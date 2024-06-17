@@ -33,6 +33,7 @@ const CreateUser = () => {
         COBRADOR_ID: ruta?.COBRADOR_ID,
         NOMBRE: name,
         P: password,
+        FECHA_CARGA_INICIAL: Timestamp.now(),
       });
       navigate("/settings");
     } catch (error) {

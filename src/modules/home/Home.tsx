@@ -4,6 +4,7 @@ import useGetRutas from "../user/useGetRutas";
 import useGetPagos, { Pago } from "../../hooks/useGetPagos";
 import { Ruta } from "../../services/api/getRutas";
 import dayjs from "dayjs";
+import { Link } from "react-router-dom";
 
 const Home = () => {
   const [point, setPoint] = React.useState<
@@ -64,6 +65,12 @@ const Home = () => {
             value={fechaFin.format("YYYY-MM-DD")}
             onChange={(e) => setFechaFin(dayjs(e.target.value).endOf("day"))}
           />
+          <Link
+            to="/settings"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Usuarios
+          </Link>
         </div>
 
         <div className="flex w-full max-h-[50rem]">
