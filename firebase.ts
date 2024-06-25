@@ -8,12 +8,12 @@ import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDueKnY8pNJnwBNPDKW7u_nuz74O3xV_34",
-  authDomain: "msp-db-31fdf.firebaseapp.com",
-  projectId: "msp-db-31fdf",
-  storageBucket: "msp-db-31fdf.appspot.com",
-  messagingSenderId: "156727289232",
-  appId: "1:156727289232:web:871f5bcbb762f2ea19bf15",
+  apiKey: "AIzaSyDRXzWxvwZcs9qVjKvrjoMOOynPwyF0sBo",
+  authDomain: "msp-db-1c2ce.firebaseapp.com",
+  projectId: "msp-db-1c2ce",
+  storageBucket: "msp-db-1c2ce.appspot.com",
+  messagingSenderId: "519103475417",
+  appId: "1:519103475417:web:d1b83f6d6e17d6e2d898c8",
 };
 
 // Initialize Firebase
