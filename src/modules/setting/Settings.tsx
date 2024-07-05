@@ -26,16 +26,21 @@ const Settings = () => {
 
   return (
     <div className="w-full h-full flex justify-center bg-white">
-      <div className="grid grid-cols-[30rem,1fr] grid-rows-[5rem,4rem,1fr] w-full overflow-auto">
+      <div className="grid grid-cols-[30rem,1fr] grid-rows-[5rem,4rem,4rem,1fr] w-full overflow-auto">
         <h1 className="col-span-2 text-black text-4xl text-center font-bold mb-4 mt-4">
           Configuración
         </h1>
-
         <Link
           to="/create-user"
           className="col-span-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded h-10 w-full flex items-center justify-center"
         >
           Crear Usuario
+        </Link>
+        <Link
+          to="/"
+          className="col-span-2 bg-transparent hover:bg-gray-200 text-gray-500 font-bold py-2 px-4 rounded h-10 w-full flex items-center justify-center"
+        >
+          Volver al inicio
         </Link>
         <div className="col-span-2 relative w-full shadow-md sm:rounded-lg">
           <table className="w-full text-sm text-left rtl:text-right text-gray-500">

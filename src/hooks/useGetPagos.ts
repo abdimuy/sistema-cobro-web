@@ -11,14 +11,16 @@ export interface Pago {
   COBRADOR: string;
   COBRADOR_ID: number;
   DOCTO_CC_ID: number;
+  DOCTO_CC_ACR_ID: number;
   FECHA_HORA_PAGO: Timestamp;
+  FORMA_COBRO_ID: number;
   IMPORTE: number;
   LAT: number;
   LNG: number;
 }
 
 const useGetPagos = (
-  idCobrador: number,
+  idZonaCliente: number,
   fechaInicio: Dayjs,
   fechaFin: Dayjs
 ) => {
@@ -28,9 +30,9 @@ const useGetPagos = (
   const getPagos = () => {
     const q = query(
       collection(db, PAGOS_COLLECTION),
-      where("COBRADOR_ID", "==", idCobrador),
-      where("FECHA_HORA_PAGO", ">=", fechaInicio.toDate()),
-      where("FECHA_HORA_PAGO", "<=", fechaFin.toDate())
+      where("ZONA_CLIENTE_ID", "==", idZonaCliente),
+      where("FECHA_HORA_PAGO", ">=", Timestamp.fromDate(fechaInicio.toDate())),
+      where("FECHA_HORA_PAGO", "<=", Timestamp.fromDate(fechaFin.toDate()))
     );
     return onSnapshot(q, (querySnapshot) => {
       const data: Pago[] = [];
@@ -45,7 +47,7 @@ const useGetPagos = (
   useEffect(() => {
     const unsubscribe = getPagos();
     return unsubscribe;
-  }, [idCobrador, fechaInicio, fechaFin]);
+  }, [idZonaCliente, fechaInicio, fechaFin]);
 
   return { pagos, isLoading };
 };

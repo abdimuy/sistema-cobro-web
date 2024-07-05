@@ -12,6 +12,7 @@ const CreateUser = () => {
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [ruta, setRuta] = useState<Ruta>();
+  // const [zonaClienteId, setZonaClienteId] = useState<number>(0);
   const navigate = useNavigate();
 
   const { rutas, error } = useGetRutas();
