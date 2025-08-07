@@ -102,6 +102,23 @@ const Settings = () => {
     });
   };
 
+  const handleToggleModule = (
+    module: string,
+    cobradorId: string,
+    currentModules: string[] = []
+  ) => {
+    let newModules: string[];
+    if (currentModules.includes(module)) {
+      newModules = currentModules.filter(m => m !== module);
+    } else {
+      newModules = [...currentModules, module];
+    }
+    
+    updateDoc(doc(db, USERS_COLLECTION, cobradorId), {
+      MODULOS: newModules,
+    });
+  };
+
   return (
     <div className="w-full h-full flex justify-center bg-white">
       <div className="grid grid-cols-[30rem,1fr] grid-rows-[5rem,4rem,4rem,4rem,1fr] w-full overflow-auto">
@@ -185,6 +202,9 @@ const Settings = () => {
                 <th scope="col" className="px-6 py-3">
                   Fecha inicio de semana
                 </th>
+                <th scope="col" className="px-6 py-3">
+                  Módulos
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -253,6 +273,32 @@ const Settings = () => {
                         handleUpdateFechaInicioSemana(e, cobrador.ID)
                       }
                     />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleModule("COBRO", cobrador.ID, cobrador.MODULOS)}
+                        className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
+                          cobrador.MODULOS?.includes("COBRO")
+                            ? "bg-green-500 text-white"
+                            : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                        }`}
+                      >
+                        COBRO
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleModule("VENTAS", cobrador.ID, cobrador.MODULOS)}
+                        className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
+                          cobrador.MODULOS?.includes("VENTAS")
+                            ? "bg-green-500 text-white"
+                            : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                        }`}
+                      >
+                        VENTAS
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

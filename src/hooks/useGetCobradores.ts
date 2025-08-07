@@ -13,6 +13,7 @@ export interface Cobrador {
   FECHA_CARGA_INICIAL: Timestamp;
   ID: string;
   TELEFONO: string;
+  MODULOS?: string[];
 }
 
 export type CobradorDto = Omit<Cobrador, "ID">;

@@ -17,6 +17,7 @@ const CreateUser = () => {
   const [ruta, setRuta] = useState<Ruta>();
   const [telefono, setTelefono] = useState<string>("");
   const [zonaCliente, setZonaCliente] = useState<ZonaCliente>();
+  const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const navigate = useNavigate();
 
   const { rutas, error } = useGetRutas();
@@ -33,7 +34,7 @@ const CreateUser = () => {
       setMessage("Usuario registrado exitosamente.");
 
       // Guarda información adicional del usuario en Firestore si es necesario
-      const data: CobradorDto = {
+      const data: CobradorDto & { MODULOS: string[] } = {
         EMAIL: email,
         CREATED_AT: Timestamp.now(),
         COBRADOR_ID: ruta ? ruta.COBRADOR_ID : rutas[0].COBRADOR_ID,
@@ -43,6 +44,7 @@ const CreateUser = () => {
           ? zonaCliente.ZONA_CLIENTE_ID
           : zonasCliente[0].ZONA_CLIENTE_ID,
         TELEFONO: telefono,
+        MODULOS: selectedModules,
       };
       await setDoc(doc(db, "users", user.uid), data);
       navigate("/settings");
@@ -53,12 +55,32 @@ const CreateUser = () => {
 
   return (
     <div
-      className="w-full h-full flex justify-center flex-col items-center bg-white"
+      className="w-full h-full bg-white overflow-y-auto"
       style={{ height: "100vh" }}
     >
-      <h2 className="text-3xl text-black font-bold text-center mb-12">
-        Crear usuario
-      </h2>
+      <div className="flex justify-center flex-col items-center min-h-full py-8">
+        <button
+          onClick={() => navigate("/settings")}
+          className="self-start ml-8 mb-4 text-gray-600 hover:text-gray-800 flex items-center gap-2"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          Regresar
+        </button>
+        <h2 className="text-3xl text-black font-bold text-center mb-12">
+          Crear usuario
+        </h2>
       <input
         type="name"
         className="mb-6 bg-gray-100 p-2 rounded text-black w-[21.5rem]"
@@ -104,6 +126,43 @@ const CreateUser = () => {
           </option>
         ))}
       </select>
+      <p className="text-black text-center font-bold text-xl mb-4">Módulos</p>
+      <div className="mb-8 w-[21.5rem] flex gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            if (selectedModules.includes("COBRO")) {
+              setSelectedModules(selectedModules.filter(m => m !== "COBRO"));
+            } else {
+              setSelectedModules([...selectedModules, "COBRO"]);
+            }
+          }}
+          className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
+            selectedModules.includes("COBRO")
+              ? "bg-green-500 text-white shadow-lg transform scale-105"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          COBRO
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (selectedModules.includes("VENTAS")) {
+              setSelectedModules(selectedModules.filter(m => m !== "VENTAS"));
+            } else {
+              setSelectedModules([...selectedModules, "VENTAS"]);
+            }
+          }}
+          className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
+            selectedModules.includes("VENTAS")
+              ? "bg-green-500 text-white shadow-lg transform scale-105"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          VENTAS
+        </button>
+      </div>
       <p className="text-black text-center font-bold text-xl mb-4">Zona</p>
       <select
         className="mb-8 bg-gray-100 p-2 rounded text-black w-[21.5rem]"
@@ -135,6 +194,7 @@ const CreateUser = () => {
         {message}
       </p>
       {error && <p className="text-red-500 text-center mt-4">{error}</p>}
+      </div>
     </div>
   );
 };
