@@ -1,14 +1,43 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import useGetCobradores from "../../hooks/useGetCobradores";
 import useGetRutas from "../user/useGetRutas";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, Timestamp, updateDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
-import { USERS_COLLECTION } from "../../constants/collections";
+import {
+  CONFIG_COLLECTION,
+  USERS_COLLECTION,
+} from "../../constants/collections";
+import useGetZonasCliente from "../user/useGetZonaCliente";
+import dayjs from "dayjs";
+import { API_SETTINGS_DOC } from "../../constants/values";
+import getConfigAPI from "../../services/api/getConfigAPI";
+import validateURL from "../../utils/validateURL";
 
 const Settings = () => {
   const { cobradores } = useGetCobradores();
+  const [urlApi, setUrlApi] = useState("");
+  const [errorsURL, setErrorsURL] = useState<string[]>([]);
+  const [isValidURL, setIsValidURL] = useState<boolean>(true);
+  // console.log(
+  //   dayjs(cobradores[0].FECHA_CARGA_INICIAL.toDate()).format("DD/MM/YYYY HH:mm")
+  // );
   const { rutas } = useGetRutas();
+  const { zonasCliente } = useGetZonasCliente();
+
+  const getURLAPI = () => {
+    getConfigAPI()
+      .then((settings) => {
+        setUrlApi(settings.baseURL);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  useEffect(() => {
+    getURLAPI();
+  }, []);
 
   const handleSelect = (
     e: React.ChangeEvent<HTMLSelectElement>,
@@ -24,9 +53,58 @@ const Settings = () => {
     });
   };
 
+  const handlerUpdateURLAPI = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    const res = validateURL(url);
+    setIsValidURL(res.valido);
+    setErrorsURL(res.errores);
+    setUrlApi(url);
+
+    if (!url) return;
+
+    updateDoc(doc(db, CONFIG_COLLECTION, API_SETTINGS_DOC), {
+      baseURL: url,
+    });
+  };
+
+  const handleSelectZona = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+    email: string
+  ) => {
+    const zonaId = parseInt(e.target.value);
+    const cobrador = cobradores.find((cobrador) => cobrador.EMAIL === email);
+
+    if (!cobrador) return;
+
+    updateDoc(doc(db, USERS_COLLECTION, cobrador.ID), {
+      ZONA_CLIENTE_ID: zonaId,
+    });
+  };
+
+  const handleUpdatePhone = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    COBRADOR_ID: string
+  ) => {
+    const phone = e.target.value;
+
+    updateDoc(doc(db, USERS_COLLECTION, COBRADOR_ID), {
+      TELEFONO: phone,
+    });
+  };
+
+  const handleUpdateFechaInicioSemana = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    COBRADOR_ID: string
+  ) => {
+    const date = e.target.value;
+    updateDoc(doc(db, USERS_COLLECTION, COBRADOR_ID), {
+      FECHA_CARGA_INICIAL: Timestamp.fromDate(new Date(date)),
+    });
+  };
+
   return (
     <div className="w-full h-full flex justify-center bg-white">
-      <div className="grid grid-cols-[30rem,1fr] grid-rows-[5rem,4rem,4rem,1fr] w-full overflow-auto">
+      <div className="grid grid-cols-[30rem,1fr] grid-rows-[5rem,4rem,4rem,4rem,1fr] w-full overflow-auto">
         <h1 className="col-span-2 text-black text-4xl text-center font-bold mb-4 mt-4">
           Configuración
         </h1>
@@ -42,6 +120,49 @@ const Settings = () => {
         >
           Volver al inicio
         </Link>
+        <div className="flex flex-row justify-center col-span-2 items-center gap-4 px-8 mb-4">
+          <div className="flex flex-col">
+            <label className="text-black font-bold">URL del servidor</label>
+            <label className="text-gray-600">
+              Dirección por defecto: https://msp2025.loclx.io/
+            </label>
+            <label className="text-gray-600">
+              Dirección local: http://serverm:3001/
+            </label>
+          </div>
+          <input
+            onChange={handlerUpdateURLAPI}
+            value={urlApi}
+            className="bg-transparent border border-gray-400 rounded p-2 text-black flex-1 max-h-[50px]"
+          />
+        </div>
+        {!isValidURL && (
+          <div
+            className="flex col-span-2 justify-self-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:text-red-400"
+            role="alert"
+          >
+            <svg
+              className="shrink-0 inline w-4 h-4 me-3 mt-[2px]"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+            </svg>
+            <span className="sr-only">Danger</span>
+            <div>
+              <span className="font-medium">
+                Ensure that these requirements are met:
+              </span>
+              <ul className="mt-1.5 list-disc list-inside">
+                {errorsURL.map((err) => (
+                  <li key={err}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
         <div className="col-span-2 relative w-full shadow-md sm:rounded-lg">
           <table className="w-full text-sm text-left rtl:text-right text-gray-500">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50">
@@ -56,14 +177,20 @@ const Settings = () => {
                   Ruta
                 </th>
                 <th scope="col" className="px-6 py-3">
-                  Action
+                  Zona
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  Telefono
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  Fecha inicio de semana
                 </th>
               </tr>
             </thead>
             <tbody>
               {cobradores.map((cobrador) => (
                 <tr
-                  key={cobrador.COBRADOR_ID}
+                  key={cobrador.ID}
                   className="odd:bg-white even:bg-gray-50 border-b"
                 >
                   <th
@@ -86,20 +213,46 @@ const Settings = () => {
                         </option>
                       ))}
                     </select>
-                    {/* {
-                      rutas.find(
-                        (ruta) => ruta.COBRADOR_ID === cobrador.COBRADOR_ID
-                      )?.COBRADOR
-                    } */}
                   </td>
-                  {/* <td className="px-6 py-4">{cobrador.RUTA}</td> */}
                   <td className="px-6 py-4">
-                    <a
-                      href="#"
-                      className="font-medium text-blue-600 hover:underline"
+                    <select
+                      value={cobrador.ZONA_CLIENTE_ID}
+                      onChange={(e) => handleSelectZona(e, cobrador.EMAIL)}
+                      className="border border-gray-400 rounded p-2 bg-white"
                     >
-                      Edit
-                    </a>
+                      <option value="0">Selecciona una zona</option>
+                      {zonasCliente.map((zona) => (
+                        <option
+                          key={zona.ZONA_CLIENTE_ID}
+                          value={zona.ZONA_CLIENTE_ID}
+                        >
+                          {zona.ZONA_CLIENTE}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <input
+                      className="bg-transparent border border-gray-400 rounded p-2"
+                      type="text"
+                      defaultValue={cobrador.TELEFONO}
+                      onBlur={(e) => handleUpdatePhone(e, cobrador.ID)}
+                    />
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <input
+                      className="bg-transparent border border-gray-400 rounded p-2"
+                      type="datetime-local"
+                      defaultValue={dayjs(
+                        cobrador.FECHA_CARGA_INICIAL.toDate()
+                      ).format("YYYY-MM-DDTHH:mm")}
+                      // defaultValue={"12/09/2024 09:27"}
+                      onBlur={(e) =>
+                        handleUpdateFechaInicioSemana(e, cobrador.ID)
+                      }
+                    />
                   </td>
                 </tr>
               ))}

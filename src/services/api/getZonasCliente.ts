@@ -1,7 +1,7 @@
 import axios from "axios";
 import { URL_API } from "../../constants/api";
 
-export interface ZONA_CLIENTE {
+export interface ZonaCliente {
   ZONA_CLIENTE_ID: number;
   ZONA_CLIENTE: string;
 }
@@ -11,7 +11,7 @@ const options = {
   url: URL_API + "/zonas-cliente",
 };
 
-const getZonasCliente = async (): Promise<ZONA_CLIENTE[]> => {
+const getZonasCliente = async (): Promise<ZonaCliente[]> => {
   try {
     const response = await axios.request(options);
     return response.data.body;

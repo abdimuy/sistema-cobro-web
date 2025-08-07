@@ -1,12 +1,5 @@
-import { db } from "../../../firebase";
-import {
-  Timestamp,
-  collection,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
-import { VENTAS_COLLECTION } from "../../constants/collections";
+import { URL_API } from "../../constants/api";
+import axios from "axios";
 
 export interface Venta {
   ID: string;
@@ -23,8 +16,8 @@ export interface Venta {
   ENGANCHE: number;
   ESTADO: string;
   ESTADO_COBRANZA: string;
-  FECHA: Timestamp;
-  FECHA_ULT_PAGO: Timestamp;
+  FECHA: string;
+  FECHA_ULT_PAGO: string;
   FOLIO: string;
   IMPORTE_PAGO_PROMEDIO: number;
   IMPTE_REST: number;
@@ -60,8 +53,8 @@ export const ventaInitialData: Venta = {
   ENGANCHE: 0,
   ESTADO: "",
   ESTADO_COBRANZA: "",
-  FECHA: Timestamp.now(),
-  FECHA_ULT_PAGO: Timestamp.now(),
+  FECHA: new Date().toISOString(),
+  FECHA_ULT_PAGO: new Date().toISOString(),
   FOLIO: "",
   IMPORTE_PAGO_PROMEDIO: 0,
   IMPTE_REST: 0,
@@ -83,20 +76,18 @@ export const ventaInitialData: Venta = {
 };
 
 const getVenta = async (DOCTO_CC_ACR_ID: number) => {
-  const q = query(
-    collection(db, VENTAS_COLLECTION),
-    where("DOCTO_CC_ACR_ID", "==", DOCTO_CC_ACR_ID)
-  );
-  const querySnapshot = await getDocs(q);
-  let data: Venta = ventaInitialData;
-  if (querySnapshot.empty) {
-    return data;
+  const options = {
+    method: "GET",
+    url: `${URL_API}/ventas/id/${DOCTO_CC_ACR_ID}`,
+  };
+
+  try {
+    const response = await axios.request(options);
+    return response.data.body as Venta;
+  } catch (error) {
+    console.error("Error fetching venta:", error);
+    return ventaInitialData; // Return initial data on error
   }
-  data = {
-    ...querySnapshot.docs[0].data(),
-    ID: querySnapshot.docs[0].id,
-  } as Venta;
-  return data;
 };
 
 export default getVenta;

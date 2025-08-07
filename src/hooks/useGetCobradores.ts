@@ -9,8 +9,13 @@ export interface Cobrador {
   CREATED_AT: Timestamp;
   EMAIL: string;
   NOMBRE: string;
+  ZONA_CLIENTE_ID: number;
+  FECHA_CARGA_INICIAL: Timestamp;
   ID: string;
+  TELEFONO: string;
 }
+
+export type CobradorDto = Omit<Cobrador, "ID">;
 
 const useGetCobradores = () => {
   const [cobradores, setCobradores] = useState<Cobrador[]>([]);

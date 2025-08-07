@@ -5,17 +5,22 @@ import { Timestamp, doc, setDoc } from "firebase/firestore";
 import useGetRutas from "./useGetRutas";
 import { Ruta } from "../../services/api/getRutas";
 import { useNavigate } from "react-router-dom";
+import { ZonaCliente } from "../../services/api/getZonasCliente";
+import { CobradorDto } from "../../hooks/useGetCobradores";
+import useGetZonasCliente from "./useGetZonaCliente";
 
 const CreateUser = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [message, setMessage] = useState("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [name, setName] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
   const [ruta, setRuta] = useState<Ruta>();
-  // const [zonaClienteId, setZonaClienteId] = useState<number>(0);
+  const [telefono, setTelefono] = useState<string>("");
+  const [zonaCliente, setZonaCliente] = useState<ZonaCliente>();
   const navigate = useNavigate();
 
   const { rutas, error } = useGetRutas();
+  const { zonasCliente } = useGetZonasCliente();
 
   const handleRegister = async () => {
     try {
@@ -28,14 +33,18 @@ const CreateUser = () => {
       setMessage("Usuario registrado exitosamente.");
 
       // Guarda información adicional del usuario en Firestore si es necesario
-      await setDoc(doc(db, "users", user.uid), {
+      const data: CobradorDto = {
         EMAIL: email,
         CREATED_AT: Timestamp.now(),
-        COBRADOR_ID: ruta?.COBRADOR_ID,
+        COBRADOR_ID: ruta ? ruta.COBRADOR_ID : rutas[0].COBRADOR_ID,
         NOMBRE: name,
-        P: password,
         FECHA_CARGA_INICIAL: Timestamp.now(),
-      });
+        ZONA_CLIENTE_ID: zonaCliente
+          ? zonaCliente.ZONA_CLIENTE_ID
+          : zonasCliente[0].ZONA_CLIENTE_ID,
+        TELEFONO: telefono,
+      };
+      await setDoc(doc(db, "users", user.uid), data);
       navigate("/settings");
     } catch (error) {
       setMessage("Error al registrar el usuario.");
@@ -71,9 +80,16 @@ const CreateUser = () => {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
+      <input
+        type="tel"
+        className="mb-8 bg-gray-100 p-2 rounded text-black w-[21.5rem]"
+        placeholder="Teléfono"
+        value={telefono}
+        onChange={(e) => setTelefono(e.target.value)}
+      />
       <p className="text-black text-center font-bold text-xl mb-4">Ruta</p>
       <select
-        className="mb-8 bg-gray-100 p-2 rounded text-black"
+        className="mb-8 bg-gray-100 p-2 rounded text-black w-[21.5rem]"
         value={ruta?.COBRADOR_ID}
         onChange={(e) => {
           const selectedRuta = rutas.find(
@@ -85,6 +101,23 @@ const CreateUser = () => {
         {rutas.map((ruta) => (
           <option key={ruta.COBRADOR_ID} value={ruta.COBRADOR_ID}>
             {ruta.COBRADOR}
+          </option>
+        ))}
+      </select>
+      <p className="text-black text-center font-bold text-xl mb-4">Zona</p>
+      <select
+        className="mb-8 bg-gray-100 p-2 rounded text-black w-[21.5rem]"
+        value={zonaCliente?.ZONA_CLIENTE_ID}
+        onChange={(e) => {
+          const selectedZona = zonasCliente.find(
+            (zona) => zona.ZONA_CLIENTE_ID === Number(e.target.value)
+          );
+          setZonaCliente(selectedZona);
+        }}
+      >
+        {zonasCliente.map((zona) => (
+          <option key={zona.ZONA_CLIENTE_ID} value={zona.ZONA_CLIENTE_ID}>
+            {zona.ZONA_CLIENTE}
           </option>
         ))}
       </select>

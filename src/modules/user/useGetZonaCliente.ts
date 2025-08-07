@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import getZonasCliente, {
-  ZONA_CLIENTE,
+  ZonaCliente,
 } from "../../services/api/getZonasCliente";
 
 const useGetZonasCliente = () => {
-  const [zonasCliente, setZonasCliente] = useState<ZONA_CLIENTE[]>([]);
+  const [zonasCliente, setZonasCliente] = useState<ZonaCliente[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 

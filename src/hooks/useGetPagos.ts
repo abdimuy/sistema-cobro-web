@@ -8,6 +8,7 @@ import { Dayjs } from "dayjs";
 export interface Pago {
   ID: string;
   CLIENTE_ID: number;
+  NOMBRE_CLIENTE: string;
   COBRADOR: string;
   COBRADOR_ID: number;
   DOCTO_CC_ID: number;
@@ -17,6 +18,7 @@ export interface Pago {
   IMPORTE: number;
   LAT: number;
   LNG: number;
+  ZONA_CLIENTE_ID: number;
 }
 
 const useGetPagos = (
