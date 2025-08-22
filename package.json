@@ -16,6 +16,7 @@
   "dependencies": {
     "@ag-grid-community/locale": "^32.1.0",
     "@ag-grid-enterprise/row-grouping": "^32.3.1",
+    "@hello-pangea/dnd": "^18.0.1",
     "@react-google-maps/api": "^2.19.3",
     "ag-grid-enterprise": "^32.3.1",
     "ag-grid-react": "^32.3.1",

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import useGetCobradores from "../../hooks/useGetCobradores";
+import Navigation from "../../components/Navigation";
 import useGetRutas from "../user/useGetRutas";
 import { doc, Timestamp, updateDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
@@ -125,18 +125,6 @@ const Settings = () => {
         <h1 className="col-span-2 text-black text-4xl text-center font-bold mb-4 mt-4">
           Configuración
         </h1>
-        <Link
-          to="/create-user"
-          className="col-span-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded h-10 w-full flex items-center justify-center"
-        >
-          Crear Usuario
-        </Link>
-        <Link
-          to="/"
-          className="col-span-2 bg-transparent hover:bg-gray-200 text-gray-500 font-bold py-2 px-4 rounded h-10 w-full flex items-center justify-center"
-        >
-          Volver al inicio
-        </Link>
         <div className="flex flex-row justify-center col-span-2 items-center gap-4 px-8 mb-4">
           <div className="flex flex-col">
             <label className="text-black font-bold">URL del servidor</label>
@@ -306,6 +294,9 @@ const Settings = () => {
           </table>
         </div>
       </div>
+      
+      {/* Navegación profesional */}
+      <Navigation />
     </div>
   );
 };

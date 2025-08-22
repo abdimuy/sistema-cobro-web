@@ -14,6 +14,7 @@ export interface Cobrador {
   ID: string;
   TELEFONO: string;
   MODULOS?: string[];
+  CAMIONETA_ASIGNADA?: number; // ID del almacén/camioneta asignada
 }
 
 export type CobradorDto = Omit<Cobrador, "ID">;

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import Navigation from "../../components/Navigation";
 import { URL_API } from "../../constants/api";
 import getVenta, { Venta } from "../../services/api/getVenta";
 import { Garantia } from "./Garantias";
@@ -317,6 +318,9 @@ const GarantiaDetalle: React.FC = () => {
           {mensajeExito}
         </div>
       )}
+      
+      {/* Navegación profesional */}
+      <Navigation />
     </div>
   );
 };

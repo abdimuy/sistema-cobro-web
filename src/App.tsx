@@ -6,6 +6,7 @@ import { LoadScript } from "@react-google-maps/api";
 import Sales from "./modules/sales/Sales";
 import Garantias from "./modules/garantias/Garantias";
 import GarantiaDetalle from "./modules/garantias/GarantiaDetails";
+import AsignacionAlmacenes from "./modules/almacenes/AsignacionAlmacenes";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/sales" element={<Sales />} />
           <Route path="/garantias" element={<Garantias />} />
           <Route path="/garantias/:id" element={<GarantiaDetalle />} />
+          <Route path="/asignacion-almacenes" element={<AsignacionAlmacenes />} />
         </Routes>
       </LoadScript>
     </Router>

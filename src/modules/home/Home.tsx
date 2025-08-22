@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import Map from "../../components/Map";
+import Navigation from "../../components/Navigation";
 import dayjs from "dayjs";
-import { Link } from "react-router-dom";
 import { ZonaCliente } from "../../services/api/getZonasCliente";
 import useGetZonasCliente from "../user/useGetZonaCliente";
 import { ColDef, ModuleRegistry } from "@ag-grid-community/core";
@@ -27,7 +27,6 @@ const Home = () => {
   const [columnDefs] = useState<ColDef[]>([
     {
       field: "TIPO",
-      checkboxSelection: true,
       width: 100,
       enableRowGroup: true,
     },
@@ -214,30 +213,6 @@ const Home = () => {
           >
             Buscar
           </button>
-          <Link
-            to="/sales"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Ir a Ventas
-          </Link>
-          <Link
-            to="/garantias"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Ir a Garantías
-          </Link>
-          <Link
-            to="/settings"
-            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Usuarios
-          </Link>
-          <button
-            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-            onClick={() => setShowMap((value) => !value)}
-          >
-            {showMap ? "Ocultar mapa" : "Mostrar mapa"}
-          </button>
         </div>
 
         {loading ? (
@@ -299,6 +274,12 @@ const Home = () => {
           </>
         )}
       </div>
+      
+      {/* Navegación profesional */}
+      <Navigation 
+        showMap={showMap} 
+        onToggleMap={() => setShowMap((value) => !value)} 
+      />
     </div>
   );
 };

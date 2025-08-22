@@ -8,9 +8,9 @@ import { AG_GRID_LOCALE_ES } from "@ag-grid-community/locale";
 import dayjs from "dayjs";
 import "ag-grid-enterprise";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Link } from "react-router-dom";
 import useGetPagosByVentaId from "../../hooks/useGetPagosByVentaId";
 import Map from "../../components/Map";
+import Navigation from "../../components/Navigation";
 
 dayjs.extend(relativeTime);
 
@@ -151,18 +151,6 @@ const Sales = () => {
             </option>
           ))}
         </select>
-        <Link
-          to="/"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Ir a Pagos
-        </Link>
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={() => setShowMap((value) => !value)}
-        >
-          {showMap ? "Ocultar mapa" : "Mostrar mapa"}
-        </button>
       </div>
 
       {loading ? (
@@ -219,6 +207,12 @@ const Sales = () => {
           )}
         </div>
       )}
+      
+      {/* Navegación profesional */}
+      <Navigation 
+        showMap={showMap} 
+        onToggleMap={() => setShowMap((value) => !value)} 
+      />
     </div>
   );
 };

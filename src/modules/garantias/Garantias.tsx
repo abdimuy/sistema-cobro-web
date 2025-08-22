@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { URL_API } from "../../constants/api";
 import useGetVenta from "../../hooks/useGetVenta";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import Navigation from "../../components/Navigation";
 import useGetProductsSaleByFolio from "../../hooks/useGetProductsSaleByFolio";
 import { ProductSale } from "../../services/api/getProductsSaleByFolio";
 
@@ -94,6 +95,9 @@ const GarantiasListPage: React.FC = () => {
             <CardGarantia key={g.ID} garantia={g} />
           ))}
       </div>
+      
+      {/* Navegación profesional */}
+      <Navigation />
     </div>
   );
 };
