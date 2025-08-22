@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { URL_API } from "../../constants/api";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import useGetCobradores from "../../hooks/useGetCobradores";
@@ -65,7 +65,7 @@ const AsignacionAlmacenes = () => {
       const usuariosDisponiblesTemp: Usuario[] = [];
       const almacenesTemp = almacenes.map(almacen => ({
         ...almacen,
-        usuariosAsignados: []
+        usuariosAsignados: [] as Usuario[]
       }));
 
       usuariosFormateados.forEach(usuario => {
@@ -371,10 +371,6 @@ const AsignacionAlmacenes = () => {
     await updateUserCamioneta(usuario.id, null);
   };
 
-  const handleSave = async () => {
-    // Las asignaciones se guardan automáticamente en Firebase
-    alert("Las asignaciones se guardan automáticamente al realizar cambios");
-  };
 
   const filteredUsuarios = usuariosDisponibles.filter(usuario =>
     usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
