@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { usePermissions } from "../hooks/usePermissions";
+import { DESKTOP_MODULES } from "../constants/modules";
 
 interface NavItem {
   path: string;
@@ -7,15 +10,6 @@ interface NavItem {
   icon: string;
   color: string;
 }
-
-const navItems: NavItem[] = [
-  { path: "/", label: "Inicio", icon: "", color: "blue" },
-  { path: "/sales", label: "Ventas", icon: "", color: "blue" },
-  { path: "/ventas-locales", label: "Ventas Locales", icon: "", color: "blue" },
-  { path: "/garantias", label: "Garantías", icon: "", color: "blue" },
-  { path: "/asignacion-almacenes", label: "Camionetas", icon: "", color: "blue" },
-  { path: "/settings", label: "Usuarios", icon: "", color: "blue" },
-];
 
 interface NavigationProps {
   showMap?: boolean;
@@ -25,6 +19,16 @@ interface NavigationProps {
 const Navigation: React.FC<NavigationProps> = ({ showMap, onToggleMap }) => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { isAuthenticated, userData, logout } = useAuth();
+  const { getAvailableModulesWithConfig } = usePermissions();
+
+  // Obtener módulos accesibles para el usuario actual
+  const availableModules = isAuthenticated ? getAvailableModulesWithConfig() : [];
+
+  const handleLogout = async () => {
+    await logout();
+    setIsOpen(false);
+  };
 
   const getColorClasses = (color: string, isActive: boolean) => {
     const colors = {
@@ -99,21 +103,41 @@ const Navigation: React.FC<NavigationProps> = ({ showMap, onToggleMap }) => {
             </button>
           </div>
 
+          {/* Información del usuario */}
+          {isAuthenticated && userData && (
+            <div className="mb-6 p-4 bg-slate-50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-semibold text-blue-700">
+                    {userData.NOMBRE?.charAt(0) || userData.EMAIL.charAt(0)}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {userData.NOMBRE || userData.EMAIL}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{userData.ROL}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Enlaces de navegación */}
           <nav className="space-y-2">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
+            {availableModules.map((module) => {
+              const isActive = location.pathname === module.path || 
+                (module.path !== '/' && location.pathname.startsWith(module.path));
               return (
                 <Link
-                  key={item.path}
-                  to={item.path}
+                  key={module.path}
+                  to={module.path}
                   onClick={() => setIsOpen(false)}
                   className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all font-medium ${getColorClasses(
-                    item.color,
+                    module.color || 'blue',
                     isActive
                   )}`}
                 >
-                  <span>{item.label}</span>
+                  <span>{module.label}</span>
                   {isActive && (
                     <span className="ml-auto w-2 h-2 bg-current rounded-full" />
                   )}
@@ -138,12 +162,25 @@ const Navigation: React.FC<NavigationProps> = ({ showMap, onToggleMap }) => {
                 <span>{showMap ? "Ocultar mapa" : "Mostrar mapa"}</span>
               </button>
             )}
+            
+            {/* Botón de logout */}
+            {isAuthenticated && (
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-4 py-3 rounded-lg transition-all font-medium text-red-600 hover:bg-red-50 w-full text-left"
+              >
+                <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>Cerrar Sesión</span>
+              </button>
+            )}
           </div>
 
           {/* Footer */}
           <div className="absolute bottom-6 left-6 right-6">
             <div className="text-center text-sm text-gray-500">
-              <p>Sistema de Cobranza</p>
+              <p>Sistema Muebles San Pablo</p>
               <p className="text-xs">v1.0.0</p>
             </div>
           </div>
