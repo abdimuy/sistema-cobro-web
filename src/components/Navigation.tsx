@@ -11,9 +11,10 @@ interface NavItem {
 const navItems: NavItem[] = [
   { path: "/", label: "Inicio", icon: "", color: "blue" },
   { path: "/sales", label: "Ventas", icon: "", color: "blue" },
+  { path: "/ventas-locales", label: "Ventas Locales", icon: "", color: "blue" },
   { path: "/garantias", label: "Garantías", icon: "", color: "blue" },
-  { path: "/asignacion-almacenes", label: "Camionetas", icon: "", color: "purple" },
-  { path: "/settings", label: "Usuarios", icon: "", color: "gray" },
+  { path: "/asignacion-almacenes", label: "Camionetas", icon: "", color: "blue" },
+  { path: "/settings", label: "Usuarios", icon: "", color: "blue" },
 ];
 
 interface NavigationProps {
@@ -30,6 +31,9 @@ const Navigation: React.FC<NavigationProps> = ({ showMap, onToggleMap }) => {
       blue: isActive 
         ? "bg-blue-600 text-white" 
         : "text-blue-600 hover:bg-blue-50",
+      green: isActive 
+        ? "bg-green-600 text-white" 
+        : "text-green-600 hover:bg-green-50",
       purple: isActive 
         ? "bg-purple-600 text-white" 
         : "text-purple-600 hover:bg-purple-50",
