@@ -1,7 +1,6 @@
 import { doc, Timestamp, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { USERS_COLLECTION } from "../constants/collections";
-import { ROLES } from "../constants/roles";
 
 export const handleSelect = (
   e: React.ChangeEvent<HTMLSelectElement>,

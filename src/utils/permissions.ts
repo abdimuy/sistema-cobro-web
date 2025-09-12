@@ -1,6 +1,6 @@
 import { UserData, RoleType } from '../types/auth';
 import { ROLES, ROLE_PERMISSIONS, ROLE_HIERARCHY } from '../constants/roles';
-import { DESKTOP_MODULES, PROTECTED_MODULES, PUBLIC_MODULES } from '../constants/modules';
+import { DESKTOP_MODULES, PUBLIC_MODULES } from '../constants/modules';
 
 /**
  * Verifica si un usuario tiene un rol específico o superior
@@ -37,7 +37,7 @@ export const canUserAccessModule = (userData: UserData | null, moduleKey: string
 
   // Supervisor tiene módulos específicos definidos en el rol
   if (userRole === ROLES.SUPERVISOR) {
-    return roleConfig.allowedModules?.includes(moduleKey) || false;
+    return roleConfig.allowedModules.includes(moduleKey);
   }
 
   // Operador y Viewer usan permisos personalizados
@@ -76,7 +76,7 @@ export const isReadOnlyUser = (userData: UserData | null): boolean => {
   if (!userData) return true;
   
   const roleConfig = ROLE_PERMISSIONS[userData.ROL];
-  return roleConfig?.readOnly || false;
+  return roleConfig.readOnly;
 };
 
 /**

@@ -12,7 +12,14 @@ interface VentaDetalleModalProps {
 const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
   const { venta, loading, error } = useGetVentaLocalCompleta(ventaId);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<"info" | "productos" | "imagenes">("info");
+  const [imageLoadingStates, setImageLoadingStates] = useState<{ [key: string]: boolean }>({});
+  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
+  const [zoom, setZoom] = useState<number>(1);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [imagePosition, setImagePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -20,6 +27,47 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
       document.body.style.overflow = "auto";
     };
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape para cerrar modal
+      if (e.key === 'Escape') {
+        if (selectedImage) {
+          setSelectedImage(null);
+        } else {
+          onClose();
+        }
+      }
+      
+      // Flechas para navegar imágenes (solo cuando hay imagen seleccionada)
+      if (selectedImage && venta?.imagenes) {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          nextImage();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          prevImage();
+        }
+      }
+
+      // Zoom con + y -
+      if (selectedImage) {
+        if (e.key === '+' || e.key === '=') {
+          e.preventDefault();
+          handleZoomIn();
+        } else if (e.key === '-') {
+          e.preventDefault();
+          handleZoomOut();
+        } else if (e.key === '0') {
+          e.preventDefault();
+          resetZoom();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImage, venta?.imagenes, selectedImageIndex]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-MX", {
@@ -33,6 +81,133 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
+  };
+
+  const showToast = (message: string) => {
+    setToast({ message, visible: true });
+    setTimeout(() => {
+      setToast({ message: "", visible: false });
+    }, 3000);
+  };
+
+  const copyToClipboard = async (text: string, buttonElement: HTMLButtonElement, label?: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      const originalContent = buttonElement.innerHTML;
+      buttonElement.innerHTML = `
+        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      `;
+      buttonElement.classList.add('bg-green-100');
+      setTimeout(() => {
+        buttonElement.innerHTML = originalContent;
+        buttonElement.classList.remove('bg-green-100');
+      }, 2000);
+      
+      showToast(`${label || 'Texto'} copiado al portapapeles`);
+    } catch (err) {
+      console.error('Error copying to clipboard:', err);
+      showToast('Error al copiar');
+    }
+  };
+
+  const CopyableField = ({ label, value, tooltip }: { label: string; value: string; tooltip: string }) => (
+    <div>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-500">{label}</p>
+        <button
+          onClick={(e) => copyToClipboard(value, e.currentTarget, label)}
+          className="p-1 hover:bg-gray-200 rounded transition-colors"
+          title={tooltip}
+        >
+          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        </button>
+      </div>
+      <p className="font-semibold text-gray-900">{value}</p>
+    </div>
+  );
+
+  const CopyableCard = ({ label, value, tooltip, className }: { label: string; value: string; tooltip: string; className?: string }) => (
+    <div className="bg-white rounded-lg p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-500">{label}</p>
+        <button
+          onClick={(e) => copyToClipboard(value, e.currentTarget)}
+          className="p-1 hover:bg-gray-200 rounded transition-colors"
+          title={tooltip}
+        >
+          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        </button>
+      </div>
+      <p className={`text-2xl font-bold ${className || 'text-gray-900'}`}>{value}</p>
+    </div>
+  );
+
+  const nextImage = () => {
+    if (!venta?.imagenes) return;
+    const nextIndex = (selectedImageIndex + 1) % venta.imagenes.length;
+    setSelectedImageIndex(nextIndex);
+    setSelectedImage(getImageUrl(venta.imagenes[nextIndex].IMG_PATH));
+  };
+
+  const prevImage = () => {
+    if (!venta?.imagenes) return;
+    const prevIndex = selectedImageIndex === 0 ? venta.imagenes.length - 1 : selectedImageIndex - 1;
+    setSelectedImageIndex(prevIndex);
+    setSelectedImage(getImageUrl(venta.imagenes[prevIndex].IMG_PATH));
+  };
+
+  const openImage = (index: number) => {
+    setSelectedImageIndex(index);
+    setSelectedImage(getImageUrl(venta.imagenes![index].IMG_PATH));
+    setZoom(1);
+    setImagePosition({ x: 0, y: 0 });
+  };
+
+  const handleZoomIn = () => {
+    setZoom(prev => Math.min(prev + 0.5, 3));
+  };
+
+  const handleZoomOut = () => {
+    setZoom(prev => Math.max(prev - 0.5, 0.5));
+  };
+
+  const resetZoom = () => {
+    setZoom(1);
+    setImagePosition({ x: 0, y: 0 });
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoom > 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - imagePosition.x, y: e.clientY - imagePosition.y });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && zoom > 1) {
+      setImagePosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleImageLoad = (imageId: string) => {
+    setImageLoadingStates(prev => ({ ...prev, [imageId]: false }));
+  };
+
+  const handleImageLoadStart = (imageId: string) => {
+    setImageLoadingStates(prev => ({ ...prev, [imageId]: true }));
   };
 
   if (loading) {
@@ -78,7 +253,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
         className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
         onClick={handleBackdropClick}
       >
-        <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden animate-slide-up">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden animate-slide-up mx-4 sm:mx-0">
           {/* Header del modal */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-white">
             <div className="flex items-center justify-between">
@@ -155,25 +330,50 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                     </svg>
                     Información del Cliente
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Nombre</p>
-                      <p className="font-semibold text-gray-900">{venta.NOMBRE_CLIENTE}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Teléfono</p>
-                      <a href={`tel:${venta.TELEFONO}`} className="font-semibold text-blue-600 hover:underline">
-                        {venta.TELEFONO || "No registrado"}
-                      </a>
-                    </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <CopyableField
+                      label="Nombre"
+                      value={venta.NOMBRE_CLIENTE}
+                      tooltip="Copiar nombre"
+                    />
+                    {venta.TELEFONO ? (
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-gray-500">Teléfono</p>
+                          <button
+                            onClick={(e) => copyToClipboard(venta.TELEFONO, e.currentTarget)}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            title="Copiar teléfono"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                        <a href={`tel:${venta.TELEFONO}`} className="font-semibold text-blue-600 hover:underline">
+                          {venta.TELEFONO}
+                        </a>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-sm text-gray-500">Teléfono</p>
+                        <p className="font-semibold text-gray-900">No registrado</p>
+                      </div>
+                    )}
                     <div className="md:col-span-2">
-                      <p className="text-sm text-gray-500">Dirección</p>
-                      <p className="font-semibold text-gray-900">{venta.DIRECCION}</p>
+                      <CopyableField
+                        label="Dirección"
+                        value={venta.DIRECCION}
+                        tooltip="Copiar dirección"
+                      />
                     </div>
                     {venta.AVAL_O_RESPONSABLE && (
                       <div className="md:col-span-2">
-                        <p className="text-sm text-gray-500">Aval o Responsable</p>
-                        <p className="font-semibold text-gray-900">{venta.AVAL_O_RESPONSABLE}</p>
+                        <CopyableField
+                          label="Aval o Responsable"
+                          value={venta.AVAL_O_RESPONSABLE!}
+                          tooltip="Copiar aval/responsable"
+                        />
                       </div>
                     )}
                   </div>
@@ -187,26 +387,70 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                     </svg>
                     Información Financiera
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="bg-white rounded-lg p-4">
-                      <p className="text-sm text-gray-500">Precio Total</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-gray-500">Precio Total</p>
+                        <button
+                          onClick={(e) => copyToClipboard(venta.PRECIO_TOTAL.toString(), e.currentTarget)}
+                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                          title="Copiar precio total"
+                        >
+                          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </button>
+                      </div>
                       <p className="text-2xl font-bold text-green-600">{formatCurrency(venta.PRECIO_TOTAL)}</p>
                     </div>
                     {venta.ENGANCHE !== undefined && (
                       <div className="bg-white rounded-lg p-4">
-                        <p className="text-sm text-gray-500">Enganche</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-gray-500">Enganche</p>
+                          <button
+                            onClick={(e) => copyToClipboard((venta.ENGANCHE || 0).toString(), e.currentTarget)}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            title="Copiar enganche"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
                         <p className="text-2xl font-bold text-blue-600">{formatCurrency(venta.ENGANCHE || 0)}</p>
                       </div>
                     )}
                     {venta.PARCIALIDAD !== undefined && (
                       <div className="bg-white rounded-lg p-4">
-                        <p className="text-sm text-gray-500">Parcialidad</p>
-                        <p className="text-2xl font-bold text-purple-600">{formatCurrency(venta.PARCIALIDAD || 0)}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-gray-500">Parcialidad</p>
+                          <button
+                            onClick={(e) => copyToClipboard((venta.PARCIALIDAD || 0).toString(), e.currentTarget)}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            title="Copiar parcialidad"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </button>
                       </div>
+                      <p className="text-2xl font-bold text-purple-600">{formatCurrency(venta.PARCIALIDAD || 0)}</p>
+                    </div>
                     )}
                     {venta.MONTO_A_CORTO_PLAZO !== undefined && (
                       <div className="bg-white rounded-lg p-4">
-                        <p className="text-sm text-gray-500">Monto a Corto Plazo</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-gray-500">Monto a Corto Plazo</p>
+                          <button
+                            onClick={(e) => copyToClipboard((venta.MONTO_A_CORTO_PLAZO || 0).toString(), e.currentTarget)}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            title="Copiar monto a corto plazo"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
                         <p className="text-xl font-bold text-gray-700">{formatCurrency(venta.MONTO_A_CORTO_PLAZO || 0)}</p>
                       </div>
                     )}
@@ -228,7 +472,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                 </div>
 
                 {/* Detalles adicionales */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="bg-gray-50 rounded-xl p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Detalles de la Venta</h3>
                     <div className="space-y-3">
@@ -328,19 +572,52 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                               </span>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="grid grid-cols-3 gap-4">
-                              <div>
-                                <p className="text-xs text-gray-500">Lista</p>
-                                <p className="font-semibold text-gray-900">{formatCurrency(producto.PRECIO_LISTA)}</p>
+                          <div className="w-full">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                              <div className="bg-gray-50 rounded-lg p-3 border">
+                                <p className="text-xs text-gray-500 mb-2">Lista</p>
+                                <div className="flex items-center justify-between">
+                                  <p className="font-semibold text-gray-900">{formatCurrency(producto.PRECIO_LISTA)}</p>
+                                  <button
+                                    onClick={(e) => copyToClipboard(producto.PRECIO_LISTA.toString(), e.currentTarget)}
+                                    className="p-1 hover:bg-gray-200 rounded transition-colors"
+                                    title="Copiar precio lista"
+                                  >
+                                    <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                  </button>
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-xs text-gray-500">Corto Plazo</p>
-                                <p className="font-semibold text-blue-600">{formatCurrency(producto.PRECIO_CORTO_PLAZO)}</p>
+                              <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                                <p className="text-xs text-gray-500 mb-2">Corto Plazo</p>
+                                <div className="flex items-center justify-between">
+                                  <p className="font-semibold text-blue-600">{formatCurrency(producto.PRECIO_CORTO_PLAZO)}</p>
+                                  <button
+                                    onClick={(e) => copyToClipboard(producto.PRECIO_CORTO_PLAZO.toString(), e.currentTarget)}
+                                    className="p-1 hover:bg-blue-200 rounded transition-colors"
+                                    title="Copiar precio corto plazo"
+                                  >
+                                    <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                  </button>
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-xs text-gray-500">Contado</p>
-                                <p className="font-semibold text-green-600">{formatCurrency(producto.PRECIO_CONTADO)}</p>
+                              <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                                <p className="text-xs text-gray-500 mb-2">Contado</p>
+                                <div className="flex items-center justify-between">
+                                  <p className="font-semibold text-green-600">{formatCurrency(producto.PRECIO_CONTADO)}</p>
+                                  <button
+                                    onClick={(e) => copyToClipboard(producto.PRECIO_CONTADO.toString(), e.currentTarget)}
+                                    className="p-1 hover:bg-green-200 rounded transition-colors"
+                                    title="Copiar precio contado"
+                                  >
+                                    <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -378,37 +655,35 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
             {/* Tab de Imágenes */}
             {activeTab === "imagenes" && (
               <div className="animate-fade-in">
-                {/* Debug info - remover en producción */}
-                {venta.imagenes && venta.imagenes.length > 0 && (
-                  <div className="mb-4 p-3 bg-gray-100 rounded-lg text-xs space-y-1">
-                    <p><strong>Debug:</strong> Base URL: https://prueba2025.loclx.io</p>
-                    <p><strong>Debug:</strong> IMG_PATH: {venta.imagenes[0].IMG_PATH}</p>
-                    <p><strong>Debug:</strong> URL completa: {getImageUrl(venta.imagenes[0].IMG_PATH)}</p>
-                  </div>
-                )}
-                
                 {venta.imagenes && venta.imagenes.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {venta.imagenes.map((imagen) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {venta.imagenes.map((imagen, index) => (
                       <div 
                         key={imagen.ID}
-                        className="group relative bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:shadow-xl transition-all"
-                        onClick={() => setSelectedImage(getImageUrl(imagen.IMG_PATH))}
+                        className="group relative bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300"
+                        onClick={() => openImage(index)}
                       >
+                        {/* Loading spinner */}
+                        {imageLoadingStates[imagen.ID] && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+                            <div className="w-8 h-8 border-4 border-gray-200 rounded-full border-t-blue-600 animate-spin"></div>
+                          </div>
+                        )}
+                        
                         <img
                           src={getImageUrl(imagen.IMG_PATH)}
                           alt={imagen.IMG_DESC}
-                          className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                          onLoadStart={() => handleImageLoadStart(imagen.ID)}
+                          onLoad={() => handleImageLoad(imagen.ID)}
                           onError={(e) => {
-                            console.error('Error loading image:', getImageUrl(imagen.IMG_PATH));
+                            handleImageLoad(imagen.ID);
                             const target = e.target as HTMLImageElement;
-                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNzBWMTMwTTEwMCA3MEw3MCA4NUwxMzAgODVMMTAwIDcwWiIgc3Ryb2tlPSIjOUI5QkE0IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+';
+                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ci8+CjxwYXRoIGQ9Ik0xMDAgNzBWMTMwTTEwMCA3MEw3MCA4NUwxMzAgODVMMTAwIDcwWiIgc3Ryb2tlPSIjOUI5QkE0IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+';
                             target.classList.add('opacity-50');
                           }}
-                          onLoad={() => {
-                            console.log('Image loaded successfully:', getImageUrl(imagen.IMG_PATH));
-                          }}
                         />
+                        
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                           <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                             <p className="text-sm font-medium">{imagen.IMG_DESC}</p>
@@ -440,25 +715,121 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
       </div>
 
       {/* Modal de imagen ampliada */}
-      {selectedImage && (
+      {selectedImage && venta?.imagenes && (
         <div 
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4 animate-fade-in"
-          onClick={() => setSelectedImage(null)}
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4 animate-fade-in overflow-hidden"
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
         >
-          <div className="relative max-w-5xl max-h-[90vh]">
+          {/* Controles de zoom - Top center de pantalla */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-2 z-20">
+            <button
+              onClick={handleZoomOut}
+              className="p-1 hover:bg-white/20 rounded-full transition-colors"
+              title="Zoom out (-)"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H6" />
+              </svg>
+            </button>
+            <div className="px-2 py-1 text-white text-xs font-medium min-w-[45px] text-center">
+              {Math.round(zoom * 100)}%
+            </div>
+            <button
+              onClick={handleZoomIn}
+              className="p-1 hover:bg-white/20 rounded-full transition-colors"
+              title="Zoom in (+)"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </button>
+            <button
+              onClick={resetZoom}
+              className="p-1 hover:bg-white/20 rounded-full transition-colors ml-1"
+              title="Reset zoom (0)"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Botón cerrar - Top right de pantalla */}
+          <button
+            onClick={() => setSelectedImage(null)}
+            className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors z-20"
+          >
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* Navegación anterior - Left center de pantalla */}
+          {venta.imagenes.length > 1 && (
+            <button
+              onClick={prevImage}
+              className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors z-20"
+            >
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Navegación siguiente - Right center de pantalla */}
+          {venta.imagenes.length > 1 && (
+            <button
+              onClick={nextImage}
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors z-20"
+            >
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Contador de imágenes - Bottom center de pantalla */}
+          {venta.imagenes.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white text-sm z-20">
+              {selectedImageIndex + 1} / {venta.imagenes.length}
+            </div>
+          )}
+
+          {/* Información de la imagen - Bottom right de pantalla */}
+          <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-sm rounded-lg p-3 text-white max-w-xs z-20">
+            <p className="text-sm font-medium">{venta.imagenes[selectedImageIndex]?.IMG_DESC}</p>
+            <p className="text-xs opacity-75 mt-1">
+              {dayjs(venta.imagenes[selectedImageIndex]?.FECHA_SUBIDA).format("DD/MM/YYYY HH:mm")}
+            </p>
+          </div>
+
+          {/* Contenedor de imagen */}
+          <div className="relative max-w-5xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
             <img
               src={selectedImage}
               alt="Imagen ampliada"
-              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              className={`max-w-full max-h-[90vh] min-w-[400px] min-h-[300px] object-contain rounded-lg transition-transform ${
+                zoom > 1 ? 'cursor-move' : 'cursor-default'
+              }`}
+              style={{
+                transform: `scale(${zoom}) translate(${imagePosition.x / zoom}px, ${imagePosition.y / zoom}px)`,
+              }}
+              onMouseDown={handleMouseDown}
+              onDragStart={(e) => e.preventDefault()}
             />
-            <button
-              onClick={() => setSelectedImage(null)}
-              className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
-            >
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.visible && (
+        <div className="fixed top-4 right-4 z-[80] animate-fade-in">
+          <div className="bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="text-sm font-medium">{toast.message}</span>
           </div>
         </div>
       )}

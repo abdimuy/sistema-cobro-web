@@ -7,7 +7,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
-import { AuthContextType, AuthState, UserData, RoleType } from '../types/auth';
+import { AuthContextType, AuthState, UserData } from '../types/auth';
 import { USERS_COLLECTION } from '../constants/collections';
 import { ROLES, ROLE_PERMISSIONS } from '../constants/roles';
 import { DESKTOP_MODULES } from '../constants/modules';
@@ -126,7 +126,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Supervisor tiene módulos específicos
     if (userRole === ROLES.SUPERVISOR) {
-      return roleConfig.allowedModules?.includes(moduleKey) || false;
+      return roleConfig.allowedModules.includes(moduleKey);
     }
 
     // Operador usa permisos personalizados

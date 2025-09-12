@@ -2,14 +2,6 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { usePermissions } from "../hooks/usePermissions";
-import { DESKTOP_MODULES } from "../constants/modules";
-
-interface NavItem {
-  path: string;
-  label: string;
-  icon: string;
-  color: string;
-}
 
 interface NavigationProps {
   showMap?: boolean;
