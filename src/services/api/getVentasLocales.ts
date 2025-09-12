@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
+import { URL_API } from "../../constants/api";
 
-const BASE_URL = "https://prueba2025.loclx.io";
+const BASE_URL = URL_API
 
 export interface VentaLocal {
   LOCAL_SALE_ID: string;
