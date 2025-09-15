@@ -173,7 +173,7 @@ const Navigation: React.FC<NavigationProps> = ({ showMap, onToggleMap }) => {
           <div className="absolute bottom-6 left-6 right-6">
             <div className="text-center text-sm text-gray-500">
               <p>Sistema Muebles San Pablo</p>
-              <p className="text-xs">v1.0.1</p>
+              <p className="text-xs">v1.0.2</p>
             </div>
           </div>
         </div>
