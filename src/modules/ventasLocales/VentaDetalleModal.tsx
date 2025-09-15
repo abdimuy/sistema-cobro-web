@@ -130,23 +130,6 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
     </div>
   );
 
-  const CopyableCard = ({ label, value, tooltip, className }: { label: string; value: string; tooltip: string; className?: string }) => (
-    <div className="bg-white rounded-lg p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">{label}</p>
-        <button
-          onClick={(e) => copyToClipboard(value, e.currentTarget)}
-          className="p-1 hover:bg-gray-200 rounded transition-colors"
-          title={tooltip}
-        >
-          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-        </button>
-      </div>
-      <p className={`text-2xl font-bold ${className || 'text-gray-900'}`}>{value}</p>
-    </div>
-  );
 
   const nextImage = () => {
     if (!venta?.imagenes) return;
@@ -163,8 +146,9 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
   };
 
   const openImage = (index: number) => {
+    if (!venta?.imagenes) return;
     setSelectedImageIndex(index);
-    setSelectedImage(getImageUrl(venta.imagenes![index].IMG_PATH));
+    setSelectedImage(getImageUrl(venta.imagenes[index].IMG_PATH));
     setZoom(1);
     setImagePosition({ x: 0, y: 0 });
   };

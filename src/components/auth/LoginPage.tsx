@@ -162,7 +162,7 @@ const LoginPage: React.FC = () => {
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-200 text-center">
             <p className="text-xs text-gray-500">
-              Sistema Muebles San Pablo v1.0.0
+              Sistema Muebles San Pablo v1.0.1
             </p>
             <p className="text-xs text-gray-500 mt-1">
               Acceso restringido únicamente a personal autorizado
