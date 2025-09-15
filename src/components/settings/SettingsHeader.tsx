@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 interface SettingsHeaderProps {
   stats: {
@@ -26,15 +27,15 @@ const SettingsHeader: React.FC<SettingsHeaderProps> = ({
           </div>
           <div className="flex items-center space-x-4">
             {/* Botón crear usuario */}
-            <a
-              href="/create-user"
+            <Link
+              to="/create-user"
               className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               Crear Usuario
-            </a>
+            </Link>
             
             <div className="flex items-center space-x-2 bg-slate-100 p-1 rounded-lg">
               <button
