@@ -51,8 +51,11 @@ const AsignacionAlmacenes = () => {
   const { cobradores, isLoading: loadingCobradores } = useGetCobradores();
 
   useEffect(() => {
-    fetchExcludedAlmacenes();
-    fetchAlmacenes();
+    const loadData = async () => {
+      await fetchExcludedAlmacenes();
+      await fetchAlmacenes();
+    };
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -217,13 +220,27 @@ const AsignacionAlmacenes = () => {
         return;
       }
 
+      // Primero obtenemos los almacenes excluidos actuales de Firebase
+      let excluidos: number[] = [];
+      try {
+        const docRef = doc(db, CONFIG_COLLECTION, "almacenes_excluidos");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          excluidos = data.excluidos || [];
+        }
+      } catch (error) {
+        console.error("Error al cargar almacenes excluidos en fetchAlmacenes:", error);
+        excluidos = almacenesExcluidos; // Usar el estado actual como fallback
+      }
+
       const almacenesFormateados: Almacen[] = data.body.map((almacen) => ({
         id: almacen.ALMACEN_ID,
         nombre: almacen.ALMACEN,
         existencias: almacen.EXISTENCIAS,
         capacidad: 3,
         usuariosAsignados: [],
-        esExcluido: almacenesExcluidos.includes(almacen.ALMACEN_ID)
+        esExcluido: excluidos.includes(almacen.ALMACEN_ID)
       }));
 
       setAlmacenes(almacenesFormateados);
