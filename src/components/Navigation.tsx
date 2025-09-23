@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { usePermissions } from "../hooks/usePermissions";
+import { APP_VERSION } from "../constants/version";
 
 interface NavigationProps {
   showMap?: boolean;
@@ -173,7 +174,7 @@ const Navigation: React.FC<NavigationProps> = ({ showMap, onToggleMap }) => {
           <div className="absolute bottom-6 left-6 right-6">
             <div className="text-center text-sm text-gray-500">
               <p>Sistema Muebles San Pablo</p>
-              <p className="text-xs">v1.0.2</p>
+              <p className="text-xs">v{APP_VERSION}</p>
             </div>
           </div>
         </div>

@@ -41,7 +41,8 @@ const Settings = () => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'configured' | 'incomplete'>('all');
   const [filterRuta, setFilterRuta] = useState<string>('all');
   const [filterPermisos, setFilterPermisos] = useState<'all' | 'with-permissions' | 'no-permissions'>('all');
-  const [sortBy, setSortBy] = useState<'name' | 'email' | 'ruta'>('name');
+  const [filterVersion, setFilterVersion] = useState<'all' | 'validated' | 'not-validated' | string>('all');
+  const [sortBy, setSortBy] = useState<'name' | 'email' | 'ruta' | 'version'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Función para cambiar modo de vista y guardar en localStorage
@@ -88,6 +89,7 @@ const Settings = () => {
     filterStatus,
     filterRuta,
     filterPermisos,
+    filterVersion,
     sortBy,
     sortOrder,
     rutas,
@@ -181,6 +183,8 @@ const Settings = () => {
           onFilterRutaChange={setFilterRuta}
           filterPermisos={filterPermisos}
           onFilterPermisosChange={setFilterPermisos}
+          filterVersion={filterVersion}
+          onFilterVersionChange={setFilterVersion}
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSortChange={(sortBy, sortOrder) => {
@@ -188,6 +192,7 @@ const Settings = () => {
             setSortOrder(sortOrder);
           }}
           rutas={rutas}
+          cobradores={cobradores}
           filteredCount={filteredAndSortedCobradores.length}
           totalCount={cobradores.length}
         />

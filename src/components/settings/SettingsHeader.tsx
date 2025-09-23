@@ -7,6 +7,8 @@ interface SettingsHeaderProps {
     configured: number;
     incomplete: number;
     withPermissions: number;
+    withValidatedVersion: number;
+    withoutVersion: number;
   };
   viewMode: 'expanded' | 'compact';
   onViewModeChange: (mode: 'expanded' | 'compact') => void;
@@ -63,7 +65,7 @@ const SettingsHeader: React.FC<SettingsHeaderProps> = ({
         </div>
         
         {/* Estadísticas rápidas en su propia sección */}
-        <div className="mt-6 grid grid-cols-4 gap-4">
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="bg-blue-50 px-4 py-3 rounded-lg text-center min-w-0">
             <div className="text-xs text-blue-600 font-medium">Total</div>
             <div className="text-xl font-bold text-blue-700">{stats.total}</div>
@@ -79,6 +81,14 @@ const SettingsHeader: React.FC<SettingsHeaderProps> = ({
           <div className="bg-purple-50 px-4 py-3 rounded-lg text-center min-w-0">
             <div className="text-xs text-purple-600 font-medium">Con Permisos</div>
             <div className="text-xl font-bold text-purple-700">{stats.withPermissions}</div>
+          </div>
+          <div className="bg-emerald-50 px-4 py-3 rounded-lg text-center min-w-0">
+            <div className="text-xs text-emerald-600 font-medium">App Validada</div>
+            <div className="text-xl font-bold text-emerald-700">{stats.withValidatedVersion}</div>
+          </div>
+          <div className="bg-red-50 px-4 py-3 rounded-lg text-center min-w-0">
+            <div className="text-xs text-red-600 font-medium">Sin Validar</div>
+            <div className="text-xl font-bold text-red-700">{stats.withoutVersion}</div>
           </div>
         </div>
       </div>

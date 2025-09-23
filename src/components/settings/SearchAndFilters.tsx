@@ -9,10 +9,13 @@ interface SearchAndFiltersProps {
   onFilterRutaChange: (value: string) => void;
   filterPermisos: 'all' | 'with-permissions' | 'no-permissions';
   onFilterPermisosChange: (value: 'all' | 'with-permissions' | 'no-permissions') => void;
-  sortBy: 'name' | 'email' | 'ruta';
+  filterVersion: 'all' | 'validated' | 'not-validated' | string;
+  onFilterVersionChange: (value: string) => void;
+  sortBy: 'name' | 'email' | 'ruta' | 'version';
   sortOrder: 'asc' | 'desc';
-  onSortChange: (sortBy: 'name' | 'email' | 'ruta', sortOrder: 'asc' | 'desc') => void;
+  onSortChange: (sortBy: 'name' | 'email' | 'ruta' | 'version', sortOrder: 'asc' | 'desc') => void;
   rutas: any[];
+  cobradores: any[];
   filteredCount: number;
   totalCount: number;
 }
@@ -26,13 +29,26 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   onFilterRutaChange,
   filterPermisos,
   onFilterPermisosChange,
+  filterVersion,
+  onFilterVersionChange,
   sortBy,
   sortOrder,
   onSortChange,
   rutas,
+  cobradores,
   filteredCount,
   totalCount
 }) => {
+  // Obtener versiones únicas de la base de datos
+  const uniqueVersions = React.useMemo(() => {
+    const versions = new Set<string>();
+    cobradores.forEach(cobrador => {
+      if (cobrador.VERSION_APP) {
+        versions.add(cobrador.VERSION_APP);
+      }
+    });
+    return Array.from(versions).sort();
+  }, [cobradores]);
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <div className="flex flex-col lg:flex-row gap-4">
@@ -88,6 +104,21 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           </select>
 
           <select
+            value={filterVersion}
+            onChange={(e) => onFilterVersionChange(e.target.value)}
+            className="px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-1 focus:ring-purple-500 focus:border-transparent text-slate-900 text-sm"
+          >
+            <option value="all">Todas las versiones</option>
+            <option value="validated">Con versión validada</option>
+            <option value="not-validated">Sin validar</option>
+            {uniqueVersions.map((version) => (
+              <option key={version} value={version}>
+                Versión {version}
+              </option>
+            ))}
+          </select>
+
+          <select
             value={`${sortBy}-${sortOrder}`}
             onChange={(e) => {
               const [newSortBy, newSortOrder] = e.target.value.split('-');
@@ -101,6 +132,8 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             <option value="email-desc">Email Z-A</option>
             <option value="ruta-asc">Ruta A-Z</option>
             <option value="ruta-desc">Ruta Z-A</option>
+            <option value="version-asc">Versión ↑</option>
+            <option value="version-desc">Versión ↓</option>
           </select>
         </div>
       </div>

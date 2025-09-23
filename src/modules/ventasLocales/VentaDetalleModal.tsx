@@ -20,6 +20,8 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [imagePosition, setImagePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [rotation, setRotation] = useState<number>(0);
+  const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -38,7 +40,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
           onClose();
         }
       }
-      
+
       // Flechas para navegar imágenes (solo cuando hay imagen seleccionada)
       if (selectedImage && venta?.imagenes) {
         if (e.key === 'ArrowRight') {
@@ -62,12 +64,45 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
           e.preventDefault();
           resetZoom();
         }
+
+        // Rotación con R y L
+        if (e.key === 'r' || e.key === 'R') {
+          e.preventDefault();
+          rotateRight();
+        } else if (e.key === 'l' || e.key === 'L') {
+          e.preventDefault();
+          rotateLeft();
+        }
+      }
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      if (selectedImage) {
+        e.preventDefault();
+
+        // Zoom suave con scroll (incrementos más pequeños)
+        const zoomIncrement = 0.1;
+        const minZoom = imageElement ? calculateOptimalZoom(imageElement, rotation) * 0.8 : 0.1;
+        const maxZoom = 3;
+
+        if (e.deltaY < 0) {
+          // Scroll up = zoom in
+          setZoom(prev => Math.min(prev + zoomIncrement, maxZoom));
+        } else {
+          // Scroll down = zoom out
+          setZoom(prev => Math.max(prev - zoomIncrement, minZoom));
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedImage, venta?.imagenes, selectedImageIndex]);
+    document.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('wheel', handleWheel);
+    };
+  }, [selectedImage, venta?.imagenes, selectedImageIndex, imageElement, rotation]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-MX", {
@@ -149,8 +184,11 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
     if (!venta?.imagenes) return;
     setSelectedImageIndex(index);
     setSelectedImage(getImageUrl(venta.imagenes[index].IMG_PATH));
-    setZoom(1);
     setImagePosition({ x: 0, y: 0 });
+    setRotation(0);
+
+    // El zoom se establecerá cuando la imagen se cargue
+    setZoom(1);
   };
 
   const handleZoomIn = () => {
@@ -158,12 +196,86 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
   };
 
   const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - 0.5, 0.5));
+    // Calcular el zoom mínimo basado en el tamaño óptimo para la rotación actual
+    const minZoom = imageElement ? calculateOptimalZoom(imageElement, rotation) * 0.8 : 0.1;
+    setZoom(prev => Math.max(prev - 0.5, minZoom));
   };
 
   const resetZoom = () => {
-    setZoom(1);
+    // Volver al zoom óptimo para la rotación actual
+    if (imageElement) {
+      const optimalZoom = calculateOptimalZoom(imageElement, rotation, true);
+      setZoom(optimalZoom);
+    } else {
+      setZoom(1);
+    }
     setImagePosition({ x: 0, y: 0 });
+  };
+
+  const rotateLeft = () => {
+    setRotation(prev => {
+      const newRotation = prev - 90;
+      const normalizedRotation = newRotation < 0 ? 270 : newRotation % 360;
+
+      // Calcular zoom óptimo para la nueva orientación
+      if (imageElement) {
+        const optimalZoom = calculateOptimalZoom(imageElement, normalizedRotation);
+        setZoom(optimalZoom);
+      } else {
+        setZoom(1);
+      }
+      setImagePosition({ x: 0, y: 0 });
+
+      return normalizedRotation;
+    });
+  };
+
+  const rotateRight = () => {
+    setRotation(prev => {
+      const newRotation = (prev + 90) % 360;
+
+      // Calcular zoom óptimo para la nueva orientación
+      if (imageElement) {
+        const optimalZoom = calculateOptimalZoom(imageElement, newRotation);
+        setZoom(optimalZoom);
+      } else {
+        setZoom(1);
+      }
+      setImagePosition({ x: 0, y: 0 });
+
+      return newRotation;
+    });
+  };
+
+  const resetRotation = () => {
+    setRotation(0);
+  };
+
+  const calculateOptimalZoom = (img: HTMLImageElement, rotationDeg: number, isInitialLoad = false) => {
+    if (!img) return 1;
+
+    // Usar 90% del espacio disponible para buena UX
+    const viewportWidth = window.innerWidth * 0.9;
+    const viewportHeight = window.innerHeight * 0.9;
+
+    // Dimensiones de la imagen
+    const imgWidth = img.naturalWidth;
+    const imgHeight = img.naturalHeight;
+
+    // Si la rotación es 90° o 270°, intercambiamos las dimensiones
+    const isRotated90or270 = rotationDeg === 90 || rotationDeg === 270;
+    const effectiveWidth = isRotated90or270 ? imgHeight : imgWidth;
+    const effectiveHeight = isRotated90or270 ? imgWidth : imgHeight;
+
+    // Calculamos el factor de escala para ocupar 90% del espacio
+    const scaleX = viewportWidth / effectiveWidth;
+    const scaleY = viewportHeight / effectiveHeight;
+
+    // Usamos el menor de los dos para que quepa completamente
+    // y ocupe el máximo espacio posible
+    const optimalScale = Math.min(scaleX, scaleY);
+
+    return optimalScale;
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -705,8 +817,9 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
         >
-          {/* Controles de zoom - Top center de pantalla */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-2 z-20">
+          {/* Controles de zoom y rotación - Top center de pantalla */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-3 py-2 z-20">
+            {/* Controles de Zoom */}
             <button
               onClick={handleZoomOut}
               className="p-1 hover:bg-white/20 rounded-full transition-colors"
@@ -730,11 +843,37 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
             </button>
             <button
               onClick={resetZoom}
-              className="p-1 hover:bg-white/20 rounded-full transition-colors ml-1"
+              className="p-1 hover:bg-white/20 rounded-full transition-colors"
               title="Reset zoom (0)"
             >
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
+
+            {/* Separador */}
+            <div className="w-px h-4 bg-white/30 mx-1"></div>
+
+            {/* Controles de Rotación */}
+            <button
+              onClick={rotateLeft}
+              className="p-1 hover:bg-white/20 rounded-full transition-colors"
+              title="Rotar izquierda (L)"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2h-4m6 2a9 9 0 11-8.72-9" />
+              </svg>
+            </button>
+            <div className="px-1 py-1 text-white text-xs font-medium min-w-[35px] text-center">
+              {rotation}°
+            </div>
+            <button
+              onClick={rotateRight}
+              className="p-1 hover:bg-white/20 rounded-full transition-colors"
+              title="Rotar derecha (R)"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l-2-2m0 0l-2-2m2 2h4m-6 2a9 9 0 108.72-9" />
               </svg>
             </button>
           </div>
@@ -789,15 +928,27 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
           </div>
 
           {/* Contenedor de imagen */}
-          <div className="relative max-w-5xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+          <div className="relative flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
             <img
               src={selectedImage}
               alt="Imagen ampliada"
-              className={`max-w-full max-h-[90vh] min-w-[400px] min-h-[300px] object-contain rounded-lg transition-transform ${
+              className={`object-contain rounded-lg transition-transform duration-200 ${
                 zoom > 1 ? 'cursor-move' : 'cursor-default'
               }`}
               style={{
-                transform: `scale(${zoom}) translate(${imagePosition.x / zoom}px, ${imagePosition.y / zoom}px)`,
+                transform: `rotate(${rotation}deg) scale(${zoom}) translate(${imagePosition.x / zoom}px, ${imagePosition.y / zoom}px)`,
+                transformOrigin: 'center',
+                width: 'auto',
+                height: 'auto',
+                maxWidth: 'none',
+                maxHeight: 'none',
+              }}
+              onLoad={(e) => {
+                const img = e.target as HTMLImageElement;
+                setImageElement(img);
+                // Calcular zoom inicial óptimo (permitiendo zoom in)
+                const optimalZoom = calculateOptimalZoom(img, rotation, true);
+                setZoom(optimalZoom);
               }}
               onMouseDown={handleMouseDown}
               onDragStart={(e) => e.preventDefault()}

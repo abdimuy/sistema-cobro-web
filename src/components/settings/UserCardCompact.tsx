@@ -1,6 +1,12 @@
 import React from 'react';
+import dayjs from "dayjs";
+import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/es';
 import { desktopModules } from "../../constants/desktopModules";
 import { ROLES } from "../../constants/roles";
+
+dayjs.extend(relativeTime);
+dayjs.locale('es');
 
 interface UserCardCompactProps {
   cobrador: any;
@@ -114,6 +120,20 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
             defaultValue={cobrador.TELEFONO}
             onBlur={(e) => onUpdatePhone(e, cobrador.ID)}
           />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-slate-700 mb-1">Versión App Móvil</label>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-900 font-medium">
+              {cobrador.VERSION_APP || 'N/A'}
+            </span>
+            {cobrador.FECHA_VERSION_APP && (
+              <span className="text-slate-500 text-xs" title={`Validado el ${dayjs(cobrador.FECHA_VERSION_APP.toDate()).format('DD/MM/YYYY HH:mm')}`}>
+                Validado {dayjs(cobrador.FECHA_VERSION_APP.toDate()).fromNow()}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Permisos compactos */}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermissions } from '../../hooks/usePermissions';
+import { APP_VERSION } from '../../constants/version';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -162,7 +163,7 @@ const LoginPage: React.FC = () => {
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-200 text-center">
             <p className="text-xs text-gray-500">
-              Sistema Muebles San Pablo v1.0.2
+              Sistema Muebles San Pablo v{APP_VERSION}
             </p>
             <p className="text-xs text-gray-500 mt-1">
               Acceso restringido únicamente a personal autorizado

@@ -1,7 +1,12 @@
 import React from 'react';
 import dayjs from "dayjs";
+import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/es';
 import { desktopModules } from "../../constants/desktopModules";
 import { ROLES } from "../../constants/roles";
+
+dayjs.extend(relativeTime);
+dayjs.locale('es');
 
 interface UserCardProps {
   cobrador: any;
@@ -128,6 +133,27 @@ const UserCard: React.FC<UserCardProps> = ({
             defaultValue={dayjs(cobrador.FECHA_CARGA_INICIAL.toDate()).format("YYYY-MM-DDTHH:mm")}
             onBlur={(e) => onUpdateFechaInicioSemana(e, cobrador.ID)}
           />
+        </div>
+
+        {/* Versión de App Móvil */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-slate-700">Versión App Móvil</label>
+          <div className="flex items-center space-x-2">
+            <div className="flex-1">
+              <div className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900">
+                {cobrador.VERSION_APP || 'No registrada'}
+              </div>
+            </div>
+            <div className="flex items-center text-xs text-slate-500">
+              {cobrador.FECHA_VERSION_APP ? (
+                <span title={`Validado el ${dayjs(cobrador.FECHA_VERSION_APP.toDate()).format('DD/MM/YYYY HH:mm')}`}>
+                  Validado {dayjs(cobrador.FECHA_VERSION_APP.toDate()).fromNow()}
+                </span>
+              ) : (
+                'Sin validar'
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

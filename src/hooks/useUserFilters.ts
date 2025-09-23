@@ -6,7 +6,8 @@ interface UseUserFiltersProps {
   filterStatus: 'all' | 'configured' | 'incomplete';
   filterRuta: string;
   filterPermisos: 'all' | 'with-permissions' | 'no-permissions';
-  sortBy: 'name' | 'email' | 'ruta';
+  filterVersion: 'all' | 'validated' | 'not-validated' | string;
+  sortBy: 'name' | 'email' | 'ruta' | 'version';
   sortOrder: 'asc' | 'desc';
   rutas: any[];
   zonasCliente: any[];
@@ -32,6 +33,7 @@ export const useUserFilters = ({
   filterStatus,
   filterRuta,
   filterPermisos,
+  filterVersion,
   sortBy,
   sortOrder,
   rutas,
@@ -57,11 +59,18 @@ export const useUserFilters = ({
 
       // Filtro por permisos
       const hasPermisos = cobrador.MODULOS && cobrador.MODULOS.length > 0;
-      const matchesPermisos = filterPermisos === 'all' || 
+      const matchesPermisos = filterPermisos === 'all' ||
         (filterPermisos === 'with-permissions' && hasPermisos) ||
         (filterPermisos === 'no-permissions' && !hasPermisos);
 
-      return matchesSearch && matchesStatus && matchesRuta && matchesPermisos;
+      // Filtro por versión
+      const hasVersion = cobrador.VERSION_APP && cobrador.FECHA_VERSION_APP;
+      const matchesVersion = filterVersion === 'all' ||
+        (filterVersion === 'validated' && hasVersion) ||
+        (filterVersion === 'not-validated' && !hasVersion) ||
+        (cobrador.VERSION_APP === filterVersion);
+
+      return matchesSearch && matchesStatus && matchesRuta && matchesPermisos && matchesVersion;
     });
 
     // Ordenamiento
@@ -81,6 +90,11 @@ export const useUserFilters = ({
           aValue = rutas.find(r => r.COBRADOR_ID === a.COBRADOR_ID)?.COBRADOR || '';
           bValue = rutas.find(r => r.COBRADOR_ID === b.COBRADOR_ID)?.COBRADOR || '';
           break;
+        case 'version':
+          // Ordenar por versión: sin versión va al final, luego alfabético por versión
+          aValue = a.VERSION_APP || 'zzz-sin-version';
+          bValue = b.VERSION_APP || 'zzz-sin-version';
+          break;
         default:
           aValue = a.EMAIL;
           bValue = b.EMAIL;
@@ -94,7 +108,7 @@ export const useUserFilters = ({
     });
 
     return filtered;
-  }, [cobradores, searchTerm, filterStatus, filterRuta, filterPermisos, sortBy, sortOrder, rutas, zonasCliente]);
+  }, [cobradores, searchTerm, filterStatus, filterRuta, filterPermisos, filterVersion, sortBy, sortOrder, rutas, zonasCliente]);
 
   // Estadísticas
   const stats = useMemo(() => {
@@ -102,8 +116,10 @@ export const useUserFilters = ({
     const configured = cobradores.filter(c => getUserStatus(c).status === 'configured').length;
     const withPermissions = cobradores.filter(c => c.MODULOS && c.MODULOS.length > 0).length;
     const withRuta = cobradores.filter(c => c.COBRADOR_ID && c.COBRADOR_ID !== 0).length;
-    
-    return { total, configured, incomplete: total - configured, withPermissions, withRuta };
+    const withValidatedVersion = cobradores.filter(c => c.VERSION_APP && c.FECHA_VERSION_APP).length;
+    const withoutVersion = cobradores.filter(c => !c.VERSION_APP || !c.FECHA_VERSION_APP).length;
+
+    return { total, configured, incomplete: total - configured, withPermissions, withRuta, withValidatedVersion, withoutVersion };
   }, [cobradores]);
 
   return {

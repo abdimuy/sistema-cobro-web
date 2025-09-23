@@ -15,6 +15,8 @@ export interface Cobrador {
   TELEFONO: string;
   MODULOS?: string[];
   CAMIONETA_ASIGNADA?: number; // ID del almacén/camioneta asignada
+  VERSION_APP?: string; // Versión de la app que tiene el usuario
+  FECHA_VERSION_APP?: Timestamp; // Fecha de última actualización de versión
 }
 
 export type CobradorDto = Omit<Cobrador, "ID">;

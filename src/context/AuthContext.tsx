@@ -5,12 +5,13 @@ import {
   onAuthStateChanged,
   User
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import { AuthContextType, AuthState, UserData } from '../types/auth';
 import { USERS_COLLECTION } from '../constants/collections';
 import { ROLES, ROLE_PERMISSIONS } from '../constants/roles';
 import { DESKTOP_MODULES } from '../constants/modules';
+import { APP_VERSION } from '../constants/version';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -40,6 +41,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const userDoc = await getDoc(doc(db, USERS_COLLECTION, user.uid));
       if (userDoc.exists()) {
+        // Actualizar versión de la app y fecha
+        await updateDoc(doc(db, USERS_COLLECTION, user.uid), {
+          VERSION_APP: APP_VERSION,
+          FECHA_VERSION_APP: Timestamp.now()
+        });
         return userDoc.data() as UserData;
       }
       return null;
