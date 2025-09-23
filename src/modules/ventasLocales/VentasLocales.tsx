@@ -7,6 +7,7 @@ import useGetVentasLocales from "../../hooks/useGetVentasLocales";
 import useGetResumenVentas from "../../hooks/useGetResumenVentas";
 import VentaDetalleModal from "./VentaDetalleModal";
 import { VentaLocal } from "../../services/api/getVentasLocales";
+import useGetAlmacenes from "../../hooks/useGetAlmacenes";
 
 dayjs.extend(relativeTime);
 dayjs.locale("es");
@@ -25,6 +26,7 @@ const VentasLocales = () => {
 
   const { ventas, loading, error } = useGetVentasLocales(filters);
   const { resumen } = useGetResumenVentas(filters.fechaInicio, filters.fechaFin);
+  const { getAlmacenById, loading: loadingAlmacenes } = useGetAlmacenes();
 
   const filteredVentas = useMemo(() => {
     if (!searchTerm) return ventas;
@@ -67,9 +69,32 @@ const VentasLocales = () => {
     }
   };
 
+  // Componente para el badge del almacén
+  const AlmacenBadge = ({ almacenId, compact = false }: { almacenId: number; compact?: boolean }) => {
+    const almacen = getAlmacenById(almacenId);
+
+    const baseClassName = compact
+      ? "inline-flex items-center px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium"
+      : "inline-flex items-center px-3 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-600";
+
+    const maxWidth = compact ? "max-w-[120px]" : "max-w-[160px]";
+
+    if (loadingAlmacenes) {
+      return <span className={`${baseClassName} ${maxWidth}`}>...</span>;
+    }
+
+    const displayText = almacen ? almacen.ALMACEN : `ALM ${almacenId}`;
+
+    return (
+      <span className={`${baseClassName} ${maxWidth}`} title={displayText}>
+        <span className="truncate">{displayText}</span>
+      </span>
+    );
+  };
+
   const VentaCard = ({ venta }: { venta: VentaLocal }) => {
     const [isHovered, setIsHovered] = useState(false);
-    
+
     return (
       <div
         className={`group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 transform ${
@@ -88,10 +113,10 @@ const VentasLocales = () => {
         {/* Contenido de la tarjeta */}
         <div className="p-6">
           {/* Header con ID y fecha */}
-          <div className="flex justify-between items-start mb-4">
+          <div className="flex justify-between items-start mb-2">
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">ID Venta</p>
-              <p className="text-lg font-bold text-gray-900 mt-1">{venta.LOCAL_SALE_ID}</p>
+              <p className="text-xs font-semibold text-gray-700 mt-1 font-mono">#{venta.LOCAL_SALE_ID}</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-gray-500">{dayjs(venta.FECHA_VENTA).format("DD MMM")}</p>
@@ -157,9 +182,7 @@ const VentasLocales = () => {
                 {venta.FREC_PAGO}
               </span>
             )}
-            <span className="px-3 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-600">
-              Almacén {venta.ALMACEN_ID}
-            </span>
+            <AlmacenBadge almacenId={venta.ALMACEN_ID} />
           </div>
 
           {/* Vendedor */}
@@ -393,14 +416,14 @@ const VentasLocales = () => {
                                   <span className="text-xs text-gray-600">{venta.TELEFONO}</span>
                                 </div>
                               )}
-                              {venta.FREC_PAGO && (
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium text-white ${getPaymentStatusColor(venta.FREC_PAGO)}`}>
-                                  {venta.FREC_PAGO}
-                                </span>
-                              )}
-                              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                                ALM {venta.ALMACEN_ID}
-                              </span>
+                              <div className="flex items-center gap-1">
+                                {venta.FREC_PAGO && (
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium text-white ${getPaymentStatusColor(venta.FREC_PAGO)}`}>
+                                    {venta.FREC_PAGO}
+                                  </span>
+                                )}
+                                <AlmacenBadge almacenId={venta.ALMACEN_ID} compact />
+                              </div>
                             </div>
                           </div>
                           
