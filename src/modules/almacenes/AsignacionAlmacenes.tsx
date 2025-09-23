@@ -43,7 +43,6 @@ const AsignacionAlmacenes = () => {
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAlmacen, setSelectedAlmacen] = useState<number | null>(null);
-  const [almacenesLoaded, setAlmacenesLoaded] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
   const [showExcludedSection, setShowExcludedSection] = useState(false);
@@ -53,47 +52,13 @@ const AsignacionAlmacenes = () => {
   useEffect(() => {
     const loadData = async () => {
       await fetchExcludedAlmacenes();
-      await fetchAlmacenes();
+      if (!loadingCobradores) {
+        await fetchAlmacenes();
+      }
     };
     loadData();
-  }, []);
+  }, [loadingCobradores]);
 
-  useEffect(() => {
-    if (cobradores.length > 0 && almacenesLoaded && almacenes.length > 0) {
-      const usuariosFormateados = cobradores.map((cobrador) => ({
-        id: cobrador.ID,
-        nombre: cobrador.NOMBRE,
-        email: cobrador.EMAIL,
-        telefono: cobrador.TELEFONO,
-        camionetaAsignada: cobrador.CAMIONETA_ASIGNADA
-      }));
-
-      // Separar usuarios según si tienen camioneta asignada
-      const usuariosDisponiblesTemp: Usuario[] = [];
-      const almacenesTemp = almacenes.map(almacen => ({
-        ...almacen,
-        usuariosAsignados: [] as Usuario[]
-      }));
-
-      usuariosFormateados.forEach(usuario => {
-        if (usuario.camionetaAsignada) {
-          // Buscar el almacén correspondiente y asignar el usuario
-          const almacenIndex = almacenesTemp.findIndex(a => a.id === usuario.camionetaAsignada && !a.esExcluido);
-          if (almacenIndex !== -1) {
-            almacenesTemp[almacenIndex].usuariosAsignados.push(usuario);
-          } else {
-            // Si no encuentra el almacén o está excluido, lo pone como disponible
-            usuariosDisponiblesTemp.push(usuario);
-          }
-        } else {
-          usuariosDisponiblesTemp.push(usuario);
-        }
-      });
-
-      setUsuariosDisponibles(usuariosDisponiblesTemp);
-      setAlmacenes(almacenesTemp);
-    }
-  }, [cobradores, almacenesLoaded]); // Re-ejecutar cuando cambian cobradores o se recargan almacenes
 
   const fetchExcludedAlmacenes = async () => {
     try {
@@ -210,11 +175,10 @@ const AsignacionAlmacenes = () => {
 
   const fetchAlmacenes = async () => {
     setLoading(true);
-    setAlmacenesLoaded(false); // Reset para que se vuelva a mapear
     try {
       const response = await fetch(`${URL_API}/almacenes`);
       const data: AlmacenResponse = await response.json();
-      
+
       if (data.error) {
         console.error("Error de API:", data.error);
         return;
@@ -243,8 +207,37 @@ const AsignacionAlmacenes = () => {
         esExcluido: excluidos.includes(almacen.ALMACEN_ID)
       }));
 
+      // Si ya tenemos cobradores cargados, asignarlos directamente
+      if (cobradores.length > 0) {
+        const usuariosFormateados = cobradores.map((cobrador) => ({
+          id: cobrador.ID,
+          nombre: cobrador.NOMBRE,
+          email: cobrador.EMAIL,
+          telefono: cobrador.TELEFONO,
+          camionetaAsignada: cobrador.CAMIONETA_ASIGNADA
+        }));
+
+        const usuariosDisponiblesTemp: Usuario[] = [];
+
+        usuariosFormateados.forEach(usuario => {
+          if (usuario.camionetaAsignada) {
+            const almacenIndex = almacenesFormateados.findIndex(
+              a => a.id === usuario.camionetaAsignada && !a.esExcluido
+            );
+            if (almacenIndex !== -1) {
+              almacenesFormateados[almacenIndex].usuariosAsignados.push(usuario);
+            } else {
+              usuariosDisponiblesTemp.push(usuario);
+            }
+          } else {
+            usuariosDisponiblesTemp.push(usuario);
+          }
+        });
+
+        setUsuariosDisponibles(usuariosDisponiblesTemp);
+      }
+
       setAlmacenes(almacenesFormateados);
-      setAlmacenesLoaded(true);
     } catch (error) {
       console.error("Error al cargar almacenes:", error);
     } finally {
