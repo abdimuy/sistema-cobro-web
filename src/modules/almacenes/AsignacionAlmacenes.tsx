@@ -45,9 +45,21 @@ const AsignacionAlmacenes = () => {
   const [selectedAlmacen, setSelectedAlmacen] = useState<number | null>(null);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
-  const [showExcludedSection, setShowExcludedSection] = useState(false);
-  const [modoEdicionExcluidos, setModoEdicionExcluidos] = useState(false);
+  const [showExcludedModal, setShowExcludedModal] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const { cobradores, isLoading: loadingCobradores } = useGetCobradores();
+
+  // Cerrar menú al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setOpenMenuId(null);
+    };
+
+    if (openMenuId) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [openMenuId]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -300,18 +312,18 @@ const AsignacionAlmacenes = () => {
       const almacen = almacenes.find(a => a.id === almacenId);
       
       if (almacen?.esExcluido) {
-        alert("No puedes asignar usuarios a un almacén que no es camioneta");
+        alert("No puedes asignar vendedores a un almacén");
         return;
       }
       
       if (almacen && almacen.usuariosAsignados.length >= 3) {
-        alert("Este almacén ya tiene el máximo de 3 usuarios asignados");
+        alert("Esta camioneta ya tiene el máximo de 3 vendedores asignados");
         return;
       }
       
       // Verificar si el usuario ya tiene una camioneta asignada
       if (usuario.camionetaAsignada && usuario.camionetaAsignada !== almacenId) {
-        const confirm = window.confirm(`Este usuario ya está asignado a otra camioneta. ¿Desea reasignarlo?`);
+        const confirm = window.confirm(`Este vendedor ya está asignado a otra camioneta. ¿Desea reasignarlo?`);
         if (!confirm) return;
         
         // Remover de la camioneta anterior
@@ -366,7 +378,7 @@ const AsignacionAlmacenes = () => {
         const destAlmacen = almacenes.find(a => a.id === destAlmacenId);
         
         if (destAlmacen && destAlmacen.usuariosAsignados.length >= 3) {
-          alert("Este almacén ya tiene el máximo de 3 usuarios asignados");
+          alert("Esta camioneta ya tiene el máximo de 3 vendedores asignados");
           return;
         }
         
@@ -401,12 +413,12 @@ const AsignacionAlmacenes = () => {
     const almacen = almacenes.find(a => a.id === selectedAlmacen);
     
     if (almacen?.esExcluido) {
-      alert("No puedes asignar usuarios a un almacén que no es camioneta");
+      alert("No puedes asignar vendedores a un almacén");
       return;
     }
-    
+
     if (almacen && almacen.usuariosAsignados.length >= 3) {
-      alert("Este almacén ya tiene el máximo de 3 usuarios asignados");
+      alert("Esta camioneta ya tiene el máximo de 3 vendedores asignados");
       return;
     }
 
@@ -415,7 +427,7 @@ const AsignacionAlmacenes = () => {
 
     // Verificar si el usuario ya tiene una camioneta asignada
     if (usuario.camionetaAsignada && usuario.camionetaAsignada !== selectedAlmacen) {
-      const confirm = window.confirm(`Este usuario ya está asignado a otra camioneta. ¿Desea reasignarlo?`);
+      const confirm = window.confirm(`Este vendedor ya está asignado a otra camioneta. ¿Desea reasignarlo?`);
       if (!confirm) return;
       
       // Remover de la camioneta anterior
@@ -528,10 +540,10 @@ const AsignacionAlmacenes = () => {
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              Asignación de Almacenes (Camionetas)
+              Asignación de Camionetas
             </h1>
             <p className="text-gray-600">
-              Asigna hasta 3 usuarios por camioneta. Arrastra y suelta o usa la asignación rápida.
+              Asigna hasta 3 vendedores por camioneta. Arrastra y suelta o usa la asignación rápida.
             </p>
           </div>
 
@@ -550,48 +562,11 @@ const AsignacionAlmacenes = () => {
                 Restablecer Todo
               </button>
               <button
-                onClick={() => setShowExcludedSection(!showExcludedSection)}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  showExcludedSection 
-                    ? 'bg-orange-500 hover:bg-orange-600 text-white' 
-                    : 'bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300'
-                }`}
+                onClick={() => setShowExcludedModal(true)}
+                className="bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300 px-4 py-2 rounded-lg transition-colors"
               >
-                {showExcludedSection ? 'Ocultar' : 'Ver'} Almacenes No-Camioneta ({almacenes.filter(a => a.esExcluido).length})
+                Ver Almacenes ({almacenes.filter(a => a.esExcluido).length})
               </button>
-              {!showExcludedSection && (
-                <button
-                  onClick={() => {
-                    setModoEdicionExcluidos(!modoEdicionExcluidos);
-                    if (modoEdicionExcluidos) {
-                      // Si se está desactivando el modo, mostrar mensaje
-                      alert('Modo de gestión desactivado');
-                    }
-                  }}
-                  className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
-                    modoEdicionExcluidos 
-                      ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg animate-pulse' 
-                      : 'bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-300'
-                  }`}
-                >
-                  {modoEdicionExcluidos ? (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Modo Gestión Activo
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      Gestionar No-Camionetas
-                    </>
-                  )}
-                </button>
-              )}
             </div>
             <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2">
               <span className="text-green-700 text-sm font-medium">
@@ -603,117 +578,11 @@ const AsignacionAlmacenes = () => {
             </div>
           </div>
 
-          {/* Banner informativo cuando el modo de edición está activo */}
-          {modoEdicionExcluidos && !showExcludedSection && (
-            <div className="mb-6 bg-gradient-to-r from-purple-50 to-purple-100 border-2 border-purple-300 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="bg-purple-600 text-white rounded-full p-2 animate-pulse">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-purple-900">Modo de Gestión Activo</h3>
-                    <p className="text-purple-700 text-sm">
-                      Puedes marcar los almacenes vacíos como "No-Camioneta". Los almacenes con usuarios asignados no se pueden modificar.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setModoEdicionExcluidos(false)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                >
-                  Finalizar
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Sección de almacenes excluidos */}
-          {showExcludedSection && (
-            <div className="mb-8">
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-xl font-semibold text-orange-800 mb-2">
-                      Almacenes que NO son Camionetas
-                    </h2>
-                    <p className="text-orange-700 text-sm">
-                      Estos almacenes están marcados como "solo almacén" y no pueden tener usuarios asignados.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="bg-orange-100 px-3 py-2 rounded-lg">
-                      <span className="text-orange-800 font-medium text-sm">
-                        {almacenes.filter(a => a.esExcluido).length} almacén(es)
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setShowExcludedSection(false);
-                        setModoEdicionExcluidos(true);
-                      }}
-                      className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      Gestionar
-                    </button>
-                  </div>
-                </div>
-                
-                {almacenes.filter(a => a.esExcluido).length === 0 ? (
-                  <div className="bg-white rounded-lg p-8 text-center">
-                    <p className="text-gray-500">
-                      No hay almacenes excluidos. Usa el botón "Marcar como No-Camioneta" en cualquier almacén vacío.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {almacenes.filter(a => a.esExcluido).map((almacen) => (
-                      <div
-                        key={`excluido-${almacen.id}`}
-                        className="bg-white rounded-lg shadow-sm p-4 border border-orange-200"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-semibold text-gray-800 text-sm">
-                            {almacen.nombre}
-                          </h3>
-                          <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded">
-                            No-Camioneta
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-600">
-                          ID: {almacen.id}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          Existencias: {almacen.existencias.toLocaleString()}
-                        </p>
-                        <button
-                          onClick={() => toggleAlmacenExcluido(almacen.id)}
-                          className="mt-3 w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-xs py-2 rounded transition-all shadow-sm hover:shadow-md font-medium flex items-center justify-center gap-1"
-                        >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          Habilitar como Camioneta
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-700">Almacenes / Camionetas</h2>
+                <h2 className="text-xl font-semibold text-gray-700">Camionetas</h2>
                 <div className="bg-blue-50 px-3 py-2 rounded-lg">
                   <span className="text-blue-700 font-medium text-sm">
                     {almacenes.filter(a => !a.esExcluido).length} camioneta(s) disponible(s)
@@ -732,49 +601,57 @@ const AsignacionAlmacenes = () => {
                     <div className="mb-3">
                       <div className="flex justify-between items-center">
                         <h3 className="font-semibold text-gray-800">{almacen.nombre}</h3>
-                        <span className={`text-sm px-2 py-1 rounded ${
-                          almacen.usuariosAsignados.length === 3 
-                            ? 'bg-red-100 text-red-600' 
-                            : almacen.usuariosAsignados.length > 0
-                            ? 'bg-yellow-100 text-yellow-600'
-                            : 'bg-green-100 text-green-600'
-                        }`}>
-                          {almacen.usuariosAsignados.length}/3
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm px-2 py-1 rounded ${
+                            almacen.usuariosAsignados.length === 3
+                              ? 'bg-red-100 text-red-600'
+                              : almacen.usuariosAsignados.length > 0
+                              ? 'bg-yellow-100 text-yellow-600'
+                              : 'bg-green-100 text-green-600'
+                          }`}>
+                            {almacen.usuariosAsignados.length}/3
+                          </span>
+                          {/* Menú de 3 puntos */}
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(openMenuId === almacen.id ? null : almacen.id);
+                              }}
+                              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                              <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                              </svg>
+                            </button>
+                            {openMenuId === almacen.id && (
+                              <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[220px]">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleAlmacenExcluido(almacen.id);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-gray-700 text-sm font-medium"
+                                >
+                                  <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                  </svg>
+                                  <span>
+                                    {almacen.usuariosAsignados.length > 0
+                                      ? `Cambiar a Almacén (${almacen.usuariosAsignados.length} usuarios)`
+                                      : 'Cambiar a Almacén'
+                                    }
+                                  </span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
                         Existencias: {almacen.existencias.toLocaleString()}
                       </p>
-                      {modoEdicionExcluidos && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleAlmacenExcluido(almacen.id);
-                          }}
-                          className={`mt-2 text-xs px-3 py-1.5 rounded transition-all w-full font-medium ${
-                            almacen.usuariosAsignados.length > 0
-                              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-sm hover:shadow-md transform hover:scale-105'
-                              : 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-sm hover:shadow-md transform hover:scale-105'
-                          }`}
-                          title={almacen.usuariosAsignados.length > 0 ? 'Al marcar como No-Camioneta se desasignarán los usuarios' : 'Marcar como almacén que no será usado como camioneta'}
-                        >
-                          {almacen.usuariosAsignados.length > 0 ? (
-                            <span className="flex items-center justify-center gap-1">
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                              </svg>
-                              Desasignar {almacen.usuariosAsignados.length} y marcar
-                            </span>
-                          ) : (
-                            <span className="flex items-center justify-center gap-1">
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                              </svg>
-                              Marcar como No-Camioneta
-                            </span>
-                          )}
-                        </button>
-                      )}
                     </div>
                     
                     <Droppable droppableId={`almacen-${almacen.id}`}>
@@ -788,9 +665,9 @@ const AsignacionAlmacenes = () => {
                         >
                           {almacen.usuariosAsignados.length === 0 ? (
                             <p className="text-gray-400 text-center py-8 font-medium">
-                              Sin usuarios asignados
+                              Sin vendedores asignados
                               <br />
-                              <span className="text-xs">Arrastra usuarios aquí</span>
+                              <span className="text-xs">Arrastra vendedores aquí</span>
                             </p>
                           ) : (
                             almacen.usuariosAsignados.map((usuario, index) => (
@@ -844,7 +721,7 @@ const AsignacionAlmacenes = () => {
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Usuarios Disponibles</h2>
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Vendedores Disponibles</h2>
               <div className="bg-white rounded-lg shadow-md p-4">
                 <input
                   type="text"
@@ -865,7 +742,7 @@ const AsignacionAlmacenes = () => {
                     >
                       {filteredUsuarios.length === 0 ? (
                         <p className="text-gray-400 text-center py-4">
-                          No hay usuarios disponibles
+                          No hay vendedores disponibles
                         </p>
                       ) : (
                         filteredUsuarios.map((usuario, index) => (
@@ -923,16 +800,107 @@ const AsignacionAlmacenes = () => {
           <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="font-semibold text-blue-800 mb-2">Instrucciones:</h3>
             <ul className="text-sm text-blue-700 space-y-1">
-              <li>• Arrastra y suelta usuarios entre las columnas para asignarlos</li>
-              <li>• Cada camioneta puede tener máximo 3 usuarios asignados</li>
+              <li>• Arrastra y suelta vendedores entre las columnas para asignarlos</li>
+              <li>• Cada camioneta puede tener máximo 3 vendedores asignados</li>
               <li>• Haz clic en una camioneta y luego en "Asignar" para asignación rápida</li>
               <li>• Los cambios se guardan automáticamente</li>
-              <li>• Usa el botón "Gestionar No-Camionetas" para marcar almacenes que no serán usados como camionetas</li>
-              <li>• Solo los almacenes vacíos pueden ser marcados como "No-Camioneta"</li>
-              <li>• Los almacenes "No-Camioneta" se guardan en Firebase y no pueden recibir usuarios</li>
+              <li>• Usa el menú de opciones (⋮) en cualquier camioneta para cambiarla a "Almacén"</li>
+              <li>• Usa "Ver Almacenes" para gestionar almacenes que no serán usados como camionetas</li>
+              <li>• Los almacenes se guardan automáticamente y no pueden recibir vendedores</li>
             </ul>
           </div>
         </div>
+
+        {/* Modal para almacenes no-camioneta */}
+        {showExcludedModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">Almacenes</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Estos almacenes están marcados como "almacén" y no pueden tener vendedores asignados
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowExcludedModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                {almacenes.filter(a => a.esExcluido).length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="bg-orange-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    </div>
+                    <h4 className="text-lg font-medium text-gray-900 mb-2">No hay almacenes</h4>
+                    <p className="text-gray-500">
+                      Usa el menú de opciones (⋮) en cualquier camioneta para cambiarla a "Almacén"
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {almacenes.filter(a => a.esExcluido).map((almacen) => (
+                      <div
+                        key={`modal-excluido-${almacen.id}`}
+                        className="bg-orange-50 border border-orange-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-800 text-sm mb-1">
+                              {almacen.nombre}
+                            </h4>
+                            <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded">
+                              Almacén
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 mb-4">
+                          <p className="text-xs text-gray-600">
+                            <span className="font-medium">ID:</span> {almacen.id}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            <span className="font-medium">Existencias:</span> {almacen.existencias.toLocaleString()}
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            toggleAlmacenExcluido(almacen.id);
+                            // No cerramos el modal para que puedan ver el cambio
+                          }}
+                          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-sm py-2.5 rounded-lg transition-all shadow-sm hover:shadow-md font-medium flex items-center justify-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          Cambiar a Camioneta
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+                <button
+                  onClick={() => setShowExcludedModal(false)}
+                  className="px-6 py-2.5 rounded-lg bg-gray-600 hover:bg-gray-700 text-white font-medium transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Modal de confirmación para restablecer todo */}
         {showResetModal && (
