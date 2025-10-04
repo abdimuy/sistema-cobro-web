@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import useGetVentaLocalCompleta from "../../hooks/useGetVentaLocalCompleta";
 import { getImageUrl } from "../../services/api/getVentasLocales";
 import MapSimple from "../../components/MapSimple";
+import useGetAlmacenes from "../../hooks/useGetAlmacenes";
 
 interface VentaDetalleModalProps {
   ventaId: string;
@@ -11,6 +12,7 @@ interface VentaDetalleModalProps {
 
 const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
   const { venta, loading, error } = useGetVentaLocalCompleta(ventaId);
+  const { getAlmacenById, loading: loadingAlmacenes } = useGetAlmacenes();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<"info" | "productos" | "imagenes">("info");
@@ -204,7 +206,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
   const resetZoom = () => {
     // Volver al zoom óptimo para la rotación actual
     if (imageElement) {
-      const optimalZoom = calculateOptimalZoom(imageElement, rotation, true);
+      const optimalZoom = calculateOptimalZoom(imageElement, rotation);
       setZoom(optimalZoom);
     } else {
       setZoom(1);
@@ -247,11 +249,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
     });
   };
 
-  const resetRotation = () => {
-    setRotation(0);
-  };
-
-  const calculateOptimalZoom = (img: HTMLImageElement, rotationDeg: number, isInitialLoad = false) => {
+  const calculateOptimalZoom = (img: HTMLImageElement, rotationDeg: number) => {
     if (!img) return 1;
 
     // Usar 90% del espacio disponible para buena UX
@@ -463,6 +461,82 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                         tooltip="Copiar dirección"
                       />
                     </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Número</p>
+                      {venta.NUMERO ? (
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold text-gray-900">{venta.NUMERO}</p>
+                          <button
+                            onClick={(e) => copyToClipboard(venta.NUMERO!, e.currentTarget, 'Número')}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            title="Copiar número"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="font-semibold text-gray-400">-</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Colonia</p>
+                      {venta.COLONIA ? (
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold text-gray-900">{venta.COLONIA}</p>
+                          <button
+                            onClick={(e) => copyToClipboard(venta.COLONIA!, e.currentTarget, 'Colonia')}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            title="Copiar colonia"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="font-semibold text-gray-400">-</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Población</p>
+                      {venta.POBLACION ? (
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold text-gray-900">{venta.POBLACION}</p>
+                          <button
+                            onClick={(e) => copyToClipboard(venta.POBLACION!, e.currentTarget, 'Población')}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            title="Copiar población"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="font-semibold text-gray-400">-</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Ciudad</p>
+                      {venta.CIUDAD ? (
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold text-gray-900">{venta.CIUDAD}</p>
+                          <button
+                            onClick={(e) => copyToClipboard(venta.CIUDAD!, e.currentTarget, 'Ciudad')}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            title="Copiar ciudad"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="font-semibold text-gray-400">-</p>
+                      )}
+                    </div>
                     {venta.AVAL_O_RESPONSABLE && (
                       <div className="md:col-span-2">
                         <CopyableField
@@ -582,7 +656,27 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Almacén</p>
-                        <p className="font-semibold text-gray-900">ID: {venta.ALMACEN_ID}</p>
+                        {loadingAlmacenes ? (
+                          <p className="font-semibold text-gray-900">Cargando...</p>
+                        ) : (
+                          <p className="font-semibold text-gray-900">
+                            {getAlmacenById(venta.ALMACEN_ID)?.ALMACEN || `ID: ${venta.ALMACEN_ID}`}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Tipo de Venta</p>
+                        {venta.TIPO_VENTA ? (
+                          <span className={`inline-block mt-1 px-3 py-1 rounded-full text-sm font-medium ${
+                            venta.TIPO_VENTA === 'CREDITO'
+                              ? 'bg-orange-100 text-orange-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                            {venta.TIPO_VENTA}
+                          </span>
+                        ) : (
+                          <p className="font-semibold text-gray-400">-</p>
+                        )}
                       </div>
                       {venta.DIA_COBRANZA && (
                         <div>
@@ -754,10 +848,9 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                 {venta.imagenes && venta.imagenes.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {venta.imagenes.map((imagen, index) => (
-                      <div 
+                      <div
                         key={imagen.ID}
-                        className="group relative bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300"
-                        onClick={() => openImage(index)}
+                        className="group relative bg-gray-100 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
                       >
                         {/* Loading spinner */}
                         {imageLoadingStates[imagen.ID] && (
@@ -769,18 +862,22 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                         <img
                           src={getImageUrl(imagen.IMG_PATH)}
                           alt={imagen.IMG_DESC}
-                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                          onClick={() => openImage(index)}
                           onLoadStart={() => handleImageLoadStart(imagen.ID)}
                           onLoad={() => handleImageLoad(imagen.ID)}
                           onError={(e) => {
                             handleImageLoad(imagen.ID);
                             const target = e.target as HTMLImageElement;
-                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ci8+CjxwYXRoIGQ9Ik0xMDAgNzBWMTMwTTEwMCA3MEw3MCA4NUwxMzAgODVMMTAwIDcwWiIgc3Ryb2tlPSIjOUI5QkE0IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+';
+                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNzBWMTMwTTEwMCA3MEw3MCA4NUwxMzAgODVMMTAwIDcwWiIgc3Ryb2tlPSIjOUI5QkE0IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+';
                             target.classList.add('opacity-50');
                           }}
                         />
                         
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div
+                          className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          onClick={() => openImage(index)}
+                        >
                           <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                             <p className="text-sm font-medium">{imagen.IMG_DESC}</p>
                             <p className="text-xs opacity-75">
@@ -946,8 +1043,8 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
               onLoad={(e) => {
                 const img = e.target as HTMLImageElement;
                 setImageElement(img);
-                // Calcular zoom inicial óptimo (permitiendo zoom in)
-                const optimalZoom = calculateOptimalZoom(img, rotation, true);
+                // Calcular zoom inicial óptimo
+                const optimalZoom = calculateOptimalZoom(img, rotation);
                 setZoom(optimalZoom);
               }}
               onMouseDown={handleMouseDown}

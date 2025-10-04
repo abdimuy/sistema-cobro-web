@@ -42,6 +42,7 @@ const AsignacionAlmacenes = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [camionetaSearchTerm, setCamionetaSearchTerm] = useState("");
   const [selectedAlmacen, setSelectedAlmacen] = useState<number | null>(null);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
@@ -526,6 +527,11 @@ const AsignacionAlmacenes = () => {
     (usuario.email && usuario.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const filteredCamionetas = almacenes.filter(almacen =>
+    !almacen.esExcluido &&
+    almacen.nombre.toLowerCase().includes(camionetaSearchTerm.toLowerCase())
+  );
+
   if (loading || loadingCobradores) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -585,12 +591,35 @@ const AsignacionAlmacenes = () => {
                 <h2 className="text-xl font-semibold text-gray-700">Camionetas</h2>
                 <div className="bg-blue-50 px-3 py-2 rounded-lg">
                   <span className="text-blue-700 font-medium text-sm">
-                    {almacenes.filter(a => !a.esExcluido).length} camioneta(s) disponible(s)
+                    {filteredCamionetas.length} camioneta(s) encontrada(s)
                   </span>
                 </div>
               </div>
+
+              <div className="mb-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Buscar camionetas por nombre..."
+                    value={camionetaSearchTerm}
+                    onChange={(e) => setCamionetaSearchTerm(e.target.value)}
+                    className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
+                  />
+                  {camionetaSearchTerm && (
+                    <button
+                      onClick={() => setCamionetaSearchTerm("")}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      type="button"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2">
-                {almacenes.filter(a => !a.esExcluido).map((almacen) => (
+                {filteredCamionetas.map((almacen) => (
                   <div
                     key={almacen.id}
                     className={`bg-white rounded-lg shadow-md p-4 border-2 transition-all ${

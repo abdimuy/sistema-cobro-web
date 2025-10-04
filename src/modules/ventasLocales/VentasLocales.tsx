@@ -182,6 +182,15 @@ const VentasLocales = () => {
                 {venta.FREC_PAGO}
               </span>
             )}
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+              venta.TIPO_VENTA === 'CREDITO'
+                ? 'bg-orange-100 text-orange-700'
+                : venta.TIPO_VENTA === 'CONTADO'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-gray-100 text-gray-500'
+            }`}>
+              {venta.TIPO_VENTA || 'SIN TIPO'}
+            </span>
             <AlmacenBadge almacenId={venta.ALMACEN_ID} />
           </div>
 
@@ -422,6 +431,15 @@ const VentasLocales = () => {
                                     {venta.FREC_PAGO}
                                   </span>
                                 )}
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  venta.TIPO_VENTA === 'CREDITO'
+                                    ? 'bg-orange-100 text-orange-700'
+                                    : venta.TIPO_VENTA === 'CONTADO'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-gray-100 text-gray-500'
+                                }`}>
+                                  {venta.TIPO_VENTA || 'SIN TIPO'}
+                                </span>
                                 <AlmacenBadge almacenId={venta.ALMACEN_ID} compact />
                               </div>
                             </div>

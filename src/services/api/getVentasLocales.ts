@@ -22,6 +22,13 @@ export interface VentaLocal {
   DIA_COBRANZA?: string;
   TIEMPO_A_CORTO_PLAZOMESES?: number;
   MONTO_A_CORTO_PLAZO?: number;
+  // Nuevos campos de dirección
+  NUMERO?: string;
+  COLONIA?: string;
+  POBLACION?: string;
+  CIUDAD?: string;
+  // Nuevo campo tipo de venta
+  TIPO_VENTA?: string;
 }
 
 export interface ProductoVenta {
