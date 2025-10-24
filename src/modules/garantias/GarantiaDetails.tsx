@@ -13,6 +13,8 @@ import { ImageGarantia } from "../../services/api/getImagesByGarantia";
 import createEventoGarantia, {
   AllowedEstadosDesktop,
 } from "../../services/api/createEventoGarantia";
+import createEventoGarantiaConImagenes from "../../services/api/createEventoGarantiaConImagenes";
+import { v4 as uuidv4 } from "uuid";
 
 const GarantiaDetalle: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +31,7 @@ const GarantiaDetalle: React.FC = () => {
   const [agregando, setAgregando] = useState(false);
   const [imagenGrande, setImagenGrande] = useState<ImageGarantia | null>(null);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+  const [imagenesEvento, setImagenesEvento] = useState<File[]>([]);
   const { eventos, refetch: refetchEventos } = useGetEventosByGarantia(
     garantia?.ID || 0
   );
@@ -58,14 +61,28 @@ const GarantiaDetalle: React.FC = () => {
     if (!garantia) return;
     setAgregando(true);
     try {
-      await createEventoGarantia(garantia.EXTERNAL_ID, {
-        tipoEvento: nuevoEstado,
-        fechaEvento: new Date().toISOString(),
-        comentario: nuevaObservacion,
-      });
+      if (imagenesEvento.length > 0) {
+        await createEventoGarantiaConImagenes(
+          garantia.EXTERNAL_ID,
+          {
+            id: uuidv4(),
+            tipoEvento: nuevoEstado,
+            fechaEvento: new Date().toISOString(),
+            comentario: nuevaObservacion,
+          },
+          imagenesEvento
+        );
+      } else {
+        await createEventoGarantia(garantia.EXTERNAL_ID, {
+          tipoEvento: nuevoEstado,
+          fechaEvento: new Date().toISOString(),
+          comentario: nuevaObservacion,
+        });
+      }
       setShowModal(false);
       setNuevaObservacion("");
       setNuevoEstado(AllowedEstadosDesktop[0]);
+      setImagenesEvento([]);
       setMensajeExito("¡Evento agregado con éxito!");
       setTimeout(() => setMensajeExito(null), 3000);
       await refetchEventos();
@@ -256,6 +273,22 @@ const GarantiaDetalle: React.FC = () => {
             <p>
               <strong>Comentario:</strong> {evento.COMENTARIO || "-"}
             </p>
+            {evento.IMAGENES && evento.IMAGENES.length > 0 && (
+              <div className="mt-3">
+                <strong className="block mb-2">Imágenes:</strong>
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                  {evento.IMAGENES.map((img) => (
+                    <img
+                      key={img.ID}
+                      src={`${URL_API}${img.IMG_PATH}`}
+                      alt={img.IMG_DESC}
+                      className="w-full h-20 object-cover rounded border cursor-pointer hover:scale-105 transition-transform"
+                      onClick={() => setImagenGrande(img)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -293,6 +326,30 @@ const GarantiaDetalle: React.FC = () => {
                 onChange={(e) => setNuevaObservacion(e.target.value)}
                 rows={3}
               />
+            </div>
+            <div className="mb-4">
+              <label className="block font-semibold mb-1">
+                Imágenes (opcional, máx. 10)
+              </label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/gif"
+                multiple
+                className="w-full border rounded px-2 py-1 bg-white"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  if (files.length > 10) {
+                    alert("Máximo 10 imágenes permitidas");
+                    return;
+                  }
+                  setImagenesEvento(files);
+                }}
+              />
+              {imagenesEvento.length > 0 && (
+                <p className="text-sm text-gray-600 mt-1">
+                  {imagenesEvento.length} imagen(es) seleccionada(s)
+                </p>
+              )}
             </div>
             <div className="flex justify-end gap-2">
               <button
