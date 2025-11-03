@@ -32,10 +32,17 @@ export const DESKTOP_MODULES: ModuleConfig[] = [
   },
   {
     key: 'ALMACENES',
-    label: 'Camionetas',
+    label: 'Asignar Vendedores',
     path: '/asignacion-almacenes',
     icon: 'truck',
     color: 'blue'
+  },
+  {
+    key: 'INVENTARIO',
+    label: 'Inventario Camionetas',
+    path: '/inventario-camionetas',
+    icon: 'package',
+    color: 'green'
   },
   {
     key: 'USUARIOS',
@@ -51,10 +58,12 @@ export const DESKTOP_MODULES: ModuleConfig[] = [
 export const ROUTE_TO_MODULE: Record<string, string> = {
   '/': 'HOME',
   '/sales': 'SALES',
-  '/ventas-locales': 'VENTAS_LOCALES', 
+  '/ventas-locales': 'VENTAS_LOCALES',
   '/garantias': 'GARANTIAS',
   '/garantias/:id': 'GARANTIAS',
   '/asignacion-almacenes': 'ALMACENES',
+  '/inventario-camionetas': 'INVENTARIO',
+  '/almacenes/:almacenId/inventario': 'INVENTARIO',
   '/settings': 'USUARIOS',
   '/create-user': 'USUARIOS'
 };

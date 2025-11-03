@@ -10,6 +10,8 @@ import VentasLocales from "./modules/ventasLocales/VentasLocales";
 import Garantias from "./modules/garantias/Garantias";
 import GarantiaDetalle from "./modules/garantias/GarantiaDetails";
 import AsignacionAlmacenes from "./modules/almacenes/AsignacionAlmacenes";
+import Traspasos from "./modules/traspasos/Traspasos";
+import InventarioDetalle from "./modules/traspasos/InventarioDetalle";
 
 // Auth Components
 import LoginPage from "./components/auth/LoginPage";
@@ -74,15 +76,33 @@ function App() {
               } 
             />
             
-            <Route 
-              path="/asignacion-almacenes" 
+            <Route
+              path="/asignacion-almacenes"
               element={
                 <ProtectedRoute requiredModule="ALMACENES">
                   <AsignacionAlmacenes />
                 </ProtectedRoute>
-              } 
+              }
             />
-            
+
+            <Route
+              path="/inventario-camionetas"
+              element={
+                <ProtectedRoute requiredModule="INVENTARIO">
+                  <Traspasos />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/almacenes/:almacenId/inventario"
+              element={
+                <ProtectedRoute requiredModule="INVENTARIO">
+                  <InventarioDetalle />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Rutas de Administración - Solo Admin y Super Admin */}
             <Route 
               path="/settings" 

@@ -1,7 +1,6 @@
 import { URL_API } from "../../constants/api";
 import axios from "axios";
 import { EstadoGarantiaDesktop } from "./createEventoGarantia";
-import { ImagenEvento } from "./getEventosByGarantia";
 
 export interface CreateEventoConImagenesResponse {
   evento: {

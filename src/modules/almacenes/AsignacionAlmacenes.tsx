@@ -562,6 +562,12 @@ const AsignacionAlmacenes = () => {
                 Recargar Almacenes
               </button>
               <button
+                onClick={() => window.location.href = '/inventario-camionetas'}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Ver Inventario
+              </button>
+              <button
                 onClick={() => setShowResetModal(true)}
                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
               >

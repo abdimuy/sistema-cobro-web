@@ -50,18 +50,44 @@ const useGetAlmacenById = (almacenId: number | null): UseGetAlmacenByIdReturn =>
       setError(null);
 
       const response = await fetch(`${URL_API}/almacenes/${almacenId}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data: AlmacenResponse = await response.json();
 
       if (data.error) {
         setError(data.error);
+        setAlmacen(null);
+        setArticulos([]);
         return;
       }
 
       // Extraer el almacén y los artículos del body
-      if (data.body && data.body.ALMACEN) {
-        setAlmacen(data.body.ALMACEN);
-        setArticulos(data.body.ARTICULOS || []);
+      if (data.body) {
+        // Si viene ALMACEN en la respuesta, usarlo
+        if (data.body.ALMACEN) {
+          setAlmacen(data.body.ALMACEN);
+          setArticulos(data.body.ARTICULOS || []);
+        }
+        // Si solo vienen ARTICULOS, crear objeto almacén básico
+        else if (data.body.ARTICULOS !== undefined) {
+          // Crear objeto almacén con la info básica que tenemos
+          setAlmacen({
+            ALMACEN_ID: almacenId,
+            ALMACEN: `Almacén ${almacenId}`, // Temporal, se actualizará con useGetAlmacenes
+            EXISTENCIAS: 0
+          });
+          setArticulos(data.body.ARTICULOS || []);
+        }
+        else {
+          setError("Estructura de respuesta inválida");
+          setAlmacen(null);
+          setArticulos([]);
+        }
       } else {
+        setError("Almacén no encontrado en la respuesta");
         setAlmacen(null);
         setArticulos([]);
       }
