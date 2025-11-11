@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/es';
 import { desktopModules } from "../../constants/desktopModules";
+import { androidModules } from "../../constants/androidModules";
 import { ROLES } from "../../constants/roles";
 
 dayjs.extend(relativeTime);
@@ -141,28 +142,21 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-2">Permisos Android</label>
             <div className="flex gap-1">
-              <button
-                type="button"
-                onClick={() => onToggleModule("COBRO", cobrador.ID, cobrador.MODULOS)}
-                className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                  cobrador.MODULOS?.includes("COBRO")
-                    ? "bg-green-500 text-white"
-                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                C
-              </button>
-              <button
-                type="button"
-                onClick={() => onToggleModule("VENTAS", cobrador.ID, cobrador.MODULOS)}
-                className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                  cobrador.MODULOS?.includes("VENTAS")
-                    ? "bg-green-500 text-white"
-                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                V
-              </button>
+              {androidModules.map((module) => (
+                <button
+                  key={module.key}
+                  type="button"
+                  onClick={() => onToggleModule(module.key, cobrador.ID, cobrador.MODULOS || [])}
+                  className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                    (cobrador.MODULOS || []).includes(module.key)
+                      ? "bg-green-500 text-white"
+                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                  }`}
+                  title={module.label}
+                >
+                  {module.label.charAt(0)}
+                </button>
+              ))}
             </div>
           </div>
 

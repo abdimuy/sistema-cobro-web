@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/es';
 import { desktopModules } from "../../constants/desktopModules";
+import { androidModules } from "../../constants/androidModules";
 import { ROLES } from "../../constants/roles";
 
 dayjs.extend(relativeTime);
@@ -168,28 +169,20 @@ const UserCard: React.FC<UserCardProps> = ({
               <h4 className="font-medium text-slate-900">Aplicación Android</h4>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => onToggleModule("COBRO", cobrador.ID, cobrador.MODULOS)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  cobrador.MODULOS?.includes("COBRO")
-                    ? "bg-green-500 text-white shadow-sm"
-                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                Cobro
-              </button>
-              <button
-                type="button"
-                onClick={() => onToggleModule("VENTAS", cobrador.ID, cobrador.MODULOS)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  cobrador.MODULOS?.includes("VENTAS")
-                    ? "bg-green-500 text-white shadow-sm"
-                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                Ventas
-              </button>
+              {androidModules.map((module) => (
+                <button
+                  key={module.key}
+                  type="button"
+                  onClick={() => onToggleModule(module.key, cobrador.ID, cobrador.MODULOS || [])}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    (cobrador.MODULOS || []).includes(module.key)
+                      ? "bg-green-500 text-white shadow-sm"
+                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {module.label}
+                </button>
+              ))}
             </div>
           </div>
 

@@ -9,6 +9,7 @@ import Navigation from "../../components/Navigation";
 import { ZonaCliente } from "../../services/api/getZonasCliente";
 import { CobradorDto } from "../../hooks/useGetCobradores";
 import useGetZonasCliente from "./useGetZonaCliente";
+import { androidModules } from "../../constants/androidModules";
 
 const CreateUser = () => {
   const [email, setEmail] = useState<string>("");
@@ -129,40 +130,26 @@ const CreateUser = () => {
       </select>
       <p className="text-black text-center font-bold text-xl mb-4">Módulos</p>
       <div className="mb-8 w-[21.5rem] flex gap-3">
-        <button
-          type="button"
-          onClick={() => {
-            if (selectedModules.includes("COBRO")) {
-              setSelectedModules(selectedModules.filter(m => m !== "COBRO"));
-            } else {
-              setSelectedModules([...selectedModules, "COBRO"]);
-            }
-          }}
-          className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
-            selectedModules.includes("COBRO")
-              ? "bg-green-500 text-white shadow-lg transform scale-105"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          }`}
-        >
-          COBRO
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            if (selectedModules.includes("VENTAS")) {
-              setSelectedModules(selectedModules.filter(m => m !== "VENTAS"));
-            } else {
-              setSelectedModules([...selectedModules, "VENTAS"]);
-            }
-          }}
-          className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
-            selectedModules.includes("VENTAS")
-              ? "bg-green-500 text-white shadow-lg transform scale-105"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          }`}
-        >
-          VENTAS
-        </button>
+        {androidModules.map((module) => (
+          <button
+            key={module.key}
+            type="button"
+            onClick={() => {
+              if (selectedModules.includes(module.key)) {
+                setSelectedModules(selectedModules.filter(m => m !== module.key));
+              } else {
+                setSelectedModules([...selectedModules, module.key]);
+              }
+            }}
+            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
+              selectedModules.includes(module.key)
+                ? "bg-green-500 text-white shadow-lg transform scale-105"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            {module.label.toUpperCase()}
+          </button>
+        ))}
       </div>
       <p className="text-black text-center font-bold text-xl mb-4">Zona</p>
       <select
