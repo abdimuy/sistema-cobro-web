@@ -16,9 +16,14 @@ const firebaseConfig = {
   appId: "1:519103475417:web:d1b83f6d6e17d6e2d898c8",
 };
 
-// Initialize Firebase
+// Initialize Firebase - Primary app for admin
 export const app = initializeApp(firebaseConfig);
+
+// Initialize Firebase - Secondary app for user creation (avoids session conflicts)
+export const secondaryApp = initializeApp(firebaseConfig, "secondary");
 
 export const db = getFirestore(app);
 
 export const auth = getAuth(app);
+
+export const secondaryAuth = getAuth(secondaryApp);

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { auth, db } from "../../../firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { db, secondaryAuth } from "../../../firebase";
+import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { Timestamp, doc, setDoc } from "firebase/firestore";
 import useGetRutas from "./useGetRutas";
 import { Ruta } from "../../services/api/getRutas";
@@ -27,15 +27,16 @@ const CreateUser = () => {
 
   const handleRegister = async () => {
     try {
+      // Create the new user with the secondary auth instance
+      // This prevents logging out the current admin session
       const userCredential = await createUserWithEmailAndPassword(
-        auth,
+        secondaryAuth,
         email,
         password
       );
       const user = userCredential.user;
-      setMessage("Usuario registrado exitosamente.");
 
-      // Guarda información adicional del usuario en Firestore si es necesario
+      // Save additional user information to Firestore
       const data: CobradorDto & { MODULOS: string[] } = {
         EMAIL: email,
         CREATED_AT: Timestamp.now(),
@@ -49,9 +50,34 @@ const CreateUser = () => {
         MODULOS: selectedModules,
       };
       await setDoc(doc(db, "users", user.uid), data);
-      navigate("/settings");
-    } catch (error) {
-      setMessage("Error al registrar el usuario.");
+
+      // Sign out the newly created user immediately to keep admin session active
+      await signOut(secondaryAuth);
+
+      setMessage("Usuario registrado exitosamente.");
+
+      // Reset form
+      setEmail("");
+      setPassword("");
+      setName("");
+      setTelefono("");
+      setSelectedModules([]);
+
+      // Navigate after a short delay to show success message
+      setTimeout(() => {
+        navigate("/settings");
+      }, 1500);
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      setMessage(
+        error.code === "auth/email-already-in-use"
+          ? "Este correo ya está registrado."
+          : error.code === "auth/weak-password"
+          ? "La contraseña debe tener al menos 6 caracteres."
+          : error.code === "auth/invalid-email"
+          ? "El correo electrónico no es válido."
+          : "Error al registrar el usuario. Intenta nuevamente."
+      );
     }
   };
 
