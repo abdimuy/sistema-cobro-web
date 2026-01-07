@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { LoadScript } from "@react-google-maps/api";
+import { Toaster } from "sonner";
 
 // Components
 import Home from "./modules/home/Home";
@@ -26,6 +27,7 @@ function App() {
     <AuthProvider>
       <Router>
         <LoadScript googleMapsApiKey="AIzaSyCASwsCJvFm7dGajUWlVg19PmS8JVPqRaY">
+          <Toaster richColors position="top-right" />
           <Routes>
             {/* Ruta de Login */}
             <Route path="/login" element={<LoginPage />} />
