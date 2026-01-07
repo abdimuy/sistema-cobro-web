@@ -4,6 +4,7 @@ import useGetVentaLocalCompleta from "../../hooks/useGetVentaLocalCompleta";
 import { getImageUrl } from "../../services/api/getVentasLocales";
 import MapSimple from "../../components/MapSimple";
 import useGetAlmacenes from "../../hooks/useGetAlmacenes";
+import EditarVentaSheet from "./components/EditarVentaSheet";
 
 interface VentaDetalleModalProps {
   ventaId: string;
@@ -11,7 +12,7 @@ interface VentaDetalleModalProps {
 }
 
 const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
-  const { venta, loading, error } = useGetVentaLocalCompleta(ventaId);
+  const { venta, loading, error, refetch } = useGetVentaLocalCompleta(ventaId);
   const { getAlmacenById, loading: loadingAlmacenes } = useGetAlmacenes();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
@@ -24,6 +25,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
   const [imagePosition, setImagePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [rotation, setRotation] = useState<number>(0);
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
+  const [showEditSheet, setShowEditSheet] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -355,14 +357,25 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                 <h2 className="text-2xl font-bold">Detalle de Venta</h2>
                 <p className="text-blue-100 mt-1">ID: {venta.LOCAL_SALE_ID}</p>
               </div>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowEditSheet(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-sm font-medium"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Editar
+                </button>
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -537,6 +550,12 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                         <p className="font-semibold text-gray-400">-</p>
                       )}
                     </div>
+                    {venta.ZONA_CLIENTE && (
+                      <div>
+                        <p className="text-sm text-gray-500">Zona</p>
+                        <p className="font-semibold text-gray-900">{venta.ZONA_CLIENTE}</p>
+                      </div>
+                    )}
                     {venta.AVAL_O_RESPONSABLE && (
                       <div className="md:col-span-2">
                         <CopyableField
@@ -1064,6 +1083,16 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
             <span className="text-sm font-medium">{toast.message}</span>
           </div>
         </div>
+      )}
+
+      {/* Sheet de Edición */}
+      {venta && (
+        <EditarVentaSheet
+          venta={venta}
+          open={showEditSheet}
+          onOpenChange={setShowEditSheet}
+          onSuccess={refetch}
+        />
       )}
 
       <style>{`

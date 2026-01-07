@@ -192,6 +192,11 @@ const VentasLocales = () => {
               {venta.TIPO_VENTA || 'SIN TIPO'}
             </span>
             <AlmacenBadge almacenId={venta.ALMACEN_ID} />
+            {venta.ZONA_CLIENTE && (
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-700">
+                {venta.ZONA_CLIENTE}
+              </span>
+            )}
           </div>
 
           {/* Vendedor */}
@@ -441,6 +446,11 @@ const VentasLocales = () => {
                                   {venta.TIPO_VENTA || 'SIN TIPO'}
                                 </span>
                                 <AlmacenBadge almacenId={venta.ALMACEN_ID} compact />
+                                {venta.ZONA_CLIENTE && (
+                                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700">
+                                    {venta.ZONA_CLIENTE}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>

@@ -7,6 +7,7 @@ export interface VentaLocal {
   LOCAL_SALE_ID: string;
   USER_EMAIL: string;
   ALMACEN_ID: number;
+  ALMACEN_DESTINO_ID?: number;
   NOMBRE_CLIENTE: string;
   FECHA_VENTA: string;
   LATITUD: number;
@@ -29,6 +30,9 @@ export interface VentaLocal {
   CIUDAD?: string;
   // Nuevo campo tipo de venta
   TIPO_VENTA?: string;
+  // Campos de zona del cliente
+  ZONA_CLIENTE_ID?: number;
+  ZONA_CLIENTE?: string;
 }
 
 export interface ProductoVenta {
