@@ -765,78 +765,165 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
             {activeTab === "productos" && (
               <div className="animate-fade-in">
                 {venta.productos && venta.productos.length > 0 ? (
-                  <div className="space-y-4">
-                    {venta.productos.map((producto, index) => (
-                      <div 
-                        key={index} 
-                        className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h4 className="text-lg font-semibold text-gray-900">{producto.ARTICULO}</h4>
-                            <div className="flex items-center gap-4 mt-2">
-                              <span className="text-sm text-gray-500">ID: {producto.ARTICULO_ID}</span>
-                              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                                Cantidad: {producto.CANTIDAD}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="w-full">
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                              <div className="bg-gray-50 rounded-lg p-3 border">
-                                <p className="text-xs text-gray-500 mb-2">Lista</p>
-                                <div className="flex items-center justify-between">
-                                  <p className="font-semibold text-gray-900">{formatCurrency(producto.PRECIO_LISTA)}</p>
-                                  <button
-                                    onClick={(e) => copyToClipboard(producto.PRECIO_LISTA.toString(), e.currentTarget)}
-                                    className="p-1 hover:bg-gray-200 rounded transition-colors"
-                                    title="Copiar precio lista"
-                                  >
-                                    <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                    </svg>
-                                  </button>
+                  <div className="space-y-6">
+                    {/* Combos */}
+                    {venta.combos && venta.combos.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                          <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                          </svg>
+                          Combos ({venta.combos.length})
+                        </h3>
+                        {venta.combos.map((combo) => {
+                          const productosDelCombo = venta.productos.filter(p => p.COMBO_ID === combo.COMBO_ID);
+                          return (
+                            <div
+                              key={combo.COMBO_ID}
+                              className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-6"
+                            >
+                              <div className="flex items-start justify-between mb-4">
+                                <div>
+                                  <h4 className="text-lg font-semibold text-purple-900">{combo.NOMBRE_COMBO}</h4>
+                                  <span className="text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
+                                    {productosDelCombo.length} productos
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-3 text-right">
+                                  <div>
+                                    <p className="text-xs text-gray-500">Lista</p>
+                                    <p className="font-semibold text-gray-900">{formatCurrency(combo.PRECIO_LISTA)}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500">Corto Plazo</p>
+                                    <p className="font-semibold text-blue-600">{formatCurrency(combo.PRECIO_CORTO_PLAZO)}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500">Contado</p>
+                                    <p className="font-semibold text-green-600">{formatCurrency(combo.PRECIO_CONTADO)}</p>
+                                  </div>
                                 </div>
                               </div>
-                              <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                                <p className="text-xs text-gray-500 mb-2">Corto Plazo</p>
-                                <div className="flex items-center justify-between">
-                                  <p className="font-semibold text-blue-600">{formatCurrency(producto.PRECIO_CORTO_PLAZO)}</p>
-                                  <button
-                                    onClick={(e) => copyToClipboard(producto.PRECIO_CORTO_PLAZO.toString(), e.currentTarget)}
-                                    className="p-1 hover:bg-blue-200 rounded transition-colors"
-                                    title="Copiar precio corto plazo"
-                                  >
-                                    <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                                <p className="text-xs text-gray-500 mb-2">Contado</p>
-                                <div className="flex items-center justify-between">
-                                  <p className="font-semibold text-green-600">{formatCurrency(producto.PRECIO_CONTADO)}</p>
-                                  <button
-                                    onClick={(e) => copyToClipboard(producto.PRECIO_CONTADO.toString(), e.currentTarget)}
-                                    className="p-1 hover:bg-green-200 rounded transition-colors"
-                                    title="Copiar precio contado"
-                                  >
-                                    <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                    </svg>
-                                  </button>
+                              {/* Productos del combo */}
+                              <div className="mt-4 space-y-2">
+                                <p className="text-sm text-gray-600 font-medium">Incluye:</p>
+                                <div className="grid gap-2">
+                                  {productosDelCombo.map((producto, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="bg-white/70 rounded-lg px-4 py-2 flex items-center justify-between"
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <span className="w-6 h-6 bg-purple-200 text-purple-700 rounded-full flex items-center justify-center text-xs font-medium">
+                                          {producto.CANTIDAD}
+                                        </span>
+                                        <span className="text-gray-800">{producto.ARTICULO}</span>
+                                      </div>
+                                      <span className="text-xs text-gray-500">ID: {producto.ARTICULO_ID}</span>
+                                    </div>
+                                  ))}
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </div>
+                          );
+                        })}
                       </div>
-                    ))}
-                    
+                    )}
+
+                    {/* Productos individuales (sin combo) */}
+                    {(() => {
+                      const productosIndividuales = venta.productos.filter(p => !p.COMBO_ID);
+                      if (productosIndividuales.length === 0) return null;
+                      return (
+                        <div className="space-y-4">
+                          {venta.combos && venta.combos.length > 0 && (
+                            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                              </svg>
+                              Productos Individuales ({productosIndividuales.length})
+                            </h3>
+                          )}
+                          {productosIndividuales.map((producto, index) => (
+                            <div
+                              key={index}
+                              className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <h4 className="text-lg font-semibold text-gray-900">{producto.ARTICULO}</h4>
+                                  <div className="flex items-center gap-4 mt-2">
+                                    <span className="text-sm text-gray-500">ID: {producto.ARTICULO_ID}</span>
+                                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                                      Cantidad: {producto.CANTIDAD}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="w-full">
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div className="bg-gray-50 rounded-lg p-3 border">
+                                      <p className="text-xs text-gray-500 mb-2">Lista</p>
+                                      <div className="flex items-center justify-between">
+                                        <p className="font-semibold text-gray-900">{formatCurrency(producto.PRECIO_LISTA)}</p>
+                                        <button
+                                          onClick={(e) => copyToClipboard(producto.PRECIO_LISTA.toString(), e.currentTarget)}
+                                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                                          title="Copiar precio lista"
+                                        >
+                                          <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                          </svg>
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                                      <p className="text-xs text-gray-500 mb-2">Corto Plazo</p>
+                                      <div className="flex items-center justify-between">
+                                        <p className="font-semibold text-blue-600">{formatCurrency(producto.PRECIO_CORTO_PLAZO)}</p>
+                                        <button
+                                          onClick={(e) => copyToClipboard(producto.PRECIO_CORTO_PLAZO.toString(), e.currentTarget)}
+                                          className="p-1 hover:bg-blue-200 rounded transition-colors"
+                                          title="Copiar precio corto plazo"
+                                        >
+                                          <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                          </svg>
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                                      <p className="text-xs text-gray-500 mb-2">Contado</p>
+                                      <div className="flex items-center justify-between">
+                                        <p className="font-semibold text-green-600">{formatCurrency(producto.PRECIO_CONTADO)}</p>
+                                        <button
+                                          onClick={(e) => copyToClipboard(producto.PRECIO_CONTADO.toString(), e.currentTarget)}
+                                          className="p-1 hover:bg-green-200 rounded transition-colors"
+                                          title="Copiar precio contado"
+                                        >
+                                          <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                          </svg>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
                     {/* Resumen de productos */}
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mt-6">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between flex-wrap gap-4">
+                        {venta.combos && venta.combos.length > 0 && (
+                          <div>
+                            <p className="text-sm text-gray-500">Combos</p>
+                            <p className="text-2xl font-bold text-purple-600">{venta.combos.length}</p>
+                          </div>
+                        )}
                         <div>
                           <p className="text-sm text-gray-500">Total de Productos</p>
                           <p className="text-2xl font-bold text-gray-900">{venta.productos.length}</p>

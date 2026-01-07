@@ -43,6 +43,16 @@ export interface ProductoVenta {
   PRECIO_LISTA: number;
   PRECIO_CORTO_PLAZO: number;
   PRECIO_CONTADO: number;
+  COMBO_ID: string | null;
+}
+
+export interface ComboVenta {
+  COMBO_ID: string;
+  LOCAL_SALE_ID: string;
+  NOMBRE_COMBO: string;
+  PRECIO_LISTA: number;
+  PRECIO_CORTO_PLAZO: number;
+  PRECIO_CONTADO: number;
 }
 
 export interface ImagenVenta {
@@ -57,6 +67,7 @@ export interface ImagenVenta {
 export interface VentaCompleta extends VentaLocal {
   productos: ProductoVenta[];
   imagenes: ImagenVenta[];
+  combos: ComboVenta[];
 }
 
 export interface ResumenVentas {
