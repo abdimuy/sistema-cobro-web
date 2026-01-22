@@ -244,6 +244,16 @@ const useEditarVentaForm = (venta: VentaCompleta): UseEditarVentaFormReturn => {
       precioContado: p.precioContado,
     }));
 
+    // Calcular precios automáticamente de los productos activos
+    const precioTotalCalculado = activeProductos.reduce(
+      (total, p) => total + p.precioLista * p.cantidad,
+      0
+    );
+    const montoACortoPlazoCalculado = activeProductos.reduce(
+      (total, p) => total + p.precioCortoPlazo * p.cantidad,
+      0
+    );
+
     const datos: DatosVentaLocal = {
       userEmail: formData.userEmail,
       nombreCliente: formData.cliente.nombreCliente,
@@ -262,9 +272,9 @@ const useEditarVentaForm = (venta: VentaCompleta): UseEditarVentaFormReturn => {
       diaCobranza: formData.financiero.diaCobranza || undefined,
       avalOResponsable: formData.cliente.avalOResponsable || undefined,
       nota: formData.financiero.nota || undefined,
-      precioTotal: formData.financiero.precioTotal,
+      precioTotal: precioTotalCalculado,
       tiempoACortoPlazoMeses: formData.financiero.tiempoACortoPlazoMeses || undefined,
-      montoACortoPlazo: formData.financiero.montoACortoPlazo || undefined,
+      montoACortoPlazo: montoACortoPlazoCalculado,
       tipoVenta: formData.financiero.tipoVenta || undefined,
       zonaClienteId: formData.cliente.zonaClienteId || undefined,
       almacenOrigenId: formData.almacenes.almacenOrigenId,

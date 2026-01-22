@@ -182,9 +182,7 @@ export const validateClienteTab = (data: ClienteFormData): ValidationResult => {
 export const validateFinancieroTab = (data: FinancieroFormData): ValidationResult => {
   const errors: ValidationError[] = [];
 
-  if (data.precioTotal <= 0) {
-    errors.push({ field: "precioTotal", message: "El precio total debe ser mayor a 0" });
-  }
+  // El precio total se calcula automáticamente de los productos, no se valida aquí
 
   if (data.tipoVenta === "CREDITO") {
     if (!data.frecPago) {

@@ -576,10 +576,11 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                     </svg>
                     Información Financiera
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Primera fila: 3 Totales */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                     <div className="bg-white rounded-lg p-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-500">Precio Total</p>
+                        <p className="text-sm text-gray-500">Precio Lista</p>
                         <button
                           onClick={(e) => copyToClipboard(venta.PRECIO_TOTAL.toString(), e.currentTarget)}
                           className="p-1 hover:bg-gray-200 rounded transition-colors"
@@ -590,8 +591,52 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                           </svg>
                         </button>
                       </div>
-                      <p className="text-2xl font-bold text-green-600">{formatCurrency(venta.PRECIO_TOTAL)}</p>
+                      <p className="text-2xl font-bold text-gray-900">{formatCurrency(venta.PRECIO_TOTAL)}</p>
                     </div>
+                    <div className="bg-white rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-gray-500">Total Corto Plazo</p>
+                        <button
+                          onClick={(e) => {
+                            const totalCortoPlazo = venta.productos?.reduce((sum, p) => sum + (p.PRECIO_CORTO_PLAZO * p.CANTIDAD), 0) || 0;
+                            copyToClipboard(totalCortoPlazo.toString(), e.currentTarget);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                          title="Copiar total corto plazo"
+                        >
+                          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </button>
+                      </div>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {formatCurrency(venta.productos?.reduce((sum, p) => sum + (p.PRECIO_CORTO_PLAZO * p.CANTIDAD), 0) || 0)}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-gray-500">Total Contado</p>
+                        <button
+                          onClick={(e) => {
+                            const totalContado = venta.productos?.reduce((sum, p) => sum + (p.PRECIO_CONTADO * p.CANTIDAD), 0) || 0;
+                            copyToClipboard(totalContado.toString(), e.currentTarget);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                          title="Copiar total contado"
+                        >
+                          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </button>
+                      </div>
+                      <p className="text-2xl font-bold text-green-600">
+                        {formatCurrency(venta.productos?.reduce((sum, p) => sum + (p.PRECIO_CONTADO * p.CANTIDAD), 0) || 0)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Segunda fila: Enganche, Parcialidad, Frecuencia */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {venta.ENGANCHE !== undefined && (
                       <div className="bg-white rounded-lg p-4">
                         <div className="flex items-center justify-between">
@@ -606,7 +651,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                             </svg>
                           </button>
                         </div>
-                        <p className="text-2xl font-bold text-blue-600">{formatCurrency(venta.ENGANCHE || 0)}</p>
+                        <p className="text-xl font-bold text-orange-600">{formatCurrency(venta.ENGANCHE || 0)}</p>
                       </div>
                     )}
                     {venta.PARCIALIDAD !== undefined && (
@@ -623,40 +668,19 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                           </svg>
                         </button>
                       </div>
-                      <p className="text-2xl font-bold text-purple-600">{formatCurrency(venta.PARCIALIDAD || 0)}</p>
+                      <p className="text-xl font-bold text-purple-600">{formatCurrency(venta.PARCIALIDAD || 0)}</p>
                     </div>
                     )}
-                    {venta.MONTO_A_CORTO_PLAZO !== undefined && (
-                      <div className="bg-white rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-500">Monto a Corto Plazo</p>
-                          <button
-                            onClick={(e) => copyToClipboard((venta.MONTO_A_CORTO_PLAZO || 0).toString(), e.currentTarget)}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
-                            title="Copiar monto a corto plazo"
-                          >
-                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          </button>
-                        </div>
-                        <p className="text-xl font-bold text-gray-700">{formatCurrency(venta.MONTO_A_CORTO_PLAZO || 0)}</p>
-                      </div>
-                    )}
-                    {venta.TIEMPO_A_CORTO_PLAZOMESES !== undefined && (
-                      <div className="bg-white rounded-lg p-4">
-                        <p className="text-sm text-gray-500">Plazo</p>
-                        <p className="text-xl font-bold text-gray-700">{venta.TIEMPO_A_CORTO_PLAZOMESES} meses</p>
-                      </div>
-                    )}
-                    {venta.FREC_PAGO && (
-                      <div className="bg-white rounded-lg p-4">
-                        <p className="text-sm text-gray-500">Frecuencia de Pago</p>
+                    <div className="bg-white rounded-lg p-4">
+                      <p className="text-sm text-gray-500">Frecuencia de Pago</p>
+                      {venta.FREC_PAGO ? (
                         <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
                           {venta.FREC_PAGO}
                         </span>
-                      </div>
-                    )}
+                      ) : (
+                        <p className="text-xl font-bold text-gray-400">-</p>
+                      )}
+                    </div>
                   </div>
                 </div>
 

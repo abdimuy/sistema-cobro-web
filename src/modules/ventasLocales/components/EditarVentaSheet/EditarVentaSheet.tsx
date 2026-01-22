@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { User, DollarSign, Package, Image, Loader2, AlertTriangle, X } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -87,6 +87,25 @@ const EditarVentaSheet = ({
     reset,
     getPayload,
   } = useEditarVentaForm(venta);
+
+  // Calcular precios totales de productos activos
+  const { precioTotalCalculado, montoACortoPlazoCalculado, totalContadoCalculado } = useMemo(() => {
+    const productosActivos = formData.productos.filter((p) => !p.isDeleted);
+    return {
+      precioTotalCalculado: productosActivos.reduce(
+        (total, p) => total + p.precioLista * p.cantidad,
+        0
+      ),
+      montoACortoPlazoCalculado: productosActivos.reduce(
+        (total, p) => total + p.precioCortoPlazo * p.cantidad,
+        0
+      ),
+      totalContadoCalculado: productosActivos.reduce(
+        (total, p) => total + p.precioContado * p.cantidad,
+        0
+      ),
+    };
+  }, [formData.productos]);
 
   // ==========================================================================
   // Handlers
@@ -258,6 +277,9 @@ const EditarVentaSheet = ({
                   <FinancieroTab
                     data={formData.financiero}
                     errors={validation.errors}
+                    precioTotalCalculado={precioTotalCalculado}
+                    montoACortoPlazoCalculado={montoACortoPlazoCalculado}
+                    totalContadoCalculado={totalContadoCalculado}
                     onUpdate={updateFinanciero}
                   />
                 </TabsContent>

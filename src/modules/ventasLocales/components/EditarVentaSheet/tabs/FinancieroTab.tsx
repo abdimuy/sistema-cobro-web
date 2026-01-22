@@ -18,6 +18,9 @@ import { FinancieroFormData, ValidationError } from "../types";
 interface FinancieroTabProps {
   data: FinancieroFormData;
   errors: ValidationError[];
+  precioTotalCalculado: number;
+  montoACortoPlazoCalculado: number;
+  totalContadoCalculado: number;
   onUpdate: (field: keyof FinancieroFormData, value: FinancieroFormData[keyof FinancieroFormData]) => void;
 }
 
@@ -71,7 +74,7 @@ const formatCurrency = (value: number): string => {
 // Component
 // ============================================================================
 
-const FinancieroTab = ({ data, errors, onUpdate }: FinancieroTabProps) => {
+const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCalculado, totalContadoCalculado, onUpdate }: FinancieroTabProps) => {
   const isCredito = data.tipoVenta === "CREDITO";
 
   const handleNumberChange = (
@@ -84,58 +87,66 @@ const FinancieroTab = ({ data, errors, onUpdate }: FinancieroTabProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Tipo de Venta y Total */}
+      {/* Totales Calculados */}
+      <div className="bg-gradient-to-r from-slate-50 to-gray-50 border border-gray-200 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <DollarSign className="h-5 w-5 text-gray-600" />
+          <span className="text-sm font-semibold text-gray-700">Totales Calculados</span>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {/* Precio Lista */}
+          <div className="bg-white rounded-lg p-3 border border-gray-200 text-center">
+            <p className="text-xs text-gray-500 mb-1">Precio Lista</p>
+            <p className="text-lg font-bold text-gray-900">
+              {formatCurrency(precioTotalCalculado)}
+            </p>
+          </div>
+          {/* Corto Plazo */}
+          <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 text-center">
+            <p className="text-xs text-blue-600 mb-1">Corto Plazo</p>
+            <p className="text-lg font-bold text-blue-600">
+              {formatCurrency(montoACortoPlazoCalculado)}
+            </p>
+          </div>
+          {/* Contado */}
+          <div className="bg-green-50 rounded-lg p-3 border border-green-200 text-center">
+            <p className="text-xs text-green-600 mb-1">Contado</p>
+            <p className="text-lg font-bold text-green-600">
+              {formatCurrency(totalContadoCalculado)}
+            </p>
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 mt-2 text-center">
+          Calculados automáticamente de la suma de productos
+        </p>
+      </div>
+
+      {/* Tipo de Venta */}
       <fieldset className="space-y-4">
         <legend className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3">
-          <DollarSign className="h-4 w-4 text-green-600" />
-          Información de Venta
+          <CreditCard className="h-4 w-4 text-blue-600" />
+          Tipo de Venta
         </legend>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Tipo de Venta */}
-          <div className="space-y-2">
-            <Label htmlFor="tipoVenta" className="text-sm font-medium">
-              Tipo de Venta
-            </Label>
-            <Select
-              value={data.tipoVenta}
-              onValueChange={(value) => onUpdate("tipoVenta", value as FinancieroFormData["tipoVenta"])}
-            >
-              <SelectTrigger id="tipoVenta">
-                <SelectValue placeholder="Seleccionar tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                {TIPOS_VENTA.map((tipo) => (
-                  <SelectItem key={tipo.value} value={tipo.value}>
-                    {tipo.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Precio Total */}
-          <div className="space-y-2">
-            <Label htmlFor="precioTotal" className="text-sm font-medium">
-              Precio Total <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-              <Input
-                id="precioTotal"
-                type="number"
-                min="0"
-                step="0.01"
-                value={data.precioTotal || ""}
-                onChange={(e) => handleNumberChange("precioTotal", e.target.value)}
-                className={`pl-7 ${getFieldError(errors, "precioTotal") ? "border-red-500" : ""}`}
-                placeholder="0.00"
-              />
-            </div>
-            {getFieldError(errors, "precioTotal") && (
-              <p className="text-xs text-red-500">{getFieldError(errors, "precioTotal")}</p>
-            )}
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="tipoVenta" className="text-sm font-medium">
+            Tipo de Venta
+          </Label>
+          <Select
+            value={data.tipoVenta}
+            onValueChange={(value) => onUpdate("tipoVenta", value as FinancieroFormData["tipoVenta"])}
+          >
+            <SelectTrigger id="tipoVenta">
+              <SelectValue placeholder="Seleccionar tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              {TIPOS_VENTA.map((tipo) => (
+                <SelectItem key={tipo.value} value={tipo.value}>
+                  {tipo.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </fieldset>
 
@@ -245,51 +256,22 @@ const FinancieroTab = ({ data, errors, onUpdate }: FinancieroTabProps) => {
         </fieldset>
       )}
 
-      {/* Corto Plazo */}
-      <fieldset className="space-y-4">
-        <legend className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3">
+      {/* Plazo */}
+      <div className="space-y-2">
+        <Label htmlFor="tiempoACortoPlazoMeses" className="text-sm font-medium flex items-center gap-2">
           <Calendar className="h-4 w-4 text-purple-600" />
-          Información a Corto Plazo
-        </legend>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Monto a Corto Plazo */}
-          <div className="space-y-2">
-            <Label htmlFor="montoACortoPlazo" className="text-sm font-medium">
-              Monto a Corto Plazo
-            </Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-              <Input
-                id="montoACortoPlazo"
-                type="number"
-                min="0"
-                step="0.01"
-                value={data.montoACortoPlazo || ""}
-                onChange={(e) => handleNumberChange("montoACortoPlazo", e.target.value)}
-                className="pl-7"
-                placeholder="0.00"
-              />
-            </div>
-          </div>
-
-          {/* Tiempo a Corto Plazo */}
-          <div className="space-y-2">
-            <Label htmlFor="tiempoACortoPlazoMeses" className="text-sm font-medium">
-              Plazo (meses)
-            </Label>
-            <Input
-              id="tiempoACortoPlazoMeses"
-              type="number"
-              min="0"
-              max="120"
-              value={data.tiempoACortoPlazoMeses || ""}
-              onChange={(e) => handleNumberChange("tiempoACortoPlazoMeses", e.target.value)}
-              placeholder="0"
-            />
-          </div>
-        </div>
-      </fieldset>
+          Plazo a Corto Plazo (meses)
+        </Label>
+        <Input
+          id="tiempoACortoPlazoMeses"
+          type="number"
+          min="0"
+          max="120"
+          value={data.tiempoACortoPlazoMeses || ""}
+          onChange={(e) => handleNumberChange("tiempoACortoPlazoMeses", e.target.value)}
+          placeholder="0"
+        />
+      </div>
 
       {/* Nota */}
       <fieldset className="space-y-4">
@@ -314,30 +296,28 @@ const FinancieroTab = ({ data, errors, onUpdate }: FinancieroTabProps) => {
       </fieldset>
 
       {/* Resumen */}
-      <div className="bg-gray-50 rounded-lg p-4 border">
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">Resumen Financiero</h4>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="text-gray-600">Precio Total:</div>
-          <div className="font-semibold text-green-600 text-right">
-            {formatCurrency(data.precioTotal)}
+      {isCredito && (
+        <div className="bg-gray-50 rounded-lg p-4 border">
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">Resumen de Crédito</h4>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="text-gray-600">Precio Total:</div>
+            <div className="font-semibold text-green-600 text-right">
+              {formatCurrency(precioTotalCalculado)}
+            </div>
+
+            <div className="text-gray-600">Enganche:</div>
+            <div className="font-medium text-right">{formatCurrency(data.enganche)}</div>
+
+            <div className="text-gray-600">Parcialidad:</div>
+            <div className="font-medium text-right">{formatCurrency(data.parcialidad)}</div>
+
+            <div className="text-gray-600 font-medium">Saldo a financiar:</div>
+            <div className="font-semibold text-right text-orange-600">
+              {formatCurrency(precioTotalCalculado - data.enganche)}
+            </div>
           </div>
-
-          {isCredito && (
-            <>
-              <div className="text-gray-600">Enganche:</div>
-              <div className="font-medium text-right">{formatCurrency(data.enganche)}</div>
-
-              <div className="text-gray-600">Parcialidad:</div>
-              <div className="font-medium text-right">{formatCurrency(data.parcialidad)}</div>
-
-              <div className="text-gray-600">Saldo a financiar:</div>
-              <div className="font-medium text-right text-orange-600">
-                {formatCurrency(data.precioTotal - data.enganche)}
-              </div>
-            </>
-          )}
         </div>
-      </div>
+      )}
     </div>
   );
 };

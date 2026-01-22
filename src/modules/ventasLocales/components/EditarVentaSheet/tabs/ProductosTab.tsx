@@ -238,25 +238,61 @@ const ProductoCard = ({
         )}
       </div>
 
-      {/* Precios */}
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="bg-gray-50 rounded p-2">
-          <p className="text-xs text-gray-500">Lista</p>
-          <p className="text-sm font-semibold text-gray-900">
-            {formatCurrency(producto.precioLista)}
-          </p>
+      {/* Precios editables */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="space-y-1">
+          <Label htmlFor={`precioLista-${index}`} className="text-xs text-gray-500">
+            Lista
+          </Label>
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+            <Input
+              id={`precioLista-${index}`}
+              type="number"
+              min="0"
+              step="0.01"
+              value={producto.precioLista}
+              onChange={(e) => onUpdate("precioLista", parseFloat(e.target.value) || 0)}
+              disabled={isDeleted}
+              className="h-8 pl-5 text-sm font-semibold text-gray-900 bg-gray-50"
+            />
+          </div>
         </div>
-        <div className="bg-blue-50 rounded p-2">
-          <p className="text-xs text-gray-500">C. Plazo</p>
-          <p className="text-sm font-semibold text-blue-600">
-            {formatCurrency(producto.precioCortoPlazo)}
-          </p>
+        <div className="space-y-1">
+          <Label htmlFor={`precioCortoPlazo-${index}`} className="text-xs text-gray-500">
+            C. Plazo
+          </Label>
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-blue-400 text-xs">$</span>
+            <Input
+              id={`precioCortoPlazo-${index}`}
+              type="number"
+              min="0"
+              step="0.01"
+              value={producto.precioCortoPlazo}
+              onChange={(e) => onUpdate("precioCortoPlazo", parseFloat(e.target.value) || 0)}
+              disabled={isDeleted}
+              className="h-8 pl-5 text-sm font-semibold text-blue-600 bg-blue-50"
+            />
+          </div>
         </div>
-        <div className="bg-green-50 rounded p-2">
-          <p className="text-xs text-gray-500">Contado</p>
-          <p className="text-sm font-semibold text-green-600">
-            {formatCurrency(producto.precioContado)}
-          </p>
+        <div className="space-y-1">
+          <Label htmlFor={`precioContado-${index}`} className="text-xs text-gray-500">
+            Contado
+          </Label>
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-green-400 text-xs">$</span>
+            <Input
+              id={`precioContado-${index}`}
+              type="number"
+              min="0"
+              step="0.01"
+              value={producto.precioContado}
+              onChange={(e) => onUpdate("precioContado", parseFloat(e.target.value) || 0)}
+              disabled={isDeleted}
+              className="h-8 pl-5 text-sm font-semibold text-green-600 bg-green-50"
+            />
+          </div>
         </div>
       </div>
 
