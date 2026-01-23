@@ -4,7 +4,6 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/es";
 import Navigation from "../../components/Navigation";
 import useGetVentasLocales from "../../hooks/useGetVentasLocales";
-import useGetResumenVentas from "../../hooks/useGetResumenVentas";
 import VentaDetalleModal from "./VentaDetalleModal";
 import { VentaLocal } from "../../services/api/getVentasLocales";
 import useGetAlmacenes from "../../hooks/useGetAlmacenes";
@@ -25,7 +24,6 @@ const VentasLocales = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const { ventas, loading, error } = useGetVentasLocales(filters);
-  const { resumen } = useGetResumenVentas(filters.fechaInicio, filters.fechaFin);
   const { getAlmacenById, loading: loadingAlmacenes } = useGetAlmacenes();
 
   const filteredVentas = useMemo(() => {
@@ -236,27 +234,6 @@ const VentasLocales = () => {
               <p className="text-sm text-gray-500 mt-2">Sistema de consulta y gestión de ventas</p>
             </div>
             
-            {/* KPIs con animación */}
-            {resumen && (
-              <div className="flex gap-8">
-                <div className="text-center group cursor-pointer">
-                  <div className="transform transition-transform group-hover:scale-110">
-                    <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-                      {resumen.TOTAL_VENTAS}
-                    </p>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">Total Ventas</p>
-                </div>
-                <div className="text-center group cursor-pointer">
-                  <div className="transform transition-transform group-hover:scale-110">
-                    <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
-                      {formatCurrency(resumen.MONTO_TOTAL)}
-                    </p>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">Monto Total</p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
