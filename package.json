@@ -3,15 +3,14 @@
   "private": true,
   "version": "1.2.0",
   "type": "module",
-  "main": "main.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "electron": "electron .",
-    "electron-dev": "concurrently \"npm run dev\" \"npm run electron\"",
-    "dist": "electron-builder"
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "@ag-grid-community/locale": "^32.1.0",
@@ -29,16 +28,14 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@react-google-maps/api": "^2.19.3",
     "@tanstack/react-table": "^8.21.3",
+    "@tauri-apps/api": "^2.9.1",
     "ag-grid-enterprise": "^32.3.1",
     "ag-grid-react": "^32.3.1",
     "axios": "^1.6.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.11",
-    "electron-is-dev": "^3.0.1",
-    "express": "^4.19.2",
     "firebase": "^10.12.0",
-    "get-port": "^7.1.0",
     "lucide-react": "^0.546.0",
     "next-themes": "^0.4.6",
     "react": "^18.2.0",
@@ -52,6 +49,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.9.6",
     "@types/node": "^24.9.1",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
@@ -59,9 +57,6 @@
     "@typescript-eslint/parser": "^7.2.0",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.19",
-    "concurrently": "^7.0.0",
-    "electron": "^31.0.2",
-    "electron-builder": "^24.13.3",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
@@ -70,29 +65,5 @@
     "tailwindcss": "^3.4.3",
     "typescript": "^5.2.2",
     "vite": "^5.2.0"
-  },
-  "build": {
-    "appId": "com.ejemplo.app",
-    "productName": "MiAppDesktop",
-    "files": [
-      "**/*",
-      "dist/**/*"
-    ],
-    "directories": {
-      "buildResources": "assets",
-      "output": "release"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "icons/icon.ico"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "icons/icon.icns"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "icons"
-    }
   }
 }
