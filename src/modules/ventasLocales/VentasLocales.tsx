@@ -11,13 +11,15 @@ import {
   VentasFilters,
   VentasTable,
   VentasColumnSelector,
-  VentasInfiniteScroll,
   VentasEmptyState,
   VentasErrorState,
   VentasLoadingSkeleton,
   loadVisibleColumns,
   saveVisibleColumns,
+  loadColumnWidths,
+  saveColumnWidths,
   ColumnId,
+  ColumnWidths,
 } from "./components";
 
 export default function VentasLocales() {
@@ -25,16 +27,20 @@ export default function VentasLocales() {
   const [selectedVentaId, setSelectedVentaId] = useState<string | null>(null);
   const [showDetalleModal, setShowDetalleModal] = useState(false);
 
-  // Selection state
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
   // Column visibility state
   const [visibleColumns, setVisibleColumns] = useState<ColumnId[]>(loadVisibleColumns);
+
+  // Column widths state
+  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(loadColumnWidths);
 
   // Save column preferences when they change
   useEffect(() => {
     saveVisibleColumns(visibleColumns);
   }, [visibleColumns]);
+
+  useEffect(() => {
+    saveColumnWidths(columnWidths);
+  }, [columnWidths]);
 
   // Data hooks
   const {
@@ -91,6 +97,10 @@ export default function VentasLocales() {
     },
     [getAlmacenById]
   );
+
+  const handleColumnResize = useCallback((columnId: ColumnId, width: number) => {
+    setColumnWidths((prev) => ({ ...prev, [columnId]: width }));
+  }, []);
 
   // Check if any filters are applied
   const hasFilters = useMemo(() => {
@@ -154,7 +164,7 @@ export default function VentasLocales() {
       </header>
 
       {/* Main Content */}
-      <main className="px-4 sm:px-6 lg:px-8 py-4">
+      <main>
         {error ? (
           <VentasErrorState message={error} onRetry={refetch} />
         ) : loading && ventas.length === 0 ? (
@@ -165,25 +175,22 @@ export default function VentasLocales() {
             onClearFilters={handleClearFilters}
           />
         ) : (
-          <>
-            <VentasTable
-              ventas={ventas}
-              visibleColumns={visibleColumns}
-              sortBy={params.sortBy}
-              sortOrder={params.sortOrder}
-              onSort={updateSort}
-              onViewDetails={handleViewDetails}
-              getAlmacenName={getAlmacenName}
-              selectedIds={selectedIds}
-              onSelectionChange={setSelectedIds}
-            />
-            <VentasInfiniteScroll
-              hasMore={hasMore}
-              isLoading={loadingMore}
-              onLoadMore={loadMore}
-              currentCount={ventas.length}
-            />
-          </>
+          <VentasTable
+            ventas={ventas}
+            visibleColumns={visibleColumns}
+            columnWidths={columnWidths}
+            onColumnResize={handleColumnResize}
+            sortBy={params.sortBy}
+            sortOrder={params.sortOrder}
+            onSort={updateSort}
+            onViewDetails={handleViewDetails}
+            getAlmacenName={getAlmacenName}
+            infiniteScroll={{
+              hasMore,
+              isLoading: loadingMore,
+              onLoadMore: loadMore,
+            }}
+          />
         )}
       </main>
 
