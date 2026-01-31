@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Calendar,
+  Calendar as CalendarIcon,
   Store,
   CreditCard,
   MapPin,
@@ -8,10 +8,13 @@ import {
   X,
   ChevronDown,
 } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
@@ -85,46 +88,42 @@ export function VentasFilters({
                 "border-primary/50 bg-primary/5 text-primary"
             )}
           >
-            <Calendar className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Fecha</span>
-            {(params.fechaInicio || params.fechaFin) && (
-              <Badge
-                variant="secondary"
-                className="ml-1 h-4 px-1 text-[10px] bg-primary/10 text-primary border-0"
-              >
-                1
-              </Badge>
+            <CalendarIcon className="h-3.5 w-3.5" />
+            {params.fechaInicio || params.fechaFin ? (
+              <span className="hidden sm:inline">
+                {params.fechaInicio
+                  ? format(new Date(params.fechaInicio + "T00:00:00"), "dd MMM", { locale: es })
+                  : "..."}{" "}
+                -{" "}
+                {params.fechaFin
+                  ? format(new Date(params.fechaFin + "T00:00:00"), "dd MMM", { locale: es })
+                  : "..."}
+              </span>
+            ) : (
+              <span className="hidden sm:inline">Fecha</span>
             )}
             <ChevronDown className="h-3 w-3 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 p-3" align="start">
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
-                Fecha inicio
-              </Label>
-              <Input
-                type="date"
-                value={params.fechaInicio || ""}
-                onChange={(e) =>
-                  onParamsChange({ fechaInicio: e.target.value || undefined })
-                }
-                className="h-8 text-sm"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Fecha fin</Label>
-              <Input
-                type="date"
-                value={params.fechaFin || ""}
-                onChange={(e) =>
-                  onParamsChange({ fechaFin: e.target.value || undefined })
-                }
-                className="h-8 text-sm"
-              />
-            </div>
-            {(params.fechaInicio || params.fechaFin) && (
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="range"
+            selected={{
+              from: params.fechaInicio ? new Date(params.fechaInicio + "T00:00:00") : undefined,
+              to: params.fechaFin ? new Date(params.fechaFin + "T00:00:00") : undefined,
+            }}
+            onSelect={(range) => {
+              onParamsChange({
+                fechaInicio: range?.from ? format(range.from, "yyyy-MM-dd") : undefined,
+                fechaFin: range?.to ? format(range.to, "yyyy-MM-dd") : undefined,
+              });
+            }}
+            locale={es}
+            numberOfMonths={2}
+            initialFocus
+          />
+          {(params.fechaInicio || params.fechaFin) && (
+            <div className="p-2 border-t border-border/50">
               <Button
                 variant="ghost"
                 size="sm"
@@ -138,8 +137,8 @@ export function VentasFilters({
               >
                 Limpiar fechas
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </PopoverContent>
       </Popover>
 
@@ -311,31 +310,23 @@ export function VentasFilters({
         </PopoverContent>
       </Popover>
 
-      {/* Active Filter Tags */}
+      {/* Clear All Filters Button */}
       {activeFilterCount > 0 && (
-        <div className="hidden md:flex items-center gap-1.5 ml-1">
-          {params.tipoVenta && (
-            <Badge
-              variant="secondary"
-              className="h-6 gap-1 text-xs font-normal cursor-pointer hover:bg-secondary/80"
-              onClick={() => onParamsChange({ tipoVenta: undefined })}
-            >
-              {params.tipoVenta === "CREDITO" ? "Crédito" : "Contado"}
-              <X className="h-3 w-3" />
-            </Badge>
-          )}
-          {params.almacenId && (
-            <Badge
-              variant="secondary"
-              className="h-6 gap-1 text-xs font-normal cursor-pointer hover:bg-secondary/80"
-              onClick={() => onParamsChange({ almacenId: undefined })}
-            >
-              {almacenes.find((a) => a.ALMACEN_ID === params.almacenId)?.ALMACEN ||
-                "Almacén"}
-              <X className="h-3 w-3" />
-            </Badge>
-          )}
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleClearFilters}
+          className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <X className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Limpiar filtros</span>
+          <Badge
+            variant="secondary"
+            className="ml-0.5 h-4 px-1 text-[10px] bg-muted border-0"
+          >
+            {activeFilterCount}
+          </Badge>
+        </Button>
       )}
     </div>
   );
