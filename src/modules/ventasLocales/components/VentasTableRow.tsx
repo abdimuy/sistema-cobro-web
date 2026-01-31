@@ -10,7 +10,6 @@ import {
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,15 +18,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { VentaLocal } from "@/services/api/getVentasLocales";
-import { ColumnId, COLUMNS } from "./columns";
-import { formatCurrency, formatRelativeDate, formatPhone, copyToClipboard } from "./utils";
+import { ColumnId, ColumnWidths, COLUMNS } from "./columns";
+import { formatCurrency, formatPhone, copyToClipboard } from "./utils";
 import { cn } from "@/lib/utils";
 
 interface VentasTableRowProps {
   venta: VentaLocal;
   visibleColumns: ColumnId[];
-  isSelected: boolean;
-  onSelect: (selected: boolean) => void;
+  columnWidths: ColumnWidths;
   onViewDetails: () => void;
   getAlmacenName: (id: number) => string;
 }
@@ -35,8 +33,7 @@ interface VentasTableRowProps {
 export function VentasTableRow({
   venta,
   visibleColumns,
-  isSelected,
-  onSelect,
+  columnWidths,
   onViewDetails,
   getAlmacenName,
 }: VentasTableRowProps) {
@@ -64,34 +61,40 @@ export function VentasTableRow({
   const renderCell = (columnId: ColumnId) => {
     const colDef = getColumnDef(columnId);
     const alignClass = colDef?.align === "right" ? "text-right" : "";
+    const width = columnWidths[columnId];
+    const cellStyle = { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` };
 
     switch (columnId) {
+      case "id":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-xs text-muted-foreground font-mono">
+              #{venta.LOCAL_SALE_ID.slice(0, 8)}
+            </span>
+          </TableCell>
+        );
+
       case "cliente":
         return (
-          <TableCell className={cn("min-w-[180px]", alignClass)}>
-            <div className="flex flex-col gap-0.5">
-              <span className="font-medium text-foreground truncate max-w-[220px]">
-                {venta.NOMBRE_CLIENTE}
-              </span>
-              <span className="text-[11px] text-muted-foreground font-mono">
-                #{venta.LOCAL_SALE_ID.slice(0, 8)}
-              </span>
-            </div>
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="font-medium text-foreground truncate block">
+              {venta.NOMBRE_CLIENTE}
+            </span>
           </TableCell>
         );
 
       case "telefono":
         return (
-          <TableCell className={cn("w-[130px]", alignClass)}>
+          <TableCell className={alignClass} style={cellStyle}>
             {venta.TELEFONO ? (
               <div className="flex items-center gap-1">
-                <span className="text-sm tabular-nums">
+                <span className="text-sm tabular-nums truncate">
                   {formatPhone(venta.TELEFONO)}
                 </span>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleCopy(venta.TELEFONO, "phone");
@@ -112,8 +115,8 @@ export function VentasTableRow({
 
       case "direccion":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
-            <span className="text-sm text-muted-foreground truncate block max-w-[200px]" title={venta.DIRECCION}>
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-sm text-muted-foreground truncate block" title={venta.DIRECCION}>
               {venta.DIRECCION || "—"}
             </span>
           </TableCell>
@@ -121,8 +124,8 @@ export function VentasTableRow({
 
       case "colonia":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
-            <span className="text-sm text-muted-foreground truncate block max-w-[120px]">
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-sm text-muted-foreground truncate block">
               {venta.COLONIA || "—"}
             </span>
           </TableCell>
@@ -130,8 +133,8 @@ export function VentasTableRow({
 
       case "ciudad":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
-            <span className="text-sm text-muted-foreground truncate block max-w-[130px]">
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-sm text-muted-foreground truncate block">
               {venta.CIUDAD || "—"}
             </span>
           </TableCell>
@@ -139,8 +142,8 @@ export function VentasTableRow({
 
       case "poblacion":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
-            <span className="text-sm text-muted-foreground truncate block max-w-[120px]">
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-sm text-muted-foreground truncate block">
               {venta.POBLACION || "—"}
             </span>
           </TableCell>
@@ -148,16 +151,25 @@ export function VentasTableRow({
 
       case "total":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
+          <TableCell className={alignClass} style={cellStyle}>
             <span className="font-semibold tabular-nums text-foreground">
               {formatCurrency(venta.PRECIO_TOTAL)}
             </span>
           </TableCell>
         );
 
+      case "montoCorto":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-sm tabular-nums text-muted-foreground">
+              {venta.MONTO_A_CORTO_PLAZO ? formatCurrency(venta.MONTO_A_CORTO_PLAZO) : "—"}
+            </span>
+          </TableCell>
+        );
+
       case "enganche":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
+          <TableCell className={alignClass} style={cellStyle}>
             <span className="text-sm tabular-nums text-muted-foreground">
               {venta.ENGANCHE ? formatCurrency(venta.ENGANCHE) : "—"}
             </span>
@@ -166,7 +178,7 @@ export function VentasTableRow({
 
       case "parcialidad":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
+          <TableCell className={alignClass} style={cellStyle}>
             <span className="text-sm tabular-nums text-muted-foreground">
               {venta.PARCIALIDAD ? formatCurrency(venta.PARCIALIDAD) : "—"}
             </span>
@@ -175,7 +187,7 @@ export function VentasTableRow({
 
       case "tipo":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
+          <TableCell className={alignClass} style={cellStyle}>
             {venta.TIPO_VENTA ? (
               <Badge
                 variant="secondary"
@@ -197,11 +209,22 @@ export function VentasTableRow({
 
       case "frecuencia":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
+          <TableCell className={alignClass} style={cellStyle}>
             {venta.FREC_PAGO ? (
-              <span className="text-xs text-muted-foreground">
+              <Badge
+                variant="secondary"
+                className={cn(
+                  "text-[10px] font-medium px-1.5 py-0",
+                  venta.FREC_PAGO === "SEMANAL" &&
+                    "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-blue-500/20",
+                  venta.FREC_PAGO === "QUINCENAL" &&
+                    "bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20",
+                  venta.FREC_PAGO === "MENSUAL" &&
+                    "bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 border-indigo-500/20"
+                )}
+              >
                 {venta.FREC_PAGO.charAt(0) + venta.FREC_PAGO.slice(1).toLowerCase()}
-              </span>
+              </Badge>
             ) : (
               <span className="text-muted-foreground">—</span>
             )}
@@ -210,7 +233,7 @@ export function VentasTableRow({
 
       case "zona":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
+          <TableCell className={alignClass} style={cellStyle}>
             <span className="text-xs text-muted-foreground font-mono">
               {venta.ZONA_CLIENTE || "—"}
             </span>
@@ -219,8 +242,8 @@ export function VentasTableRow({
 
       case "vendedor":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
-            <span className="text-xs text-muted-foreground truncate block max-w-[130px]" title={venta.USER_EMAIL}>
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-xs text-muted-foreground truncate block" title={venta.USER_EMAIL}>
               {venta.USER_EMAIL?.split("@")[0] || "—"}
             </span>
           </TableCell>
@@ -228,8 +251,8 @@ export function VentasTableRow({
 
       case "almacen":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
-            <span className="text-xs text-muted-foreground truncate block max-w-[120px]" title={getAlmacenName(venta.ALMACEN_ID)}>
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-xs text-muted-foreground truncate block" title={getAlmacenName(venta.ALMACEN_ID)}>
               {getAlmacenName(venta.ALMACEN_ID)}
             </span>
           </TableCell>
@@ -237,7 +260,7 @@ export function VentasTableRow({
 
       case "diaCobranza":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
+          <TableCell className={alignClass} style={cellStyle}>
             <span className="text-xs text-muted-foreground">
               {venta.DIA_COBRANZA || "—"}
             </span>
@@ -246,9 +269,18 @@ export function VentasTableRow({
 
       case "fecha":
         return (
-          <TableCell className={cn(colDef?.width, alignClass)}>
-            <span className="text-xs text-muted-foreground">
-              {formatRelativeDate(venta.FECHA_VENTA)}
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {new Date(venta.FECHA_VENTA).toLocaleDateString("es-MX", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })}{" "}
+              {new Date(venta.FECHA_VENTA).toLocaleTimeString("es-MX", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              })}
             </span>
           </TableCell>
         );
@@ -260,21 +292,9 @@ export function VentasTableRow({
 
   return (
     <TableRow
-      className={cn(
-        "group cursor-pointer transition-colors",
-        isSelected && "bg-muted/50"
-      )}
+      className="group cursor-pointer transition-colors hover:bg-muted/50"
       onClick={onViewDetails}
     >
-      {/* Checkbox */}
-      <TableCell className="w-[40px]" onClick={(e) => e.stopPropagation()}>
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={onSelect}
-          className="translate-y-[2px]"
-        />
-      </TableCell>
-
       {/* Dynamic columns */}
       {visibleColumns.map((columnId) => (
         <React.Fragment key={columnId}>{renderCell(columnId)}</React.Fragment>
