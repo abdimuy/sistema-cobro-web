@@ -36,7 +36,7 @@ export type UseVentasReturn = UseVentasState & UseVentasActions & {
 // Constants
 // ============================================================================
 
-const DEFAULT_LIMIT = 30;
+const DEFAULT_LIMIT = 50;
 
 // ============================================================================
 // Hook
