@@ -23,16 +23,75 @@ export interface VentaLocal {
   DIA_COBRANZA?: string;
   TIEMPO_A_CORTO_PLAZOMESES?: number;
   MONTO_A_CORTO_PLAZO?: number;
-  // Nuevos campos de dirección
   NUMERO?: string;
   COLONIA?: string;
   POBLACION?: string;
   CIUDAD?: string;
-  // Nuevo campo tipo de venta
   TIPO_VENTA?: string;
-  // Campos de zona del cliente
   ZONA_CLIENTE_ID?: number;
   ZONA_CLIENTE?: string;
+  ENVIADO?: boolean;
+}
+
+// ============================================================================
+// Types for V2 API (cursor pagination)
+// ============================================================================
+
+export interface VentasParams {
+  // Date filters
+  fechaInicio?: string;
+  fechaFin?: string;
+  // Text filters (partial match)
+  nombreCliente?: string;
+  telefono?: string;
+  direccion?: string;
+  ciudad?: string;
+  colonia?: string;
+  poblacion?: string;
+  // Exact filters
+  zonaClienteId?: number;
+  tipoVenta?: "CONTADO" | "CREDITO";
+  userEmail?: string;
+  almacenId?: number;
+  enviado?: boolean;
+  // Range filters
+  precioMin?: number;
+  precioMax?: number;
+  // General search
+  search?: string;
+  // Pagination
+  cursor?: string;
+  limit?: number;
+  // Sorting
+  sortBy?: "fechaVenta" | "nombreCliente" | "precioTotal" | "ciudad" | "tipoVenta";
+  sortOrder?: "asc" | "desc";
+  // Options
+  includeTotal?: boolean;
+}
+
+export interface VentasPagination {
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  nextCursor: string | null;
+  previousCursor: string | null;
+  limit: number;
+  totalCount?: number;
+}
+
+export interface VentasFilters {
+  applied: Record<string, unknown>;
+  sortBy: string;
+  sortOrder: "asc" | "desc";
+}
+
+export interface VentasResponse {
+  error: boolean;
+  status: number;
+  body: {
+    data: VentaLocal[];
+    pagination: VentasPagination;
+    filters: VentasFilters;
+  };
 }
 
 export interface ProductoVenta {
@@ -77,21 +136,25 @@ export interface ResumenVentas {
   VENTAS_PENDIENTES: number;
 }
 
-interface VentasParams {
-  fechaInicio?: string;
-  fechaFin?: string;
-  nombreCliente?: string;
-  limit?: number;
-  offset?: number;
-}
+export const getVentasLocales = async (
+  params?: VentasParams
+): Promise<VentasResponse["body"]> => {
+  // Clean params - remove undefined/empty values
+  const cleanParams: Record<string, unknown> = {};
 
-export const getVentasLocales = async (params?: VentasParams): Promise<VentaLocal[]> => {
-  const options: AxiosRequestConfig = {
-    url: `${BASE_URL}/ventas-locales`,
-    method: "GET",
-    params,
-  };
-  const response = await axios.request<{ body: VentaLocal[]; error: string }>(options);
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== "" && value !== null) {
+        cleanParams[key] = value;
+      }
+    });
+  }
+
+  const response = await axios.get<VentasResponse>(
+    `${BASE_URL}/ventas-locales/v2`,
+    { params: cleanParams }
+  );
+
   return response.data.body;
 };
 
