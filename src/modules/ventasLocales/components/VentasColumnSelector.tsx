@@ -39,7 +39,7 @@ export function VentasColumnSelector({
   };
 
   const hasChanges =
-    JSON.stringify(visibleColumns.sort()) !==
+    JSON.stringify([...visibleColumns].sort()) !==
     JSON.stringify([...DEFAULT_VISIBLE_COLUMNS].sort());
 
   return (
