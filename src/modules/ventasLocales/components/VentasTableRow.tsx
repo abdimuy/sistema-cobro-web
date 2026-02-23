@@ -243,6 +243,25 @@ export function VentasTableRow({
       case "vendedor":
         return (
           <TableCell className={alignClass} style={cellStyle}>
+            {venta.vendedores && venta.vendedores.length > 0 ? (
+              <div className="flex flex-col gap-0.5">
+                {venta.vendedores.map((v, idx) => (
+                  <span key={idx} className="text-xs text-muted-foreground truncate block" title={`${v.NOMBRE_VENDEDOR} (${v.VENDEDOR_EMAIL})`}>
+                    {v.NOMBRE_VENDEDOR}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <span className="text-xs text-muted-foreground truncate block" title={venta.USER_EMAIL}>
+                {venta.USER_EMAIL?.split("@")[0] || "—"}
+              </span>
+            )}
+          </TableCell>
+        );
+
+      case "creador":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
             <span className="text-xs text-muted-foreground truncate block" title={venta.USER_EMAIL}>
               {venta.USER_EMAIL?.split("@")[0] || "—"}
             </span>

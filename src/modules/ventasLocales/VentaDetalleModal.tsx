@@ -694,9 +694,22 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                         <p className="font-semibold text-gray-900">{dayjs(venta.FECHA_VENTA).format("DD/MM/YYYY HH:mm")}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Vendedor</p>
+                        <p className="text-sm text-gray-500">Creador</p>
                         <p className="font-semibold text-gray-900">{venta.USER_EMAIL}</p>
                       </div>
+                      {venta.vendedores && venta.vendedores.length > 0 && (
+                        <div>
+                          <p className="text-sm text-gray-500">Vendedor{venta.vendedores.length > 1 ? 'es' : ''}</p>
+                          <div className="space-y-1">
+                            {venta.vendedores.map((v, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <span className="font-semibold text-gray-900">{v.NOMBRE_VENDEDOR}</span>
+                                <span className="text-xs text-gray-500">({v.VENDEDOR_EMAIL})</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <div>
                         <p className="text-sm text-gray-500">Almacén</p>
                         {loadingAlmacenes ? (

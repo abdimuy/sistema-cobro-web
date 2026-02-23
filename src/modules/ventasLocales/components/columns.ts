@@ -14,6 +14,7 @@ export type ColumnId =
   | "frecuencia"
   | "zona"
   | "vendedor"
+  | "creador"
   | "almacen"
   | "diaCobranza"
   | "fecha";
@@ -143,6 +144,12 @@ export const COLUMNS: ColumnDef[] = [
     width: "w-[140px]",
   },
   {
+    id: "creador",
+    label: "Creador",
+    defaultVisible: false,
+    width: "w-[140px]",
+  },
+  {
     id: "almacen",
     label: "Almacén",
     defaultVisible: false,
@@ -211,6 +218,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ColumnId, number> = {
   frecuencia: 90,
   zona: 70,
   vendedor: 140,
+  creador: 140,
   almacen: 130,
   diaCobranza: 100,
   fecha: 150,
