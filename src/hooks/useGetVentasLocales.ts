@@ -183,6 +183,7 @@ export function useGetVentasLocales(initialParams?: Partial<VentasParams>): UseV
     params.precioMin,
     params.precioMax,
     params.enviado,
+    params.vendedorEmails,
     fetchInitial,
   ]);
 

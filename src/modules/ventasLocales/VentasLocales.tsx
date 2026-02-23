@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation";
 import useGetVentasLocales from "@/hooks/useGetVentasLocales";
 import useGetAlmacenes from "@/hooks/useGetAlmacenes";
 import useGetZonasCliente from "@/hooks/useGetZonasCliente";
+import useGetVendedores from "@/hooks/useGetVendedores";
 import VentaDetalleModal from "./VentaDetalleModal";
 import {
   VentasSearchBar,
@@ -58,6 +59,7 @@ export default function VentasLocales() {
 
   const { almacenes, getAlmacenById } = useGetAlmacenes();
   const { zonas } = useGetZonasCliente();
+  const { vendedores: vendedoresOptions } = useGetVendedores();
 
   // Handlers
   const handleSearch = useCallback(
@@ -85,6 +87,7 @@ export default function VentasLocales() {
       tipoVenta: undefined,
       almacenId: undefined,
       zonaClienteId: undefined,
+      vendedorEmails: undefined,
       precioMin: undefined,
       precioMax: undefined,
     });
@@ -111,6 +114,7 @@ export default function VentasLocales() {
       params.tipoVenta ||
       params.almacenId ||
       params.zonaClienteId ||
+      params.vendedorEmails ||
       params.precioMin ||
       params.precioMax
     );
@@ -153,6 +157,7 @@ export default function VentasLocales() {
                 onParamsChange={setParams}
                 almacenes={almacenes}
                 zonas={zonas}
+                vendedores={vendedoresOptions}
               />
               <VentasColumnSelector
                 visibleColumns={visibleColumns}

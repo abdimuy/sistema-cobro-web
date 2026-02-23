@@ -7,6 +7,7 @@ import {
   Filter,
   X,
   ChevronDown,
+  Users,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -28,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { VentasParams } from "@/services/api/getVentasLocales";
+import { VentasParams, VendedorOption } from "@/services/api/getVentasLocales";
 import { Almacen } from "@/hooks/useGetAlmacenes";
 import { ZonaCliente } from "@/services/api/getZonasCliente";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ interface VentasFiltersProps {
   onParamsChange: (params: Partial<VentasParams>) => void;
   almacenes: Almacen[];
   zonas: ZonaCliente[];
+  vendedores: VendedorOption[];
   className?: string;
 }
 
@@ -46,6 +48,7 @@ export function VentasFilters({
   onParamsChange,
   almacenes,
   zonas,
+  vendedores,
   className,
 }: VentasFiltersProps) {
   const [dateOpen, setDateOpen] = useState(false);
@@ -58,6 +61,7 @@ export function VentasFilters({
     params.tipoVenta,
     params.almacenId,
     params.zonaClienteId,
+    params.vendedorEmails,
     params.precioMin,
     params.precioMax,
   ].filter(Boolean).length;
@@ -69,6 +73,7 @@ export function VentasFilters({
       tipoVenta: undefined,
       almacenId: undefined,
       zonaClienteId: undefined,
+      vendedorEmails: undefined,
       precioMin: undefined,
       precioMax: undefined,
     });
@@ -263,6 +268,34 @@ export function VentasFilters({
                       value={z.ZONA_CLIENTE_ID.toString()}
                     >
                       {z.ZONA_CLIENTE}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Vendedor */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Users className="h-3 w-3" />
+                Vendedor
+              </Label>
+              <Select
+                value={params.vendedorEmails || "all"}
+                onValueChange={(v) =>
+                  onParamsChange({
+                    vendedorEmails: v === "all" ? undefined : v,
+                  })
+                }
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los vendedores</SelectItem>
+                  {vendedores.map((v) => (
+                    <SelectItem key={v.VENDEDOR_EMAIL} value={v.VENDEDOR_EMAIL}>
+                      {v.NOMBRE_VENDEDOR}
                     </SelectItem>
                   ))}
                 </SelectContent>
