@@ -1,6 +1,6 @@
 [package]
 name = "sistema-muebles-san-pablo"
-version = "1.4.0"
+version = "1.5.0"
 description = "Sistema de cobro para Muebles San Pablo"
 authors = ["Muebles San Pablo"]
 license = "MIT"
