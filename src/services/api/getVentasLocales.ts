@@ -3,6 +3,12 @@ import { URL_API } from "../../constants/api";
 
 const BASE_URL = URL_API
 
+export interface VendedorVenta {
+  LOCAL_SALE_ID: string;
+  VENDEDOR_EMAIL: string;
+  NOMBRE_VENDEDOR: string;
+}
+
 export interface VentaLocal {
   LOCAL_SALE_ID: string;
   USER_EMAIL: string;
@@ -31,6 +37,7 @@ export interface VentaLocal {
   ZONA_CLIENTE_ID?: number;
   ZONA_CLIENTE?: string;
   ENVIADO?: boolean;
+  vendedores?: VendedorVenta[];
 }
 
 // ============================================================================
@@ -54,6 +61,7 @@ export interface VentasParams {
   userEmail?: string;
   almacenId?: number;
   enviado?: boolean;
+  vendedorEmails?: string;
   // Range filters
   precioMin?: number;
   precioMax?: number;
@@ -127,6 +135,7 @@ export interface VentaCompleta extends VentaLocal {
   productos: ProductoVenta[];
   imagenes: ImagenVenta[];
   combos: ComboVenta[];
+  vendedores: VendedorVenta[];
 }
 
 export interface ResumenVentas {
@@ -183,6 +192,18 @@ export const getResumenVentas = async (fechaInicio?: string, fechaFin?: string):
     params: { fechaInicio, fechaFin },
   };
   const response = await axios.request<{ body: ResumenVentas; error: string }>(options);
+  return response.data.body;
+};
+
+export interface VendedorOption {
+  VENDEDOR_EMAIL: string;
+  NOMBRE_VENDEDOR: string;
+}
+
+export const getVendedores = async (): Promise<VendedorOption[]> => {
+  const response = await axios.get<{ body: VendedorOption[]; error: string }>(
+    `${BASE_URL}/ventas-locales/vendedores`
+  );
   return response.data.body;
 };
 
