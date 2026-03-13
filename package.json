@@ -29,7 +29,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@react-google-maps/api": "^2.19.3",
     "@tanstack/react-table": "^8.21.3",
-    "@tauri-apps/api": "^2.9.1",
+    "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/plugin-autostart": "^2.5.1",
     "@tauri-apps/plugin-notification": "^2.3.3",
     "ag-grid-enterprise": "^32.3.1",
