@@ -1,5 +1,6 @@
 export const androidModules = [
   { key: 'COBRO', label: 'Cobro' },
   { key: 'VENTAS', label: 'Ventas' },
-  { key: 'ALMACEN', label: 'Almacén' }
+  { key: 'ALMACEN', label: 'Almacén' },
+  { key: 'GARANTIAS', label: 'Garantías' }
 ];

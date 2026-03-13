@@ -15,9 +15,11 @@ export type Garantia = {
   DESCRIPCION_FALLA: string;
   ESTADO: string;
   OBSERVACIONES?: string;
-  EXTERNAL_ID: string;
-  ZONA_CLIENTE_ID: number;
-  ZONA_CLIENTE_NOMBRE: string;
+  EXTERNAL_ID: string | null;
+  NOMBRE_CLIENTE: string | null;
+  NOMBRE_PRODUCTO: string | null;
+  ZONA_CLIENTE_ID: number | null;
+  ZONA_CLIENTE_NOMBRE: string | null;
 };
 
 const GarantiasListPage: React.FC = () => {
@@ -80,8 +82,8 @@ const GarantiasListPage: React.FC = () => {
         >
           <option value="">Todas las zonas</option>
           {zonasUnicas.map((zona) => (
-            <option key={zona} value={zona}>
-              {zona}
+            <option key={zona ?? "sin-zona"} value={zona ?? ""}>
+              {zona || "Sin zona"}
             </option>
           ))}
         </select>
@@ -103,13 +105,21 @@ const GarantiasListPage: React.FC = () => {
 };
 
 function CardGarantia({ garantia }: { garantia: Garantia }) {
-  const { venta } = useGetVenta(garantia.DOCTO_CC_ID);
+  const tieneVenta = !!garantia.DOCTO_CC_ID;
+  const { venta } = useGetVenta(tieneVenta ? garantia.DOCTO_CC_ID : 0);
   const { products, loading: loadingProductos } = useGetProductsSaleByFolio(
-    venta?.FOLIO || ""
+    tieneVenta && venta?.FOLIO ? venta.FOLIO : ""
   );
-  const zonaCliente = venta?.ZONA_NOMBRE || "";
+
+  const nombreCliente = tieneVenta
+    ? venta?.CLIENTE || "Cargando..."
+    : garantia.NOMBRE_CLIENTE || "Sin cliente";
+  const zonaCliente = tieneVenta
+    ? venta?.ZONA_NOMBRE || "Cargando..."
+    : garantia.ZONA_CLIENTE_NOMBRE || "Sin zona";
+
   return (
-    <div key={garantia.ID} className="bg-white rounded-xl shadow px-6 py-4">
+    <div key={garantia.ID} className="bg-white rounded-xl shadow px-6 py-4 h-32 overflow-hidden">
       {/* Primera fila: datos de la garantía */}
       <div className="grid grid-cols-1 md:grid-cols-[repeat(20,minmax(0,1fr))] gap-2 items-center">
         <Link
@@ -136,25 +146,31 @@ function CardGarantia({ garantia }: { garantia: Garantia }) {
       {/* Segunda fila: nombre del cliente, zona y productos */}
       <div className="mt-2 grid grid-cols-1 md:grid-cols-5 gap-2 items-start">
         <span className="text-blue-700 font-medium col-span-2 truncate">
-          <strong>Cliente:</strong> {venta?.CLIENTE || "Cargando..."}
+          <strong>Cliente:</strong> {nombreCliente}
         </span>
         <span className="text-green-700 font-medium col-span-1 truncate">
-          <strong>Zona:</strong> {zonaCliente || "Cargando..."}
+          <strong>Zona:</strong> {zonaCliente}
         </span>
         <span className="font-semibold col-span-2 text-black">
           Productos:{" "}
-          {loadingProductos ? (
-            <span className="text-gray-400">Cargando productos...</span>
-          ) : products && products.length > 0 ? (
-            <div className="text-gray-700">
-              {products.map((prod: ProductSale) => (
-                <div key={prod.ARTICULO_ID}>
-                  {prod.ARTICULO} (x{prod.CANTIDAD})
-                </div>
-              ))}
-            </div>
+          {tieneVenta ? (
+            loadingProductos ? (
+              <span className="text-gray-400">Cargando productos...</span>
+            ) : products && products.length > 0 ? (
+              <div className="text-gray-700">
+                {products.map((prod: ProductSale) => (
+                  <div key={prod.ARTICULO_ID}>
+                    {prod.ARTICULO} (x{prod.CANTIDAD})
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="text-gray-400">Sin productos</span>
+            )
           ) : (
-            <span className="text-gray-400">Sin productos</span>
+            <span className="text-gray-700">
+              {garantia.NOMBRE_PRODUCTO || "Sin producto"}
+            </span>
           )}
         </span>
       </div>

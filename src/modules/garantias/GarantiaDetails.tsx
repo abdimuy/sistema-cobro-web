@@ -49,16 +49,19 @@ const GarantiaDetalle: React.FC = () => {
       .get<{ body: Garantia }>(`${URL_API}/garantias/${id}`)
       .then(async (response) => {
         console.log("Garantía cargada:", response.data.body);
-        setGarantia(response.data.body);
-        const ventaData = await getVenta(response.data.body.DOCTO_CC_ID);
-        setVenta(ventaData);
+        const g = response.data.body;
+        setGarantia(g);
+        if (g.DOCTO_CC_ID) {
+          const ventaData = await getVenta(g.DOCTO_CC_ID);
+          setVenta(ventaData);
+        }
       })
       .catch(() => setError("No se pudo cargar la garantía"))
       .finally(() => setLoading(false));
   }, [id]);
 
   const handleAgregarEvento = async () => {
-    if (!garantia) return;
+    if (!garantia || !garantia.EXTERNAL_ID) return;
     setAgregando(true);
     try {
       if (imagenesEvento.length > 0) {
@@ -142,18 +145,33 @@ const GarantiaDetalle: React.FC = () => {
         <h2 className="text-xl font-bold mb-2 text-black">Datos del Cliente</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <span className="font-semibold">Cliente:</span> {venta?.CLIENTE}
+            <span className="font-semibold">Cliente:</span>{" "}
+            {venta?.CLIENTE || garantia.NOMBRE_CLIENTE || "Sin cliente"}
           </div>
+          {venta && (
+            <>
+              <div>
+                <span className="font-semibold">Teléfono:</span> {venta.TELEFONO}
+              </div>
+              <div>
+                <span className="font-semibold">Dirección:</span> {venta.CALLE},{" "}
+                {venta.CIUDAD}
+              </div>
+              <div>
+                <span className="font-semibold">Vendedor:</span> {venta.VENDEDOR_1}
+              </div>
+            </>
+          )}
           <div>
-            <span className="font-semibold">Teléfono:</span> {venta?.TELEFONO}
+            <span className="font-semibold">Zona:</span>{" "}
+            {venta?.ZONA_NOMBRE || garantia.ZONA_CLIENTE_NOMBRE || "Sin zona"}
           </div>
-          <div>
-            <span className="font-semibold">Dirección:</span> {venta?.CALLE},{" "}
-            {venta?.CIUDAD}
-          </div>
-          <div>
-            <span className="font-semibold">Vendedor:</span> {venta?.VENDEDOR_1}
-          </div>
+          {!venta && garantia.NOMBRE_PRODUCTO && (
+            <div>
+              <span className="font-semibold">Producto:</span>{" "}
+              {garantia.NOMBRE_PRODUCTO}
+            </div>
+          )}
         </div>
       </div>
 
