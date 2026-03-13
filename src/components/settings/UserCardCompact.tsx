@@ -5,6 +5,7 @@ import 'dayjs/locale/es';
 import { desktopModules } from "../../constants/desktopModules";
 import { androidModules } from "../../constants/androidModules";
 import { ROLES } from "../../constants/roles";
+import NotificationZones from "./NotificationZones";
 
 dayjs.extend(relativeTime);
 dayjs.locale('es');
@@ -180,6 +181,9 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
               ))}
             </div>
           </div>
+
+          {/* Zonas de Notificación */}
+          <NotificationZones email={cobrador.EMAIL} zonasCliente={zonasCliente} compact />
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import 'dayjs/locale/es';
 import { desktopModules } from "../../constants/desktopModules";
 import { androidModules } from "../../constants/androidModules";
 import { ROLES } from "../../constants/roles";
+import NotificationZones from "./NotificationZones";
 
 dayjs.extend(relativeTime);
 dayjs.locale('es');
@@ -210,6 +211,11 @@ const UserCard: React.FC<UserCardProps> = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Zonas de Notificación */}
+      <div className="mt-6">
+        <NotificationZones email={cobrador.EMAIL} zonasCliente={zonasCliente} />
       </div>
     </div>
   );
