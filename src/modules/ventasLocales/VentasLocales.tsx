@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import useGetVentasLocales from "@/hooks/useGetVentasLocales";
@@ -24,9 +26,24 @@ import {
 } from "./components";
 
 export default function VentasLocales() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   // Modal state
   const [selectedVentaId, setSelectedVentaId] = useState<string | null>(null);
   const [showDetalleModal, setShowDetalleModal] = useState(false);
+
+  // Open modal from notification deep link
+  const ventaIdParam = searchParams.get("ventaId");
+  useEffect(() => {
+    if (ventaIdParam) {
+      setSelectedVentaId(ventaIdParam);
+      setShowDetalleModal(true);
+      setSearchParams((prev) => {
+        prev.delete("ventaId");
+        return prev;
+      }, { replace: true });
+    }
+  }, [ventaIdParam, setSearchParams]);
 
   // Column visibility state
   const [visibleColumns, setVisibleColumns] = useState<ColumnId[]>(loadVisibleColumns);

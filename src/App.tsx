@@ -1,6 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { LoadScript } from "@react-google-maps/api";
 import { Toaster } from "sonner";
+import { useEffect } from "react";
+import { setNavigateRef } from "./lib/navigation";
 
 // Components
 import Home from "./modules/home/Home";
@@ -18,14 +20,23 @@ import InventarioDetalle from "./modules/traspasos/InventarioDetalle";
 import LoginPage from "./components/auth/LoginPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
+import { NotificationProvider } from "./context/NotificationContext";
 
 // Constants
 import { ROLES } from "./constants/roles";
 
+function NavigationSetter() {
+  const navigate = useNavigate();
+  useEffect(() => { setNavigateRef(navigate); }, [navigate]);
+  return null;
+}
+
 function App() {
   return (
     <AuthProvider>
+      <NotificationProvider>
       <Router>
+        <NavigationSetter />
         <LoadScript googleMapsApiKey="AIzaSyCASwsCJvFm7dGajUWlVg19PmS8JVPqRaY">
           <Toaster richColors position="top-right" />
           <Routes>
@@ -135,6 +146,7 @@ function App() {
           </Routes>
         </LoadScript>
       </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

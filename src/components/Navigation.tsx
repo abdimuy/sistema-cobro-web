@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { usePermissions } from "../hooks/usePermissions";
 import { APP_VERSION } from "../constants/version";
+import NotificationBell from "./notifications/NotificationBell";
 
 interface NavigationProps {
   showMap?: boolean;
@@ -43,8 +44,9 @@ const Navigation: React.FC<NavigationProps> = ({ showMap, onToggleMap }) => {
 
   return (
     <>
-      {/* Menú hamburguesa */}
-      <div className="fixed top-4 right-4 z-50">
+      {/* Menú hamburguesa + campana */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        {isAuthenticated && <NotificationBell />}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="bg-white shadow-lg rounded-full p-3 hover:shadow-xl transition-all border border-gray-200"
