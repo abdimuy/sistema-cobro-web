@@ -166,48 +166,53 @@ const GarantiaDetalle: React.FC = () => {
             <span className="font-semibold">Zona:</span>{" "}
             {venta?.ZONA_NOMBRE || garantia.ZONA_CLIENTE_NOMBRE || "Sin zona"}
           </div>
-          {!venta && garantia.NOMBRE_PRODUCTO && (
-            <div>
-              <span className="font-semibold">Producto:</span>{" "}
-              {garantia.NOMBRE_PRODUCTO}
-            </div>
-          )}
         </div>
       </div>
 
       {/* Sección de productos */}
       <h2 className="text-xl font-bold mt-8 mb-4 text-black text-center">
-        Productos de la Venta
+        Productos
       </h2>
       <div className="bg-white rounded-xl shadow p-4 max-w-2xl mx-auto mb-8">
-        {loadingProductos ? (
-          <div className="text-gray-400">Cargando productos...</div>
-        ) : products && products.length > 0 ? (
-          <table className="w-full text-left">
-            <thead>
-              <tr>
-                <th className="py-2 px-2 border-b">Clave</th>
-                <th className="py-2 px-2 border-b">Descripción</th>
-                <th className="py-2 px-2 border-b">Cantidad</th>
-                <th className="py-2 px-2 border-b">Precio</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((prod) => (
-                <tr key={prod.ARTICULO_ID}>
-                  <td className="py-1 px-2 border-b">{prod.FOLIO}</td>
-                  <td className="py-1 px-2 border-b">{prod.ARTICULO}</td>
-                  <td className="py-1 px-2 border-b">{prod.CANTIDAD}</td>
-                  <td className="py-1 px-2 border-b">
-                    ${prod.PRECIO_UNITARIO_IMPTO?.toFixed(2)}
-                  </td>
+        {venta ? (
+          loadingProductos ? (
+            <div className="text-gray-400">Cargando productos...</div>
+          ) : products && products.length > 0 ? (
+            <table className="w-full text-left">
+              <thead>
+                <tr>
+                  <th className="py-2 px-2 border-b">Clave</th>
+                  <th className="py-2 px-2 border-b">Descripción</th>
+                  <th className="py-2 px-2 border-b">Cantidad</th>
+                  <th className="py-2 px-2 border-b">Precio</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {products.map((prod) => (
+                  <tr key={prod.ARTICULO_ID}>
+                    <td className="py-1 px-2 border-b">{prod.FOLIO}</td>
+                    <td className="py-1 px-2 border-b">{prod.ARTICULO}</td>
+                    <td className="py-1 px-2 border-b">{prod.CANTIDAD}</td>
+                    <td className="py-1 px-2 border-b">
+                      ${prod.PRECIO_UNITARIO_IMPTO?.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-gray-500">
+              No hay productos asociados a esta venta.
+            </div>
+          )
+        ) : garantia.NOMBRE_PRODUCTO ? (
+          <div>
+            <span className="font-semibold">Producto:</span>{" "}
+            {garantia.NOMBRE_PRODUCTO}
+          </div>
         ) : (
           <div className="text-gray-500">
-            No hay productos asociados a esta venta.
+            No hay productos asociados a esta garantía.
           </div>
         )}
       </div>
