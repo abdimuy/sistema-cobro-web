@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth';
+import useGetUser from '../hooks/useGetUser';
 import { SSEClient } from '../services/sse/SSEClient';
 import { BaseNotification } from '../types/notifications';
 import { transformers, supportedEvents } from '../services/notifications/notificationTransformers';
@@ -24,10 +25,12 @@ interface NotificationContextValue {
 export const NotificationContext = createContext<NotificationContextValue | null>(null);
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, userData } = useAuth();
+  const { isAuthenticated, userData, user } = useAuth();
+  const { user: firestoreUser } = useGetUser(user?.uid);
   const [notifications, setNotifications] = useState<BaseNotification[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const sseRef = useRef<SSEClient | null>(null);
+  const isFirstLoad = useRef(true);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -126,6 +129,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     client.connect();
     sseRef.current = client;
   }, [userData, handleSSEEvent]);
+
+  // Reconectar SSE cuando cambia el doc del usuario en Firestore
+  useEffect(() => {
+    if (!firestoreUser) return;
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      return;
+    }
+    reconnect();
+  }, [firestoreUser, reconnect]);
 
   return (
     <NotificationContext.Provider
