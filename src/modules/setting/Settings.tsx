@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import useGetCobradores from "../../hooks/useGetCobradores";
-import Navigation from "../../components/Navigation";
+
 import useGetRutas from "../user/useGetRutas";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
@@ -266,8 +266,6 @@ const Settings = () => {
           </div>
         </div>
       </div>
-
-      <Navigation />
     </div>
   );
 };

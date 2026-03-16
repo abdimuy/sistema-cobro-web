@@ -10,7 +10,7 @@ import "ag-grid-enterprise";
 import relativeTime from "dayjs/plugin/relativeTime";
 import useGetPagosByVentaId from "../../hooks/useGetPagosByVentaId";
 import Map from "../../components/Map";
-import Navigation from "../../components/Navigation";
+
 
 dayjs.extend(relativeTime);
 
@@ -22,7 +22,7 @@ const Sales = () => {
     ZONA_CLIENTE: "",
   });
   const [ventaId, setVentaId] = useState<number>(0);
-  const [showMap, setShowMap] = useState<boolean>(false);
+  const [showMap] = useState<boolean>(false);
   console.log(showMap);
   const { pagos } = useGetPagosByVentaId(ventaId);
   console.log(pagos);
@@ -207,12 +207,6 @@ const Sales = () => {
           )}
         </div>
       )}
-      
-      {/* Navegación profesional */}
-      <Navigation 
-        showMap={showMap} 
-        onToggleMap={() => setShowMap((value) => !value)} 
-      />
     </div>
   );
 };

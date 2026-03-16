@@ -21,6 +21,7 @@ import LoginPage from "./components/auth/LoginPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { AppLayout } from "./components/AppLayout";
 
 // Constants
 import { ROLES } from "./constants/roles";
@@ -29,6 +30,14 @@ function NavigationSetter() {
   const navigate = useNavigate();
   useEffect(() => { setNavigateRef(navigate); }, [navigate]);
   return null;
+}
+
+function ProtectedLayout() {
+  return (
+    <ProtectedRoute>
+      <AppLayout />
+    </ProtectedRoute>
+  );
 }
 
 function App() {
@@ -42,104 +51,52 @@ function App() {
           <Routes>
             {/* Ruta de Login */}
             <Route path="/login" element={<LoginPage />} />
-            
-            {/* Rutas Protegidas */}
-            <Route 
-              path="/" 
-              element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              } 
-            />
-            
-            <Route 
-              path="/sales" 
-              element={
-                <ProtectedRoute requiredModule="SALES">
-                  <Sales />
-                </ProtectedRoute>
-              } 
-            />
-            
-            <Route 
-              path="/ventas-locales" 
-              element={
-                <ProtectedRoute requiredModule="VENTAS_LOCALES">
-                  <VentasLocales />
-                </ProtectedRoute>
-              } 
-            />
-            
-            <Route 
-              path="/garantias" 
-              element={
-                <ProtectedRoute requiredModule="GARANTIAS">
-                  <Garantias />
-                </ProtectedRoute>
-              } 
-            />
-            
-            <Route 
-              path="/garantias/:id" 
-              element={
-                <ProtectedRoute requiredModule="GARANTIAS">
-                  <GarantiaDetalle />
-                </ProtectedRoute>
-              } 
-            />
-            
-            <Route
-              path="/asignacion-almacenes"
-              element={
-                <ProtectedRoute requiredModule="ALMACENES">
-                  <AsignacionAlmacenes />
-                </ProtectedRoute>
-              }
-            />
 
-            <Route
-              path="/inventario-camionetas"
-              element={
-                <ProtectedRoute requiredModule="INVENTARIO">
-                  <Traspasos />
-                </ProtectedRoute>
-              }
-            />
+            {/* Rutas Protegidas con Layout */}
+            <Route element={<ProtectedLayout />}>
+              <Route path="/" element={<Home />} />
 
-            <Route
-              path="/almacenes/:almacenId/inventario"
-              element={
-                <ProtectedRoute requiredModule="INVENTARIO">
-                  <InventarioDetalle />
-                </ProtectedRoute>
-              }
-            />
+              <Route path="/sales" element={
+                <ProtectedRoute requiredModule="SALES"><Sales /></ProtectedRoute>
+              } />
 
-            {/* Rutas de Administración - Solo Admin y Super Admin */}
-            <Route 
-              path="/settings" 
-              element={
-                <ProtectedRoute 
-                  requiredModule="USUARIOS" 
-                  requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}
-                >
+              <Route path="/ventas-locales" element={
+                <ProtectedRoute requiredModule="VENTAS_LOCALES"><VentasLocales /></ProtectedRoute>
+              } />
+
+              <Route path="/garantias" element={
+                <ProtectedRoute requiredModule="GARANTIAS"><Garantias /></ProtectedRoute>
+              } />
+
+              <Route path="/garantias/:id" element={
+                <ProtectedRoute requiredModule="GARANTIAS"><GarantiaDetalle /></ProtectedRoute>
+              } />
+
+              <Route path="/asignacion-almacenes" element={
+                <ProtectedRoute requiredModule="ALMACENES"><AsignacionAlmacenes /></ProtectedRoute>
+              } />
+
+              <Route path="/inventario-camionetas" element={
+                <ProtectedRoute requiredModule="INVENTARIO"><Traspasos /></ProtectedRoute>
+              } />
+
+              <Route path="/almacenes/:almacenId/inventario" element={
+                <ProtectedRoute requiredModule="INVENTARIO"><InventarioDetalle /></ProtectedRoute>
+              } />
+
+              {/* Rutas de Administración - Solo Admin y Super Admin */}
+              <Route path="/settings" element={
+                <ProtectedRoute requiredModule="USUARIOS" requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
                   <Settings />
                 </ProtectedRoute>
-              } 
-            />
-            
-            <Route 
-              path="/create-user" 
-              element={
-                <ProtectedRoute 
-                  requiredModule="USUARIOS" 
-                  requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}
-                >
+              } />
+
+              <Route path="/create-user" element={
+                <ProtectedRoute requiredModule="USUARIOS" requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
                   <CreateUser />
                 </ProtectedRoute>
-              } 
-            />
+              } />
+            </Route>
 
             {/* Redirección por defecto */}
             <Route path="*" element={<Navigate to="/" replace />} />

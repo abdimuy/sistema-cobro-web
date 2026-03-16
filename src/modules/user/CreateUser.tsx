@@ -5,7 +5,7 @@ import { Timestamp, doc, setDoc } from "firebase/firestore";
 import useGetRutas from "./useGetRutas";
 import { Ruta } from "../../services/api/getRutas";
 import { useNavigate } from "react-router-dom";
-import Navigation from "../../components/Navigation";
+
 import { ZonaCliente } from "../../services/api/getZonasCliente";
 import { CobradorDto } from "../../hooks/useGetCobradores";
 import useGetZonasCliente from "./useGetZonaCliente";
@@ -209,9 +209,6 @@ const CreateUser = () => {
       </p>
       {error && <p className="text-red-500 text-center mt-4">{error}</p>}
       </div>
-      
-      {/* Navegación profesional */}
-      <Navigation />
     </div>
   );
 };

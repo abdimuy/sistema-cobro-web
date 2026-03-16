@@ -5,7 +5,7 @@ import useGetCobradores from "../../hooks/useGetCobradores";
 import { doc, updateDoc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
 import { USERS_COLLECTION, CONFIG_COLLECTION } from "../../constants/collections";
-import Navigation from "../../components/Navigation";
+
 
 interface Usuario {
   id: string;
@@ -984,9 +984,6 @@ const AsignacionAlmacenes = () => {
             </div>
           </div>
         )}
-        
-        {/* Navegación profesional */}
-        <Navigation />
       </div>
     </DragDropContext>
   );

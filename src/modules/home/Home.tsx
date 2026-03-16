@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import Map from "../../components/Map";
-import Navigation from "../../components/Navigation";
+
 import dayjs from "dayjs";
 import { ZonaCliente } from "../../services/api/getZonasCliente";
 import useGetZonasCliente from "../user/useGetZonaCliente";
@@ -102,7 +102,7 @@ const Home = () => {
     ZONA_CLIENTE_ID: 0,
     ZONA_CLIENTE: "",
   });
-  const [showMap, setShowMap] = React.useState<boolean>(false);
+  const [showMap] = React.useState<boolean>(false);
   const { zonasCliente } = useGetZonasCliente();
 
   const getPagosYVisitas = async () => {
@@ -274,12 +274,6 @@ const Home = () => {
           </>
         )}
       </div>
-      
-      {/* Navegación profesional */}
-      <Navigation 
-        showMap={showMap} 
-        onToggleMap={() => setShowMap((value) => !value)} 
-      />
     </div>
   );
 };

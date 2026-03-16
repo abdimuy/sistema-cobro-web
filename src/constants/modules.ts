@@ -1,54 +1,55 @@
 import { ModuleConfig } from '../types/auth';
 import { ROLES } from './roles';
+import { Home, BarChart3, ShoppingCart, Shield, Truck, Package, Users } from 'lucide-react';
 
 export const DESKTOP_MODULES: ModuleConfig[] = [
   {
     key: 'HOME',
     label: 'Inicio',
     path: '/',
-    icon: 'home',
+    icon: Home,
     color: 'blue'
   },
   {
-    key: 'SALES', 
+    key: 'SALES',
     label: 'Ventas',
     path: '/sales',
-    icon: 'chart',
+    icon: BarChart3,
     color: 'blue'
   },
   {
     key: 'VENTAS_LOCALES',
     label: 'Ventas Locales',
-    path: '/ventas-locales', 
-    icon: 'local',
+    path: '/ventas-locales',
+    icon: ShoppingCart,
     color: 'blue'
   },
   {
     key: 'GARANTIAS',
     label: 'Garantías',
     path: '/garantias',
-    icon: 'shield', 
+    icon: Shield,
     color: 'blue'
   },
   {
     key: 'ALMACENES',
     label: 'Asignar Vendedores',
     path: '/asignacion-almacenes',
-    icon: 'truck',
+    icon: Truck,
     color: 'blue'
   },
   {
     key: 'INVENTARIO',
     label: 'Inventario Camionetas',
     path: '/inventario-camionetas',
-    icon: 'package',
+    icon: Package,
     color: 'green'
   },
   {
     key: 'USUARIOS',
     label: 'Usuarios',
     path: '/settings',
-    icon: 'users',
+    icon: Users,
     color: 'blue',
     requiredRole: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
   }

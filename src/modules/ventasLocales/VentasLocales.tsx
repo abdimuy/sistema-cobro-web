@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import Navigation from "@/components/Navigation";
+
 import useGetVentasLocales from "@/hooks/useGetVentasLocales";
 import useGetAlmacenes from "@/hooks/useGetAlmacenes";
 import useGetZonasCliente from "@/hooks/useGetZonasCliente";
@@ -220,9 +220,6 @@ export default function VentasLocales() {
       {showDetalleModal && selectedVentaId && (
         <VentaDetalleModal ventaId={selectedVentaId} onClose={handleCloseModal} />
       )}
-
-      {/* Navigation */}
-      <Navigation />
     </div>
   );
 }

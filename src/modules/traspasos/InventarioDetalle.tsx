@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import Navigation from "../../components/Navigation";
+
 import CrearTraspasoDialog from "./components/CrearTraspasoDialog";
 import useGetAlmacenes from "../../hooks/useGetAlmacenes";
 import { ArrowLeft, Package, TrendingDown, TrendingUp } from "lucide-react";
@@ -262,8 +262,6 @@ const InventarioDetalle = () => {
         almacenOrigenPredefinido={parseInt(almacenId!)}
         onSuccess={handleTraspasoSuccess}
       />
-
-      <Navigation />
     </div>
   );
 };

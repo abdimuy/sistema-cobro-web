@@ -1,5 +1,6 @@
 import { User } from 'firebase/auth';
 import { ROLES } from '../constants/roles';
+import type { LucideIcon } from 'lucide-react';
 
 export type RoleType = typeof ROLES[keyof typeof ROLES];
 
@@ -40,7 +41,7 @@ export interface ModuleConfig {
   key: string;
   label: string;
   path: string;
-  icon?: string;
+  icon?: LucideIcon;
   color?: string;
   requiredRole?: RoleType[];
 }
