@@ -6,6 +6,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
 import { CONFIG_COLLECTION } from "../../constants/collections";
 import useGetZonasCliente from "../user/useGetZonaCliente";
+import { getUsuariosFirebase, UsuarioFirebase } from "../../services/api/notificationVendedores";
 import { API_SETTINGS_DOC } from "../../constants/values";
 import getConfigAPI from "../../services/api/getConfigAPI";
 import validateURL from "../../utils/validateURL";
@@ -53,6 +54,13 @@ const Settings = () => {
 
   const { rutas } = useGetRutas();
   const { zonasCliente } = useGetZonasCliente();
+  const [usuariosFirebase, setUsuariosFirebase] = useState<UsuarioFirebase[]>([]);
+
+  useEffect(() => {
+    getUsuariosFirebase()
+      .then(setUsuariosFirebase)
+      .catch(() => setUsuariosFirebase([]));
+  }, []);
 
   const getURLAPI = () => {
     getConfigAPI()
@@ -217,6 +225,7 @@ const Settings = () => {
                       userStatus={userStatus}
                       rutas={rutas}
                       zonasCliente={zonasCliente}
+                      usuariosFirebase={usuariosFirebase}
                       onSelect={handleSelectWithCobradores}
                       onSelectZona={handleSelectZonaWithCobradores}
                       onUpdatePhone={handleUpdatePhone}
@@ -241,6 +250,7 @@ const Settings = () => {
                         userStatus={userStatus}
                         rutas={rutas}
                         zonasCliente={zonasCliente}
+                        usuariosFirebase={usuariosFirebase}
                         onSelect={handleSelectWithCobradores}
                         onSelectZona={handleSelectZonaWithCobradores}
                         onUpdatePhone={handleUpdatePhone}

@@ -5,7 +5,8 @@ import 'dayjs/locale/es';
 import { desktopModules } from "../../constants/desktopModules";
 import { androidModules } from "../../constants/androidModules";
 import { ROLES } from "../../constants/roles";
-import NotificationZones from "./NotificationZones";
+import NotificationVendedores from "./NotificationVendedores";
+import { UsuarioFirebase } from "../../services/api/notificationVendedores";
 
 dayjs.extend(relativeTime);
 dayjs.locale('es');
@@ -15,6 +16,7 @@ interface UserCardProps {
   userStatus: { status: string; label: string; color: string };
   rutas: any[];
   zonasCliente: any[];
+  usuariosFirebase: UsuarioFirebase[];
   onSelect: (e: React.ChangeEvent<HTMLSelectElement>, email: string) => void;
   onSelectZona: (e: React.ChangeEvent<HTMLSelectElement>, email: string) => void;
   onUpdatePhone: (e: React.ChangeEvent<HTMLInputElement>, id: string) => void;
@@ -29,6 +31,7 @@ const UserCard: React.FC<UserCardProps> = ({
   userStatus,
   rutas,
   zonasCliente,
+  usuariosFirebase,
   onSelect,
   onSelectZona,
   onUpdatePhone,
@@ -215,7 +218,7 @@ const UserCard: React.FC<UserCardProps> = ({
 
       {/* Zonas de Notificación */}
       <div className="mt-6">
-        <NotificationZones email={cobrador.EMAIL} zonasCliente={zonasCliente} />
+        <NotificationVendedores email={cobrador.EMAIL} usuarios={usuariosFirebase} />
       </div>
     </div>
   );
