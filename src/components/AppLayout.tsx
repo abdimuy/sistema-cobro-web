@@ -12,6 +12,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { AppSidebar } from "./AppSidebar"
+import { AppUpdater } from "./AppUpdater"
 import NotificationBell from "./notifications/NotificationBell"
 import { DESKTOP_MODULES } from "@/constants/modules"
 
@@ -55,6 +56,7 @@ export function AppLayout() {
           <Outlet />
         </main>
       </SidebarInset>
+      <AppUpdater />
     </SidebarProvider>
   )
 }
