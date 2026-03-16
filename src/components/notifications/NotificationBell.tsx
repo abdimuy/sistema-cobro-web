@@ -1,59 +1,204 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, ShoppingCart, Shield, ArrowLeftRight, Info, CheckCheck, Trash2 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { useNotifications } from '../../hooks/useNotifications';
-import NotificationPanel from './NotificationPanel';
+import { BaseNotification, NotificationType } from '../../types/notifications';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
-const NotificationBell: React.FC = () => {
-  const { unreadCount, isConnected } = useNotifications();
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+const typeConfig: Record<NotificationType, { color: string; icon: React.ReactNode }> = {
+  nueva_venta: {
+    color: 'bg-blue-100 text-blue-600',
+    icon: <ShoppingCart className="size-4" />,
+  },
+  garantia: {
+    color: 'bg-amber-100 text-amber-600',
+    icon: <Shield className="size-4" />,
+  },
+  traspaso: {
+    color: 'bg-green-100 text-green-600',
+    icon: <ArrowLeftRight className="size-4" />,
+  },
+  sistema: {
+    color: 'bg-gray-100 text-gray-600',
+    icon: <Info className="size-4" />,
+  },
+};
 
-  // Close panel on outside click
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isOpen]);
+const notificationRoutes: Partial<Record<NotificationType, (data: Record<string, unknown>) => string>> = {
+  nueva_venta: (data) => `/ventas-locales?ventaId=${data.localSaleId}`,
+};
+
+function NotificationItem({
+  notification,
+  onClick,
+}: {
+  notification: BaseNotification;
+  onClick: (notification: BaseNotification) => void;
+}) {
+  const config = typeConfig[notification.type] || typeConfig.sistema;
+  const hasRoute = notification.type in notificationRoutes;
 
   return (
-    <div ref={containerRef} className="relative">
-      <button
-        onClick={() => setIsOpen((o) => !o)}
-        className="bg-white shadow-lg rounded-full p-3 hover:shadow-xl transition-all border border-gray-200 relative"
-        aria-label="Notificaciones"
-      >
-        {/* Bell icon */}
-        <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-          />
-        </svg>
+    <button
+      onClick={() => onClick(notification)}
+      className={`w-full text-left px-3 py-2.5 transition-colors ${
+        notification.read
+          ? 'opacity-50'
+          : 'hover:bg-accent'
+      } ${hasRoute ? 'cursor-pointer' : 'cursor-default'}`}
+    >
+      <div className="flex items-start gap-3">
+        <div className={`${config.color} rounded-lg p-2 flex-shrink-0 mt-0.5`}>
+          {config.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className={`text-sm truncate ${notification.read ? 'text-muted-foreground' : 'font-semibold text-foreground'}`}>
+              {notification.title}
+            </p>
+            {!notification.read && <span className="size-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+            {notification.body}
+          </p>
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-[11px] text-muted-foreground/70">
+              {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true, locale: es })}
+            </p>
+            {hasRoute && (
+              <span className="text-[11px] text-primary font-medium">Ver detalle →</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
 
-        {/* Unread badge */}
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
+const NotificationBell: React.FC = () => {
+  const { notifications, unreadCount, isConnected, markAsRead, markAllAsRead, clearAll } = useNotifications();
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleNotificationClick = (notification: BaseNotification) => {
+    markAsRead(notification.id);
+    const routeBuilder = notificationRoutes[notification.type];
+    if (routeBuilder) {
+      const route = routeBuilder(notification.data);
+      setOpen(false);
+      navigate(route);
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative size-9">
+                <Bell className="size-4" />
+                {unreadCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 size-5 p-0 flex items-center justify-center text-[10px] font-bold"
+                  >
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Badge>
+                )}
+                <span
+                  className={`absolute bottom-1 right-1 size-2 rounded-full ring-2 ring-background ${
+                    isConnected ? 'bg-green-500' : 'bg-red-400'
+                  }`}
+                />
+              </Button>
+            </PopoverTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>
+              {isConnected ? 'Notificaciones' : 'Sin conexión'}
+              {unreadCount > 0 && ` (${unreadCount} sin leer)`}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <PopoverContent className="w-96 p-0" align="end" sideOffset={8}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm font-semibold">Notificaciones</h4>
+            {unreadCount > 0 && (
+              <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                {unreadCount}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllAsRead}
+                className="h-7 text-xs text-muted-foreground gap-1"
+              >
+                <CheckCheck className="size-3" />
+                Leer todo
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAll}
+                className="h-7 text-xs text-muted-foreground gap-1"
+              >
+                <Trash2 className="size-3" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* List */}
+        {notifications.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Bell className="size-10 mb-3 opacity-20" />
+            <p className="text-sm font-medium">Sin notificaciones</p>
+            <p className="text-xs mt-1 opacity-70">Las nuevas aparecerán aquí</p>
+          </div>
+        ) : (
+          <ScrollArea className="max-h-[400px]">
+            <div className="divide-y divide-border">
+              {notifications.map((n) => (
+                <NotificationItem
+                  key={n.id}
+                  notification={n}
+                  onClick={handleNotificationClick}
+                />
+              ))}
+            </div>
+          </ScrollArea>
         )}
-
-        {/* Connection indicator */}
-        <span
-          className={`absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
-            isConnected ? 'bg-green-500' : 'bg-red-400'
-          }`}
-        />
-      </button>
-
-      {isOpen && <NotificationPanel onClose={() => setIsOpen(false)} />}
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 
