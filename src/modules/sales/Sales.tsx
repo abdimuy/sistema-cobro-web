@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { MapPin, MapPinOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import useGetZonasCliente from "../user/useGetZonaCliente";
 import { ZonaCliente } from "../../services/api/getZonasCliente";
 import useGetVentasByZona from "../../hooks/useGetVentasByZona";
@@ -22,10 +24,8 @@ const Sales = () => {
     ZONA_CLIENTE: "",
   });
   const [ventaId, setVentaId] = useState<number>(0);
-  const [showMap] = useState<boolean>(false);
-  console.log(showMap);
+  const [showMap, setShowMap] = useState<boolean>(false);
   const { pagos } = useGetPagosByVentaId(ventaId);
-  console.log(pagos);
   const [colDef] = useState<ColDef[]>([
     {
       field: "FOLIO",
@@ -128,7 +128,7 @@ const Sales = () => {
       </h1>
 
       <div className="col-span-2 flex gap-4 justify-center mt-4 items-center">
-        <p className="col-span-2 text-black text-center">
+        <p className="text-black text-center">
           Selecciona una ruta para ver las ventas
         </p>
         <select
@@ -151,6 +151,15 @@ const Sales = () => {
             </option>
           ))}
         </select>
+        <Button
+          variant={showMap ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowMap((v) => !v)}
+          className="gap-1.5"
+        >
+          {showMap ? <MapPinOff className="size-4" /> : <MapPin className="size-4" />}
+          {showMap ? "Ocultar mapa" : "Mostrar mapa"}
+        </Button>
       </div>
 
       {loading ? (

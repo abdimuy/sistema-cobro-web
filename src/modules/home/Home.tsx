@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
+import { MapPin, MapPinOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import Map from "../../components/Map";
-
 import dayjs from "dayjs";
 import { ZonaCliente } from "../../services/api/getZonasCliente";
 import useGetZonasCliente from "../user/useGetZonaCliente";
@@ -102,7 +103,7 @@ const Home = () => {
     ZONA_CLIENTE_ID: 0,
     ZONA_CLIENTE: "",
   });
-  const [showMap] = React.useState<boolean>(false);
+  const [showMap, setShowMap] = React.useState<boolean>(false);
   const { zonasCliente } = useGetZonasCliente();
 
   const getPagosYVisitas = async () => {
@@ -114,9 +115,8 @@ const Home = () => {
         fechaFin
       );
       setData(pagosYVisitas);
-      console.log(pagosYVisitas);
     } catch (error) {
-      console.error(error);
+      // silently fail
     } finally {
       setLoading(false);
     }
@@ -195,8 +195,6 @@ const Home = () => {
             className="border border-gray-400 rounded p-2 text-black bg-white"
             value={fechaInicio.format("YYYY-MM-DD")}
             onChange={(e) => {
-              console.log(e.target.value);
-              // dayjs(e.target.value).isValid()
               setFechaInicio(dayjs(e.target.value).startOf("day"));
             }}
           />
@@ -213,6 +211,15 @@ const Home = () => {
           >
             Buscar
           </button>
+          <Button
+            variant={showMap ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowMap((v) => !v)}
+            className="gap-1.5"
+          >
+            {showMap ? <MapPinOff className="size-4" /> : <MapPin className="size-4" />}
+            {showMap ? "Ocultar mapa" : "Mostrar mapa"}
+          </Button>
         </div>
 
         {loading ? (
