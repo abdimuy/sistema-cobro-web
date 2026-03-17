@@ -49,6 +49,13 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval)
   }, [checkForUpdate])
 
+  // Auto-download when update is available
+  useEffect(() => {
+    if (state.status === "available") {
+      downloadAndInstall()
+    }
+  }, [state.status])
+
   const downloadAndInstall = useCallback(async () => {
     if (state.status !== "available") return
     const { update } = state
