@@ -48,7 +48,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFFODQyRTEyRkFCNDk4RjcKUldUM21MVDZFaTZFSHZLdXdjMFJJbW1OMk0rcklJZTZmSGVUaWs3MU1xT0podEljZGhHeTMrWWUK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZBQTRFODc0NEYzN0RBNzAKUldSdzJqZFBkT2lrYW9rMWZXcmxZWUgweXNzUmVWRkdLWXVrZTNIRzRXMEtZejBZQkpNajVjcUUK",
       "endpoints": [
         "https://github.com/abdimuy/sistema-cobro-web/releases/latest/download/latest.json"
       ]
