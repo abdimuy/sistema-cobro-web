@@ -111,7 +111,7 @@ const Map: React.FC<MapProps> = ({ points = [] }) => {
   }
 
   return (
-    <div className="mt-[20px] flex rounded-lg overflow-hidden flex-1">
+    <div className="flex rounded-lg overflow-hidden flex-1 h-full">
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={points[0] || defaultCenter}
