@@ -33,7 +33,7 @@ export interface diferenciaHoras {
   horaSiguiente: string;
 }
 
-function DatePicker({ value, onChange, label }: { value: dayjs.Dayjs; onChange: (d: dayjs.Dayjs) => void; label: string }) {
+function DatePicker({ value, onChange }: { value: dayjs.Dayjs; onChange: (d: dayjs.Dayjs) => void }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -215,12 +215,10 @@ const Home = () => {
             <DatePicker
               value={fechaInicio}
               onChange={(d) => setFechaInicio(d.startOf("day"))}
-              label="Desde"
             />
             <DatePicker
               value={fechaFin}
               onChange={(d) => setFechaFin(d.endOf("day"))}
-              label="Hasta"
             />
 
             <Button
