@@ -15,6 +15,7 @@ import { AppSidebar } from "./AppSidebar"
 import { AppUpdater } from "./AppUpdater"
 import { UpdaterProvider } from "@/context/UpdaterContext"
 import NotificationBell from "./notifications/NotificationBell"
+import { ThemeToggle } from "./ThemeToggle"
 import { DESKTOP_MODULES } from "@/constants/modules"
 
 function useCurrentModuleLabel() {
@@ -50,7 +51,8 @@ export function AppLayout() {
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-            <div className="ml-auto flex items-center gap-2 pr-4">
+            <div className="ml-auto flex items-center gap-1 pr-4">
+              <ThemeToggle />
               <NotificationBell />
             </div>
           </header>

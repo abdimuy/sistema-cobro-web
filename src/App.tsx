@@ -21,6 +21,7 @@ import LoginPage from "./components/auth/LoginPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { AppLayout } from "./components/AppLayout";
 
 // Constants
@@ -42,6 +43,7 @@ function ProtectedLayout() {
 
 function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <NotificationProvider>
       <Router>
@@ -117,6 +119,7 @@ function App() {
       </Router>
       </NotificationProvider>
     </AuthProvider>
+    </ThemeProvider>
   );
 }
 
