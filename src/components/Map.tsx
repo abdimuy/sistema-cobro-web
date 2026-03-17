@@ -75,7 +75,7 @@ interface MapProps {
 
 const containerStyle = {
   width: "100%",
-  height: "-webkit-fill-available",
+  height: "100%",
 };
 
 const defaultCenter = {
