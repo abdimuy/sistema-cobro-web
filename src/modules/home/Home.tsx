@@ -1,6 +1,15 @@
 import React, { useMemo, useState } from "react";
-import { MapPin, MapPinOff } from "lucide-react";
+import { MapPin, MapPinOff, Search, Loader2, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import Map from "../../components/Map";
 import dayjs from "dayjs";
 import { ZonaCliente } from "../../services/api/getZonasCliente";
@@ -22,6 +31,38 @@ import { AG_GRID_LOCALE_ES } from "@ag-grid-community/locale";
 export interface diferenciaHoras {
   horaAnterior: string;
   horaSiguiente: string;
+}
+
+function DatePicker({ value, onChange, label }: { value: dayjs.Dayjs; onChange: (d: dayjs.Dayjs) => void; label: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-9 gap-2 text-xs font-normal min-w-[130px] justify-start"
+        >
+          <CalendarIcon className="size-3.5 text-muted-foreground" />
+          {value.format("DD/MM/YYYY")}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={value.toDate()}
+          onSelect={(date) => {
+            if (date) {
+              onChange(dayjs(date));
+              setOpen(false);
+            }
+          }}
+          defaultMonth={value.toDate()}
+        />
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 const Home = () => {
@@ -122,135 +163,93 @@ const Home = () => {
     }
   };
 
-  // const exportFile = (data: Visita[]) => {
-  //   const horas = revisarVisitas();
-  //   const dataExport = data.map((d) => ({
-  //     ...d,
-  //     FECHA_HORA_VISITA: dayjs(d.FECHA_HORA_VISITA.toDate()).format(
-  //       "DD/MM/YY HH:mm"
-  //     ),
-  //   }));
-  //   /* generate worksheet from state */
-  //   const ws = utils.json_to_sheet(dataExport);
-  //   ws["!cols"] = [
-  //     { wch: 30 },
-  //     { wch: 15 },
-  //     { wch: 20 },
-  //     { wch: 30 },
-  //     { wch: 10 },
-  //     { wch: 10 },
-  //     { wch: 10 },
-  //   ];
-  //   const ws2 = utils.json_to_sheet(horas);
-  //   ws2["!cols"] = [{ wch: 20 }, { wch: 20 }];
-  //   /* create workbook and append worksheet */
-  //   const wb = utils.book_new();
-  //   utils.book_append_sheet(wb, ws, "LISTA DE VISITAS");
-  //   utils.book_append_sheet(wb, ws2, "HORAS ENTRE VISITAS Y PAGOS");
-
-  //   /* export to XLSX */
-  //   writeFile(wb, `visitas-${dayjs().format("YYYY-MM-DD HH:mm")}.xlsx`);
-  // };
-
   const groupRowRenderer = (params: any) => {
-    const nodeIndex = params.node.rowIndex + 1; // Número de grupo (secuencial)
+    const nodeIndex = params.node.rowIndex + 1;
     return (
       <span>
-        {`Grupo ${nodeIndex}: ${params.value}`}{" "}
-        {/* Muestra el número del grupo */}
+        {`Grupo ${nodeIndex}: ${params.value}`}
       </span>
     );
   };
 
   return (
-    <div className="w-full h-full flex justify-center bg-white">
-      <div className="grid grid-cols-[5fr,3fr] gap-2 grid-rows-[4rem,4rem] w-full overflow-auto">
-        <h1 className="col-span-2 text-black text-2xl font-bold text-center mb-4 mt-4 ml-4">
-          Pagos y visitas
-        </h1>
-        <div className="col-span-2 flex gap-4 justify-center mt-4">
-          <select
-            onChange={(e) => {
-              const id = parseInt(e.target.value);
-              const r = zonasCliente.find((r) => r.ZONA_CLIENTE_ID === id);
-              if (r) {
-                setZonaCliente(r);
-              }
-            }}
-            className="border border-gray-400 rounded p-2 bg-blue-500"
-          >
-            <option value="0">Selecciona una ruta</option>
-            {zonasCliente.map((zonaCliente) => (
-              <option
-                key={zonaCliente.ZONA_CLIENTE_ID}
-                value={zonaCliente.ZONA_CLIENTE_ID}
-              >
-                {zonaCliente.ZONA_CLIENTE}
-              </option>
-            ))}
-          </select>
+    <div className="flex flex-col h-full bg-background">
+      <header className="shrink-0 border-b border-border/40">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14">
+            <h1 className="text-lg font-semibold text-foreground">
+              Pagos y visitas
+            </h1>
+            <Button
+              variant={showMap ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowMap((v) => !v)}
+              className="gap-1.5 h-8 text-xs"
+            >
+              {showMap ? <MapPinOff className="size-3.5" /> : <MapPin className="size-3.5" />}
+              <span className="hidden sm:inline">{showMap ? "Ocultar mapa" : "Mostrar mapa"}</span>
+            </Button>
+          </div>
 
-          <input
-            type="date"
-            className="border border-gray-400 rounded p-2 text-black bg-white"
-            value={fechaInicio.format("YYYY-MM-DD")}
-            onChange={(e) => {
-              setFechaInicio(dayjs(e.target.value).startOf("day"));
-            }}
-          />
-          <input
-            type="date"
-            className="border border-gray-400 rounded p-2 text-black bg-white"
-            value={fechaFin.format("YYYY-MM-DD")}
-            onChange={(e) => setFechaFin(dayjs(e.target.value).endOf("day"))}
-          />
-          <button
-            onClick={getPagosYVisitas}
-            disabled={zonaCliente.ZONA_CLIENTE_ID === 0 || loading}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Buscar
-          </button>
-          <Button
-            variant={showMap ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowMap((v) => !v)}
-            className="gap-1.5"
-          >
-            {showMap ? <MapPinOff className="size-4" /> : <MapPin className="size-4" />}
-            {showMap ? "Ocultar mapa" : "Mostrar mapa"}
-          </Button>
+          <div className="flex items-center gap-2 pb-4 flex-wrap">
+            <Select
+              value={zonaCliente.ZONA_CLIENTE_ID === 0 ? undefined : String(zonaCliente.ZONA_CLIENTE_ID)}
+              onValueChange={(val) => {
+                const id = parseInt(val);
+                const r = zonasCliente.find((r) => r.ZONA_CLIENTE_ID === id);
+                if (r) setZonaCliente(r);
+              }}
+            >
+              <SelectTrigger className="h-9 w-[220px] text-xs">
+                <SelectValue placeholder="Selecciona una ruta" />
+              </SelectTrigger>
+              <SelectContent>
+                {zonasCliente.map((z) => (
+                  <SelectItem key={z.ZONA_CLIENTE_ID} value={String(z.ZONA_CLIENTE_ID)}>
+                    {z.ZONA_CLIENTE}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <DatePicker
+              value={fechaInicio}
+              onChange={(d) => setFechaInicio(d.startOf("day"))}
+              label="Desde"
+            />
+            <DatePicker
+              value={fechaFin}
+              onChange={(d) => setFechaFin(d.endOf("day"))}
+              label="Hasta"
+            />
+
+            <Button
+              size="sm"
+              onClick={getPagosYVisitas}
+              disabled={zonaCliente.ZONA_CLIENTE_ID === 0 || loading}
+              className="h-9 gap-1.5 text-xs"
+            >
+              {loading ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Search className="size-3.5" />
+              )}
+              Buscar
+            </Button>
+          </div>
         </div>
+      </header>
 
+      <div className="flex-1 min-h-0">
         {loading ? (
-          <div className="col-span-2 flex justify-center items-center">
-            <div role="status">
-              <svg
-                aria-hidden="true"
-                className="w-8 h-8 text-gray-200 animate-spin fill-blue-600"
-                viewBox="0 0 100 101"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                  fill="currentFill"
-                />
-              </svg>
-              <span className="sr-only">Loading...</span>
-            </div>
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="size-8 text-muted-foreground animate-spin" />
           </div>
         ) : (
-          <>
+          <div className={`flex h-full ${showMap ? "gap-0" : ""}`}>
             <div
-              className={`ag-theme-quartz ${
-                showMap ? "col-span-1" : "col-span-2"
-              }`}
-              style={{ height: "100%", paddingTop: 20 }}
+              className={`ag-theme-quartz ${showMap ? "flex-[5]" : "flex-1"}`}
+              style={{ height: "100%" }}
             >
               <AgGridReact
                 rowData={data}
@@ -270,15 +269,14 @@ const Home = () => {
                 tooltipShowDelay={500}
                 pagination={true}
                 localeText={AG_GRID_LOCALE_ES}
-                // rowSelection="multiple"
-                // suppressRowClickSelection={true}
-                // pagination={true}
-                // paginationPageSize={10}
-                // paginationPageSizeSelector={[10, 25, 50]}
               />
             </div>
-            {showMap && <Map points={[point || { lat: 0, lng: 0 }]} />}
-          </>
+            {showMap && (
+              <div className="flex-[3]">
+                <Map points={[point || { lat: 0, lng: 0 }]} />
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
