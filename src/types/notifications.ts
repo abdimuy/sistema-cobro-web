@@ -19,6 +19,7 @@ export interface NuevaVentaPayload {
   productos: number;
   zonaClienteId: number | null;
   vendedoresEmails: string[];
+  vendedoresNombres?: string[];
   timestamp: string;
 }
 

@@ -53,7 +53,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setNotifications((prev) => [notification, ...prev].slice(0, MAX_NOTIFICATIONS));
 
       showNativeNotification(notification.title, notification.body);
-      toast.custom((t) => renderToastContent(notification, t));
+      toast.custom((t) => renderToastContent(notification, t), { duration: 5000 });
     },
     [userData?.EMAIL]
   );

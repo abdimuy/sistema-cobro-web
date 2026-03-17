@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, ShoppingCart, Shield, ArrowLeftRight, Info, CheckCheck, Trash2 } from 'lucide-react';
+import { Bell, ShoppingCart, Shield, ArrowLeftRight, Info, CheckCheck, Trash2, DollarSign, Package, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNotifications } from '../../hooks/useNotifications';
-import { BaseNotification, NotificationType } from '../../types/notifications';
+import { BaseNotification, NotificationType, NuevaVentaPayload } from '../../types/notifications';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -44,6 +44,37 @@ const notificationRoutes: Partial<Record<NotificationType, (data: Record<string,
   nueva_venta: (data) => `/ventas-locales?ventaId=${data.localSaleId}`,
 };
 
+function VentaDetails({ data }: { data: Record<string, unknown> }) {
+  const payload = data as unknown as NuevaVentaPayload;
+  const precio = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(payload.precioTotal);
+  const vendedores = payload.vendedoresNombres?.length
+    ? payload.vendedoresNombres.join(', ')
+    : payload.vendedoresEmails?.map((e) => e.split('@')[0]).join(', ');
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5">
+      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+        <DollarSign className="size-3" />{precio}
+      </span>
+      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+        <Package className="size-3" />{payload.productos} prod.
+      </span>
+      {payload.vendedoresNombres?.length ? (
+        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          <User className="size-3 flex-shrink-0" />
+          {payload.vendedoresNombres.length === 1
+            ? payload.vendedoresNombres[0]
+            : `${payload.vendedoresNombres.length} vendedores`}
+        </span>
+      ) : vendedores ? (
+        <span className="flex items-center gap-1 text-[11px] text-muted-foreground truncate max-w-[180px]">
+          <User className="size-3 flex-shrink-0" />{vendedores}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function NotificationItem({
   notification,
   onClick,
@@ -74,10 +105,15 @@ function NotificationItem({
             </p>
             {!notification.read && <span className="size-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
             {notification.body}
           </p>
-          <div className="flex items-center justify-between mt-1">
+
+          {notification.type === 'nueva_venta' && (
+            <VentaDetails data={notification.data} />
+          )}
+
+          <div className="flex items-center justify-between mt-1.5">
             <p className="text-[11px] text-muted-foreground/70">
               {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true, locale: es })}
             </p>

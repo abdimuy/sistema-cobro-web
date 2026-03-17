@@ -47,7 +47,19 @@ function App() {
       <Router>
         <NavigationSetter />
         <LoadScript googleMapsApiKey="AIzaSyCASwsCJvFm7dGajUWlVg19PmS8JVPqRaY">
-          <Toaster richColors position="top-right" />
+          <Toaster
+            richColors
+            position="top-right"
+            expand
+            toastOptions={{
+              style: {
+                width: "420px",
+                padding: "16px 20px",
+                fontSize: "14px",
+              },
+              descriptionClassName: "text-sm",
+            }}
+          />
           <Routes>
             {/* Ruta de Login */}
             <Route path="/login" element={<LoginPage />} />
