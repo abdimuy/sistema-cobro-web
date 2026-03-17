@@ -138,9 +138,9 @@ export default function VentasLocales() {
   }, [params]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40">
+      <header className="shrink-0 bg-background border-b border-border/40">
         <div className="px-4 sm:px-6 lg:px-8">
           {/* Title Row */}
           <div className="flex items-center justify-between h-14">
@@ -186,7 +186,7 @@ export default function VentasLocales() {
       </header>
 
       {/* Main Content */}
-      <main>
+      <div className="flex-1 overflow-hidden min-h-0">
         {error ? (
           <VentasErrorState message={error} onRetry={refetch} />
         ) : loading && ventas.length === 0 ? (
@@ -214,7 +214,7 @@ export default function VentasLocales() {
             }}
           />
         )}
-      </main>
+      </div>
 
       {/* Detail Modal */}
       {showDetalleModal && selectedVentaId && (

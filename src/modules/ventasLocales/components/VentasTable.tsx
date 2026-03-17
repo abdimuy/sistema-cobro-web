@@ -214,7 +214,7 @@ export function VentasTable({
     <>
       <Table
         ref={scrollContainerRef}
-        className="bg-card block overflow-auto h-[calc(100vh-140px)] [&_th]:border-r [&_th]:border-border [&_th:last-child]:border-r-0 [&_th]:py-1.5 [&_td]:border-r [&_td]:border-border [&_td:last-child]:border-r-0 [&_td]:py-0.5 [&_tbody_tr:nth-child(even)]:bg-muted"
+        className="bg-card block overflow-auto h-[calc(100vh-170px)] [&_th]:border-r [&_th]:border-border [&_th:last-child]:border-r-0 [&_th]:py-1.5 [&_td]:border-r [&_td]:border-border [&_td:last-child]:border-r-0 [&_td]:py-0.5 [&_tbody_tr:nth-child(even)]:bg-muted"
         style={{ tableLayout: "fixed" }}
       >
         <TableHeader className="sticky top-0 z-10 bg-card">

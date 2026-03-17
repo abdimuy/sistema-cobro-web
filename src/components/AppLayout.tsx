@@ -30,7 +30,7 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="flex flex-col h-screen overflow-hidden !m-0 !rounded-none !shadow-none">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/40">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
@@ -52,9 +52,9 @@ export function AppLayout() {
             <NotificationBell />
           </div>
         </header>
-        <main className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto min-w-0">
           <Outlet />
-        </main>
+        </div>
       </SidebarInset>
       <AppUpdater />
     </SidebarProvider>
