@@ -30,13 +30,13 @@ const Traspasos = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-muted/50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Inventario de Camionetas
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Consulta el stock de cada camioneta y realiza traspasos de productos
           </p>
         </div>
@@ -59,8 +59,8 @@ const Traspasos = () => {
 
         {filteredAlmacenes.length === 0 ? (
           <div className="text-center py-12">
-            <Warehouse className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500 text-lg">
+            <Warehouse className="w-16 h-16 mx-auto text-muted-foreground/60 mb-4" />
+            <p className="text-muted-foreground text-lg">
               {searchTerm
                 ? "No se encontraron camionetas con ese criterio"
                 : "No hay camionetas disponibles"}
@@ -81,8 +81,8 @@ const Traspasos = () => {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <Icon className="w-6 h-6 text-blue-600" />
+                        <div className="p-2 bg-primary/10 rounded-lg dark:bg-primary/20">
+                          <Icon className="w-6 h-6 text-primary" />
                         </div>
                         <div>
                           <CardTitle className="text-lg">
@@ -95,10 +95,10 @@ const Traspasos = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <div className="flex items-center gap-2">
-                          <Package className="w-5 h-5 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-600">
+                          <Package className="w-5 h-5 text-muted-foreground" />
+                          <span className="text-sm font-medium text-muted-foreground">
                             Existencias Totales
                           </span>
                         </div>
@@ -118,9 +118,9 @@ const Traspasos = () => {
           </div>
         )}
 
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-800 mb-2">Información:</h3>
-          <ul className="text-sm text-blue-700 space-y-1">
+        <div className="mt-8 bg-primary/5 border border-primary/20 rounded-lg p-4 dark:bg-primary/10">
+          <h3 className="font-semibold text-primary mb-2">Información:</h3>
+          <ul className="text-sm text-primary/80 space-y-1">
             <li>• Haz clic en cualquier camioneta para ver su inventario detallado</li>
             <li>• Desde el inventario podrás realizar traspasos entre camionetas</li>
             <li>• Los traspasos se registran automáticamente con entrada y salida</li>

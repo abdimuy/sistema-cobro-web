@@ -67,16 +67,16 @@ const ProductoCard = ({ articulo, disabled, onSelect }: ProductoCardProps) => {
       className={`
         p-3 border rounded-lg transition-all
         ${disabled
-          ? "bg-gray-50 border-gray-200 opacity-60"
-          : "bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm cursor-pointer"
+          ? "bg-muted border-border opacity-60"
+          : "bg-card border-border hover:border-blue-300 hover:shadow-sm cursor-pointer"
         }
       `}
       onClick={disabled ? undefined : onSelect}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm text-gray-900 truncate">{articulo.ARTICULO}</p>
-          <p className="text-xs text-gray-500 mt-0.5">ID: {articulo.ARTICULO_ID}</p>
+          <p className="font-medium text-sm text-foreground truncate">{articulo.ARTICULO}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">ID: {articulo.ARTICULO_ID}</p>
           {articulo.LINEA_ARTICULO && (
             <Badge variant="secondary" className="mt-1 text-xs">
               {articulo.LINEA_ARTICULO}
@@ -92,7 +92,7 @@ const ProductoCard = ({ articulo, disabled, onSelect }: ProductoCardProps) => {
             Stock: {articulo.EXISTENCIAS}
           </Badge>
           {precios.lista > 0 && (
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               ${precios.lista.toLocaleString()}
             </p>
           )}
@@ -211,7 +211,7 @@ const AgregarProductoDialog = ({
 
         {/* Buscador */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
           <Input
             placeholder="Buscar por nombre o ID..."
             value={search}
@@ -236,7 +236,7 @@ const AgregarProductoDialog = ({
             <div className="p-6 space-y-4">
               <div className="text-center">
                 <p className="font-medium text-lg">{selectedArticulo.ARTICULO}</p>
-                <p className="text-sm text-gray-500">ID: {selectedArticulo.ARTICULO_ID}</p>
+                <p className="text-sm text-muted-foreground">ID: {selectedArticulo.ARTICULO_ID}</p>
                 <Badge className="mt-2">Stock disponible: {selectedArticulo.EXISTENCIAS}</Badge>
               </div>
 
@@ -288,7 +288,7 @@ const AgregarProductoDialog = ({
             // Lista de productos
             <ScrollArea className="h-[400px] pr-4">
               {articulosFiltrados.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-muted-foreground">
                   <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p>No se encontraron productos</p>
                 </div>
@@ -313,7 +313,7 @@ const AgregarProductoDialog = ({
 
         {/* Footer info */}
         {!loading && !error && !selectedArticulo && (
-          <div className="pt-2 border-t text-xs text-gray-500 text-center">
+          <div className="pt-2 border-t text-xs text-muted-foreground text-center">
             {articulosFiltrados.length} producto{articulosFiltrados.length !== 1 ? "s" : ""} disponible{articulosFiltrados.length !== 1 ? "s" : ""}
           </div>
         )}

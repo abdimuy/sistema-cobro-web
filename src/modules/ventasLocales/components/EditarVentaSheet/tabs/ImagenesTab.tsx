@@ -42,12 +42,12 @@ const ImagenCard = ({ imagen, onUpdateDescripcion, onRemove, onRestore }: Imagen
           ? "opacity-50 border-red-300"
           : isNew
             ? "border-green-300 ring-2 ring-green-100"
-            : "border-gray-200 hover:border-blue-300"
+            : "border-border hover:border-blue-300"
         }
       `}
     >
       {/* Image */}
-      <div className="relative aspect-square bg-gray-100">
+      <div className="relative aspect-square bg-muted">
         <img
           src={imageUrl}
           alt={imagen.imgDesc}
@@ -113,7 +113,7 @@ const ImagenCard = ({ imagen, onUpdateDescripcion, onRemove, onRestore }: Imagen
           disabled={isDeleted}
           className="text-sm h-8"
         />
-        <p className="text-xs text-gray-400 mt-2">
+        <p className="text-xs text-muted-foreground/60 mt-2">
           {dayjs(imagen.fechaSubida).format("DD/MM/YYYY HH:mm")}
         </p>
       </div>
@@ -173,20 +173,20 @@ const Dropzone = ({ onFilesSelected }: DropzoneProps) => {
       onDragOver={handleDragOver}
       onClick={() => inputRef.current?.click()}
       className="
-        border-2 border-dashed border-gray-300 rounded-lg p-8
-        hover:border-blue-400 hover:bg-blue-50/50
+        border-2 border-dashed border-border rounded-lg p-8
+        hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/20
         transition-colors cursor-pointer
         flex flex-col items-center justify-center gap-3
       "
     >
-      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+      <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center">
         <Upload className="h-6 w-6 text-blue-600" />
       </div>
       <div className="text-center">
-        <p className="text-sm font-medium text-gray-700">
+        <p className="text-sm font-medium text-foreground">
           Arrastra imágenes aquí o haz clic para seleccionar
         </p>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           PNG, JPG, JPEG hasta 10MB
         </p>
       </div>
@@ -223,19 +223,19 @@ const ImagenesTab = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Image className="h-5 w-5 text-blue-600" />
-          <h3 className="font-semibold text-gray-900">
+          <h3 className="font-semibold text-foreground">
             Imágenes ({activeImagenes.length})
           </h3>
         </div>
 
         <div className="flex gap-2">
           {newImagenes.length > 0 && (
-            <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+            <span className="text-xs text-green-600 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded">
               {newImagenes.length} nueva(s)
             </span>
           )}
           {deletedImagenes.length > 0 && (
-            <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+            <span className="text-xs text-red-600 bg-red-50 dark:bg-red-950/30 px-2 py-1 rounded">
               {deletedImagenes.length} eliminada(s)
             </span>
           )}
@@ -260,17 +260,17 @@ const ImagenesTab = ({
         </div>
       ) : (
         <div className="text-center py-8">
-          <Image className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No hay imágenes</p>
-          <p className="text-sm text-gray-400">
+          <Image className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
+          <p className="text-muted-foreground">No hay imágenes</p>
+          <p className="text-sm text-muted-foreground/60">
             Arrastra o selecciona imágenes para agregarlas
           </p>
         </div>
       )}
 
       {/* Info */}
-      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
+      <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <p className="text-sm text-blue-800 dark:text-blue-300">
           <strong>Tip:</strong> Las imágenes eliminadas se quitarán permanentemente al guardar.
           Las nuevas imágenes se subirán al servidor.
         </p>

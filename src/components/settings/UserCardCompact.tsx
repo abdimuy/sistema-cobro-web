@@ -47,16 +47,16 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
       {/* Header compacto */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-sm font-semibold text-blue-700">
+          <div className="w-10 h-10 bg-primary/10 rounded-full dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-semibold text-primary">
               {cobrador.NOMBRE?.charAt(0) || cobrador.EMAIL.charAt(0)}
             </span>
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold text-slate-900 truncate">
+            <h3 className="text-sm font-semibold text-foreground truncate">
               {cobrador.NOMBRE || cobrador.EMAIL}
             </h3>
-            <p className="text-xs text-slate-600 truncate">{cobrador.EMAIL}</p>
+            <p className="text-xs text-muted-foreground truncate">{cobrador.EMAIL}</p>
           </div>
         </div>
         <div className="flex-shrink-0">
@@ -71,9 +71,9 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
       {/* Configuraciones básicas */}
       <div className="space-y-3">
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">Rol</label>
+          <label className="block text-xs font-medium text-foreground mb-1">Rol</label>
           <select
-            className="w-full px-2 py-1.5 text-xs bg-white border border-slate-200 rounded focus:ring-1 focus:ring-purple-500 focus:border-transparent text-slate-900"
+            className="w-full px-2 py-1.5 text-xs bg-background border border-border rounded focus:ring-1 focus:ring-purple-500 focus:border-transparent text-foreground"
             value={cobrador.ROL || ROLES.VIEWER}
             onChange={(e) => onRoleChange(e, cobrador.EMAIL)}
           >
@@ -86,9 +86,9 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">Ruta</label>
+          <label className="block text-xs font-medium text-foreground mb-1">Ruta</label>
           <select
-            className="w-full px-2 py-1.5 text-xs bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-slate-900"
+            className="w-full px-2 py-1.5 text-xs bg-background border border-border rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-foreground"
             value={cobrador.COBRADOR_ID}
             onChange={(e) => onSelect(e, cobrador.EMAIL)}
           >
@@ -102,11 +102,11 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">Zona</label>
+          <label className="block text-xs font-medium text-foreground mb-1">Zona</label>
           <select
             value={cobrador.ZONA_CLIENTE_ID}
             onChange={(e) => onSelectZona(e, cobrador.EMAIL)}
-            className="w-full px-2 py-1.5 text-xs bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-slate-900"
+            className="w-full px-2 py-1.5 text-xs bg-background border border-border rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-foreground"
           >
             <option value="0">Seleccionar</option>
             {zonasCliente.map((zona) => (
@@ -118,9 +118,9 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">Teléfono</label>
+          <label className="block text-xs font-medium text-foreground mb-1">Teléfono</label>
           <input
-            className="w-full px-2 py-1.5 text-xs bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-slate-900"
+            className="w-full px-2 py-1.5 text-xs bg-background border border-border rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-foreground"
             type="text"
             defaultValue={cobrador.TELEFONO}
             onBlur={(e) => onUpdatePhone(e, cobrador.ID)}
@@ -128,13 +128,13 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">Versión App Móvil</label>
+          <label className="block text-xs font-medium text-foreground mb-1">Versión App Móvil</label>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-900 font-medium">
+            <span className="text-foreground font-medium">
               {cobrador.VERSION_APP || 'N/A'}
             </span>
             {cobrador.FECHA_VERSION_APP && (
-              <span className="text-slate-500 text-xs" title={`Validado el ${dayjs(cobrador.FECHA_VERSION_APP.toDate()).format('DD/MM/YYYY HH:mm')}`}>
+              <span className="text-muted-foreground text-xs" title={`Validado el ${dayjs(cobrador.FECHA_VERSION_APP.toDate()).format('DD/MM/YYYY HH:mm')}`}>
                 Validado {dayjs(cobrador.FECHA_VERSION_APP.toDate()).fromNow()}
               </span>
             )}
@@ -144,7 +144,7 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
         {/* Permisos compactos */}
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-2">Permisos Android</label>
+            <label className="block text-xs font-medium text-foreground mb-2">Permisos Android</label>
             <div className="flex gap-1">
               {androidModules.map((module) => (
                 <button
@@ -154,7 +154,7 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
                   className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                     (cobrador.MODULOS || []).includes(module.key)
                       ? "bg-green-500 text-white"
-                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                      : "bg-background border border-border text-muted-foreground hover:bg-muted"
                   }`}
                   title={module.label}
                 >
@@ -165,7 +165,7 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-2">Permisos Desktop</label>
+            <label className="block text-xs font-medium text-foreground mb-2">Permisos Desktop</label>
             <div className="flex gap-1 flex-wrap">
               {desktopModules.map((module) => (
                 <button
@@ -175,7 +175,7 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
                   className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                     (cobrador.MODULOS_DESKTOP || []).includes(module.key)
                       ? "bg-blue-500 text-white"
-                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                      : "bg-background border border-border text-muted-foreground hover:bg-muted"
                   }`}
                   title={module.label}
                 >

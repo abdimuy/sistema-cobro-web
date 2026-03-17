@@ -221,7 +221,7 @@ const EditarVentaSheet = ({
           </SheetHeader>
 
           {/* Tabs Navigation */}
-          <div className="px-6 py-3 border-b bg-gray-50">
+          <div className="px-6 py-3 border-b bg-muted">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
               <TabsList className="grid w-full grid-cols-4 h-auto p-1">
                 {TABS_CONFIG.map((tab) => {
@@ -247,7 +247,7 @@ const EditarVentaSheet = ({
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className="flex flex-col gap-1 py-2 px-1 data-[state=active]:bg-white relative"
+                      className="flex flex-col gap-1 py-2 px-1 data-[state=active]:bg-card relative"
                     >
                       <Icon className="h-4 w-4" />
                       <span className="text-xs">{tab.label}</span>
@@ -311,7 +311,7 @@ const EditarVentaSheet = ({
           </ScrollArea>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t bg-gray-50 flex items-center justify-between">
+          <div className="px-6 py-4 border-t bg-muted flex items-center justify-between">
             <div className="flex items-center gap-2">
               {isDirty && (
                 <span className="text-xs text-amber-600 flex items-center gap-1">

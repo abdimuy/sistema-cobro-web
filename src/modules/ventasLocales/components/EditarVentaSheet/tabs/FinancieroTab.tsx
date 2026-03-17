@@ -88,42 +88,42 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
   return (
     <div className="space-y-6">
       {/* Totales Calculados */}
-      <div className="bg-gradient-to-r from-slate-50 to-gray-50 border border-gray-200 rounded-lg p-4">
+      <div className="bg-muted/50 border border-border rounded-lg p-4">
         <div className="flex items-center gap-2 mb-3">
-          <DollarSign className="h-5 w-5 text-gray-600" />
-          <span className="text-sm font-semibold text-gray-700">Totales Calculados</span>
+          <DollarSign className="h-5 w-5 text-muted-foreground" />
+          <span className="text-sm font-semibold text-foreground">Totales Calculados</span>
         </div>
         <div className="grid grid-cols-3 gap-3">
           {/* Precio Lista */}
-          <div className="bg-white rounded-lg p-3 border border-gray-200 text-center">
-            <p className="text-xs text-gray-500 mb-1">Precio Lista</p>
-            <p className="text-lg font-bold text-gray-900">
+          <div className="bg-card rounded-lg p-3 border border-border text-center">
+            <p className="text-xs text-muted-foreground mb-1">Precio Lista</p>
+            <p className="text-lg font-bold text-foreground">
               {formatCurrency(precioTotalCalculado)}
             </p>
           </div>
           {/* Corto Plazo */}
-          <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 text-center">
+          <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 border border-blue-200 dark:border-blue-800 text-center">
             <p className="text-xs text-blue-600 mb-1">Corto Plazo</p>
             <p className="text-lg font-bold text-blue-600">
               {formatCurrency(montoACortoPlazoCalculado)}
             </p>
           </div>
           {/* Contado */}
-          <div className="bg-green-50 rounded-lg p-3 border border-green-200 text-center">
+          <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-3 border border-green-200 dark:border-green-800 text-center">
             <p className="text-xs text-green-600 mb-1">Contado</p>
             <p className="text-lg font-bold text-green-600">
               {formatCurrency(totalContadoCalculado)}
             </p>
           </div>
         </div>
-        <p className="text-xs text-gray-400 mt-2 text-center">
+        <p className="text-xs text-muted-foreground/60 mt-2 text-center">
           Calculados automáticamente de la suma de productos
         </p>
       </div>
 
       {/* Tipo de Venta */}
       <fieldset className="space-y-4">
-        <legend className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3">
+        <legend className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
           <CreditCard className="h-4 w-4 text-blue-600" />
           Tipo de Venta
         </legend>
@@ -152,8 +152,8 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
 
       {/* Información de Crédito */}
       {isCredito && (
-        <fieldset className="space-y-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
-          <legend className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3">
+        <fieldset className="space-y-4 p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+          <legend className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
             <CreditCard className="h-4 w-4 text-orange-600" />
             Información de Crédito
           </legend>
@@ -165,7 +165,7 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
                 Enganche
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                 <Input
                   id="enganche"
                   type="number"
@@ -185,7 +185,7 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
                 Parcialidad <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                 <Input
                   id="parcialidad"
                   type="number"
@@ -275,8 +275,8 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
 
       {/* Nota */}
       <fieldset className="space-y-4">
-        <legend className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3">
-          <FileText className="h-4 w-4 text-gray-600" />
+        <legend className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
+          <FileText className="h-4 w-4 text-muted-foreground" />
           Notas
         </legend>
 
@@ -297,21 +297,21 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
 
       {/* Resumen */}
       {isCredito && (
-        <div className="bg-gray-50 rounded-lg p-4 border">
-          <h4 className="text-sm font-semibold text-gray-900 mb-3">Resumen de Crédito</h4>
+        <div className="bg-muted rounded-lg p-4 border">
+          <h4 className="text-sm font-semibold text-foreground mb-3">Resumen de Crédito</h4>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="text-gray-600">Precio Total:</div>
+            <div className="text-muted-foreground">Precio Total:</div>
             <div className="font-semibold text-green-600 text-right">
               {formatCurrency(precioTotalCalculado)}
             </div>
 
-            <div className="text-gray-600">Enganche:</div>
+            <div className="text-muted-foreground">Enganche:</div>
             <div className="font-medium text-right">{formatCurrency(data.enganche)}</div>
 
-            <div className="text-gray-600">Parcialidad:</div>
+            <div className="text-muted-foreground">Parcialidad:</div>
             <div className="font-medium text-right">{formatCurrency(data.parcialidad)}</div>
 
-            <div className="text-gray-600 font-medium">Saldo a financiar:</div>
+            <div className="text-muted-foreground font-medium">Saldo a financiar:</div>
             <div className="font-semibold text-right text-orange-600">
               {formatCurrency(precioTotalCalculado - data.enganche)}
             </div>

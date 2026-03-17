@@ -118,7 +118,7 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-background dark:to-background">
       {/* Header */}
       <SettingsHeader 
         stats={stats}
@@ -128,33 +128,33 @@ const Settings = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Configuración del servidor */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center space-x-3 mb-6">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-10 h-10 bg-primary/10 rounded-lg dark:bg-primary/20 flex items-center justify-center">
+              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-slate-900">Configuración del Servidor</h2>
-              <p className="text-slate-600">URL del servidor API</p>
+              <h2 className="text-xl font-semibold text-foreground">Configuración del Servidor</h2>
+              <p className="text-muted-foreground">URL del servidor API</p>
             </div>
           </div>
           
           <div className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700">URL del Servidor</label>
+                <label className="block text-sm font-medium text-foreground">URL del Servidor</label>
                 <input
                   onChange={handlerUpdateURLAPI}
                   value={urlApi}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-slate-900"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-foreground"
                   placeholder="Ingresa la URL del servidor"
                 />
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700">Direcciones de referencia</label>
-                <div className="space-y-1 text-sm text-slate-600">
+                <label className="block text-sm font-medium text-foreground">Direcciones de referencia</label>
+                <div className="space-y-1 text-sm text-muted-foreground">
                   <p>• Por defecto: https://msp2025.loclx.io/</p>
                   <p>• Local: http://serverm:3001/</p>
                 </div>
@@ -206,10 +206,10 @@ const Settings = () => {
         />
 
         {/* Lista de usuarios */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-          <div className="px-6 py-4 border-b border-slate-200">
-            <h2 className="text-xl font-semibold text-slate-900">Usuarios del Sistema</h2>
-            <p className="text-slate-600 mt-1">Gestiona permisos, rutas y configuraciones</p>
+        <div className="bg-card rounded-xl shadow-sm border border-border">
+          <div className="px-6 py-4 border-b border-border">
+            <h2 className="text-xl font-semibold text-foreground">Usuarios del Sistema</h2>
+            <p className="text-muted-foreground mt-1">Gestiona permisos, rutas y configuraciones</p>
           </div>
           
           <div className="overflow-hidden">

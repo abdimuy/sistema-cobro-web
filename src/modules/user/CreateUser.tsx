@@ -83,13 +83,13 @@ const CreateUser = () => {
 
   return (
     <div
-      className="w-full h-full bg-white overflow-y-auto"
+      className="w-full h-full bg-background overflow-y-auto"
       style={{ height: "100vh" }}
     >
       <div className="flex justify-center flex-col items-center min-h-full py-8">
         <button
           onClick={() => navigate("/settings")}
-          className="self-start ml-8 mb-4 text-gray-600 hover:text-gray-800 flex items-center gap-2"
+          className="self-start ml-8 mb-4 text-muted-foreground hover:text-foreground flex items-center gap-2"
         >
           <svg
             className="w-6 h-6"
@@ -106,40 +106,40 @@ const CreateUser = () => {
           </svg>
           Regresar
         </button>
-        <h2 className="text-3xl text-black font-bold text-center mb-12">
+        <h2 className="text-3xl text-foreground font-bold text-center mb-12">
           Crear usuario
         </h2>
       <input
         type="name"
-        className="mb-6 bg-gray-100 p-2 rounded text-black w-[21.5rem]"
+        className="mb-6 bg-muted p-2 rounded text-foreground w-[21.5rem]"
         placeholder="Nombre"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
       <input
         type="email"
-        className="mb-6 bg-gray-100 p-2 rounded text-black w-[21.5rem]"
+        className="mb-6 bg-muted p-2 rounded text-foreground w-[21.5rem]"
         placeholder="Correo electrónico"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
       <input
         type="password"
-        className="mb-8 bg-gray-100 p-2 rounded text-black w-[21.5rem]"
+        className="mb-8 bg-muted p-2 rounded text-foreground w-[21.5rem]"
         placeholder="Contraseña"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
       <input
         type="tel"
-        className="mb-8 bg-gray-100 p-2 rounded text-black w-[21.5rem]"
+        className="mb-8 bg-muted p-2 rounded text-foreground w-[21.5rem]"
         placeholder="Teléfono"
         value={telefono}
         onChange={(e) => setTelefono(e.target.value)}
       />
-      <p className="text-black text-center font-bold text-xl mb-4">Ruta</p>
+      <p className="text-foreground text-center font-bold text-xl mb-4">Ruta</p>
       <select
-        className="mb-8 bg-gray-100 p-2 rounded text-black w-[21.5rem]"
+        className="mb-8 bg-muted p-2 rounded text-foreground w-[21.5rem]"
         value={ruta?.COBRADOR_ID}
         onChange={(e) => {
           const selectedRuta = rutas.find(
@@ -154,7 +154,7 @@ const CreateUser = () => {
           </option>
         ))}
       </select>
-      <p className="text-black text-center font-bold text-xl mb-4">Módulos</p>
+      <p className="text-foreground text-center font-bold text-xl mb-4">Módulos</p>
       <div className="mb-8 w-[21.5rem] flex gap-3">
         {androidModules.map((module) => (
           <button
@@ -170,16 +170,16 @@ const CreateUser = () => {
             className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
               selectedModules.includes(module.key)
                 ? "bg-green-500 text-white shadow-lg transform scale-105"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
           >
             {module.label.toUpperCase()}
           </button>
         ))}
       </div>
-      <p className="text-black text-center font-bold text-xl mb-4">Zona</p>
+      <p className="text-foreground text-center font-bold text-xl mb-4">Zona</p>
       <select
-        className="mb-8 bg-gray-100 p-2 rounded text-black w-[21.5rem]"
+        className="mb-8 bg-muted p-2 rounded text-foreground w-[21.5rem]"
         value={zonaCliente?.ZONA_CLIENTE_ID}
         onChange={(e) => {
           const selectedZona = zonasCliente.find(
@@ -195,7 +195,7 @@ const CreateUser = () => {
         ))}
       </select>
       <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2 px-4 rounded"
         onClick={handleRegister}
       >
         Crear usuario

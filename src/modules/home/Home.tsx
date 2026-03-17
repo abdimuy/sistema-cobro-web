@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useTheme } from "../../context/ThemeContext";
 import { MapPin, MapPinOff, Search, Loader2, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,6 +67,9 @@ function DatePicker({ value, onChange }: { value: dayjs.Dayjs; onChange: (d: day
 }
 
 const Home = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
   const [columnDefs] = useState<ColDef[]>([
     {
       field: "TIPO",
@@ -246,7 +250,7 @@ const Home = () => {
         ) : (
           <div className={`flex h-full ${showMap ? "gap-0" : ""}`}>
             <div
-              className={`ag-theme-quartz ${showMap ? "flex-[5]" : "flex-1"}`}
+              className={`${isDark ? 'ag-theme-quartz-dark' : 'ag-theme-quartz'} ${showMap ? "flex-[5]" : "flex-1"}`}
               style={{ height: "100%" }}
             >
               <AgGridReact

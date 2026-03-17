@@ -542,13 +542,13 @@ const AsignacionAlmacenes = () => {
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-muted/50 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
               Asignación de Camionetas
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Asigna hasta 3 vendedores por camioneta. Arrastra y suelta o usa la asignación rápida.
             </p>
           </div>
@@ -557,13 +557,13 @@ const AsignacionAlmacenes = () => {
             <div className="flex gap-3 flex-wrap">
               <button
                 onClick={fetchAlmacenes}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                className="bg-muted-foreground hover:bg-muted-foreground/80 text-white px-4 py-2 rounded-lg transition-colors"
               >
                 Recargar Almacenes
               </button>
               <button
                 onClick={() => window.location.href = '/inventario-camionetas'}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg transition-colors"
               >
                 Ver Inventario
               </button>
@@ -594,9 +594,9 @@ const AsignacionAlmacenes = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-700">Camionetas</h2>
-                <div className="bg-blue-50 px-3 py-2 rounded-lg">
-                  <span className="text-blue-700 font-medium text-sm">
+                <h2 className="text-xl font-semibold text-foreground">Camionetas</h2>
+                <div className="bg-primary/10 px-3 py-2 rounded-lg">
+                  <span className="text-primary/80 font-medium text-sm">
                     {filteredCamionetas.length} camioneta(s) encontrada(s)
                   </span>
                 </div>
@@ -609,12 +609,12 @@ const AsignacionAlmacenes = () => {
                     placeholder="Buscar camionetas por nombre..."
                     value={camionetaSearchTerm}
                     onChange={(e) => setCamionetaSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
+                    className="w-full px-4 py-2 pr-10 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
                   />
                   {camionetaSearchTerm && (
                     <button
                       onClick={() => setCamionetaSearchTerm("")}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
                       type="button"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -628,14 +628,14 @@ const AsignacionAlmacenes = () => {
                 {filteredCamionetas.map((almacen) => (
                   <div
                     key={almacen.id}
-                    className={`bg-white rounded-lg shadow-md p-4 border-2 transition-all ${
-                      selectedAlmacen === almacen.id ? 'border-blue-500 shadow-lg' : 'border-gray-200'
+                    className={`bg-card rounded-lg shadow-md p-4 border-2 transition-all ${
+                      selectedAlmacen === almacen.id ? 'border-blue-500 shadow-lg' : 'border-border'
                     }`}
                     onClick={() => setSelectedAlmacen(almacen.id)}
                   >
                     <div className="mb-3">
                       <div className="flex justify-between items-center">
-                        <h3 className="font-semibold text-gray-800">{almacen.nombre}</h3>
+                        <h3 className="font-semibold text-foreground">{almacen.nombre}</h3>
                         <div className="flex items-center gap-2">
                           <span className={`text-sm px-2 py-1 rounded ${
                             almacen.usuariosAsignados.length === 3
@@ -653,21 +653,21 @@ const AsignacionAlmacenes = () => {
                                 e.stopPropagation();
                                 setOpenMenuId(openMenuId === almacen.id ? null : almacen.id);
                               }}
-                              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                              className="p-2 hover:bg-muted rounded-full transition-colors"
                             >
-                              <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-6 h-6 text-muted-foreground" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
                               </svg>
                             </button>
                             {openMenuId === almacen.id && (
-                              <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[220px]">
+                              <div className="absolute right-0 top-10 bg-card border border-border rounded-lg shadow-lg z-50 min-w-[220px]">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     toggleAlmacenExcluido(almacen.id);
                                     setOpenMenuId(null);
                                   }}
-                                  className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-gray-700 text-sm font-medium"
+                                  className="w-full px-4 py-3 text-left hover:bg-muted transition-colors flex items-center gap-3 text-foreground text-sm font-medium"
                                 >
                                   <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -684,7 +684,7 @@ const AsignacionAlmacenes = () => {
                           </div>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Existencias: {almacen.existencias.toLocaleString()}
                       </p>
                     </div>
@@ -695,11 +695,11 @@ const AsignacionAlmacenes = () => {
                           ref={provided.innerRef}
                           {...provided.droppableProps}
                           className={`min-h-[120px] max-h-[250px] overflow-y-auto p-3 rounded-lg transition-colors ${
-                            snapshot.isDraggingOver ? 'bg-blue-50' : 'bg-gray-50'
+                            snapshot.isDraggingOver ? 'bg-primary/10' : 'bg-muted'
                           }`}
                         >
                           {almacen.usuariosAsignados.length === 0 ? (
-                            <p className="text-gray-400 text-center py-8 font-medium">
+                            <p className="text-muted-foreground/60 text-center py-8 font-medium">
                               Sin vendedores asignados
                               <br />
                               <span className="text-xs">Arrastra vendedores aquí</span>
@@ -716,20 +716,18 @@ const AsignacionAlmacenes = () => {
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
-                                    className={`bg-white p-3 mb-2 rounded-lg shadow-md border-2 flex justify-between items-center transition-all ${
-                                      snapshot.isDragging ? 'shadow-xl border-blue-400 scale-105' : 'border-gray-300 hover:border-blue-300'
+                                    className={`bg-card p-3 mb-2 rounded-lg shadow-md border-2 flex justify-between items-center transition-all ${
+                                      snapshot.isDragging ? 'shadow-xl border-primary scale-105' : 'border-border hover:border-primary/50'
                                     }`}
                                     style={{
                                       ...provided.draggableProps.style,
-                                      color: '#374151',
-                                      backgroundColor: '#ffffff',
                                       minHeight: '60px'
                                     }}
                                   >
                                     <div className="flex-1 min-w-0">
-                                      <span className="text-base font-semibold text-gray-900 block truncate">{usuario.nombre}</span>
+                                      <span className="text-base font-semibold text-foreground block truncate">{usuario.nombre}</span>
                                       {usuario.email && (
-                                        <span className="text-sm text-blue-600 block truncate">{usuario.email}</span>
+                                        <span className="text-sm text-primary block truncate">{usuario.email}</span>
                                       )}
                                     </div>
                                     <button
@@ -756,14 +754,14 @@ const AsignacionAlmacenes = () => {
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Vendedores Disponibles</h2>
-              <div className="bg-white rounded-lg shadow-md p-4">
+              <h2 className="text-xl font-semibold text-foreground mb-4">Vendedores Disponibles</h2>
+              <div className="bg-card rounded-lg shadow-md p-4">
                 <input
                   type="text"
                   placeholder="Buscar por nombre o email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
+                  className="w-full px-3 py-2 border border-border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
                 />
                 
                 <Droppable droppableId="usuarios-disponibles">
@@ -772,11 +770,11 @@ const AsignacionAlmacenes = () => {
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={`max-h-[500px] overflow-y-auto p-2 rounded-lg transition-colors ${
-                        snapshot.isDraggingOver ? 'bg-blue-50' : 'bg-gray-50'
+                        snapshot.isDraggingOver ? 'bg-primary/10' : 'bg-muted'
                       }`}
                     >
                       {filteredUsuarios.length === 0 ? (
-                        <p className="text-gray-400 text-center py-4">
+                        <p className="text-muted-foreground/60 text-center py-4">
                           No hay vendedores disponibles
                         </p>
                       ) : (
@@ -791,30 +789,28 @@ const AsignacionAlmacenes = () => {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className={`bg-white p-3 mb-2 rounded-lg shadow-sm border cursor-move hover:shadow-md transition-all ${
-                                  snapshot.isDragging ? 'shadow-lg border-blue-400' : 'border-gray-200'
+                                className={`bg-card p-3 mb-2 rounded-lg shadow-sm border cursor-move hover:shadow-md transition-all ${
+                                  snapshot.isDragging ? 'shadow-lg border-primary' : 'border-border'
                                 }`}
                                 style={{
-                                  ...provided.draggableProps.style,
-                                  color: '#374151',
-                                  backgroundColor: '#ffffff'
+                                  ...provided.draggableProps.style
                                 }}
                               >
                                 <div className="flex justify-between items-center">
                                   <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-gray-800 truncate">{usuario.nombre}</p>
+                                    <p className="font-medium text-foreground truncate">{usuario.nombre}</p>
                                     <div className="flex flex-col gap-1">
                                       {usuario.email && (
-                                        <p className="text-xs text-gray-500 truncate">{usuario.email}</p>
+                                        <p className="text-xs text-muted-foreground truncate">{usuario.email}</p>
                                       )}
                                       {usuario.telefono && (
-                                        <p className="text-xs text-gray-400 truncate">Tel: {usuario.telefono}</p>
+                                        <p className="text-xs text-muted-foreground/60 truncate">Tel: {usuario.telefono}</p>
                                       )}
                                     </div>
                                   </div>
                                   <button
                                     onClick={() => handleQuickAssign(usuario.id)}
-                                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors min-w-[70px] flex-shrink-0"
+                                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors min-w-[70px] flex-shrink-0"
                                   >
                                     Asignar
                                   </button>
@@ -832,9 +828,9 @@ const AsignacionAlmacenes = () => {
             </div>
           </div>
 
-          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-800 mb-2">Instrucciones:</h3>
-            <ul className="text-sm text-blue-700 space-y-1">
+          <div className="mt-8 bg-primary/5 border border-primary/20 rounded-lg p-4 dark:bg-primary/10">
+            <h3 className="font-semibold text-primary mb-2">Instrucciones:</h3>
+            <ul className="text-sm text-primary/80 space-y-1">
               <li>• Arrastra y suelta vendedores entre las columnas para asignarlos</li>
               <li>• Cada camioneta puede tener máximo 3 vendedores asignados</li>
               <li>• Haz clic en una camioneta y luego en "Asignar" para asignación rápida</li>
@@ -849,17 +845,17 @@ const AsignacionAlmacenes = () => {
         {/* Modal para almacenes no-camioneta */}
         {showExcludedModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="bg-card rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
+              <div className="flex items-center justify-between p-6 border-b border-border">
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900">Almacenes</h3>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <h3 className="text-xl font-semibold text-foreground">Almacenes</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
                     Estos almacenes están marcados como "almacén" y no pueden tener vendedores asignados
                   </p>
                 </div>
                 <button
                   onClick={() => setShowExcludedModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="text-muted-foreground/60 hover:text-muted-foreground transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -875,8 +871,8 @@ const AsignacionAlmacenes = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
                     </div>
-                    <h4 className="text-lg font-medium text-gray-900 mb-2">No hay almacenes</h4>
-                    <p className="text-gray-500">
+                    <h4 className="text-lg font-medium text-foreground mb-2">No hay almacenes</h4>
+                    <p className="text-muted-foreground">
                       Usa el menú de opciones (⋮) en cualquier camioneta para cambiarla a "Almacén"
                     </p>
                   </div>
@@ -889,7 +885,7 @@ const AsignacionAlmacenes = () => {
                       >
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex-1">
-                            <h4 className="font-semibold text-gray-800 text-sm mb-1">
+                            <h4 className="font-semibold text-foreground text-sm mb-1">
                               {almacen.nombre}
                             </h4>
                             <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded">
@@ -899,10 +895,10 @@ const AsignacionAlmacenes = () => {
                         </div>
 
                         <div className="space-y-2 mb-4">
-                          <p className="text-xs text-gray-600">
+                          <p className="text-xs text-muted-foreground">
                             <span className="font-medium">ID:</span> {almacen.id}
                           </p>
-                          <p className="text-xs text-gray-600">
+                          <p className="text-xs text-muted-foreground">
                             <span className="font-medium">Existencias:</span> {almacen.existencias.toLocaleString()}
                           </p>
                         </div>
@@ -925,10 +921,10 @@ const AsignacionAlmacenes = () => {
                 )}
               </div>
 
-              <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+              <div className="flex justify-end gap-3 p-6 border-t border-border bg-muted">
                 <button
                   onClick={() => setShowExcludedModal(false)}
-                  className="px-6 py-2.5 rounded-lg bg-gray-600 hover:bg-gray-700 text-white font-medium transition-colors"
+                  className="px-6 py-2.5 rounded-lg bg-muted-foreground hover:bg-muted-foreground/80 text-white font-medium transition-colors"
                 >
                   Cerrar
                 </button>
@@ -940,9 +936,9 @@ const AsignacionAlmacenes = () => {
         {/* Modal de confirmación para restablecer todo */}
         {showResetModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+            <div className="bg-card rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
               <div className="mb-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Restablecer Todas las Asignaciones</h3>
+                <h3 className="text-xl font-semibold text-foreground mb-3">Restablecer Todas las Asignaciones</h3>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                   <p className="text-red-800 text-sm font-medium mb-2">
                     Advertencia: Esta acción es irreversible
@@ -951,7 +947,7 @@ const AsignacionAlmacenes = () => {
                     Se eliminarán todas las asignaciones de usuarios a camionetas del sistema.
                   </p>
                 </div>
-                <p className="text-gray-700 text-sm font-medium mb-3">
+                <p className="text-foreground text-sm font-medium mb-3">
                   Para confirmar esta operación, escriba: <span className="font-bold text-red-600 bg-red-50 px-2 py-1 rounded">RESTABLECER</span>
                 </p>
                 <input
@@ -959,7 +955,7 @@ const AsignacionAlmacenes = () => {
                   value={resetConfirmText}
                   onChange={(e) => setResetConfirmText(e.target.value)}
                   placeholder="Escriba RESTABLECER para confirmar"
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-center font-semibold bg-white text-gray-900 uppercase tracking-wider"
+                  className="w-full px-4 py-3 border-2 border-border rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-center font-semibold bg-background text-foreground uppercase tracking-wider"
                 />
               </div>
               <div className="flex justify-end gap-3 pt-2">
@@ -968,7 +964,7 @@ const AsignacionAlmacenes = () => {
                     setShowResetModal(false);
                     setResetConfirmText("");
                   }}
-                  className="px-6 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-colors"
+                  className="px-6 py-2.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground font-medium transition-colors"
                   disabled={saving}
                 >
                   Cancelar

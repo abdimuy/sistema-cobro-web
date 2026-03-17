@@ -46,7 +46,7 @@ const AlmacenesSection = ({ almacenes, onUpdate }: AlmacenesSectionProps) => {
   const almacenDestino = getAlmacenById(almacenes.almacenDestinoId);
 
   return (
-    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+    <div className="p-4 bg-muted rounded-lg border border-border">
       {/* Header colapsable */}
       <button
         type="button"
@@ -54,27 +54,27 @@ const AlmacenesSection = ({ almacenes, onUpdate }: AlmacenesSectionProps) => {
         className="w-full flex items-center justify-between text-left"
       >
         <div className="flex items-center gap-2">
-          <Warehouse className="h-4 w-4 text-slate-600" />
-          <span className="text-sm font-medium text-slate-700">Almacenes para traspasos</span>
+          <Warehouse className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Almacenes para traspasos</span>
         </div>
         <div className="flex items-center gap-3">
           {!expanded && (
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-muted-foreground">
               {almacenOrigen?.ALMACEN || "..."} → {almacenDestino?.ALMACEN || "..."}
             </span>
           )}
           {expanded ? (
-            <ChevronUp className="h-4 w-4 text-slate-400" />
+            <ChevronUp className="h-4 w-4 text-muted-foreground/60" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-slate-400" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground/60" />
           )}
         </div>
       </button>
 
       {/* Contenido expandible */}
       {expanded && (
-        <div className="mt-4 pt-4 border-t border-slate-200 space-y-4">
-          <p className="text-xs text-slate-500">
+        <div className="mt-4 pt-4 border-t border-border space-y-4">
+          <p className="text-xs text-muted-foreground">
             Estos almacenes se usan cuando agregas o quitas productos de la venta.
           </p>
 
@@ -99,7 +99,7 @@ const AlmacenesSection = ({ almacenes, onUpdate }: AlmacenesSectionProps) => {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-slate-400">De aquí salen productos nuevos</p>
+              <p className="text-xs text-muted-foreground/60">De aquí salen productos nuevos</p>
             </div>
 
             {/* Almacén Destino */}
@@ -122,7 +122,7 @@ const AlmacenesSection = ({ almacenes, onUpdate }: AlmacenesSectionProps) => {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-slate-400">Aquí están los productos de la venta</p>
+              <p className="text-xs text-muted-foreground/60">Aquí están los productos de la venta</p>
             </div>
           </div>
         </div>
@@ -176,7 +176,7 @@ const ProductoCard = ({
         relative border rounded-lg p-4 transition-all
         ${isDeleted
           ? "bg-red-50 border-red-200 opacity-60"
-          : "bg-white border-gray-200 hover:border-blue-300"
+          : "bg-card border-border hover:border-blue-300"
         }
       `}
     >
@@ -188,7 +188,7 @@ const ProductoCard = ({
             variant="outline"
             size="sm"
             onClick={onRestore}
-            className="bg-white"
+            className="bg-card"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             Restaurar
@@ -199,8 +199,8 @@ const ProductoCard = ({
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-gray-900 truncate">{producto.articulo}</h4>
-          <p className="text-xs text-gray-500 mt-0.5">ID: {producto.articuloId}</p>
+          <h4 className="font-medium text-foreground truncate">{producto.articulo}</h4>
+          <p className="text-xs text-muted-foreground mt-0.5">ID: {producto.articuloId}</p>
         </div>
 
         {!isDeleted && (
@@ -209,7 +209,7 @@ const ProductoCard = ({
             variant="ghost"
             size="icon"
             onClick={onRemove}
-            className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50"
+            className="h-8 w-8 text-muted-foreground/60 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -218,7 +218,7 @@ const ProductoCard = ({
 
       {/* Cantidad */}
       <div className="mb-4">
-        <Label htmlFor={`cantidad-${index}`} className="text-xs font-medium text-gray-600">
+        <Label htmlFor={`cantidad-${index}`} className="text-xs font-medium text-muted-foreground">
           Cantidad
         </Label>
         <Input
@@ -241,11 +241,11 @@ const ProductoCard = ({
       {/* Precios editables */}
       <div className="grid grid-cols-3 gap-2">
         <div className="space-y-1">
-          <Label htmlFor={`precioLista-${index}`} className="text-xs text-gray-500">
+          <Label htmlFor={`precioLista-${index}`} className="text-xs text-muted-foreground">
             Lista
           </Label>
           <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-xs">$</span>
             <Input
               id={`precioLista-${index}`}
               type="number"
@@ -254,12 +254,12 @@ const ProductoCard = ({
               value={producto.precioLista}
               onChange={(e) => onUpdate("precioLista", parseFloat(e.target.value) || 0)}
               disabled={isDeleted}
-              className="h-8 pl-5 text-sm font-semibold text-gray-900 bg-gray-50"
+              className="h-8 pl-5 text-sm font-semibold text-foreground bg-muted dark:bg-muted"
             />
           </div>
         </div>
         <div className="space-y-1">
-          <Label htmlFor={`precioCortoPlazo-${index}`} className="text-xs text-gray-500">
+          <Label htmlFor={`precioCortoPlazo-${index}`} className="text-xs text-muted-foreground">
             C. Plazo
           </Label>
           <div className="relative">
@@ -272,12 +272,12 @@ const ProductoCard = ({
               value={producto.precioCortoPlazo}
               onChange={(e) => onUpdate("precioCortoPlazo", parseFloat(e.target.value) || 0)}
               disabled={isDeleted}
-              className="h-8 pl-5 text-sm font-semibold text-blue-600 bg-blue-50"
+              className="h-8 pl-5 text-sm font-semibold text-blue-600 bg-blue-50 dark:bg-blue-950/30"
             />
           </div>
         </div>
         <div className="space-y-1">
-          <Label htmlFor={`precioContado-${index}`} className="text-xs text-gray-500">
+          <Label htmlFor={`precioContado-${index}`} className="text-xs text-muted-foreground">
             Contado
           </Label>
           <div className="relative">
@@ -290,16 +290,16 @@ const ProductoCard = ({
               value={producto.precioContado}
               onChange={(e) => onUpdate("precioContado", parseFloat(e.target.value) || 0)}
               disabled={isDeleted}
-              className="h-8 pl-5 text-sm font-semibold text-green-600 bg-green-50"
+              className="h-8 pl-5 text-sm font-semibold text-green-600 bg-green-50 dark:bg-green-950/30"
             />
           </div>
         </div>
       </div>
 
       {/* Subtotal */}
-      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-        <span className="text-xs text-gray-500">Subtotal (Lista):</span>
-        <span className="font-semibold text-gray-900">
+      <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">Subtotal (Lista):</span>
+        <span className="font-semibold text-foreground">
           {formatCurrency(producto.precioLista * producto.cantidad)}
         </span>
       </div>
@@ -345,16 +345,16 @@ const ProductosTab = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Package className="h-5 w-5 text-blue-600" />
-          <h3 className="font-semibold text-gray-900">
+          <h3 className="font-semibold text-foreground">
             Productos ({activeProductos.length})
           </h3>
           {newProductos.length > 0 && (
-            <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+            <span className="text-xs text-green-600 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded">
               {newProductos.length} nuevo(s)
             </span>
           )}
           {deletedProductos.length > 0 && (
-            <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+            <span className="text-xs text-red-600 bg-red-50 dark:bg-red-950/30 px-2 py-1 rounded">
               {deletedProductos.length} eliminado(s)
             </span>
           )}
@@ -393,23 +393,23 @@ const ProductosTab = ({
       </div>
 
       {/* Resumen de totales */}
-      <div className="bg-gray-50 rounded-lg p-4 border">
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">Resumen de Productos</h4>
+      <div className="bg-muted rounded-lg p-4 border">
+        <h4 className="text-sm font-semibold text-foreground mb-3">Resumen de Productos</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>
-            <p className="text-xs text-gray-500">Productos</p>
-            <p className="text-xl font-bold text-gray-900">{activeProductos.length}</p>
+            <p className="text-xs text-muted-foreground">Productos</p>
+            <p className="text-xl font-bold text-foreground">{activeProductos.length}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500">Unidades</p>
+            <p className="text-xs text-muted-foreground">Unidades</p>
             <p className="text-xl font-bold text-blue-600">{totales.cantidad}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500">Total Lista</p>
-            <p className="text-lg font-bold text-gray-900">{formatCurrency(totales.lista)}</p>
+            <p className="text-xs text-muted-foreground">Total Lista</p>
+            <p className="text-lg font-bold text-foreground">{formatCurrency(totales.lista)}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500">Total Contado</p>
+            <p className="text-xs text-muted-foreground">Total Contado</p>
             <p className="text-lg font-bold text-green-600">{formatCurrency(totales.contado)}</p>
           </div>
         </div>

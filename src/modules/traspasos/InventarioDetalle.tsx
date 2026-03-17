@@ -62,7 +62,7 @@ const InventarioDetalle = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-muted/50 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <p className="text-red-800">{error}</p>
@@ -81,7 +81,7 @@ const InventarioDetalle = () => {
 
   if (!almacen) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-muted/50 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
             <p className="text-yellow-800">Cargando información del almacén...</p>
@@ -92,7 +92,7 @@ const InventarioDetalle = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-muted/50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <Button
@@ -106,10 +106,10 @@ const InventarioDetalle = () => {
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              <h1 className="text-3xl font-bold text-foreground mb-2">
                 {almacen.ALMACEN}
               </h1>
-              <p className="text-gray-600">ID: {almacen.ALMACEN_ID}</p>
+              <p className="text-muted-foreground">ID: {almacen.ALMACEN_ID}</p>
             </div>
             <div className="flex gap-3">
               <Button onClick={() => setIsCrearTraspasoOpen(true)}>
@@ -130,8 +130,8 @@ const InventarioDetalle = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <Package className="w-6 h-6 text-blue-600" />
+                <div className="p-3 bg-primary/10 rounded-lg dark:bg-primary/20">
+                  <Package className="w-6 h-6 text-primary" />
                 </div>
                 <div className="text-2xl font-bold">
                   {(almacen.EXISTENCIAS || 0).toLocaleString()}
@@ -146,8 +146,8 @@ const InventarioDetalle = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <Package className="w-6 h-6 text-green-600" />
+                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                  <Package className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="text-2xl font-bold">{articulos.length}</div>
               </div>
@@ -160,8 +160,8 @@ const InventarioDetalle = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-red-100 rounded-lg">
-                  <TrendingDown className="w-6 h-6 text-red-600" />
+                <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                  <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
                 </div>
                 <div className="text-2xl font-bold">
                   {articulos.filter((a) => a.EXISTENCIAS === 0).length}
@@ -188,8 +188,8 @@ const InventarioDetalle = () => {
 
             {filteredArticulos.length === 0 ? (
               <div className="text-center py-12">
-                <Package className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-500 text-lg">
+                <Package className="w-16 h-16 mx-auto text-muted-foreground/60 mb-4" />
+                <p className="text-muted-foreground text-lg">
                   {searchTerm
                     ? "No se encontraron productos con ese criterio"
                     : "Este almacén no tiene productos"}
@@ -244,9 +244,9 @@ const InventarioDetalle = () => {
           </CardContent>
         </Card>
 
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-800 mb-2">Acciones disponibles:</h3>
-          <ul className="text-sm text-blue-700 space-y-1">
+        <div className="mt-6 bg-primary/5 border border-primary/20 rounded-lg p-4 dark:bg-primary/10">
+          <h3 className="font-semibold text-primary mb-2">Acciones disponibles:</h3>
+          <ul className="text-sm text-primary/80 space-y-1">
             <li>• Haz clic en "Realizar Traspaso" para mover productos entre almacenes</li>
             <li>• Puedes enviar productos a otras camionetas o recibir de ellas</li>
             <li>• Los traspasos se aplican automáticamente al crearlos</li>

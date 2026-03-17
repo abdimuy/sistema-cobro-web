@@ -40,7 +40,7 @@ const ClienteTab = ({ data, errors, onUpdate }: ClienteTabProps) => {
     <div className="space-y-6">
       {/* Información Personal */}
       <fieldset className="space-y-4">
-        <legend className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3">
+        <legend className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
           <User className="h-4 w-4 text-blue-600" />
           Información Personal
         </legend>
@@ -100,7 +100,7 @@ const ClienteTab = ({ data, errors, onUpdate }: ClienteTabProps) => {
 
       {/* Dirección */}
       <fieldset className="space-y-4">
-        <legend className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3">
+        <legend className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
           <MapPin className="h-4 w-4 text-blue-600" />
           Dirección
         </legend>

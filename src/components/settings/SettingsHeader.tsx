@@ -20,12 +20,12 @@ const SettingsHeader: React.FC<SettingsHeaderProps> = ({
   onViewModeChange
 }) => {
   return (
-    <div className="bg-white shadow-sm border-b border-slate-200">
+    <div className="bg-card shadow-sm border-b border-border">
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Gestión de Usuarios</h1>
-            <p className="text-slate-600 mt-2">Configuración de permisos y asignaciones</p>
+            <h1 className="text-3xl font-bold text-foreground">Gestión de Usuarios</h1>
+            <p className="text-muted-foreground mt-2">Configuración de permisos y asignaciones</p>
           </div>
           <div className="flex items-center space-x-4">
             {/* Botón crear usuario */}
@@ -39,13 +39,13 @@ const SettingsHeader: React.FC<SettingsHeaderProps> = ({
               Crear Usuario
             </Link>
             
-            <div className="flex items-center space-x-2 bg-slate-100 p-1 rounded-lg">
+            <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
               <button
                 onClick={() => onViewModeChange('compact')}
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
                   viewMode === 'compact'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Compacto
@@ -54,8 +54,8 @@ const SettingsHeader: React.FC<SettingsHeaderProps> = ({
                 onClick={() => onViewModeChange('expanded')}
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
                   viewMode === 'expanded'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Detallado
@@ -66,27 +66,27 @@ const SettingsHeader: React.FC<SettingsHeaderProps> = ({
         
         {/* Estadísticas rápidas en su propia sección */}
         <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="bg-blue-50 px-4 py-3 rounded-lg text-center min-w-0">
+          <div className="bg-blue-50 dark:bg-blue-950/30 px-4 py-3 rounded-lg text-center min-w-0">
             <div className="text-xs text-blue-600 font-medium">Total</div>
             <div className="text-xl font-bold text-blue-700">{stats.total}</div>
           </div>
-          <div className="bg-green-50 px-4 py-3 rounded-lg text-center min-w-0">
+          <div className="bg-green-50 dark:bg-green-950/30 px-4 py-3 rounded-lg text-center min-w-0">
             <div className="text-xs text-green-600 font-medium">Configurados</div>
             <div className="text-xl font-bold text-green-700">{stats.configured}</div>
           </div>
-          <div className="bg-yellow-50 px-4 py-3 rounded-lg text-center min-w-0">
+          <div className="bg-yellow-50 dark:bg-yellow-950/30 px-4 py-3 rounded-lg text-center min-w-0">
             <div className="text-xs text-yellow-600 font-medium">Incompletos</div>
             <div className="text-xl font-bold text-yellow-700">{stats.incomplete}</div>
           </div>
-          <div className="bg-purple-50 px-4 py-3 rounded-lg text-center min-w-0">
+          <div className="bg-purple-50 dark:bg-purple-950/30 px-4 py-3 rounded-lg text-center min-w-0">
             <div className="text-xs text-purple-600 font-medium">Con Permisos</div>
             <div className="text-xl font-bold text-purple-700">{stats.withPermissions}</div>
           </div>
-          <div className="bg-emerald-50 px-4 py-3 rounded-lg text-center min-w-0">
+          <div className="bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 rounded-lg text-center min-w-0">
             <div className="text-xs text-emerald-600 font-medium">App Validada</div>
             <div className="text-xl font-bold text-emerald-700">{stats.withValidatedVersion}</div>
           </div>
-          <div className="bg-red-50 px-4 py-3 rounded-lg text-center min-w-0">
+          <div className="bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-lg text-center min-w-0">
             <div className="text-xs text-red-600 font-medium">Sin Validar</div>
             <div className="text-xl font-bold text-red-700">{stats.withoutVersion}</div>
           </div>

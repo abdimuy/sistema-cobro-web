@@ -63,14 +63,14 @@ const GarantiasListPage: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-muted/50 min-h-screen">
       <button
-        className="mb-4 text-blue-600 hover:underline"
+        className="mb-4 text-primary hover:underline"
         onClick={() => navigate(-1)}
       >
         ← Volver
       </button>
-      <h1 className="text-2xl font-bold mb-6 text-black">
+      <h1 className="text-2xl font-bold mb-6 text-foreground">
         Listado de Garantías
       </h1>
       {/* Select de filtrado por zona cliente */}
@@ -78,7 +78,7 @@ const GarantiasListPage: React.FC = () => {
         <select
           value={filterZona}
           onChange={(e) => setFilterZona(e.target.value)}
-          className="border bg-slate-100 text-black rounded px-3 py-2 w-full md:w-1/3"
+          className="border border-border bg-muted text-foreground rounded px-3 py-2 w-full md:w-1/3"
         >
           <option value="">Todas las zonas</option>
           {zonasUnicas.map((zona) => (
@@ -116,45 +116,45 @@ function CardGarantia({ garantia }: { garantia: Garantia }) {
     : garantia.ZONA_CLIENTE_NOMBRE || "Sin zona";
 
   return (
-    <div key={garantia.ID} className="bg-white rounded-xl shadow px-6 py-4 h-32 overflow-hidden">
+    <div key={garantia.ID} className="bg-card rounded-xl shadow px-6 py-4 h-32 overflow-hidden">
       {/* Primera fila: datos de la garantía */}
       <div className="grid grid-cols-1 md:grid-cols-[repeat(20,minmax(0,1fr))] gap-2 items-center">
         <Link
           to={`/garantias/${garantia.ID}`}
-          className="font-semibold text-lg text-black truncate"
+          className="font-semibold text-lg text-foreground truncate"
         >
           #{garantia.ID}
         </Link>
-        <span className="text-gray-600 truncate col-span-3">
+        <span className="text-muted-foreground truncate col-span-3">
           <strong>Fecha:</strong>{" "}
           {new Date(garantia.FECHA_SOLICITUD).toLocaleDateString()}
         </span>
-        <span className="text-gray-600 truncate col-span-6">
+        <span className="text-muted-foreground truncate col-span-6">
           <strong>Falla:</strong> {garantia.DESCRIPCION_FALLA}
         </span>
-        <span className="text-gray-600 truncate col-span-4">
+        <span className="text-muted-foreground truncate col-span-4">
           <strong>Estado:</strong>{" "}
           <span className="capitalize">{garantia.ESTADO}</span>
         </span>
-        <span className="text-gray-600 truncate col-span-6">
+        <span className="text-muted-foreground truncate col-span-6">
           <strong>Obs:</strong> {garantia.OBSERVACIONES || "-"}
         </span>
       </div>
       {/* Segunda fila: nombre del cliente, zona y productos */}
       <div className="mt-2 grid grid-cols-1 md:grid-cols-5 gap-2 items-start">
-        <span className="text-blue-700 font-medium col-span-2 truncate">
+        <span className="text-primary font-medium col-span-2 truncate">
           <strong>Cliente:</strong> {nombreCliente}
         </span>
         <span className="text-green-700 font-medium col-span-1 truncate">
           <strong>Zona:</strong> {zonaCliente}
         </span>
-        <span className="font-semibold col-span-2 text-black">
+        <span className="font-semibold col-span-2 text-foreground">
           Productos:{" "}
           {tieneVenta ? (
             loadingProductos ? (
-              <span className="text-gray-400">Cargando productos...</span>
+              <span className="text-muted-foreground/60">Cargando productos...</span>
             ) : products && products.length > 0 ? (
-              <div className="text-gray-700">
+              <div className="text-muted-foreground">
                 {products.map((prod: ProductSale) => (
                   <div key={prod.ARTICULO_ID}>
                     {prod.ARTICULO} (x{prod.CANTIDAD})
@@ -162,10 +162,10 @@ function CardGarantia({ garantia }: { garantia: Garantia }) {
                 ))}
               </div>
             ) : (
-              <span className="text-gray-400">Sin productos</span>
+              <span className="text-muted-foreground/60">Sin productos</span>
             )
           ) : (
-            <span className="text-gray-700">
+            <span className="text-muted-foreground">
               {garantia.NOMBRE_PRODUCTO || "Sin producto"}
             </span>
           )}

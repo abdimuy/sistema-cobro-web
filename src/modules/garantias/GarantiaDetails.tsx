@@ -113,17 +113,17 @@ const GarantiaDetalle: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen text-black">
+    <div className="p-6 bg-muted/50 min-h-screen text-foreground">
       <button
-        className="mb-4 text-blue-600 hover:underline"
+        className="mb-4 text-primary hover:underline"
         onClick={() => navigate(-1)}
       >
         ← Volver
       </button>
-      <h1 className="text-2xl font-bold mb-4 text-black text-center">
+      <h1 className="text-2xl font-bold mb-4 text-foreground text-center">
         Detalles de la Garantía #{garantia.ID}
       </h1>
-      <div className="bg-white rounded-xl shadow p-6 max-w-2xl mx-auto">
+      <div className="bg-card rounded-xl shadow p-6 max-w-2xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
             <span className="font-semibold">Fecha solicitud:</span>{" "}
@@ -142,7 +142,7 @@ const GarantiaDetalle: React.FC = () => {
             {garantia.OBSERVACIONES || "-"}
           </div>
         </div>
-        <h2 className="text-xl font-bold mb-2 text-black">Datos del Cliente</h2>
+        <h2 className="text-xl font-bold mb-2 text-foreground">Datos del Cliente</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <span className="font-semibold">Cliente:</span>{" "}
@@ -170,13 +170,13 @@ const GarantiaDetalle: React.FC = () => {
       </div>
 
       {/* Sección de productos */}
-      <h2 className="text-xl font-bold mt-8 mb-4 text-black text-center">
+      <h2 className="text-xl font-bold mt-8 mb-4 text-foreground text-center">
         Productos
       </h2>
-      <div className="bg-white rounded-xl shadow p-4 max-w-2xl mx-auto mb-8">
+      <div className="bg-card rounded-xl shadow p-4 max-w-2xl mx-auto mb-8">
         {venta ? (
           loadingProductos ? (
-            <div className="text-gray-400">Cargando productos...</div>
+            <div className="text-muted-foreground/60">Cargando productos...</div>
           ) : products && products.length > 0 ? (
             <table className="w-full text-left">
               <thead>
@@ -201,7 +201,7 @@ const GarantiaDetalle: React.FC = () => {
               </tbody>
             </table>
           ) : (
-            <div className="text-gray-500">
+            <div className="text-muted-foreground">
               No hay productos asociados a esta venta.
             </div>
           )
@@ -211,19 +211,19 @@ const GarantiaDetalle: React.FC = () => {
             {garantia.NOMBRE_PRODUCTO}
           </div>
         ) : (
-          <div className="text-gray-500">
+          <div className="text-muted-foreground">
             No hay productos asociados a esta garantía.
           </div>
         )}
       </div>
 
       {/* Sección de imágenes */}
-      <h2 className="text-xl font-bold mt-8 mb-4 text-black text-center">
+      <h2 className="text-xl font-bold mt-8 mb-4 text-foreground text-center">
         Imágenes asociadas
       </h2>
-      <div className="bg-white rounded-xl shadow p-4 max-w-2xl mx-auto mb-8">
+      <div className="bg-card rounded-xl shadow p-4 max-w-2xl mx-auto mb-8">
         {loadingImages ? (
-          <div className="text-gray-400">Cargando imágenes...</div>
+          <div className="text-muted-foreground/60">Cargando imágenes...</div>
         ) : images && images.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {images.map((img: ImageGarantia) => (
@@ -234,12 +234,12 @@ const GarantiaDetalle: React.FC = () => {
                   className="w-full h-32 object-cover rounded mb-2 border cursor-pointer transition-transform hover:scale-105"
                   onClick={() => setImagenGrande(img)}
                 />
-                <span className="text-xs text-gray-600">{img.IMG_DESC}</span>
+                <span className="text-xs text-muted-foreground">{img.IMG_DESC}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-gray-500">
+          <div className="text-muted-foreground">
             No hay imágenes asociadas a esta garantía.
           </div>
         )}
@@ -252,11 +252,11 @@ const GarantiaDetalle: React.FC = () => {
           onClick={() => setImagenGrande(null)}
         >
           <div
-            className="bg-white rounded-xl shadow-lg p-4 max-w-3xl w-full flex flex-col items-center relative"
+            className="bg-card rounded-xl shadow-lg p-4 max-w-3xl w-full flex flex-col items-center relative"
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              className="absolute top-2 right-2 text-gray-700 hover:text-black text-2xl"
+              className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-2xl"
               onClick={() => setImagenGrande(null)}
               aria-label="Cerrar"
             >
@@ -267,19 +267,19 @@ const GarantiaDetalle: React.FC = () => {
               alt={imagenGrande.IMG_DESC || "Imagen de garantía"}
               className="max-h-[70vh] max-w-[90vw] min-h-[300px] min-w-[300px] w-auto rounded mb-2"
             />
-            <span className="text-base text-gray-700">
+            <span className="text-base text-muted-foreground">
               {imagenGrande.IMG_DESC}
             </span>
           </div>
         </div>
       )}
 
-      <h2 className="text-xl font-bold mt-8 mb-4 text-black text-center">
+      <h2 className="text-xl font-bold mt-8 mb-4 text-foreground text-center">
         Eventos de la Garantía
       </h2>
       <div className="flex justify-center mb-4">
         <button
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
           onClick={() => setShowModal(true)}
         >
           + Agregar evento
@@ -287,7 +287,7 @@ const GarantiaDetalle: React.FC = () => {
       </div>
       <div className="grid grid-cols-1 gap-4 max-w-2xl mx-auto">
         {eventos.map((evento) => (
-          <div key={evento.ID} className="bg-white rounded-xl shadow p-4">
+          <div key={evento.ID} className="bg-card rounded-xl shadow p-4">
             <h3 className="font-semibold">{evento.TIPO_EVENTO}</h3>
             <p>
               <strong>Fecha:</strong>{" "}
@@ -319,7 +319,7 @@ const GarantiaDetalle: React.FC = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+          <div className="bg-card rounded-xl shadow-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-bold mb-4">Agregar nuevo evento</h3>
             <div className="mb-4">
               <label className="block font-semibold mb-1">Nuevo estado</label>
@@ -330,7 +330,7 @@ const GarantiaDetalle: React.FC = () => {
                   )
                 }
                 value={nuevoEstado}
-                className="w-full border rounded px-2 py-1 bg-white"
+                className="w-full border rounded px-2 py-1 bg-background"
               >
                 {AllowedEstadosDesktop.map((estado) => (
                   <option key={estado} value={estado}>
@@ -344,7 +344,7 @@ const GarantiaDetalle: React.FC = () => {
                 Observación (opcional)
               </label>
               <textarea
-                className="w-full border rounded px-2 py-1 bg-white"
+                className="w-full border rounded px-2 py-1 bg-background"
                 value={nuevaObservacion}
                 onChange={(e) => setNuevaObservacion(e.target.value)}
                 rows={3}
@@ -358,7 +358,7 @@ const GarantiaDetalle: React.FC = () => {
                 type="file"
                 accept="image/jpeg,image/png,image/gif"
                 multiple
-                className="w-full border rounded px-2 py-1 bg-white"
+                className="w-full border rounded px-2 py-1 bg-background"
                 onChange={(e) => {
                   const files = Array.from(e.target.files || []);
                   if (files.length > 10) {
@@ -369,21 +369,21 @@ const GarantiaDetalle: React.FC = () => {
                 }}
               />
               {imagenesEvento.length > 0 && (
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {imagenesEvento.length} imagen(es) seleccionada(s)
                 </p>
               )}
             </div>
             <div className="flex justify-end gap-2">
               <button
-                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+                className="px-4 py-2 rounded bg-muted hover:bg-muted/80"
                 onClick={() => setShowModal(false)}
                 disabled={agregando}
               >
                 Cancelar
               </button>
               <button
-                className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                className="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={handleAgregarEvento}
                 disabled={agregando}
               >

@@ -50,12 +50,12 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
     return Array.from(versions).sort();
   }, [cobradores]);
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+    <div className="bg-card rounded-xl shadow-sm border border-border p-6">
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Buscador */}
         <div className="flex-1">
           <div className="relative">
-            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -63,7 +63,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
               placeholder="Buscar por nombre, email, ruta o zona..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 placeholder-slate-500"
+              className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-foreground placeholder-muted-foreground"
             />
           </div>
         </div>
@@ -73,7 +73,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           <select
             value={filterStatus}
             onChange={(e) => onFilterStatusChange(e.target.value as any)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent text-slate-900 text-sm"
+            className="px-3 py-2 bg-background border border-border rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent text-foreground text-sm"
           >
             <option value="all">Todos los estados</option>
             <option value="configured">Configurados</option>
@@ -83,7 +83,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           <select
             value={filterRuta}
             onChange={(e) => onFilterRutaChange(e.target.value)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent text-slate-900 text-sm"
+            className="px-3 py-2 bg-background border border-border rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent text-foreground text-sm"
           >
             <option value="all">Todas las rutas</option>
             {rutas.map((ruta) => (
@@ -96,7 +96,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           <select
             value={filterPermisos}
             onChange={(e) => onFilterPermisosChange(e.target.value as any)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent text-slate-900 text-sm"
+            className="px-3 py-2 bg-background border border-border rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent text-foreground text-sm"
           >
             <option value="all">Todos los permisos</option>
             <option value="with-permissions">Con permisos</option>
@@ -106,7 +106,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           <select
             value={filterVersion}
             onChange={(e) => onFilterVersionChange(e.target.value)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-1 focus:ring-purple-500 focus:border-transparent text-slate-900 text-sm"
+            className="px-3 py-2 bg-background border border-border rounded-lg focus:ring-1 focus:ring-purple-500 focus:border-transparent text-foreground text-sm"
           >
             <option value="all">Todas las versiones</option>
             <option value="validated">Con versión validada</option>
@@ -124,7 +124,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
               const [newSortBy, newSortOrder] = e.target.value.split('-');
               onSortChange(newSortBy as any, newSortOrder as any);
             }}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent text-slate-900 text-sm"
+            className="px-3 py-2 bg-background border border-border rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent text-foreground text-sm"
           >
             <option value="name-asc">Nombre A-Z</option>
             <option value="name-desc">Nombre Z-A</option>
@@ -139,7 +139,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
       </div>
 
       {/* Contador de resultados */}
-      <div className="mt-4 text-sm text-slate-600">
+      <div className="mt-4 text-sm text-muted-foreground">
         Mostrando {filteredCount} de {totalCount} usuarios
       </div>
     </div>

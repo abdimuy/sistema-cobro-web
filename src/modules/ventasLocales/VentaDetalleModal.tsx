@@ -154,18 +154,18 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
   const CopyableField = ({ label, value, tooltip }: { label: string; value: string; tooltip: string }) => (
     <div>
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">{label}</p>
+        <p className="text-sm text-muted-foreground">{label}</p>
         <button
           onClick={(e) => copyToClipboard(value, e.currentTarget, label)}
-          className="p-1 hover:bg-gray-200 rounded transition-colors"
+          className="p-1 hover:bg-muted rounded transition-colors"
           title={tooltip}
         >
-          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
         </button>
       </div>
-      <p className="font-semibold text-gray-900">{value}</p>
+      <p className="font-semibold text-foreground">{value}</p>
     </div>
   );
 
@@ -309,12 +309,12 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-        <div className="bg-white rounded-2xl p-8 flex flex-col items-center">
+        <div className="bg-card rounded-2xl p-8 flex flex-col items-center">
           <div className="relative">
-            <div className="w-16 h-16 border-4 border-gray-200 rounded-full"></div>
+            <div className="w-16 h-16 border-4 border-border rounded-full"></div>
             <div className="w-16 h-16 border-4 border-blue-600 rounded-full animate-spin absolute top-0 left-0 border-t-transparent"></div>
           </div>
-          <p className="mt-4 text-gray-600">Cargando detalles...</p>
+          <p className="mt-4 text-muted-foreground">Cargando detalles...</p>
         </div>
       </div>
     );
@@ -323,13 +323,13 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
   if (error || !venta) {
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-        <div className="bg-white rounded-2xl p-8 max-w-md">
+        <div className="bg-card rounded-2xl p-8 max-w-md">
           <div className="text-center">
             <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-lg font-semibold text-gray-900 mb-2">Error al cargar la venta</p>
-            <p className="text-gray-600 mb-6">{error || "No se pudo cargar la información"}</p>
+            <p className="text-lg font-semibold text-foreground mb-2">Error al cargar la venta</p>
+            <p className="text-muted-foreground mb-6">{error || "No se pudo cargar la información"}</p>
             <button
               onClick={onClose}
               className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -349,7 +349,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
         className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
         onClick={handleBackdropClick}
       >
-        <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden animate-slide-up mx-4 sm:mx-0">
+        <div className="bg-card rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden animate-slide-up mx-4 sm:mx-0">
           {/* Header del modal */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-white">
             <div className="flex items-center justify-between">
@@ -380,14 +380,14 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
           </div>
 
           {/* Tabs */}
-          <div className="border-b border-gray-200 bg-gray-50">
+          <div className="border-b border-border bg-muted">
             <div className="flex">
               <button
                 onClick={() => setActiveTab("info")}
                 className={`px-6 py-3 font-medium transition-all relative ${
                   activeTab === "info" 
-                    ? "text-blue-600 bg-white" 
-                    : "text-gray-600 hover:text-gray-900"
+                    ? "text-primary bg-card" 
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Información General
@@ -399,8 +399,8 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                 onClick={() => setActiveTab("productos")}
                 className={`px-6 py-3 font-medium transition-all relative ${
                   activeTab === "productos" 
-                    ? "text-blue-600 bg-white" 
-                    : "text-gray-600 hover:text-gray-900"
+                    ? "text-primary bg-card" 
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Productos ({venta.productos?.length || 0})
@@ -412,8 +412,8 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                 onClick={() => setActiveTab("imagenes")}
                 className={`px-6 py-3 font-medium transition-all relative ${
                   activeTab === "imagenes" 
-                    ? "text-blue-600 bg-white" 
-                    : "text-gray-600 hover:text-gray-900"
+                    ? "text-primary bg-card" 
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Imágenes ({venta.imagenes?.length || 0})
@@ -430,8 +430,8 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
             {activeTab === "info" && (
               <div className="space-y-6 animate-fade-in">
                 {/* Información del cliente */}
-                <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="bg-gradient-to-r from-muted to-blue-50 dark:to-blue-950/30 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                     <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
@@ -446,13 +446,13 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                     {venta.TELEFONO ? (
                       <div>
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-500">Teléfono</p>
+                          <p className="text-sm text-muted-foreground">Teléfono</p>
                           <button
                             onClick={(e) => copyToClipboard(venta.TELEFONO, e.currentTarget)}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            className="p-1 hover:bg-muted rounded transition-colors"
                             title="Copiar teléfono"
                           >
-                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                           </button>
@@ -463,8 +463,8 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                       </div>
                     ) : (
                       <div>
-                        <p className="text-sm text-gray-500">Teléfono</p>
-                        <p className="font-semibold text-gray-900">No registrado</p>
+                        <p className="text-sm text-muted-foreground">Teléfono</p>
+                        <p className="font-semibold text-foreground">No registrado</p>
                       </div>
                     )}
                     <div className="md:col-span-2">
@@ -475,85 +475,85 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                       />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Número</p>
+                      <p className="text-sm text-muted-foreground">Número</p>
                       {venta.NUMERO ? (
                         <div className="flex items-center justify-between">
-                          <p className="font-semibold text-gray-900">{venta.NUMERO}</p>
+                          <p className="font-semibold text-foreground">{venta.NUMERO}</p>
                           <button
                             onClick={(e) => copyToClipboard(venta.NUMERO!, e.currentTarget, 'Número')}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            className="p-1 hover:bg-muted rounded transition-colors"
                             title="Copiar número"
                           >
-                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                           </button>
                         </div>
                       ) : (
-                        <p className="font-semibold text-gray-400">-</p>
+                        <p className="font-semibold text-muted-foreground/60">-</p>
                       )}
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Colonia</p>
+                      <p className="text-sm text-muted-foreground">Colonia</p>
                       {venta.COLONIA ? (
                         <div className="flex items-center justify-between">
-                          <p className="font-semibold text-gray-900">{venta.COLONIA}</p>
+                          <p className="font-semibold text-foreground">{venta.COLONIA}</p>
                           <button
                             onClick={(e) => copyToClipboard(venta.COLONIA!, e.currentTarget, 'Colonia')}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            className="p-1 hover:bg-muted rounded transition-colors"
                             title="Copiar colonia"
                           >
-                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                           </button>
                         </div>
                       ) : (
-                        <p className="font-semibold text-gray-400">-</p>
+                        <p className="font-semibold text-muted-foreground/60">-</p>
                       )}
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Población</p>
+                      <p className="text-sm text-muted-foreground">Población</p>
                       {venta.POBLACION ? (
                         <div className="flex items-center justify-between">
-                          <p className="font-semibold text-gray-900">{venta.POBLACION}</p>
+                          <p className="font-semibold text-foreground">{venta.POBLACION}</p>
                           <button
                             onClick={(e) => copyToClipboard(venta.POBLACION!, e.currentTarget, 'Población')}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            className="p-1 hover:bg-muted rounded transition-colors"
                             title="Copiar población"
                           >
-                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                           </button>
                         </div>
                       ) : (
-                        <p className="font-semibold text-gray-400">-</p>
+                        <p className="font-semibold text-muted-foreground/60">-</p>
                       )}
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Ciudad</p>
+                      <p className="text-sm text-muted-foreground">Ciudad</p>
                       {venta.CIUDAD ? (
                         <div className="flex items-center justify-between">
-                          <p className="font-semibold text-gray-900">{venta.CIUDAD}</p>
+                          <p className="font-semibold text-foreground">{venta.CIUDAD}</p>
                           <button
                             onClick={(e) => copyToClipboard(venta.CIUDAD!, e.currentTarget, 'Ciudad')}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            className="p-1 hover:bg-muted rounded transition-colors"
                             title="Copiar ciudad"
                           >
-                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                           </button>
                         </div>
                       ) : (
-                        <p className="font-semibold text-gray-400">-</p>
+                        <p className="font-semibold text-muted-foreground/60">-</p>
                       )}
                     </div>
                     {venta.ZONA_CLIENTE && (
                       <div>
-                        <p className="text-sm text-gray-500">Zona</p>
-                        <p className="font-semibold text-gray-900">{venta.ZONA_CLIENTE}</p>
+                        <p className="text-sm text-muted-foreground">Zona</p>
+                        <p className="font-semibold text-foreground">{venta.ZONA_CLIENTE}</p>
                       </div>
                     )}
                     {venta.AVAL_O_RESPONSABLE && (
@@ -569,8 +569,8 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                 </div>
 
                 {/* Información financiera */}
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                     <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -578,33 +578,33 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                   </h3>
                   {/* Primera fila: 3 Totales */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                    <div className="bg-white rounded-lg p-4">
+                    <div className="bg-card rounded-lg p-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-500">Precio Lista</p>
+                        <p className="text-sm text-muted-foreground">Precio Lista</p>
                         <button
                           onClick={(e) => copyToClipboard(venta.PRECIO_TOTAL.toString(), e.currentTarget)}
-                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                          className="p-1 hover:bg-muted rounded transition-colors"
                           title="Copiar precio total"
                         >
-                          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
                         </button>
                       </div>
-                      <p className="text-2xl font-bold text-gray-900">{formatCurrency(venta.PRECIO_TOTAL)}</p>
+                      <p className="text-2xl font-bold text-foreground">{formatCurrency(venta.PRECIO_TOTAL)}</p>
                     </div>
-                    <div className="bg-white rounded-lg p-4">
+                    <div className="bg-card rounded-lg p-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-500">Total Corto Plazo</p>
+                        <p className="text-sm text-muted-foreground">Total Corto Plazo</p>
                         <button
                           onClick={(e) => {
                             const totalCortoPlazo = venta.productos?.reduce((sum, p) => sum + (p.PRECIO_CORTO_PLAZO * p.CANTIDAD), 0) || 0;
                             copyToClipboard(totalCortoPlazo.toString(), e.currentTarget);
                           }}
-                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                          className="p-1 hover:bg-muted rounded transition-colors"
                           title="Copiar total corto plazo"
                         >
-                          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
                         </button>
@@ -613,18 +613,18 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                         {formatCurrency(venta.productos?.reduce((sum, p) => sum + (p.PRECIO_CORTO_PLAZO * p.CANTIDAD), 0) || 0)}
                       </p>
                     </div>
-                    <div className="bg-white rounded-lg p-4">
+                    <div className="bg-card rounded-lg p-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-500">Total Contado</p>
+                        <p className="text-sm text-muted-foreground">Total Contado</p>
                         <button
                           onClick={(e) => {
                             const totalContado = venta.productos?.reduce((sum, p) => sum + (p.PRECIO_CONTADO * p.CANTIDAD), 0) || 0;
                             copyToClipboard(totalContado.toString(), e.currentTarget);
                           }}
-                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                          className="p-1 hover:bg-muted rounded transition-colors"
                           title="Copiar total contado"
                         >
-                          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
                         </button>
@@ -638,15 +638,15 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                   {/* Segunda fila: Enganche, Parcialidad, Frecuencia */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {venta.ENGANCHE !== undefined && (
-                      <div className="bg-white rounded-lg p-4">
+                      <div className="bg-card rounded-lg p-4">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-500">Enganche</p>
+                          <p className="text-sm text-muted-foreground">Enganche</p>
                           <button
                             onClick={(e) => copyToClipboard((venta.ENGANCHE || 0).toString(), e.currentTarget)}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            className="p-1 hover:bg-muted rounded transition-colors"
                             title="Copiar enganche"
                           >
-                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                           </button>
@@ -655,15 +655,15 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                       </div>
                     )}
                     {venta.PARCIALIDAD !== undefined && (
-                      <div className="bg-white rounded-lg p-4">
+                      <div className="bg-card rounded-lg p-4">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-500">Parcialidad</p>
+                          <p className="text-sm text-muted-foreground">Parcialidad</p>
                           <button
                             onClick={(e) => copyToClipboard((venta.PARCIALIDAD || 0).toString(), e.currentTarget)}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            className="p-1 hover:bg-muted rounded transition-colors"
                             title="Copiar parcialidad"
                           >
-                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
                         </button>
@@ -671,14 +671,14 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                       <p className="text-xl font-bold text-purple-600">{formatCurrency(venta.PARCIALIDAD || 0)}</p>
                     </div>
                     )}
-                    <div className="bg-white rounded-lg p-4">
-                      <p className="text-sm text-gray-500">Frecuencia de Pago</p>
+                    <div className="bg-card rounded-lg p-4">
+                      <p className="text-sm text-muted-foreground">Frecuencia de Pago</p>
                       {venta.FREC_PAGO ? (
                         <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
                           {venta.FREC_PAGO}
                         </span>
                       ) : (
-                        <p className="text-xl font-bold text-gray-400">-</p>
+                        <p className="text-xl font-bold text-muted-foreground/60">-</p>
                       )}
                     </div>
                   </div>
@@ -686,42 +686,42 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
 
                 {/* Detalles adicionales */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Detalles de la Venta</h3>
+                  <div className="bg-muted rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Detalles de la Venta</h3>
                     <div className="space-y-3">
                       <div>
-                        <p className="text-sm text-gray-500">Fecha de Venta</p>
-                        <p className="font-semibold text-gray-900">{dayjs(venta.FECHA_VENTA).format("DD/MM/YYYY HH:mm")}</p>
+                        <p className="text-sm text-muted-foreground">Fecha de Venta</p>
+                        <p className="font-semibold text-foreground">{dayjs(venta.FECHA_VENTA).format("DD/MM/YYYY HH:mm")}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Creador</p>
-                        <p className="font-semibold text-gray-900">{venta.USER_EMAIL}</p>
+                        <p className="text-sm text-muted-foreground">Creador</p>
+                        <p className="font-semibold text-foreground">{venta.USER_EMAIL}</p>
                       </div>
                       {venta.vendedores && venta.vendedores.length > 0 && (
                         <div>
-                          <p className="text-sm text-gray-500">Vendedor{venta.vendedores.length > 1 ? 'es' : ''}</p>
+                          <p className="text-sm text-muted-foreground">Vendedor{venta.vendedores.length > 1 ? 'es' : ''}</p>
                           <div className="space-y-1">
                             {venta.vendedores.map((v, idx) => (
                               <div key={idx} className="flex items-center gap-2">
-                                <span className="font-semibold text-gray-900">{v.NOMBRE_VENDEDOR}</span>
-                                <span className="text-xs text-gray-500">({v.VENDEDOR_EMAIL})</span>
+                                <span className="font-semibold text-foreground">{v.NOMBRE_VENDEDOR}</span>
+                                <span className="text-xs text-muted-foreground">({v.VENDEDOR_EMAIL})</span>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
                       <div>
-                        <p className="text-sm text-gray-500">Almacén</p>
+                        <p className="text-sm text-muted-foreground">Almacén</p>
                         {loadingAlmacenes ? (
-                          <p className="font-semibold text-gray-900">Cargando...</p>
+                          <p className="font-semibold text-foreground">Cargando...</p>
                         ) : (
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-foreground">
                             {getAlmacenById(venta.ALMACEN_ID)?.ALMACEN || `ID: ${venta.ALMACEN_ID}`}
                           </p>
                         )}
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Tipo de Venta</p>
+                        <p className="text-sm text-muted-foreground">Tipo de Venta</p>
                         {venta.TIPO_VENTA ? (
                           <span className={`inline-block mt-1 px-3 py-1 rounded-full text-sm font-medium ${
                             venta.TIPO_VENTA === 'CREDITO'
@@ -731,13 +731,13 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                             {venta.TIPO_VENTA}
                           </span>
                         ) : (
-                          <p className="font-semibold text-gray-400">-</p>
+                          <p className="font-semibold text-muted-foreground/60">-</p>
                         )}
                       </div>
                       {venta.DIA_COBRANZA && (
                         <div>
-                          <p className="text-sm text-gray-500">Día de Cobranza</p>
-                          <p className="font-semibold text-gray-900">{venta.DIA_COBRANZA}</p>
+                          <p className="text-sm text-muted-foreground">Día de Cobranza</p>
+                          <p className="font-semibold text-foreground">{venta.DIA_COBRANZA}</p>
                         </div>
                       )}
                     </div>
@@ -745,21 +745,21 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
 
                   {venta.NOTA && (
                     <div className="bg-yellow-50 rounded-xl p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                         <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         Notas
                       </h3>
-                      <p className="text-gray-700">{venta.NOTA}</p>
+                      <p className="text-foreground">{venta.NOTA}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Ubicación */}
                 {venta.LATITUD && venta.LONGITUD && (
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <div className="bg-muted rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                       <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -769,8 +769,8 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                     <div className="space-y-4">
                       <div className="flex items-center gap-4">
                         <div>
-                          <p className="text-sm text-gray-500">Coordenadas</p>
-                          <p className="font-semibold text-gray-900">{venta.LATITUD}, {venta.LONGITUD}</p>
+                          <p className="text-sm text-muted-foreground">Coordenadas</p>
+                          <p className="font-semibold text-foreground">{venta.LATITUD}, {venta.LONGITUD}</p>
                         </div>
                         <a
                           href={`https://www.google.com/maps?q=${venta.LATITUD},${venta.LONGITUD}`}
@@ -785,7 +785,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                         </a>
                       </div>
                       {/* Mapa integrado */}
-                      <div className="h-64 w-full rounded-lg overflow-hidden border border-gray-200 shadow-inner">
+                      <div className="h-64 w-full rounded-lg overflow-hidden border border-border shadow-inner">
                         <MapSimple 
                           point={{ lat: Number(venta.LATITUD), lng: Number(venta.LONGITUD) }} 
                           height="256px"
@@ -806,7 +806,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                     {/* Combos */}
                     {venta.combos && venta.combos.length > 0 && (
                       <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                           <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                           </svg>
@@ -817,7 +817,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                           return (
                             <div
                               key={combo.COMBO_ID}
-                              className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-6"
+                              className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border border-purple-200 dark:border-purple-800 rounded-xl p-6"
                             >
                               <div className="flex items-start justify-between mb-4">
                                 <div>
@@ -828,35 +828,35 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                                 </div>
                                 <div className="grid grid-cols-3 gap-3 text-right">
                                   <div>
-                                    <p className="text-xs text-gray-500">Lista</p>
-                                    <p className="font-semibold text-gray-900">{formatCurrency(combo.PRECIO_LISTA)}</p>
+                                    <p className="text-xs text-muted-foreground">Lista</p>
+                                    <p className="font-semibold text-foreground">{formatCurrency(combo.PRECIO_LISTA)}</p>
                                   </div>
                                   <div>
-                                    <p className="text-xs text-gray-500">Corto Plazo</p>
+                                    <p className="text-xs text-muted-foreground">Corto Plazo</p>
                                     <p className="font-semibold text-blue-600">{formatCurrency(combo.PRECIO_CORTO_PLAZO)}</p>
                                   </div>
                                   <div>
-                                    <p className="text-xs text-gray-500">Contado</p>
+                                    <p className="text-xs text-muted-foreground">Contado</p>
                                     <p className="font-semibold text-green-600">{formatCurrency(combo.PRECIO_CONTADO)}</p>
                                   </div>
                                 </div>
                               </div>
                               {/* Productos del combo */}
                               <div className="mt-4 space-y-2">
-                                <p className="text-sm text-gray-600 font-medium">Incluye:</p>
+                                <p className="text-sm text-muted-foreground font-medium">Incluye:</p>
                                 <div className="grid gap-2">
                                   {productosDelCombo.map((producto, idx) => (
                                     <div
                                       key={idx}
-                                      className="bg-white/70 rounded-lg px-4 py-2 flex items-center justify-between"
+                                      className="bg-card/70 rounded-lg px-4 py-2 flex items-center justify-between"
                                     >
                                       <div className="flex items-center gap-3">
                                         <span className="w-6 h-6 bg-purple-200 text-purple-700 rounded-full flex items-center justify-center text-xs font-medium">
                                           {producto.CANTIDAD}
                                         </span>
-                                        <span className="text-gray-800">{producto.ARTICULO}</span>
+                                        <span className="text-foreground">{producto.ARTICULO}</span>
                                       </div>
-                                      <span className="text-xs text-gray-500">ID: {producto.ARTICULO_ID}</span>
+                                      <span className="text-xs text-muted-foreground">ID: {producto.ARTICULO_ID}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -874,7 +874,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                       return (
                         <div className="space-y-4">
                           {venta.combos && venta.combos.length > 0 && (
-                            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                               <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                               </svg>
@@ -884,13 +884,13 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                           {productosIndividuales.map((producto, index) => (
                             <div
                               key={index}
-                              className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow"
+                              className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow"
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex-1">
-                                  <h4 className="text-lg font-semibold text-gray-900">{producto.ARTICULO}</h4>
+                                  <h4 className="text-lg font-semibold text-foreground">{producto.ARTICULO}</h4>
                                   <div className="flex items-center gap-4 mt-2">
-                                    <span className="text-sm text-gray-500">ID: {producto.ARTICULO_ID}</span>
+                                    <span className="text-sm text-muted-foreground">ID: {producto.ARTICULO_ID}</span>
                                     <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
                                       Cantidad: {producto.CANTIDAD}
                                     </span>
@@ -898,23 +898,23 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                                 </div>
                                 <div className="w-full">
                                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div className="bg-gray-50 rounded-lg p-3 border">
-                                      <p className="text-xs text-gray-500 mb-2">Lista</p>
+                                    <div className="bg-gray-50 dark:bg-gray-950/30 rounded-lg p-3 border border-gray-200 dark:border-gray-800">
+                                      <p className="text-xs text-muted-foreground mb-2">Lista</p>
                                       <div className="flex items-center justify-between">
-                                        <p className="font-semibold text-gray-900">{formatCurrency(producto.PRECIO_LISTA)}</p>
+                                        <p className="font-semibold text-foreground">{formatCurrency(producto.PRECIO_LISTA)}</p>
                                         <button
                                           onClick={(e) => copyToClipboard(producto.PRECIO_LISTA.toString(), e.currentTarget)}
-                                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                                          className="p-1 hover:bg-muted rounded transition-colors"
                                           title="Copiar precio lista"
                                         >
-                                          <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <svg className="w-3 h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                           </svg>
                                         </button>
                                       </div>
                                     </div>
-                                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                                      <p className="text-xs text-gray-500 mb-2">Corto Plazo</p>
+                                    <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                                      <p className="text-xs text-muted-foreground mb-2">Corto Plazo</p>
                                       <div className="flex items-center justify-between">
                                         <p className="font-semibold text-blue-600">{formatCurrency(producto.PRECIO_CORTO_PLAZO)}</p>
                                         <button
@@ -922,14 +922,14 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                                           className="p-1 hover:bg-blue-200 rounded transition-colors"
                                           title="Copiar precio corto plazo"
                                         >
-                                          <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <svg className="w-3 h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                           </svg>
                                         </button>
                                       </div>
                                     </div>
-                                    <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                                      <p className="text-xs text-gray-500 mb-2">Contado</p>
+                                    <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-3 border border-green-200 dark:border-green-800">
+                                      <p className="text-xs text-muted-foreground mb-2">Contado</p>
                                       <div className="flex items-center justify-between">
                                         <p className="font-semibold text-green-600">{formatCurrency(producto.PRECIO_CONTADO)}</p>
                                         <button
@@ -937,7 +937,7 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                                           className="p-1 hover:bg-green-200 rounded transition-colors"
                                           title="Copiar precio contado"
                                         >
-                                          <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <svg className="w-3 h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                           </svg>
                                         </button>
@@ -953,20 +953,20 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                     })()}
 
                     {/* Resumen de productos */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mt-6">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-xl p-6 mt-6">
                       <div className="flex items-center justify-between flex-wrap gap-4">
                         {venta.combos && venta.combos.length > 0 && (
                           <div>
-                            <p className="text-sm text-gray-500">Combos</p>
+                            <p className="text-sm text-muted-foreground">Combos</p>
                             <p className="text-2xl font-bold text-purple-600">{venta.combos.length}</p>
                           </div>
                         )}
                         <div>
-                          <p className="text-sm text-gray-500">Total de Productos</p>
-                          <p className="text-2xl font-bold text-gray-900">{venta.productos.length}</p>
+                          <p className="text-sm text-muted-foreground">Total de Productos</p>
+                          <p className="text-2xl font-bold text-foreground">{venta.productos.length}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Unidades Totales</p>
+                          <p className="text-sm text-muted-foreground">Unidades Totales</p>
                           <p className="text-2xl font-bold text-blue-600">
                             {venta.productos.reduce((sum, p) => sum + p.CANTIDAD, 0)}
                           </p>
@@ -976,10 +976,10 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
-                    <p className="text-gray-500">No hay productos registrados</p>
+                    <p className="text-muted-foreground">No hay productos registrados</p>
                   </div>
                 )}
               </div>
@@ -993,12 +993,12 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                     {venta.imagenes.map((imagen, index) => (
                       <div
                         key={imagen.ID}
-                        className="group relative bg-gray-100 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
+                        className="group relative bg-muted rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
                       >
                         {/* Loading spinner */}
                         {imageLoadingStates[imagen.ID] && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
-                            <div className="w-8 h-8 border-4 border-gray-200 rounded-full border-t-blue-600 animate-spin"></div>
+                          <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
+                            <div className="w-8 h-8 border-4 border-border rounded-full border-t-blue-600 animate-spin"></div>
                           </div>
                         )}
                         
@@ -1028,8 +1028,8 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                             </p>
                           </div>
                         </div>
-                        <div className="absolute top-2 right-2 bg-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="absolute top-2 right-2 bg-card rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                           </svg>
                         </div>
@@ -1038,10 +1038,10 @@ const VentaDetalleModal = ({ ventaId, onClose }: VentaDetalleModalProps) => {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <p className="text-gray-500">No hay imágenes disponibles</p>
+                    <p className="text-muted-foreground">No hay imágenes disponibles</p>
                   </div>
                 )}
               </div>

@@ -80,22 +80,22 @@ const NotificationVendedores: React.FC<NotificationVendedoresProps> = ({ email, 
         onClick={openDialog}
         className={`w-full text-left rounded-lg border transition-all group hover:shadow-md ${
           selectedCount > 0
-            ? 'border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 hover:border-orange-300'
-            : 'border-dashed border-slate-300 bg-slate-50/50 hover:border-orange-300 hover:bg-orange-50/30'
+            ? 'border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 hover:border-orange-300'
+            : 'border-dashed border-border bg-muted/50 hover:border-orange-300 hover:bg-orange-50/30 dark:hover:bg-orange-950/20'
         } ${compact ? 'p-3' : 'p-4'}`}
       >
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className={`rounded-md flex items-center justify-center ${
-              selectedCount > 0 ? 'bg-orange-500' : 'bg-slate-300 group-hover:bg-orange-400'
+              selectedCount > 0 ? 'bg-orange-500' : 'bg-muted-foreground/40 group-hover:bg-orange-400'
             } ${compact ? 'w-6 h-6' : 'w-7 h-7'} transition-colors`}>
               <Bell className={`text-white ${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} />
             </div>
             <div>
-              <p className={`font-medium text-slate-900 ${compact ? 'text-xs' : 'text-sm'}`}>
+              <p className={`font-medium text-foreground ${compact ? 'text-xs' : 'text-sm'}`}>
                 Notificaciones de Ventas
               </p>
-              <p className={`text-slate-500 ${compact ? 'text-[10px]' : 'text-xs'}`}>
+              <p className={`text-muted-foreground ${compact ? 'text-[10px]' : 'text-xs'}`}>
                 {selectedCount === 0
                   ? 'Recibe ventas de todos los vendedores'
                   : `Filtrando por ${selectedCount} ${selectedCount === 1 ? 'vendedor' : 'vendedores'}`
@@ -103,7 +103,7 @@ const NotificationVendedores: React.FC<NotificationVendedoresProps> = ({ email, 
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-slate-400 group-hover:text-orange-500 transition-colors">
+          <div className="flex items-center gap-1.5 text-muted-foreground group-hover:text-orange-500 transition-colors">
             <span className={`font-medium ${compact ? 'text-[10px]' : 'text-xs'}`}>Editar</span>
             <svg className={`${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />

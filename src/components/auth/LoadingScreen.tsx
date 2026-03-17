@@ -2,7 +2,7 @@ import React from 'react';
 
 const LoadingScreen: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-background dark:to-background flex items-center justify-center">
       <div className="text-center">
         {/* Logo animado */}
         <div className="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-6 animate-pulse">
@@ -17,8 +17,8 @@ const LoadingScreen: React.FC = () => {
         </div>
 
         {/* Texto */}
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">Cargando...</h2>
-        <p className="text-gray-600">Verificando autenticación</p>
+        <h2 className="text-xl font-semibold text-foreground mb-2">Cargando...</h2>
+        <p className="text-muted-foreground">Verificando autenticación</p>
       </div>
     </div>
   );

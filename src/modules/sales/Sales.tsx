@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTheme } from "../../context/ThemeContext";
 import { MapPin, MapPinOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useGetZonasCliente from "../user/useGetZonaCliente";
@@ -17,6 +18,9 @@ import Map from "../../components/Map";
 dayjs.extend(relativeTime);
 
 const Sales = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
   dayjs.locale("es");
   const { zonasCliente } = useGetZonasCliente();
   const [zonaCliente, setZonaCliente] = useState<ZonaCliente>({
@@ -122,13 +126,13 @@ const Sales = () => {
   const { ventas, loading } = useGetVentasByZona(zonaCliente.ZONA_CLIENTE_ID);
 
   return (
-    <div className="flex flex-col bg-white w-full h-[100vh] pt-4">
-      <h1 className="text-black text-4xl font-bold text-center">
+    <div className="flex flex-col bg-background w-full h-[100vh] pt-4">
+      <h1 className="text-foreground text-4xl font-bold text-center">
         Ventas por ruta
       </h1>
 
       <div className="col-span-2 flex gap-4 justify-center mt-4 items-center">
-        <p className="text-black text-center">
+        <p className="text-foreground text-center">
           Selecciona una ruta para ver las ventas
         </p>
         <select
@@ -139,7 +143,7 @@ const Sales = () => {
               setZonaCliente(r);
             }
           }}
-          className="border border-gray-400 rounded p-2 bg-blue-500"
+          className="border border-border rounded p-2 bg-primary text-primary-foreground"
         >
           <option value="0">Selecciona una ruta</option>
           {zonasCliente.map((zonaCliente) => (
@@ -167,7 +171,7 @@ const Sales = () => {
           <div role="status">
             <svg
               aria-hidden="true"
-              className="w-8 h-8 text-gray-200 animate-spin fill-blue-600"
+              className="w-8 h-8 text-muted animate-spin fill-primary"
               viewBox="0 0 100 101"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -187,7 +191,7 @@ const Sales = () => {
       ) : (
         <div className="flex flex-row gap-4 w-full h-full">
           <div
-            className={"ag-theme-quartz"}
+            className={isDark ? 'ag-theme-quartz-dark' : 'ag-theme-quartz'}
             style={{
               display: "flex",
               paddingTop: 20,
