@@ -1,78 +1,12 @@
-import { useEffect, useState, useCallback } from "react"
-import { check, Update } from "@tauri-apps/plugin-updater"
-import { relaunch } from "@tauri-apps/plugin-process"
+import { useState } from "react"
 import { Download, RefreshCw, Rocket, X, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { APP_VERSION } from "@/constants/version"
-
-type UpdateState =
-  | { status: "idle" }
-  | { status: "checking" }
-  | { status: "available"; update: Update }
-  | { status: "downloading"; progress: number; total: number }
-  | { status: "ready" }
-  | { status: "error"; message: string }
+import { useUpdater } from "@/context/UpdaterContext"
 
 export function AppUpdater() {
-  const [state, setState] = useState<UpdateState>({ status: "idle" })
+  const { state, downloadAndInstall, relaunchApp, checkForUpdate } = useUpdater()
   const [dismissed, setDismissed] = useState(false)
-
-  const checkForUpdate = useCallback(async () => {
-    setState({ status: "checking" })
-    try {
-      const update = await check()
-      if (update) {
-        setState({ status: "available", update })
-      } else {
-        setState({ status: "idle" })
-      }
-    } catch (e) {
-      console.error("Update check failed:", e)
-      setState({ status: "idle" })
-    }
-  }, [])
-
-  // Check on mount and every 30 minutes
-  useEffect(() => {
-    checkForUpdate()
-    const interval = setInterval(checkForUpdate, 30 * 60 * 1000)
-    return () => clearInterval(interval)
-  }, [checkForUpdate])
-
-  const handleDownloadAndInstall = async () => {
-    if (state.status !== "available") return
-    const { update } = state
-
-    try {
-      setState({ status: "downloading", progress: 0, total: 0 })
-
-      await update.downloadAndInstall((event) => {
-        if (event.event === "Started" && event.data.contentLength) {
-          setState((prev) =>
-            prev.status === "downloading"
-              ? { ...prev, total: event.data.contentLength! }
-              : prev
-          )
-        } else if (event.event === "Progress") {
-          setState((prev) =>
-            prev.status === "downloading"
-              ? { ...prev, progress: prev.progress + event.data.chunkLength }
-              : prev
-          )
-        } else if (event.event === "Finished") {
-          setState({ status: "ready" })
-        }
-      })
-
-      setState({ status: "ready" })
-    } catch (e: any) {
-      setState({ status: "error", message: e?.message || "Error al descargar" })
-    }
-  }
-
-  const handleRelaunch = async () => {
-    await relaunch()
-  }
 
   // Don't render anything if idle, checking, or dismissed
   if (state.status === "idle" || state.status === "checking" || dismissed) {
@@ -155,7 +89,7 @@ export function AppUpdater() {
         <div className="flex gap-2">
           {state.status === "available" && (
             <Button
-              onClick={handleDownloadAndInstall}
+              onClick={downloadAndInstall}
               size="sm"
               className="flex-1 gap-1.5"
             >
@@ -166,7 +100,7 @@ export function AppUpdater() {
 
           {state.status === "ready" && (
             <Button
-              onClick={handleRelaunch}
+              onClick={relaunchApp}
               size="sm"
               className="flex-1 gap-1.5"
             >
