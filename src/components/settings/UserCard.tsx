@@ -57,9 +57,9 @@ const UserCard: React.FC<UserCardProps> = ({
         </div>
         <div className="text-right">
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-            userStatus.color === 'green' 
-              ? 'bg-green-100 text-green-800'
-              : 'bg-yellow-100 text-yellow-800'
+            userStatus.color === 'green'
+              ? 'bg-green-100 dark:bg-green-950/30 text-green-800 dark:text-green-400'
+              : 'bg-yellow-100 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-400'
           }`}>
             {userStatus.label}
           </span>

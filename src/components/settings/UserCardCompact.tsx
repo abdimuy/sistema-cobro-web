@@ -41,8 +41,8 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
   return (
     <div className={`rounded-lg border-2 p-4 hover:shadow-md transition-shadow ${
       userStatus.color === 'green'
-        ? 'bg-green-50 border-green-200'
-        : 'bg-yellow-50 border-yellow-200'
+        ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
+        : 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800'
     }`}>
       {/* Header compacto */}
       <div className="flex items-center justify-between mb-4">
