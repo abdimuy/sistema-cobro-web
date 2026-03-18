@@ -145,8 +145,8 @@ const NotificationVendedores: React.FC<NotificationVendedoresProps> = ({ email, 
           <Separator />
 
           {/* Quick actions */}
-          <div className="px-6 py-3 flex items-center justify-between bg-slate-50/50">
-            <span className="text-xs text-slate-500">
+          <div className="px-6 py-3 flex items-center justify-between bg-muted/50">
+            <span className="text-xs text-muted-foreground">
               {pendingVendedores.length} de {usuarios.length} vendedores seleccionados
             </span>
             <div className="flex gap-2">
@@ -161,7 +161,7 @@ const NotificationVendedores: React.FC<NotificationVendedoresProps> = ({ email, 
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs text-slate-400"
+                className="h-7 text-xs text-muted-foreground"
                 onClick={() => setPendingVendedores([])}
               >
                 Quitar todos
@@ -190,16 +190,16 @@ const NotificationVendedores: React.FC<NotificationVendedoresProps> = ({ email, 
                         <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
                           isSelected
                             ? 'bg-orange-500 border-orange-500'
-                            : 'border-slate-300 bg-white'
+                            : 'border-border bg-background'
                         }`}>
                           {isSelected && <Check className="w-3 h-3 text-white" />}
                         </div>
                         <div className="flex-1 ml-2">
                           <span className="text-sm font-medium">{usuario.nombre}</span>
-                          <span className="text-xs text-slate-400 ml-2">{usuario.email}</span>
+                          <span className="text-xs text-muted-foreground ml-2">{usuario.email}</span>
                         </div>
                         {isSelected && (
-                          <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-[10px] hover:bg-orange-100">
+                          <Badge className="bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800 text-[10px] hover:bg-orange-100 dark:hover:bg-orange-950/50">
                             Activo
                           </Badge>
                         )}
@@ -216,15 +216,15 @@ const NotificationVendedores: React.FC<NotificationVendedoresProps> = ({ email, 
           {/* Selected preview in footer */}
           {pendingVendedores.length > 0 && (
             <>
-              <div className="px-6 py-3 bg-slate-50/50">
-                <p className="text-xs font-medium text-slate-500 mb-2">Vendedores seleccionados:</p>
+              <div className="px-6 py-3 bg-muted/50">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Vendedores seleccionados:</p>
                 <div className="max-h-[120px] overflow-y-auto">
                   <div className="flex flex-wrap gap-1.5">
                     {pendingVendedores.map((vendedorEmail) => (
                       <Badge
                         key={vendedorEmail}
                         variant="secondary"
-                        className="text-[11px] bg-orange-50 text-orange-700 border-orange-200 gap-1 cursor-pointer hover:bg-orange-100"
+                        className="text-[11px] bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800 gap-1 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-950/50"
                         onClick={() => togglePending(vendedorEmail)}
                       >
                         {getVendedorName(vendedorEmail)}
