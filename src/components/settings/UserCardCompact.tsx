@@ -6,6 +6,7 @@ import { desktopModules } from "../../constants/desktopModules";
 import { androidModules } from "../../constants/androidModules";
 import { ROLES } from "../../constants/roles";
 import NotificationVendedores from "./NotificationVendedores";
+import DeviceProtectionSection from "./DeviceProtectionSection";
 import { UsuarioFirebase } from "../../services/api/notificationVendedores";
 
 dayjs.extend(relativeTime);
@@ -184,6 +185,9 @@ const UserCardCompact: React.FC<UserCardCompactProps> = ({
               ))}
             </div>
           </div>
+
+          {/* Protección por Dispositivo */}
+          <DeviceProtectionSection cobrador={cobrador} />
 
           {/* Zonas de Notificación */}
           <NotificationVendedores email={cobrador.EMAIL} usuarios={usuariosFirebase} compact />
