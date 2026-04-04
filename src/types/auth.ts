@@ -4,18 +4,23 @@ import type { LucideIcon } from 'lucide-react';
 
 export type RoleType = typeof ROLES[keyof typeof ROLES];
 
+import { AuthorizedDevice, PendingDevice } from './device';
+
 export interface UserData {
   ID: string;
   EMAIL: string;
   NOMBRE?: string;
   TELEFONO?: string;
   ROL: RoleType;
-  MODULOS?: string[]; // Para Android
-  MODULOS_DESKTOP?: string[]; // Para Desktop
+  MODULOS?: string[];
+  MODULOS_DESKTOP?: string[];
   COBRADOR_ID?: number;
   ZONA_CLIENTE_ID?: number;
   FECHA_CARGA_INICIAL?: any;
   isActive?: boolean;
+  DEVICE_PROTECTION_ENABLED?: boolean;
+  AUTHORIZED_DEVICES?: AuthorizedDevice[];
+  PENDING_DEVICES?: PendingDevice[];
 }
 
 export interface AuthState {
@@ -24,6 +29,8 @@ export interface AuthState {
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
+  deviceBlocked: boolean;
+  deviceInfo: { deviceId: string; label: string } | null;
 }
 
 export interface AuthContextType extends AuthState {

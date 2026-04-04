@@ -4,6 +4,8 @@ import { onSnapshot, query, collection } from "firebase/firestore";
 import { db } from "../../firebase";
 import { USERS_COLLECTION } from "../constants/collections";
 
+import { AuthorizedDevice, PendingDevice } from "../types/device";
+
 export interface Cobrador {
   COBRADOR_ID: number;
   CREATED_AT: Timestamp;
@@ -14,9 +16,14 @@ export interface Cobrador {
   ID: string;
   TELEFONO: string;
   MODULOS?: string[];
-  CAMIONETA_ASIGNADA?: number; // ID del almacén/camioneta asignada
-  VERSION_APP?: string; // Versión de la app que tiene el usuario
-  FECHA_VERSION_APP?: Timestamp; // Fecha de última actualización de versión
+  CAMIONETA_ASIGNADA?: number;
+  VERSION_APP?: string;
+  FECHA_VERSION_APP?: Timestamp;
+  VERSION_APP_DESKTOP?: string;
+  FECHA_VERSION_APP_DESKTOP?: Timestamp;
+  DEVICE_PROTECTION_ENABLED?: boolean;
+  AUTHORIZED_DEVICES?: AuthorizedDevice[];
+  PENDING_DEVICES?: PendingDevice[];
 }
 
 export type CobradorDto = Omit<Cobrador, "ID">;
