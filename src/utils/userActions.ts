@@ -1,6 +1,7 @@
-import { doc, Timestamp, updateDoc } from "firebase/firestore";
+import { doc, Timestamp, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { USERS_COLLECTION } from "../constants/collections";
+import { AuthorizedDevice, PendingDevice } from "../types/device";
 
 export const handleSelect = (
   e: React.ChangeEvent<HTMLSelectElement>,
@@ -100,5 +101,120 @@ export const handleRoleChange = (
   updateDoc(doc(db, USERS_COLLECTION, cobrador.ID), {
     ROL: newRole,
     updatedAt: new Date().toISOString()
+  });
+};
+
+// --- Device Protection ---
+
+export const handleToggleDeviceProtection = (
+  cobradorId: string,
+  enabled: boolean
+) => {
+  updateDoc(doc(db, USERS_COLLECTION, cobradorId), {
+    DEVICE_PROTECTION_ENABLED: enabled,
+  });
+};
+
+export const handleApproveDevice = async (
+  cobradorId: string,
+  pending: PendingDevice,
+  approvedById: string
+) => {
+  const userRef = doc(db, USERS_COLLECTION, cobradorId);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const currentPending: PendingDevice[] = data.PENDING_DEVICES ?? [];
+  const currentAuthorized: AuthorizedDevice[] = data.AUTHORIZED_DEVICES ?? [];
+
+  const newAuthorized: AuthorizedDevice = {
+    id: crypto.randomUUID(),
+    deviceId: pending.deviceId,
+    platform: pending.platform,
+    label: pending.label,
+    authorizedAt: Timestamp.now(),
+    authorizedBy: approvedById,
+    systemInfo: pending.systemInfo ?? {},
+    // Android fields
+    ...(pending.manufacturer && { manufacturer: pending.manufacturer }),
+    ...(pending.model && { model: pending.model }),
+    ...(pending.brand && { brand: pending.brand }),
+    ...(pending.androidVersion && { androidVersion: pending.androidVersion }),
+    ...(pending.sdkVersion && { sdkVersion: pending.sdkVersion }),
+    ...(pending.product && { product: pending.product }),
+    ...(pending.device && { device: pending.device }),
+    ...(pending.language && { language: pending.language }),
+  };
+
+  await updateDoc(userRef, {
+    AUTHORIZED_DEVICES: [...currentAuthorized, newAuthorized],
+    PENDING_DEVICES: currentPending.filter(
+      (d) => d.deviceId !== pending.deviceId
+    ),
+  });
+};
+
+export const handleRejectDevice = async (
+  cobradorId: string,
+  pending: PendingDevice
+) => {
+  const userRef = doc(db, USERS_COLLECTION, cobradorId);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const currentPending: PendingDevice[] = data.PENDING_DEVICES ?? [];
+
+  await updateDoc(userRef, {
+    PENDING_DEVICES: currentPending.filter(
+      (d) => d.deviceId !== pending.deviceId
+    ),
+  });
+};
+
+export const handleRevokeDevice = async (
+  cobradorId: string,
+  device: AuthorizedDevice
+) => {
+  const userRef = doc(db, USERS_COLLECTION, cobradorId);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const currentAuthorized: AuthorizedDevice[] = data.AUTHORIZED_DEVICES ?? [];
+
+  await updateDoc(userRef, {
+    AUTHORIZED_DEVICES: currentAuthorized.filter(
+      (d) => d.deviceId !== device.deviceId
+    ),
+  });
+};
+
+export const handleAddDeviceManually = async (
+  cobradorId: string,
+  deviceId: string,
+  platform: "android" | "desktop",
+  label: string,
+  approvedById: string
+) => {
+  const userRef = doc(db, USERS_COLLECTION, cobradorId);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const currentAuthorized: AuthorizedDevice[] = data.AUTHORIZED_DEVICES ?? [];
+
+  const newDevice: AuthorizedDevice = {
+    id: crypto.randomUUID(),
+    deviceId,
+    platform,
+    label,
+    authorizedAt: Timestamp.now(),
+    authorizedBy: approvedById,
+  };
+
+  await updateDoc(userRef, {
+    AUTHORIZED_DEVICES: [...currentAuthorized, newDevice],
   });
 };

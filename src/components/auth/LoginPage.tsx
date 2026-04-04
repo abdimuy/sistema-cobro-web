@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermissions } from '../../hooks/usePermissions';
 import { APP_VERSION } from '../../constants/version';
+import DeviceBlockedScreen from './DeviceBlockedScreen';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, loading, error, clearError, isAuthenticated } = useAuth();
+  const { login, loading, error, clearError, isAuthenticated, deviceBlocked, deviceInfo, logout } = useAuth();
   const { getFirstAvailableRoute } = usePermissions();
   const navigate = useNavigate();
 
@@ -40,6 +41,16 @@ const LoginPage: React.FC = () => {
       // Error ya está manejado en el context
     }
   };
+
+  if (deviceBlocked && deviceInfo) {
+    return (
+      <DeviceBlockedScreen
+        deviceLabel={deviceInfo.label}
+        deviceId={deviceInfo.deviceId}
+        onLogout={logout}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-background dark:to-background flex items-center justify-center p-4">
