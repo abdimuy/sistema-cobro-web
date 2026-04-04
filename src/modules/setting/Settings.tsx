@@ -11,6 +11,8 @@ import { API_SETTINGS_DOC } from "../../constants/values";
 import getConfigAPI from "../../services/api/getConfigAPI";
 import validateURL from "../../utils/validateURL";
 
+import { Server } from "lucide-react";
+
 // Components
 import SettingsHeader from "../../components/settings/SettingsHeader";
 import SearchAndFilters from "../../components/settings/SearchAndFilters";
@@ -43,6 +45,8 @@ const Settings = () => {
   const [filterRuta, setFilterRuta] = useState<string>('all');
   const [filterPermisos, setFilterPermisos] = useState<'all' | 'with-permissions' | 'no-permissions'>('all');
   const [filterVersion, setFilterVersion] = useState<'all' | 'validated' | 'not-validated' | string>('all');
+  const [filterRol, setFilterRol] = useState<string>('all');
+  const [filterProtection, setFilterProtection] = useState<'all' | 'protected' | 'unprotected' | 'pending'>('all');
   const [sortBy, setSortBy] = useState<'name' | 'email' | 'ruta' | 'version'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -98,6 +102,8 @@ const Settings = () => {
     filterRuta,
     filterPermisos,
     filterVersion,
+    filterRol,
+    filterProtection,
     sortBy,
     sortOrder,
     rutas,
@@ -128,53 +134,39 @@ const Settings = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Configuración del servidor */}
-        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg dark:bg-primary/20 flex items-center justify-center">
-              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-foreground">Configuración del Servidor</h2>
-              <p className="text-muted-foreground">URL del servidor API</p>
-            </div>
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border">
+            <Server className="w-4 h-4 text-muted-foreground shrink-0" />
+            <span className="text-sm font-medium text-foreground">Servidor API</span>
+            <span className="text-sm text-muted-foreground">&middot;</span>
+            <span className="text-sm text-muted-foreground truncate">{urlApi || 'Sin configurar'}</span>
           </div>
-          
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">URL del Servidor</label>
+          <div className="px-5 py-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-sm text-muted-foreground">URL del Servidor</label>
                 <input
                   onChange={handlerUpdateURLAPI}
                   value={urlApi}
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-foreground"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-foreground"
                   placeholder="Ingresa la URL del servidor"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">Direcciones de referencia</label>
+              <div className="space-y-1.5">
+                <label className="text-sm text-muted-foreground">Referencias</label>
                 <div className="space-y-1 text-sm text-muted-foreground">
-                  <p>• Por defecto: https://msp2025.loclx.io/</p>
-                  <p>• Local: http://serverm:3001/</p>
+                  <p>Por defecto: <span className="font-mono text-foreground/70">https://msp2025.loclx.io/</span></p>
+                  <p>Local: <span className="font-mono text-foreground/70">http://serverm:3001/</span></p>
                 </div>
               </div>
             </div>
-            
             {!isValidURL && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-start">
-                  <svg className="w-5 h-5 text-red-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                  <div>
-                    <h3 className="text-sm font-medium text-red-800">Error en la URL</h3>
-                    <ul className="mt-2 text-sm text-red-700 list-disc list-inside">
-                      {errorsURL.map((err) => (
-                        <li key={err}>{err}</li>
-                      ))}
-                    </ul>
-                  </div>
+              <div className="mt-4 flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <svg className="w-4 h-4 text-red-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <div className="text-sm text-red-500">
+                  {errorsURL.map((err) => <p key={err}>{err}</p>)}
                 </div>
               </div>
             )}
@@ -193,6 +185,10 @@ const Settings = () => {
           onFilterPermisosChange={setFilterPermisos}
           filterVersion={filterVersion}
           onFilterVersionChange={setFilterVersion}
+          filterRol={filterRol}
+          onFilterRolChange={setFilterRol}
+          filterProtection={filterProtection}
+          onFilterProtectionChange={setFilterProtection}
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSortChange={(sortBy, sortOrder) => {
@@ -203,68 +199,56 @@ const Settings = () => {
           cobradores={cobradores}
           filteredCount={filteredAndSortedCobradores.length}
           totalCount={cobradores.length}
+          stats={stats}
         />
 
         {/* Lista de usuarios */}
-        <div className="bg-card rounded-xl shadow-sm border border-border">
-          <div className="px-6 py-4 border-b border-border">
-            <h2 className="text-xl font-semibold text-foreground">Usuarios del Sistema</h2>
-            <p className="text-muted-foreground mt-1">Gestiona permisos, rutas y configuraciones</p>
+        {viewMode === 'expanded' ? (
+          <div className="space-y-4">
+            {filteredAndSortedCobradores.map((cobrador) => {
+              const userStatus = getUserStatus(cobrador);
+              return (
+                <UserCard
+                  key={cobrador.ID}
+                  cobrador={cobrador}
+                  userStatus={userStatus}
+                  rutas={rutas}
+                  zonasCliente={zonasCliente}
+                  usuariosFirebase={usuariosFirebase}
+                  onSelect={handleSelectWithCobradores}
+                  onSelectZona={handleSelectZonaWithCobradores}
+                  onUpdatePhone={handleUpdatePhone}
+                  onUpdateFechaInicioSemana={handleUpdateFechaInicioSemana}
+                  onToggleModule={handleToggleModule}
+                  onToggleDesktopModule={handleToggleDesktopModule}
+                  onRoleChange={handleRoleChangeWithCobradores}
+                />
+              );
+            })}
           </div>
-          
-          <div className="overflow-hidden">
-            {viewMode === 'expanded' ? (
-              // Vista expandida
-              <div className="space-y-4 p-6">
-                {filteredAndSortedCobradores.map((cobrador) => {
-                  const userStatus = getUserStatus(cobrador);
-                  return (
-                    <UserCard
-                      key={cobrador.ID}
-                      cobrador={cobrador}
-                      userStatus={userStatus}
-                      rutas={rutas}
-                      zonasCliente={zonasCliente}
-                      usuariosFirebase={usuariosFirebase}
-                      onSelect={handleSelectWithCobradores}
-                      onSelectZona={handleSelectZonaWithCobradores}
-                      onUpdatePhone={handleUpdatePhone}
-                      onUpdateFechaInicioSemana={handleUpdateFechaInicioSemana}
-                      onToggleModule={handleToggleModule}
-                      onToggleDesktopModule={handleToggleDesktopModule}
-                      onRoleChange={handleRoleChangeWithCobradores}
-                    />
-                  );
-                })}
-              </div>
-            ) : (
-              // Vista compacta
-              <div className="p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {filteredAndSortedCobradores.map((cobrador) => {
-                    const userStatus = getUserStatus(cobrador);
-                    return (
-                      <UserCardCompact
-                        key={cobrador.ID}
-                        cobrador={cobrador}
-                        userStatus={userStatus}
-                        rutas={rutas}
-                        zonasCliente={zonasCliente}
-                        usuariosFirebase={usuariosFirebase}
-                        onSelect={handleSelectWithCobradores}
-                        onSelectZona={handleSelectZonaWithCobradores}
-                        onUpdatePhone={handleUpdatePhone}
-                        onToggleModule={handleToggleModule}
-                        onToggleDesktopModule={handleToggleDesktopModule}
-                        onRoleChange={handleRoleChangeWithCobradores}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredAndSortedCobradores.map((cobrador) => {
+              const userStatus = getUserStatus(cobrador);
+              return (
+                <UserCardCompact
+                  key={cobrador.ID}
+                  cobrador={cobrador}
+                  userStatus={userStatus}
+                  rutas={rutas}
+                  zonasCliente={zonasCliente}
+                  usuariosFirebase={usuariosFirebase}
+                  onSelect={handleSelectWithCobradores}
+                  onSelectZona={handleSelectZonaWithCobradores}
+                  onUpdatePhone={handleUpdatePhone}
+                  onToggleModule={handleToggleModule}
+                  onToggleDesktopModule={handleToggleDesktopModule}
+                  onRoleChange={handleRoleChangeWithCobradores}
+                />
+              );
+            })}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

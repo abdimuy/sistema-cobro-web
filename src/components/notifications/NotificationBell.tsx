@@ -221,7 +221,7 @@ const NotificationBell: React.FC = () => {
             <p className="text-xs mt-1 opacity-70">Las nuevas aparecerán aquí</p>
           </div>
         ) : (
-          <ScrollArea className="max-h-[400px]">
+          <ScrollArea className="h-[400px]">
             <div className="divide-y divide-border">
               {notifications.map((n) => (
                 <NotificationItem

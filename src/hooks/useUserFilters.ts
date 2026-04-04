@@ -7,6 +7,8 @@ interface UseUserFiltersProps {
   filterRuta: string;
   filterPermisos: 'all' | 'with-permissions' | 'no-permissions';
   filterVersion: 'all' | 'validated' | 'not-validated' | string;
+  filterRol: string;
+  filterProtection: 'all' | 'protected' | 'unprotected' | 'pending';
   sortBy: 'name' | 'email' | 'ruta' | 'version';
   sortOrder: 'asc' | 'desc';
   rutas: any[];
@@ -34,6 +36,8 @@ export const useUserFilters = ({
   filterRuta,
   filterPermisos,
   filterVersion,
+  filterRol,
+  filterProtection,
   sortBy,
   sortOrder,
   rutas,
@@ -70,7 +74,18 @@ export const useUserFilters = ({
         (filterVersion === 'not-validated' && !hasVersion) ||
         (cobrador.VERSION_APP === filterVersion);
 
-      return matchesSearch && matchesStatus && matchesRuta && matchesPermisos && matchesVersion;
+      // Filtro por rol
+      const matchesRol = filterRol === 'all' || cobrador.ROL === filterRol;
+
+      // Filtro por protección de dispositivo
+      const isProtected = cobrador.DEVICE_PROTECTION_ENABLED === true;
+      const hasPendingDevices = (cobrador.PENDING_DEVICES ?? []).length > 0;
+      const matchesProtection = filterProtection === 'all' ||
+        (filterProtection === 'protected' && isProtected) ||
+        (filterProtection === 'unprotected' && !isProtected) ||
+        (filterProtection === 'pending' && hasPendingDevices);
+
+      return matchesSearch && matchesStatus && matchesRuta && matchesPermisos && matchesVersion && matchesRol && matchesProtection;
     });
 
     // Ordenamiento
@@ -108,7 +123,7 @@ export const useUserFilters = ({
     });
 
     return filtered;
-  }, [cobradores, searchTerm, filterStatus, filterRuta, filterPermisos, filterVersion, sortBy, sortOrder, rutas, zonasCliente]);
+  }, [cobradores, searchTerm, filterStatus, filterRuta, filterPermisos, filterVersion, filterRol, filterProtection, sortBy, sortOrder, rutas, zonasCliente]);
 
   // Estadísticas
   const stats = useMemo(() => {
@@ -118,8 +133,10 @@ export const useUserFilters = ({
     const withRuta = cobradores.filter(c => c.COBRADOR_ID && c.COBRADOR_ID !== 0).length;
     const withValidatedVersion = cobradores.filter(c => c.VERSION_APP && c.FECHA_VERSION_APP).length;
     const withoutVersion = cobradores.filter(c => !c.VERSION_APP || !c.FECHA_VERSION_APP).length;
+    const withProtection = cobradores.filter(c => c.DEVICE_PROTECTION_ENABLED === true).length;
+    const withPendingDevices = cobradores.filter(c => (c.PENDING_DEVICES ?? []).length > 0).length;
 
-    return { total, configured, incomplete: total - configured, withPermissions, withRuta, withValidatedVersion, withoutVersion };
+    return { total, configured, incomplete: total - configured, withPermissions, withRuta, withValidatedVersion, withoutVersion, withProtection, withPendingDevices };
   }, [cobradores]);
 
   return {
