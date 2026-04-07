@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, Users, Shield, ShieldAlert, Filter } from 'lucide-react';
+import { Search, X, Users, Shield, ShieldAlert, Filter, UserCog, Activity, Route, Lock, Key, ArrowUpDown, Tag } from 'lucide-react';
 import { ROLES } from '../../constants/roles';
 
 interface SearchAndFiltersProps {
@@ -130,13 +130,14 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
       </div>
 
       {/* Filtros */}
-      <div className="flex items-center gap-2.5 px-5 py-3 border-t border-border bg-muted/30 overflow-x-auto">
+      <div className="flex items-center gap-2.5 px-5 py-3 border-t border-border bg-muted/30 flex-wrap">
         <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
 
           <FilterSelect
             value={filterRol}
             onChange={(v) => onFilterRolChange(v)}
             active={filterRol !== 'all'}
+            icon={<UserCog className="w-3.5 h-3.5" />}
           >
             <option value="all">Rol</option>
             <option value={ROLES.SUPER_ADMIN}>Super Admin</option>
@@ -149,7 +150,8 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           <FilterSelect
             value={filterStatus}
             onChange={(v) => onFilterStatusChange(v as any)}
-            active={filterStatus !== 'all'}
+            active={filterStatus !== 'all' && filterStatus !== 'active'}
+            icon={<Activity className="w-3.5 h-3.5" />}
           >
             <option value="active">Activos</option>
             <option value="all">Todos</option>
@@ -162,6 +164,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             value={filterRuta}
             onChange={(v) => onFilterRutaChange(v)}
             active={filterRuta !== 'all'}
+            icon={<Route className="w-3.5 h-3.5" />}
           >
             <option value="all">Ruta</option>
             {rutas.map((ruta) => (
@@ -175,6 +178,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             value={filterProtection}
             onChange={(v) => onFilterProtectionChange(v as any)}
             active={filterProtection !== 'all'}
+            icon={<Lock className="w-3.5 h-3.5" />}
           >
             <option value="all">Proteccion</option>
             <option value="protected">Con proteccion</option>
@@ -186,6 +190,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             value={filterPermisos}
             onChange={(v) => onFilterPermisosChange(v as any)}
             active={filterPermisos !== 'all'}
+            icon={<Key className="w-3.5 h-3.5" />}
           >
             <option value="all">Permisos</option>
             <option value="with-permissions">Con permisos</option>
@@ -196,6 +201,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             value={filterVersion}
             onChange={(v) => onFilterVersionChange(v)}
             active={filterVersion !== 'all'}
+            icon={<Tag className="w-3.5 h-3.5" />}
           >
             <option value="all">Version</option>
             <option value="validated">Validada</option>
@@ -214,6 +220,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
               onSortChange(newSortBy as any, newSortOrder as any);
             }}
             active={false}
+            icon={<ArrowUpDown className="w-3.5 h-3.5" />}
           >
             <option value="name-asc">A-Z</option>
             <option value="name-desc">Z-A</option>
@@ -279,21 +286,25 @@ interface FilterSelectProps {
   value: string;
   onChange: (value: string) => void;
   active: boolean;
+  icon?: React.ReactNode;
   children: React.ReactNode;
 }
 
-const FilterSelect: React.FC<FilterSelectProps> = ({ value, onChange, active, children }) => (
-  <select
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    className={`appearance-none px-2.5 py-1 rounded-lg text-sm font-medium border cursor-pointer outline-none transition-all ${
-      active
-        ? 'bg-primary/10 border-primary/30 text-primary'
-        : 'bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/20'
-    }`}
-  >
-    {children}
-  </select>
+const FilterSelect: React.FC<FilterSelectProps> = ({ value, onChange, active, icon, children }) => (
+  <div className={`inline-flex items-center gap-1.5 rounded-lg border cursor-pointer transition-all ${
+    active
+      ? 'bg-primary/10 border-primary/30 text-primary'
+      : 'bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/20'
+  }`}>
+    {icon && <span className="pl-2.5 flex items-center">{icon}</span>}
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`appearance-none bg-transparent text-sm font-medium cursor-pointer outline-none py-1 ${icon ? 'pl-0 pr-2.5' : 'px-2.5'}`}
+    >
+      {children}
+    </select>
+  </div>
 );
 
 export default SearchAndFilters;
