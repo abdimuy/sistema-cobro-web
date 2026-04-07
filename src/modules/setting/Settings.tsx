@@ -7,6 +7,7 @@ import { db } from "../../../firebase";
 import { CONFIG_COLLECTION } from "../../constants/collections";
 import useGetZonasCliente from "../user/useGetZonaCliente";
 import { getUsuariosFirebase, UsuarioFirebase } from "../../services/api/notificationVendedores";
+import { getUsersAuthInfo, UserAuthInfo } from "../../services/api/userAccountService";
 import { API_SETTINGS_DOC } from "../../constants/values";
 import getConfigAPI from "../../services/api/getConfigAPI";
 import validateURL from "../../utils/validateURL";
@@ -41,7 +42,7 @@ const Settings = () => {
     return (saved as 'expanded' | 'compact') || 'expanded';
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<'all' | 'configured' | 'incomplete'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'configured' | 'incomplete' | 'disabled'>('active');
   const [filterRuta, setFilterRuta] = useState<string>('all');
   const [filterPermisos, setFilterPermisos] = useState<'all' | 'with-permissions' | 'no-permissions'>('all');
   const [filterVersion, setFilterVersion] = useState<'all' | 'validated' | 'not-validated' | string>('all');
@@ -59,11 +60,20 @@ const Settings = () => {
   const { rutas } = useGetRutas();
   const { zonasCliente } = useGetZonasCliente();
   const [usuariosFirebase, setUsuariosFirebase] = useState<UsuarioFirebase[]>([]);
+  const [authInfoMap, setAuthInfoMap] = useState<Record<string, UserAuthInfo>>({});
 
   useEffect(() => {
     getUsuariosFirebase()
       .then(setUsuariosFirebase)
       .catch(() => setUsuariosFirebase([]));
+
+    getUsersAuthInfo()
+      .then((users) => {
+        const map: Record<string, UserAuthInfo> = {};
+        users.forEach((u) => { map[u.uid] = u; });
+        setAuthInfoMap(map);
+      })
+      .catch(() => setAuthInfoMap({}));
   }, []);
 
   const getURLAPI = () => {
@@ -94,9 +104,22 @@ const Settings = () => {
     });
   };
 
+  // Merge auth info into cobradores
+  const cobradoresWithAuth = React.useMemo(() => {
+    return cobradores.map((c) => {
+      const authInfo = authInfoMap[c.ID];
+      return {
+        ...c,
+        _authDisabled: authInfo?.disabled ?? false,
+        _authLastSignIn: authInfo?.lastSignIn ?? null,
+        _authCreationTime: authInfo?.creationTime ?? null,
+      };
+    });
+  }, [cobradores, authInfoMap]);
+
   // Hook para filtros y estadísticas
   const { filteredAndSortedCobradores, stats, getUserStatus } = useUserFilters({
-    cobradores,
+    cobradores: cobradoresWithAuth,
     searchTerm,
     filterStatus,
     filterRuta,
@@ -222,6 +245,12 @@ const Settings = () => {
                   onToggleModule={handleToggleModule}
                   onToggleDesktopModule={handleToggleDesktopModule}
                   onRoleChange={handleRoleChangeWithCobradores}
+                  onStatusChange={(uid, disabled) => {
+                    setAuthInfoMap(prev => ({
+                      ...prev,
+                      [uid]: { ...prev[uid], uid, disabled },
+                    }));
+                  }}
                 />
               );
             })}

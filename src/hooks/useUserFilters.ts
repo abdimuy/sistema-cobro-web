@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 interface UseUserFiltersProps {
   cobradores: any[];
   searchTerm: string;
-  filterStatus: 'all' | 'configured' | 'incomplete';
+  filterStatus: 'all' | 'active' | 'configured' | 'incomplete' | 'disabled';
   filterRuta: string;
   filterPermisos: 'all' | 'with-permissions' | 'no-permissions';
   filterVersion: 'all' | 'validated' | 'not-validated' | string;
@@ -17,11 +17,15 @@ interface UseUserFiltersProps {
 
 // Función para obtener el estado de un usuario
 const getUserStatus = (cobrador: any) => {
+  if (cobrador._authDisabled === true) {
+    return { status: 'disabled', label: 'Deshabilitado', color: 'red' };
+  }
+
   const hasRuta = cobrador.COBRADOR_ID && cobrador.COBRADOR_ID !== 0;
   const hasZona = cobrador.ZONA_CLIENTE_ID && cobrador.ZONA_CLIENTE_ID !== 0;
   const hasPermisos = cobrador.MODULOS && cobrador.MODULOS.length > 0;
   const hasTelefono = cobrador.TELEFONO && cobrador.TELEFONO.trim() !== "";
-  
+
   if (hasRuta && hasZona && hasPermisos && hasTelefono) {
     return { status: 'configured', label: 'Configurado', color: 'green' };
   } else {
@@ -56,7 +60,9 @@ export const useUserFilters = ({
 
       // Filtro por estado
       const userStatus = getUserStatus(cobrador);
-      const matchesStatus = filterStatus === 'all' || userStatus.status === filterStatus;
+      const matchesStatus = filterStatus === 'all' ||
+        filterStatus === userStatus.status ||
+        (filterStatus === 'active' && userStatus.status !== 'disabled');
 
       // Filtro por ruta
       const matchesRuta = filterRuta === 'all' || cobrador.COBRADOR_ID?.toString() === filterRuta;
@@ -133,10 +139,11 @@ export const useUserFilters = ({
     const withRuta = cobradores.filter(c => c.COBRADOR_ID && c.COBRADOR_ID !== 0).length;
     const withValidatedVersion = cobradores.filter(c => c.VERSION_APP && c.FECHA_VERSION_APP).length;
     const withoutVersion = cobradores.filter(c => !c.VERSION_APP || !c.FECHA_VERSION_APP).length;
+    const disabled = cobradores.filter(c => c._authDisabled === true).length;
     const withProtection = cobradores.filter(c => c.DEVICE_PROTECTION_ENABLED === true).length;
     const withPendingDevices = cobradores.filter(c => (c.PENDING_DEVICES ?? []).length > 0).length;
 
-    return { total, configured, incomplete: total - configured, withPermissions, withRuta, withValidatedVersion, withoutVersion, withProtection, withPendingDevices };
+    return { total, configured, incomplete: total - configured - disabled, disabled, withPermissions, withRuta, withValidatedVersion, withoutVersion, withProtection, withPendingDevices };
   }, [cobradores]);
 
   return {

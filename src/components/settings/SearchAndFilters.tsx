@@ -5,8 +5,8 @@ import { ROLES } from '../../constants/roles';
 interface SearchAndFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  filterStatus: 'all' | 'configured' | 'incomplete';
-  onFilterStatusChange: (value: 'all' | 'configured' | 'incomplete') => void;
+  filterStatus: 'all' | 'active' | 'configured' | 'incomplete' | 'disabled';
+  onFilterStatusChange: (value: 'all' | 'active' | 'configured' | 'incomplete' | 'disabled') => void;
   filterRuta: string;
   onFilterRutaChange: (value: string) => void;
   filterPermisos: 'all' | 'with-permissions' | 'no-permissions';
@@ -28,6 +28,7 @@ interface SearchAndFiltersProps {
     total: number;
     configured: number;
     incomplete: number;
+    disabled: number;
     withPermissions: number;
     withRuta: number;
     withValidatedVersion: number;
@@ -82,7 +83,8 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
     };
     activeFilters.push({ label: `Rol: ${rolLabels[filterRol] || filterRol}`, onClear: () => onFilterRolChange('all') });
   }
-  if (filterStatus !== 'all') activeFilters.push({ label: `Estado: ${filterStatus === 'configured' ? 'Configurado' : 'Incompleto'}`, onClear: () => onFilterStatusChange('all') });
+  const statusLabels: Record<string, string> = { active: 'Activos', configured: 'Configurados', incomplete: 'Incompletos', disabled: 'Deshabilitados' };
+  if (filterStatus !== 'all' && filterStatus !== 'active') activeFilters.push({ label: `Estado: ${statusLabels[filterStatus]}`, onClear: () => onFilterStatusChange('active') });
   if (filterRuta !== 'all') {
     const rutaName = rutas.find(r => r.COBRADOR_ID.toString() === filterRuta)?.COBRADOR || filterRuta;
     activeFilters.push({ label: `Ruta: ${rutaName}`, onClear: () => onFilterRutaChange('all') });
@@ -149,9 +151,11 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             onChange={(v) => onFilterStatusChange(v as any)}
             active={filterStatus !== 'all'}
           >
-            <option value="all">Estado</option>
-            <option value="configured">Configurado</option>
-            <option value="incomplete">Incompleto</option>
+            <option value="active">Activos</option>
+            <option value="all">Todos</option>
+            <option value="configured">Configurados</option>
+            <option value="incomplete">Incompletos</option>
+            <option value="disabled">Deshabilitados</option>
           </FilterSelect>
 
           <FilterSelect

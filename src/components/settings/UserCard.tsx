@@ -7,6 +7,7 @@ import { androidModules } from "../../constants/androidModules";
 import { ROLES } from "../../constants/roles";
 import NotificationVendedores from "./NotificationVendedores";
 import DeviceProtectionSection from "./DeviceProtectionSection";
+import AccountSection from "./AccountSection";
 import { UsuarioFirebase } from "../../services/api/notificationVendedores";
 import {
   Settings,
@@ -20,6 +21,8 @@ import {
   Phone,
   MapPin,
   Route,
+  UserCog,
+  Ban,
 } from "lucide-react";
 
 dayjs.extend(relativeTime);
@@ -38,9 +41,10 @@ interface UserCardProps {
   onToggleModule: (module: string, id: string, currentModules: string[]) => void;
   onToggleDesktopModule: (module: string, id: string, currentModules: string[]) => void;
   onRoleChange: (e: React.ChangeEvent<HTMLSelectElement>, email: string) => void;
+  onStatusChange?: (uid: string, disabled: boolean) => void;
 }
 
-type SectionKey = 'config' | 'permisos' | 'dispositivos' | 'notificaciones';
+type SectionKey = 'cuenta' | 'config' | 'permisos' | 'dispositivos' | 'notificaciones';
 
 const UserCard: React.FC<UserCardProps> = ({
   cobrador,
@@ -54,7 +58,8 @@ const UserCard: React.FC<UserCardProps> = ({
   onUpdateFechaInicioSemana,
   onToggleModule,
   onToggleDesktopModule,
-  onRoleChange
+  onRoleChange,
+  onStatusChange
 }) => {
   const [expanded, setExpanded] = useState<SectionKey | null>(null);
 
@@ -76,20 +81,27 @@ const UserCard: React.FC<UserCardProps> = ({
   const authorizedDevices = cobrador.AUTHORIZED_DEVICES ?? [];
   const pendingDevices = cobrador.PENDING_DEVICES ?? [];
   const isProtected = cobrador.DEVICE_PROTECTION_ENABLED ?? false;
+  const isDisabled = cobrador._authDisabled === true;
 
   return (
-    <div className="rounded-xl border border-border overflow-hidden bg-gradient-to-b from-muted/50 to-background hover:shadow-lg transition-all duration-300">
+    <div className={`rounded-xl border overflow-hidden transition-all duration-300 ${
+      isDisabled
+        ? 'border-red-500/30 opacity-50 hover:opacity-75'
+        : 'border-border bg-gradient-to-b from-muted/50 to-background hover:shadow-lg'
+    }`}>
       {/* ── Header ── */}
       <div className="px-5 py-4">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-11 h-11 bg-primary/10 rounded-full dark:bg-primary/20 flex items-center justify-center ring-2 ring-background">
-              <span className="text-base font-bold text-primary">
+            <div className={`w-11 h-11 rounded-full flex items-center justify-center ring-2 ring-background ${
+              isDisabled ? 'bg-red-500/10' : 'bg-primary/10 dark:bg-primary/20'
+            }`}>
+              <span className={`text-base font-bold ${isDisabled ? 'text-red-500' : 'text-primary'}`}>
                 {cobrador.NOMBRE?.charAt(0) || cobrador.EMAIL.charAt(0)}
               </span>
             </div>
             <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-background ${
-              userStatus.color === 'green' ? 'bg-green-500' : 'bg-yellow-500'
+              isDisabled ? 'bg-red-500' : userStatus.color === 'green' ? 'bg-green-500' : 'bg-yellow-500'
             }`} />
           </div>
           <div className="flex-1 min-w-0">
@@ -97,9 +109,16 @@ const UserCard: React.FC<UserCardProps> = ({
               <h3 className="text-sm font-semibold text-foreground truncate">
                 {cobrador.NOMBRE || cobrador.EMAIL}
               </h3>
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                {rolLabel}
-              </span>
+              {isDisabled ? (
+                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/15 text-red-500 inline-flex items-center gap-1">
+                  <Ban className="w-3 h-3" />
+                  Deshabilitado
+                </span>
+              ) : (
+                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                  {rolLabel}
+                </span>
+              )}
             </div>
             <p className="text-xs text-muted-foreground truncate mt-0.5">{cobrador.EMAIL}</p>
           </div>
@@ -134,6 +153,30 @@ const UserCard: React.FC<UserCardProps> = ({
 
       {/* ── Secciones ── */}
       <div className="border-t border-border">
+
+        {/* Cuenta */}
+        <SectionRow
+          icon={isDisabled ? <Ban className="w-4 h-4 text-red-500" /> : <UserCog className="w-4 h-4" />}
+          label="Cuenta"
+          isExpanded={expanded === 'cuenta'}
+          onToggle={() => toggle('cuenta')}
+          summary={
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className={`inline-flex items-center gap-1 ${isDisabled ? 'text-red-500 font-medium' : ''}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isDisabled ? 'bg-red-500' : 'bg-green-500'}`} />
+                {isDisabled ? 'Deshabilitado' : 'Activo'}
+              </span>
+              {cobrador._authLastSignIn && (
+                <>
+                  <span className="text-border">&middot;</span>
+                  <span>Ultimo acceso {dayjs(cobrador._authLastSignIn).fromNow()}</span>
+                </>
+              )}
+            </div>
+          }
+        >
+          <AccountSection cobrador={cobrador} onStatusChange={onStatusChange} />
+        </SectionRow>
 
         {/* Configuracion */}
         <SectionRow
