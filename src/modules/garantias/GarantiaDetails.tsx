@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "sonner";
 
 import { URL_API } from "../../constants/api";
 import getVenta, { Venta } from "../../services/api/getVenta";
@@ -90,7 +91,7 @@ const GarantiaDetalle: React.FC = () => {
       setTimeout(() => setMensajeExito(null), 3000);
       await refetchEventos();
     } catch {
-      alert("No se pudo agregar el evento");
+      toast.error("No se pudo agregar el evento");
     } finally {
       setAgregando(false);
     }
@@ -362,7 +363,7 @@ const GarantiaDetalle: React.FC = () => {
                 onChange={(e) => {
                   const files = Array.from(e.target.files || []);
                   if (files.length > 10) {
-                    alert("Máximo 10 imágenes permitidas");
+                    toast.error("Máximo 10 imágenes permitidas");
                     return;
                   }
                   setImagenesEvento(files);

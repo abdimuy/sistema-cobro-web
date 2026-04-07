@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { URL_API } from "../../constants/api";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import useGetCobradores from "../../hooks/useGetCobradores";
@@ -48,6 +49,10 @@ const AsignacionAlmacenes = () => {
   const [resetConfirmText, setResetConfirmText] = useState("");
   const [showExcludedModal, setShowExcludedModal] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
   const { cobradores, isLoading: loadingCobradores } = useGetCobradores();
 
   // Cerrar menú al hacer clic fuera
@@ -114,76 +119,51 @@ const AsignacionAlmacenes = () => {
 
     const isCurrentlyExcluded = almacenesExcluidos.includes(almacenId);
     
-    if (!isCurrentlyExcluded) {
-      // Si se va a excluir y tiene usuarios asignados
-      if (almacen.usuariosAsignados.length > 0) {
-        const confirmMessage = `El almacén "${almacen.nombre}" tiene ${almacen.usuariosAsignados.length} usuario(s) asignado(s).\n\n¿Deseas marcar este almacén como No-Camioneta?\n\nEsto desasignará automáticamente a todos los usuarios y los moverá a disponibles.`;
-        if (!window.confirm(confirmMessage)) return;
-        
-        // Desasignar todos los usuarios del almacén
+    const executeToggle = async () => {
+      if (!isCurrentlyExcluded && almacen.usuariosAsignados.length > 0) {
         const usuariosADesasignar = [...almacen.usuariosAsignados];
-        
-        // Actualizar Firebase para cada usuario
         for (const usuario of usuariosADesasignar) {
           await updateUserCamioneta(usuario.id, null);
         }
-        
-        // Actualizar el estado local: mover usuarios a disponibles
         setUsuariosDisponibles(prev => [
           ...prev,
           ...usuariosADesasignar.map(u => ({ ...u, camionetaAsignada: undefined }))
         ]);
-        
-        // Limpiar usuarios del almacén
         setAlmacenes(prev => prev.map(a => {
-          if (a.id === almacenId) {
-            return { ...a, usuariosAsignados: [], esExcluido: true };
-          }
+          if (a.id === almacenId) return { ...a, usuariosAsignados: [], esExcluido: true };
           return a;
         }));
       } else {
-        // Si no tiene usuarios, solo confirmar
-        const confirmMessage = `¿Estás seguro de marcar "${almacen.nombre}" como almacén que NO será usado como camioneta?\n\nEsto evitará que se puedan asignar usuarios a este almacén.`;
-        if (!window.confirm(confirmMessage)) return;
-        
-        // Actualizar el estado del almacén
         setAlmacenes(prev => prev.map(a => {
-          if (a.id === almacenId) {
-            return { ...a, esExcluido: true };
-          }
+          if (a.id === almacenId) return { ...a, esExcluido: !isCurrentlyExcluded };
           return a;
         }));
       }
-    } else {
-      // Si se va a habilitar como camioneta
-      const confirmMessage = `¿Deseas habilitar "${almacen.nombre}" para ser usado como camioneta?\n\nEsto permitirá asignar usuarios a este almacén.`;
-      if (!window.confirm(confirmMessage)) return;
-      
-      // Actualizar el estado del almacén
-      setAlmacenes(prev => prev.map(a => {
-        if (a.id === almacenId) {
-          return { ...a, esExcluido: false };
-        }
-        return a;
-      }));
-    }
 
-    // Actualizar lista de excluidos
-    const newExcluidos = isCurrentlyExcluded
-      ? almacenesExcluidos.filter(id => id !== almacenId)
-      : [...almacenesExcluidos, almacenId];
-    
-    // Guardar en Firebase
-    await updateExcludedAlmacenes(newExcluidos);
-    
-    // Mostrar mensaje de éxito
-    const successMessage = isCurrentlyExcluded 
-      ? `"${almacen.nombre}" ahora puede usarse como camioneta`
-      : almacen.usuariosAsignados.length > 0
-        ? `"${almacen.nombre}" ha sido marcado como No-Camioneta y se desasignaron ${almacen.usuariosAsignados.length} usuario(s)`
-        : `"${almacen.nombre}" ha sido marcado como almacén No-Camioneta`;
-    
-    setTimeout(() => alert(successMessage), 100);
+      const newExcluidos = isCurrentlyExcluded
+        ? almacenesExcluidos.filter(id => id !== almacenId)
+        : [...almacenesExcluidos, almacenId];
+      await updateExcludedAlmacenes(newExcluidos);
+
+      const successMessage = isCurrentlyExcluded
+        ? `"${almacen.nombre}" ahora puede usarse como camioneta`
+        : almacen.usuariosAsignados.length > 0
+          ? `"${almacen.nombre}" marcado como No-Camioneta, ${almacen.usuariosAsignados.length} usuario(s) desasignados`
+          : `"${almacen.nombre}" marcado como No-Camioneta`;
+      toast.success(successMessage);
+    };
+
+    if (!isCurrentlyExcluded) {
+      const msg = almacen.usuariosAsignados.length > 0
+        ? `El almacén "${almacen.nombre}" tiene ${almacen.usuariosAsignados.length} usuario(s) asignado(s). ¿Deseas marcarlo como No-Camioneta? Esto desasignará a todos los usuarios.`
+        : `¿Marcar "${almacen.nombre}" como almacén que NO será usado como camioneta?`;
+      setConfirmDialog({ message: msg, onConfirm: executeToggle });
+    } else {
+      setConfirmDialog({
+        message: `¿Habilitar "${almacen.nombre}" para ser usado como camioneta?`,
+        onConfirm: executeToggle,
+      });
+    }
   };
 
   const fetchAlmacenes = async () => {
@@ -313,46 +293,42 @@ const AsignacionAlmacenes = () => {
       const almacen = almacenes.find(a => a.id === almacenId);
       
       if (almacen?.esExcluido) {
-        alert("No puedes asignar vendedores a un almacén");
+        toast.error("No puedes asignar vendedores a un almacén excluido");
         return;
       }
-      
+
       if (almacen && almacen.usuariosAsignados.length >= 3) {
-        alert("Esta camioneta ya tiene el máximo de 3 vendedores asignados");
+        toast.error("Esta camioneta ya tiene el máximo de 3 vendedores asignados");
         return;
       }
-      
-      // Verificar si el usuario ya tiene una camioneta asignada
-      if (usuario.camionetaAsignada && usuario.camionetaAsignada !== almacenId) {
-        const confirm = window.confirm(`Este vendedor ya está asignado a otra camioneta. ¿Desea reasignarlo?`);
-        if (!confirm) return;
-        
-        // Remover de la camioneta anterior
+
+      const executeAssign = async () => {
+        if (usuario.camionetaAsignada && usuario.camionetaAsignada !== almacenId) {
+          setAlmacenes(prev => prev.map(a => {
+            if (a.id === usuario.camionetaAsignada) {
+              return { ...a, usuariosAsignados: a.usuariosAsignados.filter(u => u.id !== usuario.id) };
+            }
+            return a;
+          }));
+        }
+        setUsuariosDisponibles(prev => prev.filter(u => u.id !== usuario!.id));
         setAlmacenes(prev => prev.map(a => {
-          if (a.id === usuario.camionetaAsignada) {
-            return {
-              ...a,
-              usuariosAsignados: a.usuariosAsignados.filter(u => u.id !== usuario.id)
-            };
+          if (a.id === almacenId) {
+            return { ...a, usuariosAsignados: [...a.usuariosAsignados, { ...usuario!, camionetaAsignada: almacenId }] };
           }
           return a;
         }));
-      }
-      
-      setUsuariosDisponibles(prev => prev.filter(u => u.id !== usuario!.id));
-      
-      setAlmacenes(prev => prev.map(a => {
-        if (a.id === almacenId) {
-          return {
-            ...a,
-            usuariosAsignados: [...a.usuariosAsignados, { ...usuario!, camionetaAsignada: almacenId }]
-          };
-        }
-        return a;
-      }));
+        await updateUserCamioneta(usuario.id, almacenId);
+      };
 
-      // Guardar en Firebase
-      await updateUserCamioneta(usuario.id, almacenId);
+      if (usuario.camionetaAsignada && usuario.camionetaAsignada !== almacenId) {
+        setConfirmDialog({
+          message: `Este vendedor ya está asignado a otra camioneta. ¿Desea reasignarlo?`,
+          onConfirm: executeAssign,
+        });
+      } else {
+        await executeAssign();
+      }
     } else {
       // Mover de almacén a otro lugar
       const sourceAlmacenId = parseInt(source.droppableId.replace("almacen-", ""));
@@ -379,7 +355,7 @@ const AsignacionAlmacenes = () => {
         const destAlmacen = almacenes.find(a => a.id === destAlmacenId);
         
         if (destAlmacen && destAlmacen.usuariosAsignados.length >= 3) {
-          alert("Esta camioneta ya tiene el máximo de 3 vendedores asignados");
+          toast.error("Esta camioneta ya tiene el máximo de 3 vendedores asignados");
           return;
         }
         
@@ -407,60 +383,57 @@ const AsignacionAlmacenes = () => {
 
   const handleQuickAssign = async (usuarioId: string) => {
     if (selectedAlmacen === null) {
-      alert("Por favor selecciona un almacén primero");
+      toast.error("Por favor selecciona un almacén primero");
       return;
     }
 
     const almacen = almacenes.find(a => a.id === selectedAlmacen);
-    
+
     if (almacen?.esExcluido) {
-      alert("No puedes asignar vendedores a un almacén");
+      toast.error("No puedes asignar vendedores a un almacén excluido");
       return;
     }
 
     if (almacen && almacen.usuariosAsignados.length >= 3) {
-      alert("Esta camioneta ya tiene el máximo de 3 vendedores asignados");
+      toast.error("Esta camioneta ya tiene el máximo de 3 vendedores asignados");
       return;
     }
 
     const usuario = usuariosDisponibles.find(u => u.id === usuarioId);
     if (!usuario) return;
 
-    // Verificar si el usuario ya tiene una camioneta asignada
-    if (usuario.camionetaAsignada && usuario.camionetaAsignada !== selectedAlmacen) {
-      const confirm = window.confirm(`Este vendedor ya está asignado a otra camioneta. ¿Desea reasignarlo?`);
-      if (!confirm) return;
-      
-      // Remover de la camioneta anterior
+    const executeQuickAssign = async () => {
+      if (usuario.camionetaAsignada && usuario.camionetaAsignada !== selectedAlmacen) {
+        setAlmacenes(prev => prev.map(a => {
+          if (a.id === usuario.camionetaAsignada) {
+            return { ...a, usuariosAsignados: a.usuariosAsignados.filter(u => u.id !== usuario.id) };
+          }
+          return a;
+        }));
+      }
+      setUsuariosDisponibles(prev => prev.filter(u => u.id !== usuarioId));
       setAlmacenes(prev => prev.map(a => {
-        if (a.id === usuario.camionetaAsignada) {
-          return {
-            ...a,
-            usuariosAsignados: a.usuariosAsignados.filter(u => u.id !== usuario.id)
-          };
+        if (a.id === selectedAlmacen) {
+          return { ...a, usuariosAsignados: [...a.usuariosAsignados, { ...usuario, camionetaAsignada: selectedAlmacen }] };
         }
         return a;
       }));
+      await updateUserCamioneta(usuario.id, selectedAlmacen);
+    };
+
+    if (usuario.camionetaAsignada && usuario.camionetaAsignada !== selectedAlmacen) {
+      setConfirmDialog({
+        message: `Este vendedor ya está asignado a otra camioneta. ¿Desea reasignarlo?`,
+        onConfirm: executeQuickAssign,
+      });
+    } else {
+      await executeQuickAssign();
     }
-
-    setUsuariosDisponibles(prev => prev.filter(u => u.id !== usuarioId));
-    setAlmacenes(prev => prev.map(a => {
-      if (a.id === selectedAlmacen) {
-        return {
-          ...a,
-          usuariosAsignados: [...a.usuariosAsignados, { ...usuario, camionetaAsignada: selectedAlmacen }]
-        };
-      }
-      return a;
-    }));
-
-    // Guardar en Firebase
-    await updateUserCamioneta(usuario.id, selectedAlmacen);
   };
 
   const handleResetAll = async () => {
     if (resetConfirmText.toUpperCase() !== "RESTABLECER") {
-      alert("Debes escribir 'RESTABLECER' para confirmar");
+      toast.error("Debes escribir 'RESTABLECER' para confirmar");
       return;
     }
 
@@ -489,10 +462,10 @@ const AsignacionAlmacenes = () => {
       setShowResetModal(false);
       setResetConfirmText("");
       
-      alert("Todas las asignaciones han sido restablecidas");
+      toast.success("Todas las asignaciones han sido restablecidas");
     } catch (error) {
       console.error("Error al restablecer asignaciones:", error);
-      alert("Error al restablecer las asignaciones");
+      toast.error("Error al restablecer las asignaciones");
     } finally {
       setSaving(false);
     }
@@ -541,6 +514,7 @@ const AsignacionAlmacenes = () => {
   }
 
   return (
+    <>
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="min-h-screen bg-muted/50 p-6">
         <div className="max-w-7xl mx-auto">
@@ -575,13 +549,13 @@ const AsignacionAlmacenes = () => {
               </button>
               <button
                 onClick={() => setShowExcludedModal(true)}
-                className="bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300 px-4 py-2 rounded-lg transition-colors"
+                className="bg-orange-500/15 hover:bg-orange-500/25 text-orange-600 dark:text-orange-400 border border-orange-500/30 px-4 py-2 rounded-lg transition-colors"
               >
                 Ver Almacenes ({almacenes.filter(a => a.esExcluido).length})
               </button>
             </div>
-            <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2">
-              <span className="text-green-700 text-sm font-medium">
+            <div className="bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-2">
+              <span className="text-green-600 dark:text-green-400 text-sm font-medium">
                 <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
@@ -639,10 +613,10 @@ const AsignacionAlmacenes = () => {
                         <div className="flex items-center gap-2">
                           <span className={`text-sm px-2 py-1 rounded ${
                             almacen.usuariosAsignados.length === 3
-                              ? 'bg-red-100 text-red-600'
+                              ? 'bg-red-500/15 text-red-600 dark:text-red-400'
                               : almacen.usuariosAsignados.length > 0
-                              ? 'bg-yellow-100 text-yellow-600'
-                              : 'bg-green-100 text-green-600'
+                              ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400'
+                              : 'bg-green-500/15 text-green-600 dark:text-green-400'
                           }`}>
                             {almacen.usuariosAsignados.length}/3
                           </span>
@@ -866,8 +840,8 @@ const AsignacionAlmacenes = () => {
               <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
                 {almacenes.filter(a => a.esExcluido).length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="bg-orange-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="bg-orange-500/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-orange-500 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
                     </div>
@@ -881,14 +855,14 @@ const AsignacionAlmacenes = () => {
                     {almacenes.filter(a => a.esExcluido).map((almacen) => (
                       <div
                         key={`modal-excluido-${almacen.id}`}
-                        className="bg-orange-50 border border-orange-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                        className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4 hover:shadow-md transition-shadow"
                       >
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex-1">
                             <h4 className="font-semibold text-foreground text-sm mb-1">
                               {almacen.nombre}
                             </h4>
-                            <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded">
+                            <span className="bg-orange-500/15 text-orange-600 dark:text-orange-400 text-xs px-2 py-1 rounded">
                               Almacén
                             </span>
                           </div>
@@ -939,16 +913,16 @@ const AsignacionAlmacenes = () => {
             <div className="bg-card rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
               <div className="mb-6">
                 <h3 className="text-xl font-semibold text-foreground mb-3">Restablecer Todas las Asignaciones</h3>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                  <p className="text-red-800 text-sm font-medium mb-2">
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
+                  <p className="text-red-600 dark:text-red-400 text-sm font-medium mb-2">
                     Advertencia: Esta acción es irreversible
                   </p>
-                  <p className="text-red-700 text-sm">
+                  <p className="text-red-600/80 dark:text-red-400/80 text-sm">
                     Se eliminarán todas las asignaciones de usuarios a camionetas del sistema.
                   </p>
                 </div>
                 <p className="text-foreground text-sm font-medium mb-3">
-                  Para confirmar esta operación, escriba: <span className="font-bold text-red-600 bg-red-50 px-2 py-1 rounded">RESTABLECER</span>
+                  Para confirmar esta operación, escriba: <span className="font-bold text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-1 rounded">RESTABLECER</span>
                 </p>
                 <input
                   type="text"
@@ -982,6 +956,36 @@ const AsignacionAlmacenes = () => {
         )}
       </div>
     </DragDropContext>
+
+    {/* Confirm Dialog */}
+    {confirmDialog && (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setConfirmDialog(null)}>
+        <div className="bg-background border border-border rounded-xl shadow-xl max-w-md w-full mx-4 p-6" onClick={e => e.stopPropagation()}>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Confirmar accion</h3>
+          <p className="text-sm text-muted-foreground mb-6">{confirmDialog.message}</p>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmDialog(null)}
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-border text-foreground hover:bg-muted transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                confirmDialog.onConfirm();
+                setConfirmDialog(null);
+              }}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Confirmar
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 
