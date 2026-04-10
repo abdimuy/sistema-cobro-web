@@ -1,38 +1,86 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useCallback } from "react";
+import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
+import dayjs from "dayjs";
+import { v4 as uuidv4 } from "uuid";
+import {
+  User,
+  Phone,
+  MapPin,
+  ShoppingCart,
+  ChevronDown,
+  Upload,
+  X,
+} from "lucide-react";
 
 import { URL_API } from "../../constants/api";
 import getVenta, { Venta } from "../../services/api/getVenta";
 import { Garantia } from "./Garantias";
 import useGetEventosByGarantia from "../../hooks/useGetEventosByGarantia";
-import dayjs from "dayjs";
 import useGetProductsSaleByFolio from "../../hooks/useGetProductsSaleByFolio";
 import useGetImagesByGarantia from "../../hooks/useGetImagesByGarantia";
-import { ImageGarantia } from "../../services/api/getImagesByGarantia";
+import useGetEstadosGarantia from "../../hooks/useGetEstadosGarantia";
 import createEventoGarantia, {
   AllowedEstadosDesktop,
 } from "../../services/api/createEventoGarantia";
 import createEventoGarantiaConImagenes from "../../services/api/createEventoGarantiaConImagenes";
-import { v4 as uuidv4 } from "uuid";
+
+import GarantiaStatusBadge from "../../components/garantias/GarantiaStatusBadge";
+import GarantiaTimeline from "../../components/garantias/GarantiaTimeline";
+import GarantiaImageGallery from "../../components/garantias/GarantiaImageGallery";
+
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "../../components/ui/breadcrumb";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "../../components/ui/dialog";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "../../components/ui/table";
+import { Textarea } from "../../components/ui/textarea";
+import { Skeleton } from "../../components/ui/skeleton";
 
 const GarantiaDetalle: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [garantia, setGarantia] = useState<Garantia | null>(null);
   const [venta, setVenta] = useState<Venta | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [nuevoEstado, setNuevoEstado] = useState<
     (typeof AllowedEstadosDesktop)[number]
   >(AllowedEstadosDesktop[0]);
   const [nuevaObservacion, setNuevaObservacion] = useState("");
   const [agregando, setAgregando] = useState(false);
-  const [imagenGrande, setImagenGrande] = useState<ImageGarantia | null>(null);
-  const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [imagenesEvento, setImagenesEvento] = useState<File[]>([]);
+
+  // Gallery external open
+  const [externalImageUrl, setExternalImageUrl] = useState<string | null>(null);
+
+  // Collapsible sections
+  const [clienteOpen, setClienteOpen] = useState(true);
+  const [productosOpen, setProductosOpen] = useState(true);
+
+  // Hooks
   const { eventos, refetch: refetchEventos } = useGetEventosByGarantia(
     garantia?.ID || 0
   );
@@ -42,6 +90,7 @@ const GarantiaDetalle: React.FC = () => {
   const { images, loading: loadingImages } = useGetImagesByGarantia(
     garantia?.ID || 0
   );
+  const { getEstadoLabel } = useGetEstadosGarantia();
 
   useEffect(() => {
     if (!id) return;
@@ -49,7 +98,6 @@ const GarantiaDetalle: React.FC = () => {
     axios
       .get<{ body: Garantia }>(`${URL_API}/garantias/${id}`)
       .then(async (response) => {
-        console.log("Garantía cargada:", response.data.body);
         const g = response.data.body;
         setGarantia(g);
         if (g.DOCTO_CC_ID) {
@@ -57,11 +105,11 @@ const GarantiaDetalle: React.FC = () => {
           setVenta(ventaData);
         }
       })
-      .catch(() => setError("No se pudo cargar la garantía"))
+      .catch(() => setError("No se pudo cargar la garantia"))
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleAgregarEvento = async () => {
+  const handleAgregarEvento = useCallback(async () => {
     if (!garantia || !garantia.EXTERNAL_ID) return;
     setAgregando(true);
     try {
@@ -87,243 +135,277 @@ const GarantiaDetalle: React.FC = () => {
       setNuevaObservacion("");
       setNuevoEstado(AllowedEstadosDesktop[0]);
       setImagenesEvento([]);
-      setMensajeExito("¡Evento agregado con éxito!");
-      setTimeout(() => setMensajeExito(null), 3000);
+      toast.success("Evento agregado con exito");
       await refetchEventos();
     } catch {
       toast.error("No se pudo agregar el evento");
     } finally {
       setAgregando(false);
     }
+  }, [garantia, nuevoEstado, nuevaObservacion, imagenesEvento, refetchEventos]);
+
+  const handleRemoveImage = (index: number) => {
+    setImagenesEvento((prev) => prev.filter((_, i) => i !== index));
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-full">
-        Cargando detalles de la garantía...
+      <div className="p-6 bg-muted/50 min-h-screen">
+        <Skeleton className="h-5 w-48 mb-6" />
+        <Skeleton className="h-32 w-full rounded-xl mb-6" />
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
+          <div className="space-y-4">
+            <Skeleton className="h-40 rounded-xl" />
+            <Skeleton className="h-40 rounded-xl" />
+            <Skeleton className="h-60 rounded-xl" />
+          </div>
+          <div>
+            <Skeleton className="h-60 rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !garantia) {
     return (
-      <div className="text-red-500 text-center mt-4">
-        {error || "Garantía no encontrada"}
+      <div className="flex flex-col items-center justify-center min-h-screen bg-muted/50">
+        <p className="text-destructive font-medium text-lg">
+          {error || "Garantia no encontrada"}
+        </p>
+        <Link
+          to="/garantias"
+          className="mt-4 text-primary hover:underline text-sm"
+        >
+          Volver a garantias
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-muted/50 min-h-screen text-foreground">
-      <button
-        className="mb-4 text-primary hover:underline"
-        onClick={() => navigate(-1)}
-      >
-        ← Volver
-      </button>
-      <h1 className="text-2xl font-bold mb-4 text-foreground text-center">
-        Detalles de la Garantía #{garantia.ID}
-      </h1>
-      <div className="bg-card rounded-xl shadow p-6 max-w-2xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div>
-            <span className="font-semibold">Fecha solicitud:</span>{" "}
-            {new Date(garantia.FECHA_SOLICITUD).toLocaleDateString()}
-          </div>
-          <div>
-            <span className="font-semibold">Estado:</span>{" "}
-            <span className="capitalize">{garantia.ESTADO}</span>
-          </div>
-          <div className="md:col-span-2">
-            <span className="font-semibold">Falla reportada:</span>{" "}
-            {garantia.DESCRIPCION_FALLA}
-          </div>
-          <div className="md:col-span-2">
-            <span className="font-semibold">Observaciones:</span>{" "}
-            {garantia.OBSERVACIONES || "-"}
-          </div>
-        </div>
-        <h2 className="text-xl font-bold mb-2 text-foreground">Datos del Cliente</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <span className="font-semibold">Cliente:</span>{" "}
-            {venta?.CLIENTE || garantia.NOMBRE_CLIENTE || "Sin cliente"}
-          </div>
-          {venta && (
-            <>
-              <div>
-                <span className="font-semibold">Teléfono:</span> {venta.TELEFONO}
-              </div>
-              <div>
-                <span className="font-semibold">Dirección:</span> {venta.CALLE},{" "}
-                {venta.CIUDAD}
-              </div>
-              <div>
-                <span className="font-semibold">Vendedor:</span> {venta.VENDEDOR_1}
-              </div>
-            </>
-          )}
-          <div>
-            <span className="font-semibold">Zona:</span>{" "}
-            {venta?.ZONA_NOMBRE || garantia.ZONA_CLIENTE_NOMBRE || "Sin zona"}
-          </div>
-        </div>
-      </div>
+    <div className="p-6 bg-muted/50 min-h-screen">
+      {/* Breadcrumb */}
+      <Breadcrumb className="mb-6">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/garantias">Garantias</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>#{garantia.ID}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
-      {/* Sección de productos */}
-      <h2 className="text-xl font-bold mt-8 mb-4 text-foreground text-center">
-        Productos
-      </h2>
-      <div className="bg-card rounded-xl shadow p-4 max-w-2xl mx-auto mb-8">
-        {venta ? (
-          loadingProductos ? (
-            <div className="text-muted-foreground/60">Cargando productos...</div>
-          ) : products && products.length > 0 ? (
-            <table className="w-full text-left">
-              <thead>
-                <tr>
-                  <th className="py-2 px-2 border-b">Clave</th>
-                  <th className="py-2 px-2 border-b">Descripción</th>
-                  <th className="py-2 px-2 border-b">Cantidad</th>
-                  <th className="py-2 px-2 border-b">Precio</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((prod) => (
-                  <tr key={prod.ARTICULO_ID}>
-                    <td className="py-1 px-2 border-b">{prod.FOLIO}</td>
-                    <td className="py-1 px-2 border-b">{prod.ARTICULO}</td>
-                    <td className="py-1 px-2 border-b">{prod.CANTIDAD}</td>
-                    <td className="py-1 px-2 border-b">
-                      ${prod.PRECIO_UNITARIO_IMPTO?.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="text-muted-foreground">
-              No hay productos asociados a esta venta.
-            </div>
-          )
-        ) : garantia.NOMBRE_PRODUCTO ? (
-          <div>
-            <span className="font-semibold">Producto:</span>{" "}
-            {garantia.NOMBRE_PRODUCTO}
-          </div>
-        ) : (
-          <div className="text-muted-foreground">
-            No hay productos asociados a esta garantía.
-          </div>
+      {/* Header card */}
+      <div className="bg-card rounded-xl border border-border p-5 mb-6">
+        <div className="flex items-center gap-3 flex-wrap">
+          <GarantiaStatusBadge
+            estado={garantia.ESTADO}
+            label={getEstadoLabel(garantia.ESTADO)}
+          />
+          <span className="text-xl font-bold text-foreground">
+            #{garantia.ID}
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {dayjs(garantia.FECHA_SOLICITUD).format("DD/MM/YYYY")}
+          </span>
+        </div>
+        <p className="mt-3 text-foreground">{garantia.DESCRIPCION_FALLA?.toUpperCase()}</p>
+        {garantia.OBSERVACIONES && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {garantia.OBSERVACIONES?.toUpperCase()}
+          </p>
         )}
       </div>
 
-      {/* Sección de imágenes */}
-      <h2 className="text-xl font-bold mt-8 mb-4 text-foreground text-center">
-        Imágenes asociadas
-      </h2>
-      <div className="bg-card rounded-xl shadow p-4 max-w-2xl mx-auto mb-8">
-        {loadingImages ? (
-          <div className="text-muted-foreground/60">Cargando imágenes...</div>
-        ) : images && images.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {images.map((img: ImageGarantia) => (
-              <div key={img.ID} className="flex flex-col items-center">
-                <img
-                  src={`${URL_API}${img.IMG_PATH}`}
-                  alt={`Imagen ${img.ID}`}
-                  className="w-full h-32 object-cover rounded mb-2 border cursor-pointer transition-transform hover:scale-105"
-                  onClick={() => setImagenGrande(img)}
-                />
-                <span className="text-xs text-muted-foreground">{img.IMG_DESC}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-muted-foreground">
-            No hay imágenes asociadas a esta garantía.
-          </div>
-        )}
-      </div>
-
-      {/* Modal para imagen grande */}
-      {imagenGrande && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-          onClick={() => setImagenGrande(null)}
-        >
-          <div
-            className="bg-card rounded-xl shadow-lg p-4 max-w-3xl w-full flex flex-col items-center relative"
-            onClick={(e) => e.stopPropagation()}
+      {/* 2-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
+        {/* Left column */}
+        <div className="space-y-6">
+          {/* Cliente section */}
+          <SectionRow
+            icon={<User className="w-4 h-4" />}
+            title="Cliente"
+            open={clienteOpen}
+            onToggle={() => setClienteOpen(!clienteOpen)}
+            summary={
+              venta?.CLIENTE || garantia.NOMBRE_CLIENTE || "Sin cliente"
+            }
           >
-            <button
-              className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-2xl"
-              onClick={() => setImagenGrande(null)}
-              aria-label="Cerrar"
-            >
-              ×
-            </button>
-            <img
-              src={`${URL_API}${imagenGrande.IMG_PATH}`}
-              alt={imagenGrande.IMG_DESC || "Imagen de garantía"}
-              className="max-h-[70vh] max-w-[90vw] min-h-[300px] min-w-[300px] w-auto rounded mb-2"
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="text-muted-foreground">Cliente</span>
+                <p className="font-medium text-foreground">
+                  {venta?.CLIENTE || garantia.NOMBRE_CLIENTE || "Sin cliente"}
+                </p>
+              </div>
+              {venta?.TELEFONO && (
+                <div>
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <Phone className="w-3 h-3" />
+                    Telefono
+                  </span>
+                  <p className="font-medium text-foreground">
+                    {venta.TELEFONO}
+                  </p>
+                </div>
+              )}
+              {venta && (
+                <div>
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    Direccion
+                  </span>
+                  <p className="font-medium text-foreground">
+                    {venta.CALLE}, {venta.CIUDAD}
+                  </p>
+                </div>
+              )}
+              <div>
+                <span className="text-muted-foreground">Zona</span>
+                <p className="font-medium text-foreground">
+                  {venta?.ZONA_NOMBRE ||
+                    garantia.ZONA_CLIENTE_NOMBRE ||
+                    "Sin zona"}
+                </p>
+              </div>
+              {venta?.VENDEDOR_1 && (
+                <div>
+                  <span className="text-muted-foreground">Vendedor</span>
+                  <p className="font-medium text-foreground">
+                    {venta.VENDEDOR_1}
+                  </p>
+                </div>
+              )}
+            </div>
+          </SectionRow>
+
+          {/* Productos section */}
+          <SectionRow
+            icon={<ShoppingCart className="w-4 h-4" />}
+            title="Productos"
+            open={productosOpen}
+            onToggle={() => setProductosOpen(!productosOpen)}
+            summary={
+              venta
+                ? loadingProductos
+                  ? "Cargando..."
+                  : `${products?.length || 0} producto(s)`
+                : garantia.NOMBRE_PRODUCTO || "Sin productos"
+            }
+          >
+            {venta ? (
+              loadingProductos ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-full" />
+                  <Skeleton className="h-8 w-full" />
+                </div>
+              ) : products && products.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Clave</TableHead>
+                      <TableHead>Descripcion</TableHead>
+                      <TableHead className="text-right">Cant.</TableHead>
+                      <TableHead className="text-right">Precio</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {products.map((prod) => (
+                      <TableRow key={prod.ARTICULO_ID}>
+                        <TableCell className="font-mono text-xs">
+                          {prod.FOLIO}
+                        </TableCell>
+                        <TableCell>{prod.ARTICULO}</TableCell>
+                        <TableCell className="text-right">
+                          {prod.CANTIDAD}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          ${prod.PRECIO_UNITARIO_IMPTO?.toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No hay productos asociados a esta venta.
+                </p>
+              )
+            ) : garantia.NOMBRE_PRODUCTO ? (
+              <p className="text-sm text-foreground">
+                {garantia.NOMBRE_PRODUCTO}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No hay productos asociados.
+              </p>
+            )}
+          </SectionRow>
+
+          {/* Timeline */}
+          <div className="bg-card rounded-xl border border-border p-5">
+            <h2 className="text-base font-semibold text-foreground mb-4">
+              Eventos
+            </h2>
+            <GarantiaTimeline
+              eventos={eventos}
+              getEstadoLabel={getEstadoLabel}
+              onAddEvento={() => setShowModal(true)}
+              onImageClick={(url) => setExternalImageUrl(url)}
             />
-            <span className="text-base text-muted-foreground">
-              {imagenGrande.IMG_DESC}
-            </span>
           </div>
         </div>
-      )}
 
-      <h2 className="text-xl font-bold mt-8 mb-4 text-foreground text-center">
-        Eventos de la Garantía
-      </h2>
-      <div className="flex justify-center mb-4">
-        <button
-          className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
-          onClick={() => setShowModal(true)}
-        >
-          + Agregar evento
-        </button>
-      </div>
-      <div className="grid grid-cols-1 gap-4 max-w-2xl mx-auto">
-        {eventos.map((evento) => (
-          <div key={evento.ID} className="bg-card rounded-xl shadow p-4">
-            <h3 className="font-semibold">{evento.TIPO_EVENTO}</h3>
-            <p>
-              <strong>Fecha:</strong>{" "}
-              {dayjs(evento.FECHA_EVENTO).format("DD/MM/YYYY hh:mm A")}
-            </p>
-            <p>
-              <strong>Comentario:</strong> {evento.COMENTARIO || "-"}
-            </p>
-            {evento.IMAGENES && evento.IMAGENES.length > 0 && (
-              <div className="mt-3">
-                <strong className="block mb-2">Imágenes:</strong>
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-                  {evento.IMAGENES.map((img) => (
-                    <img
-                      key={img.ID}
-                      src={`${URL_API}${img.IMG_PATH}`}
-                      alt={img.IMG_DESC}
-                      className="w-full h-20 object-cover rounded border cursor-pointer hover:scale-105 transition-transform"
-                      onClick={() => setImagenGrande(img)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+        {/* Right column */}
+        <div className="space-y-6">
+          {/* Image gallery */}
+          <div className="bg-card rounded-xl border border-border p-5">
+            <h2 className="text-base font-semibold text-foreground mb-4">
+              Imagenes
+            </h2>
+            <GarantiaImageGallery
+              images={images}
+              loading={loadingImages}
+              externalOpenUrl={externalImageUrl}
+              onExternalClose={() => setExternalImageUrl(null)}
+            />
           </div>
-        ))}
+
+          {/* Quick actions */}
+          <div className="bg-card rounded-xl border border-border p-5">
+            <h2 className="text-base font-semibold text-foreground mb-3">
+              Acciones
+            </h2>
+            <button
+              onClick={() => setShowModal(true)}
+              className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Agregar evento
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-card rounded-xl shadow-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold mb-4">Agregar nuevo evento</h3>
-            <div className="mb-4">
-              <label className="block font-semibold mb-1">Nuevo estado</label>
+      {/* Add evento dialog */}
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Agregar nuevo evento</DialogTitle>
+            <DialogDescription>
+              Registra un cambio de estado o comentario para esta garantia.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">
+                Nuevo estado
+              </label>
               <select
                 onChange={(e) =>
                   setNuevoEstado(
@@ -331,76 +413,133 @@ const GarantiaDetalle: React.FC = () => {
                   )
                 }
                 value={nuevoEstado}
-                className="w-full border rounded px-2 py-1 bg-background"
+                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
                 {AllowedEstadosDesktop.map((estado) => (
                   <option key={estado} value={estado}>
-                    {estado.replace(/_/g, " ")}
+                    {getEstadoLabel(estado)}
                   </option>
                 ))}
               </select>
             </div>
-            <div className="mb-4">
-              <label className="block font-semibold mb-1">
-                Observación (opcional)
+
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">
+                Observacion (opcional)
               </label>
-              <textarea
-                className="w-full border rounded px-2 py-1 bg-background"
+              <Textarea
                 value={nuevaObservacion}
                 onChange={(e) => setNuevaObservacion(e.target.value)}
                 rows={3}
+                placeholder="Escribe un comentario..."
               />
             </div>
-            <div className="mb-4">
-              <label className="block font-semibold mb-1">
-                Imágenes (opcional, máx. 10)
+
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">
+                Imagenes (opcional, max. 10)
               </label>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/gif"
-                multiple
-                className="w-full border rounded px-2 py-1 bg-background"
-                onChange={(e) => {
-                  const files = Array.from(e.target.files || []);
-                  if (files.length > 10) {
-                    toast.error("Máximo 10 imágenes permitidas");
-                    return;
-                  }
-                  setImagenesEvento(files);
-                }}
-              />
+              <label className="flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors cursor-pointer">
+                <Upload className="w-4 h-4" />
+                <span className="text-sm">Seleccionar imagenes</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length + imagenesEvento.length > 10) {
+                      toast.error("Maximo 10 imagenes permitidas");
+                      return;
+                    }
+                    setImagenesEvento((prev) => [...prev, ...files]);
+                  }}
+                />
+              </label>
+
               {imagenesEvento.length > 0 && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {imagenesEvento.length} imagen(es) seleccionada(s)
-                </p>
+                <div className="flex gap-2 mt-3 flex-wrap">
+                  {imagenesEvento.map((file, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="w-16 h-16 object-cover rounded-md border border-border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-            <div className="flex justify-end gap-2">
-              <button
-                className="px-4 py-2 rounded bg-muted hover:bg-muted/80"
-                onClick={() => setShowModal(false)}
-                disabled={agregando}
-              >
-                Cancelar
-              </button>
-              <button
-                className="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={handleAgregarEvento}
-                disabled={agregando}
-              >
-                {agregando ? "Guardando..." : "Guardar"}
-              </button>
-            </div>
           </div>
-        </div>
-      )}
-      {mensajeExito && (
-        <div className="bg-green-100 text-green-800 px-4 py-2 rounded mb-4 text-center font-semibold">
-          {mensajeExito}
-        </div>
-      )}
+
+          <DialogFooter>
+            <button
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-muted hover:bg-muted/80 transition-colors"
+              onClick={() => setShowModal(false)}
+              disabled={agregando}
+            >
+              Cancelar
+            </button>
+            <button
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              onClick={handleAgregarEvento}
+              disabled={agregando}
+            >
+              {agregando ? "Guardando..." : "Guardar"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
+// ── Collapsible section row ──
+
+interface SectionRowProps {
+  icon: React.ReactNode;
+  title: string;
+  summary: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}
+
+const SectionRow: React.FC<SectionRowProps> = ({
+  icon,
+  title,
+  summary,
+  open,
+  onToggle,
+  children,
+}) => (
+  <div className="bg-card rounded-xl border border-border overflow-hidden">
+    <button
+      onClick={onToggle}
+      className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-muted/50 transition-colors"
+    >
+      <span className="text-muted-foreground">{icon}</span>
+      <span className="text-sm font-semibold text-foreground">{title}</span>
+      <span className="text-sm text-muted-foreground flex-1 truncate">
+        {summary}
+      </span>
+      <ChevronDown
+        className={`w-4 h-4 text-muted-foreground transition-transform ${
+          open ? "rotate-180" : ""
+        }`}
+      />
+    </button>
+    {open && <div className="px-5 pb-4 border-t border-border pt-3">{children}</div>}
+  </div>
+);
 
 export default GarantiaDetalle;

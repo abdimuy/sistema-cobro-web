@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { URL_API } from "../../constants/api";
-import useGetVenta from "../../hooks/useGetVenta";
-import { useNavigate, Link } from "react-router-dom";
-
-import useGetProductsSaleByFolio from "../../hooks/useGetProductsSaleByFolio";
-import { ProductSale } from "../../services/api/getProductsSaleByFolio";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { Skeleton } from "../../components/ui/skeleton";
+import useGetGarantiasActivas from "../../hooks/useGetGarantiasActivas";
+import useGetEstadosGarantia from "../../hooks/useGetEstadosGarantia";
+import useGetZonasCliente from "../../hooks/useGetZonasCliente";
+import GarantiasSearchAndFilters, {
+  SortField,
+  SortOrder,
+} from "../../components/garantias/GarantiasSearchAndFilters";
+import GarantiaCard from "../../components/garantias/GarantiaCard";
+import { GarantiaFilters } from "../../services/api/getGarantiasActivas";
+import { ClipboardList } from "lucide-react";
 
 // Interfaz de datos de garantía
 export type Garantia = {
@@ -23,156 +27,137 @@ export type Garantia = {
 };
 
 const GarantiasListPage: React.FC = () => {
-  const [garantias, setGarantias] = useState<Garantia[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filterZona, setFilterZona] = useState(""); // Estado para el filtro
-  const navigate = useNavigate();
+  // Filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterEstado, setFilterEstado] = useState("all");
+  const [filterZona, setFilterZona] = useState("all");
+  const [filterFechaInicio, setFilterFechaInicio] = useState("");
+  const [filterFechaFin, setFilterFechaFin] = useState("");
+  const [sortBy, setSortBy] = useState<SortField>("fecha");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+
+  // Debounced client search
+  const [debouncedCliente, setDebouncedCliente] = useState("");
+  const debounceTimer = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    // Reemplaza con tu endpoint real
-    axios
-      .get<{ body: Garantia[] }>(URL_API + "/garantias/activa")
-      .then((response) => {
-        console.log("Garantías cargadas:", response.data);
-        setGarantias(response.data.body);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError("Error al cargar las garantías.");
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedCliente(searchTerm);
+    }, 400);
+    return () => clearTimeout(debounceTimer.current);
+  }, [searchTerm]);
 
-  // Obtener zonas únicas de las garantías
-  const zonasUnicas = Array.from(
-    new Set(garantias.map((g) => g.ZONA_CLIENTE_NOMBRE))
+  // Build server-side filters
+  const serverFilters = useMemo<GarantiaFilters>(
+    () => ({
+      estado: filterEstado !== "all" ? filterEstado : undefined,
+      fechaInicio: filterFechaInicio || undefined,
+      fechaFin: filterFechaFin || undefined,
+      zonaClienteId: filterZona !== "all" ? filterZona : undefined,
+      cliente: debouncedCliente || undefined,
+    }),
+    [filterEstado, filterFechaInicio, filterFechaFin, filterZona, debouncedCliente]
   );
-  console.log("Zonas únicas:", zonasUnicas);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        Cargando garantías...
-      </div>
-    );
-  }
+  const { garantias, loading, error } = useGetGarantiasActivas(serverFilters);
+  const { estados, getEstadoLabel } = useGetEstadosGarantia();
+  const { zonas } = useGetZonasCliente();
 
-  if (error) {
-    return <div className="text-red-500 text-center mt-4">{error}</div>;
-  }
+  // Client-side sort
+  const sortedGarantias = useMemo(() => {
+    const sorted = [...garantias];
+    sorted.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === "fecha") {
+        cmp =
+          new Date(a.FECHA_SOLICITUD).getTime() -
+          new Date(b.FECHA_SOLICITUD).getTime();
+      } else if (sortBy === "id") {
+        cmp = a.ID - b.ID;
+      } else if (sortBy === "estado") {
+        cmp = a.ESTADO.localeCompare(b.ESTADO);
+      }
+      return sortOrder === "asc" ? cmp : -cmp;
+    });
+    return sorted;
+  }, [garantias, sortBy, sortOrder]);
+
+  const handleSortChange = useCallback(
+    (newSortBy: SortField, newSortOrder: SortOrder) => {
+      setSortBy(newSortBy);
+      setSortOrder(newSortOrder);
+    },
+    []
+  );
 
   return (
     <div className="p-6 bg-muted/50 min-h-screen">
-      <button
-        className="mb-4 text-primary hover:underline"
-        onClick={() => navigate(-1)}
-      >
-        ← Volver
-      </button>
       <h1 className="text-2xl font-bold mb-6 text-foreground">
-        Listado de Garantías
+        Garantias
       </h1>
-      {/* Select de filtrado por zona cliente */}
-      <div className="mb-4">
-        <select
-          value={filterZona}
-          onChange={(e) => setFilterZona(e.target.value)}
-          className="border border-border bg-muted text-foreground rounded px-3 py-2 w-full md:w-1/3"
-        >
-          <option value="">Todas las zonas</option>
-          {zonasUnicas.map((zona) => (
-            <option key={zona ?? "sin-zona"} value={zona ?? ""}>
-              {zona || "Sin zona"}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex flex-col gap-4">
-        {garantias
-          .filter((g) =>
-            filterZona === "" ? true : g.ZONA_CLIENTE_NOMBRE === filterZona
-          )
-          .map((g) => (
-            <CardGarantia key={g.ID} garantia={g} />
-          ))}
+
+      <GarantiasSearchAndFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        filterEstado={filterEstado}
+        onFilterEstadoChange={setFilterEstado}
+        filterZona={filterZona}
+        onFilterZonaChange={setFilterZona}
+        filterFechaInicio={filterFechaInicio}
+        onFilterFechaInicioChange={setFilterFechaInicio}
+        filterFechaFin={filterFechaFin}
+        onFilterFechaFinChange={setFilterFechaFin}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSortChange={handleSortChange}
+        estados={estados}
+        zonas={zonas}
+        garantias={garantias}
+        filteredCount={sortedGarantias.length}
+      />
+
+      <div className="flex flex-col gap-3 mt-6">
+        {loading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-card rounded-xl border border-border px-5 py-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-5 w-24 rounded-full" />
+                <Skeleton className="h-5 w-12" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <div className="flex items-center gap-3 mt-2">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-5 w-20 rounded-md" />
+              </div>
+            </div>
+          ))
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-destructive font-medium">{error}</p>
+          </div>
+        ) : sortedGarantias.length === 0 ? (
+          <div className="text-center py-16">
+            <ClipboardList className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+            <p className="text-muted-foreground font-medium">
+              No se encontraron garantias
+            </p>
+            <p className="text-sm text-muted-foreground/60 mt-1">
+              Intenta ajustar los filtros de busqueda
+            </p>
+          </div>
+        ) : (
+          sortedGarantias.map((g) => (
+            <GarantiaCard
+              key={g.ID}
+              garantia={g}
+              getEstadoLabel={getEstadoLabel}
+            />
+          ))
+        )}
       </div>
     </div>
   );
 };
-
-function CardGarantia({ garantia }: { garantia: Garantia }) {
-  const tieneVenta = !!garantia.DOCTO_CC_ID;
-  const { venta } = useGetVenta(tieneVenta ? garantia.DOCTO_CC_ID : 0);
-  const { products, loading: loadingProductos } = useGetProductsSaleByFolio(
-    tieneVenta && venta?.FOLIO ? venta.FOLIO : ""
-  );
-
-  const nombreCliente = tieneVenta
-    ? venta?.CLIENTE || "Cargando..."
-    : garantia.NOMBRE_CLIENTE || "Sin cliente";
-  const zonaCliente = tieneVenta
-    ? venta?.ZONA_NOMBRE || "Cargando..."
-    : garantia.ZONA_CLIENTE_NOMBRE || "Sin zona";
-
-  return (
-    <div key={garantia.ID} className="bg-card rounded-xl shadow px-6 py-4 h-32 overflow-hidden">
-      {/* Primera fila: datos de la garantía */}
-      <div className="grid grid-cols-1 md:grid-cols-[repeat(20,minmax(0,1fr))] gap-2 items-center">
-        <Link
-          to={`/garantias/${garantia.ID}`}
-          className="font-semibold text-lg text-foreground truncate"
-        >
-          #{garantia.ID}
-        </Link>
-        <span className="text-muted-foreground truncate col-span-3">
-          <strong>Fecha:</strong>{" "}
-          {new Date(garantia.FECHA_SOLICITUD).toLocaleDateString()}
-        </span>
-        <span className="text-muted-foreground truncate col-span-6">
-          <strong>Falla:</strong> {garantia.DESCRIPCION_FALLA}
-        </span>
-        <span className="text-muted-foreground truncate col-span-4">
-          <strong>Estado:</strong>{" "}
-          <span className="capitalize">{garantia.ESTADO}</span>
-        </span>
-        <span className="text-muted-foreground truncate col-span-6">
-          <strong>Obs:</strong> {garantia.OBSERVACIONES || "-"}
-        </span>
-      </div>
-      {/* Segunda fila: nombre del cliente, zona y productos */}
-      <div className="mt-2 grid grid-cols-1 md:grid-cols-5 gap-2 items-start">
-        <span className="text-primary font-medium col-span-2 truncate">
-          <strong>Cliente:</strong> {nombreCliente}
-        </span>
-        <span className="text-green-700 font-medium col-span-1 truncate">
-          <strong>Zona:</strong> {zonaCliente}
-        </span>
-        <span className="font-semibold col-span-2 text-foreground">
-          Productos:{" "}
-          {tieneVenta ? (
-            loadingProductos ? (
-              <span className="text-muted-foreground/60">Cargando productos...</span>
-            ) : products && products.length > 0 ? (
-              <div className="text-muted-foreground">
-                {products.map((prod: ProductSale) => (
-                  <div key={prod.ARTICULO_ID}>
-                    {prod.ARTICULO} (x{prod.CANTIDAD})
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <span className="text-muted-foreground/60">Sin productos</span>
-            )
-          ) : (
-            <span className="text-muted-foreground">
-              {garantia.NOMBRE_PRODUCTO || "Sin producto"}
-            </span>
-          )}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 export default GarantiasListPage;
