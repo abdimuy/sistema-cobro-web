@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "r
 import { LoadScript } from "@react-google-maps/api";
 import { Toaster } from "sonner";
 import { useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { setNavigateRef } from "./lib/navigation";
 
 // Components
@@ -42,6 +43,10 @@ function ProtectedLayout() {
 }
 
 function App() {
+  useEffect(() => {
+    invoke("close_splash").catch(() => {});
+  }, []);
+
   return (
     <ThemeProvider>
     <AuthProvider>

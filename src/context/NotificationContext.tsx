@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { invoke } from '@tauri-apps/api/core';
 import { useAuth } from '../hooks/useAuth';
 import useGetUser from '../hooks/useGetUser';
 import { SSEClient } from '../services/sse/SSEClient';
@@ -38,6 +39,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     enableAutostart().catch(() => {});
   }, []);
+
+  // Update tray tooltip with unread count
+  useEffect(() => {
+    invoke('update_tray_badge', { count: unreadCount }).catch(() => {});
+  }, [unreadCount]);
 
   const handleSSEEvent = useCallback(
     (eventType: string, payload: unknown) => {

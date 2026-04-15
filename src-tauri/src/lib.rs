@@ -24,6 +24,32 @@ fn get_device_label() -> String {
 }
 
 #[tauri::command]
+fn update_tray_badge(app: tauri::AppHandle, count: u32) {
+    if let Some(tray) = app.tray_by_id("main-tray") {
+        let tooltip = if count == 0 {
+            "Sistema Muebles San Pablo".to_string()
+        } else {
+            format!("Sistema Muebles San Pablo · {} notificaciones", count)
+        };
+        let _ = tray.set_tooltip(Some(&tooltip));
+    }
+}
+
+#[tauri::command]
+fn close_splash(app: tauri::AppHandle) {
+    let minimized = std::env::args().any(|a| a == "--minimized");
+    if let Some(splash) = app.get_webview_window("splashscreen") {
+        let _ = splash.close();
+    }
+    if !minimized {
+        if let Some(main) = app.get_webview_window("main") {
+            let _ = main.show();
+            let _ = main.set_focus();
+        }
+    }
+}
+
+#[tauri::command]
 fn get_device_info() -> std::collections::HashMap<String, String> {
     let mut info = std::collections::HashMap::new();
 
@@ -278,10 +304,13 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }))
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             get_device_fingerprint,
             get_device_label,
-            get_device_info
+            get_device_info,
+            update_tray_badge,
+            close_splash
         ])
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
@@ -304,15 +333,17 @@ pub fn run() {
             let quit_i = MenuItem::with_id(app, "quit", "Salir", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open_i, &quit_i])?;
 
-            // If launched with --minimized, hide the window (autostart)
+            // If launched with --minimized, close splash immediately
+            // (main window stays hidden because visible:false in config)
             let minimized = std::env::args().any(|a| a == "--minimized");
             if minimized {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.hide();
+                if let Some(splash) = app.get_webview_window("splashscreen") {
+                    let _ = splash.close();
                 }
             }
 
-            TrayIconBuilder::new()
+            TrayIconBuilder::with_id("main-tray")
+                .tooltip("Sistema Muebles San Pablo")
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
