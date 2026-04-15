@@ -2,10 +2,21 @@ use sha2::{Digest, Sha256};
 use std::process::Command;
 use tauri::{
     menu::{Menu, MenuItem},
-    tray::TrayIconBuilder,
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, WindowEvent,
 };
 use tauri_plugin_autostart::MacosLauncher;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+#[cfg(target_os = "windows")]
+fn silent_command(program: &str) -> Command {
+    use std::os::windows::process::CommandExt;
+    let mut cmd = Command::new(program);
+    cmd.creation_flags(CREATE_NO_WINDOW);
+    cmd
+}
 
 #[tauri::command]
 fn get_device_fingerprint() -> String {
@@ -78,7 +89,7 @@ fn get_os_version() -> String {
     }
     #[cfg(target_os = "windows")]
     {
-        Command::new("cmd")
+        silent_command("cmd")
             .args(["/c", "ver"])
             .output()
             .ok()
@@ -113,7 +124,7 @@ fn get_cpu_info() -> String {
     }
     #[cfg(target_os = "windows")]
     {
-        Command::new("wmic")
+        silent_command("wmic")
             .args(["cpu", "get", "name"])
             .output()
             .ok()
@@ -150,7 +161,7 @@ fn get_ram_info() -> String {
     }
     #[cfg(target_os = "windows")]
     {
-        Command::new("wmic")
+        silent_command("wmic")
             .args(["computersystem", "get", "totalphysicalmemory"])
             .output()
             .ok()
@@ -197,7 +208,7 @@ fn get_screen_resolution() -> String {
     }
     #[cfg(target_os = "windows")]
     {
-        Command::new("wmic")
+        silent_command("wmic")
             .args(["path", "Win32_VideoController", "get", "CurrentHorizontalResolution,CurrentVerticalResolution"])
             .output()
             .ok()
@@ -271,7 +282,7 @@ fn get_board_serial() -> String {
     }
     #[cfg(target_os = "windows")]
     {
-        Command::new("wmic")
+        silent_command("wmic")
             .args(["baseboard", "get", "serialnumber"])
             .output()
             .ok()
@@ -359,7 +370,12 @@ pub fn run() {
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
-                    if let tauri::tray::TrayIconEvent::Click { .. } = event {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.show();
