@@ -119,14 +119,28 @@ export const handleApproveDevice = async (
   cobradorId: string,
   pending: PendingDevice,
   approvedById: string
-) => {
+): Promise<{ success: boolean; reason?: "duplicate" }> => {
   const userRef = doc(db, USERS_COLLECTION, cobradorId);
   const snap = await getDoc(userRef);
-  if (!snap.exists()) return;
+  if (!snap.exists()) return { success: false };
 
   const data = snap.data();
   const currentPending: PendingDevice[] = data.PENDING_DEVICES ?? [];
   const currentAuthorized: AuthorizedDevice[] = data.AUTHORIZED_DEVICES ?? [];
+
+  const alreadyAuthorized = currentAuthorized.some(
+    (d) => d.deviceId === pending.deviceId
+  );
+
+  if (alreadyAuthorized) {
+    // Remove from pending anyway since it's already authorized
+    await updateDoc(userRef, {
+      PENDING_DEVICES: currentPending.filter(
+        (d) => d.deviceId !== pending.deviceId
+      ),
+    });
+    return { success: false, reason: "duplicate" };
+  }
 
   const newAuthorized: AuthorizedDevice = {
     id: crypto.randomUUID(),
@@ -153,6 +167,8 @@ export const handleApproveDevice = async (
       (d) => d.deviceId !== pending.deviceId
     ),
   });
+
+  return { success: true };
 };
 
 export const handleRejectDevice = async (
@@ -166,10 +182,21 @@ export const handleRejectDevice = async (
   const data = snap.data();
   const currentPending: PendingDevice[] = data.PENDING_DEVICES ?? [];
 
+  const idx = currentPending.findIndex(
+    (d) =>
+      d.deviceId === pending.deviceId &&
+      d.requestedAt?.seconds === pending.requestedAt?.seconds &&
+      d.requestedAt?.nanoseconds === pending.requestedAt?.nanoseconds
+  );
+  if (idx === -1) return;
+
+  const newPending = [
+    ...currentPending.slice(0, idx),
+    ...currentPending.slice(idx + 1),
+  ];
+
   await updateDoc(userRef, {
-    PENDING_DEVICES: currentPending.filter(
-      (d) => d.deviceId !== pending.deviceId
-    ),
+    PENDING_DEVICES: newPending,
   });
 };
 
@@ -185,9 +212,7 @@ export const handleRevokeDevice = async (
   const currentAuthorized: AuthorizedDevice[] = data.AUTHORIZED_DEVICES ?? [];
 
   await updateDoc(userRef, {
-    AUTHORIZED_DEVICES: currentAuthorized.filter(
-      (d) => d.deviceId !== device.deviceId
-    ),
+    AUTHORIZED_DEVICES: currentAuthorized.filter((d) => d.id !== device.id),
   });
 };
 
@@ -197,13 +222,17 @@ export const handleAddDeviceManually = async (
   platform: "android" | "desktop",
   label: string,
   approvedById: string
-) => {
+): Promise<{ success: boolean; reason?: "duplicate" }> => {
   const userRef = doc(db, USERS_COLLECTION, cobradorId);
   const snap = await getDoc(userRef);
-  if (!snap.exists()) return;
+  if (!snap.exists()) return { success: false };
 
   const data = snap.data();
   const currentAuthorized: AuthorizedDevice[] = data.AUTHORIZED_DEVICES ?? [];
+
+  if (currentAuthorized.some((d) => d.deviceId === deviceId)) {
+    return { success: false, reason: "duplicate" };
+  }
 
   const newDevice: AuthorizedDevice = {
     id: crypto.randomUUID(),
@@ -217,4 +246,6 @@ export const handleAddDeviceManually = async (
   await updateDoc(userRef, {
     AUTHORIZED_DEVICES: [...currentAuthorized, newDevice],
   });
+
+  return { success: true };
 };

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import dayjs from "dayjs";
+import { toast } from "sonner";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/es";
 import { Switch } from "../ui/switch";
@@ -68,9 +69,14 @@ const DeviceProtectionSection: React.FC<DeviceProtectionSectionProps> = ({
     handleToggleDeviceProtection(cobrador.ID, checked);
   };
 
-  const onApprove = (pending: PendingDevice) => {
+  const onApprove = async (pending: PendingDevice) => {
     if (!userData?.ID) return;
-    handleApproveDevice(cobrador.ID, pending, userData.ID);
+    const result = await handleApproveDevice(cobrador.ID, pending, userData.ID);
+    if (!result.success && result.reason === "duplicate") {
+      toast.warning("Este dispositivo ya estaba autorizado");
+    } else if (result.success) {
+      toast.success("Dispositivo aprobado");
+    }
   };
 
   const onReject = (pending: PendingDevice) => {
@@ -83,13 +89,24 @@ const DeviceProtectionSection: React.FC<DeviceProtectionSectionProps> = ({
     setRevokeTarget(null);
   };
 
-  const onAddManual = (
+  const onAddManual = async (
     deviceId: string,
     platform: "android" | "desktop",
     label: string
   ) => {
     if (!userData?.ID) return;
-    handleAddDeviceManually(cobrador.ID, deviceId, platform, label, userData.ID);
+    const result = await handleAddDeviceManually(
+      cobrador.ID,
+      deviceId,
+      platform,
+      label,
+      userData.ID
+    );
+    if (!result.success && result.reason === "duplicate") {
+      toast.error("Ya existe un dispositivo con ese ID");
+    } else if (result.success) {
+      toast.success("Dispositivo agregado");
+    }
   };
 
   return (
