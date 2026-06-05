@@ -6,14 +6,20 @@ import { getAuth } from "firebase/auth";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
+// TEMP DEV: pointed at msp-dev-96ff5. Restore the prod config from
+// firebase.ts.prod-backup before shipping. The appId below is a placeholder
+// (Android-app variant) because no Web app is registered in the dev project
+// yet; Auth and Firestore work without a Web-specific appId, but if you need
+// Analytics, register a Web app at
+// https://console.firebase.google.com/project/msp-dev-96ff5/overview
+// and replace `appId` with the value shown.
 const firebaseConfig = {
-  apiKey: "AIzaSyDRXzWxvwZcs9qVjKvrjoMOOynPwyF0sBo",
-  authDomain: "msp-db-1c2ce.firebaseapp.com",
-  projectId: "msp-db-1c2ce",
-  storageBucket: "msp-db-1c2ce.appspot.com",
-  messagingSenderId: "519103475417",
-  appId: "1:519103475417:web:d1b83f6d6e17d6e2d898c8",
+  apiKey: "AIzaSyAx9Ts4kGoqEmzDiI-mQCp8Jd4FZhczxos",
+  authDomain: "msp-dev-96ff5.firebaseapp.com",
+  projectId: "msp-dev-96ff5",
+  storageBucket: "msp-dev-96ff5.appspot.com",
+  messagingSenderId: "305734432149",
+  appId: "1:305734432149:web:placeholder",
 };
 
 // Initialize Firebase - Primary app for admin
