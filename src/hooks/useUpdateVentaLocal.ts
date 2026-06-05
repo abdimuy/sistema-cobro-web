@@ -1,3 +1,11 @@
+/**
+ * @deprecated Consume la API legacy v1 (`PATCH /ventas/:id` en Node :3002).
+ * Reemplazado por el módulo hexagonal en
+ * `src/modules/ventasLocales/presentation/hooks/useGuardarEdicionVenta.ts`,
+ * que orquesta los endpoints v2 (`PATCH /v2/ventas/{id}/cliente`, etc.)
+ * vía el `VentaEditPort` y el `HttpVentaEditAdapter`. Pendiente de borrar
+ * cuando ningún consumidor lo referencie.
+ */
 import { useState, useCallback } from "react";
 import {
   updateVentaLocal,

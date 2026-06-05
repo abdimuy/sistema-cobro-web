@@ -1,3 +1,10 @@
+/**
+ * @deprecated Servicio HTTP legacy contra `PATCH /ventas/:id` en :3002.
+ * Reemplazado por `HttpVentaEditAdapter` en
+ * `src/modules/ventasLocales/infrastructure/http/HttpVentaEditAdapter.ts`,
+ * que implementa `VentaEditPort` orquestando los endpoints v2. Borrar este
+ * archivo y sus tipos cuando ningún consumidor lo importe.
+ */
 import axios, { AxiosError } from "axios";
 import { URL_API } from "../../constants/api";
 

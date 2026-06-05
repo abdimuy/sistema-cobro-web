@@ -1,3 +1,12 @@
+/**
+ * @deprecated Consume la API legacy v1 (`/ventas/:id` Node en :3002) y se
+ * reemplazó por `useVentaV2` (`/v2/ventas/:id` en msp-api Go). Pendiente de
+ * borrar cuando ningún otro módulo lo referencie.
+ *
+ * Para editar ventas en arquitectura hexagonal, ver
+ * `src/modules/ventasLocales/presentation/hooks/useVentaEditState.ts` y
+ * `useGuardarEdicionVenta.ts`.
+ */
 import { useState, useEffect, useCallback } from "react";
 import { VentaCompleta, getVentaLocalCompleta } from "../services/api/getVentasLocales";
 
