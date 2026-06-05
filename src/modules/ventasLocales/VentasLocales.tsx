@@ -8,7 +8,7 @@ import useGetVentasLocales from "@/hooks/useGetVentasLocales";
 import useGetAlmacenes from "@/hooks/useGetAlmacenes";
 import useGetZonasCliente from "@/hooks/useGetZonasCliente";
 import useGetVendedores from "@/hooks/useGetVendedores";
-import VentaDetalleModal from "./VentaDetalleModal";
+import { VentaDetalleModal } from "./components/detalle";
 import {
   VentasSearchBar,
   VentasFilters,

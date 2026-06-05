@@ -1,7 +1,98 @@
 import axios, { AxiosRequestConfig } from "axios";
-import { URL_API } from "../../constants/api";
+import { URL_API, URL_API_V2 } from "../../constants/api";
+import { auth } from "../../../firebase";
 
 const BASE_URL = URL_API
+
+// ─── V2 (Go API) ───────────────────────────────────────────────────────────
+
+interface ClienteSnapshotV2 { cliente_id: number | null; nombre: string; telefono: string | null; aval: string | null; referencia: string | null }
+interface DireccionV2 { calle: string; numero_exterior: string | null; colonia: string; poblacion: string; ciudad: string; zona_cliente_id: number | null }
+interface GPSV2 { latitud: number; longitud: number }
+interface MontosV2 { anual: string; corto_plazo: string; contado: string }
+interface PlanCreditoV2 { plazo_meses: number; enganche: string; parcialidad: string; frec_pago: string }
+interface DiaCobranzaV2 { semana: string | null; mes: number | null }
+interface ProductoV2 { id: string; articulo_id: number; articulo: string; cantidad: string; precio_anual: string; precio_corto: string; precio_contado: string; combo_id: string | null; almacen_origen_id: number | null; almacen_destino_id: number | null }
+interface ComboV2 { id: string; nombre: string; precio_anual: string; precio_corto: string; precio_contado: string; cantidad: string; almacen_origen_id: number; almacen_destino_id: number }
+interface VendedorV2 { id: string; usuario_id: string; email: string; nombre: string }
+interface ImagenV2 { id: string; storage_kind: string; storage_key: string; mime: string; size_bytes: number; descripcion: string | null; created_at: string; updated_at: string }
+
+interface VentaV2DTO {
+  id: string;
+  cliente: ClienteSnapshotV2;
+  direccion: DireccionV2;
+  gps: GPSV2;
+  fecha_venta: string;
+  tipo_venta: string;
+  estado: string;
+  situacion: string;
+  sincronizacion: string;
+  microsip_folio: string | null;
+  microsip_docto_pv_id: number | null;
+  microsip_aplicada_at: string | null;
+  montos: MontosV2;
+  plan_credito: PlanCreditoV2 | null;
+  dia_cobranza: DiaCobranzaV2 | null;
+  nota: string | null;
+  combos: ComboV2[];
+  productos: ProductoV2[];
+  vendedores: VendedorV2[];
+  imagenes: ImagenV2[];
+  created_at: string;
+  updated_at: string;
+}
+
+interface ListV2Response<T> { items: T[]; next_cursor?: string }
+
+const numOrUndef = (s: string | null | undefined): number | undefined => {
+  if (s == null || s === "") return undefined;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : undefined;
+};
+
+const adaptVentaV2ToLocal = (v: VentaV2DTO): VentaLocal => {
+  const firstProd = v.productos[0];
+  const dia = v.dia_cobranza?.semana ?? (v.dia_cobranza?.mes != null ? String(v.dia_cobranza.mes) : undefined);
+  return {
+    LOCAL_SALE_ID: v.id,
+    USER_EMAIL: v.vendedores[0]?.email ?? "",
+    ALMACEN_ID: firstProd?.almacen_origen_id ?? 0,
+    ALMACEN_DESTINO_ID: firstProd?.almacen_destino_id ?? undefined,
+    NOMBRE_CLIENTE: v.cliente.nombre,
+    FECHA_VENTA: v.fecha_venta,
+    LATITUD: v.gps.latitud,
+    LONGITUD: v.gps.longitud,
+    DIRECCION: v.direccion.calle,
+    PRECIO_TOTAL: numOrUndef(v.montos.anual) ?? 0,
+    TELEFONO: v.cliente.telefono ?? "",
+    PARCIALIDAD: v.plan_credito ? numOrUndef(v.plan_credito.parcialidad) : undefined,
+    ENGANCHE: v.plan_credito ? numOrUndef(v.plan_credito.enganche) : undefined,
+    FREC_PAGO: v.plan_credito?.frec_pago,
+    AVAL_O_RESPONSABLE: v.cliente.aval ?? undefined,
+    NOTA: v.nota ?? undefined,
+    DIA_COBRANZA: dia,
+    TIEMPO_A_CORTO_PLAZOMESES: v.plan_credito?.plazo_meses,
+    MONTO_A_CORTO_PLAZO: numOrUndef(v.montos.corto_plazo),
+    NUMERO: v.direccion.numero_exterior ?? undefined,
+    COLONIA: v.direccion.colonia,
+    POBLACION: v.direccion.poblacion,
+    CIUDAD: v.direccion.ciudad,
+    TIPO_VENTA: v.tipo_venta,
+    ZONA_CLIENTE_ID: v.direccion.zona_cliente_id ?? undefined,
+    ZONA_CLIENTE: undefined,
+    ENVIADO: true,
+    vendedores: v.vendedores.map((ve) => ({
+      LOCAL_SALE_ID: v.id,
+      VENDEDOR_EMAIL: ve.email,
+      NOMBRE_VENDEDOR: ve.nombre,
+    })),
+  };
+};
+
+const authHeaders = async (): Promise<Record<string, string>> => {
+  const token = await auth.currentUser?.getIdToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 export interface VendedorVenta {
   LOCAL_SALE_ID: string;
@@ -148,23 +239,40 @@ export interface ResumenVentas {
 export const getVentasLocales = async (
   params?: VentasParams
 ): Promise<VentasResponse["body"]> => {
-  // Clean params - remove undefined/empty values
-  const cleanParams: Record<string, unknown> = {};
+  // V2: hits the Go API at /v2/ventas. Maps the nested VentaDTO into the flat
+  // VentaLocal shape the UI already consumes, so screens didn't change.
+  // Note: many UI filters (text search, almacenId, userEmail, price range,
+  // sortBy) don't have direct Go API equivalents. Add client-side filtering
+  // or extend the Go endpoint when needed.
+  const goParams: Record<string, unknown> = {};
+  if (params?.fechaInicio) goParams.desde = params.fechaInicio;
+  if (params?.fechaFin) goParams.hasta = params.fechaFin;
+  if (params?.tipoVenta) goParams.tipo_venta = params.tipoVenta;
+  if (params?.cursor) goParams.cursor = params.cursor;
+  if (params?.limit) goParams.limit = params.limit;
 
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== "" && value !== null) {
-        cleanParams[key] = value;
-      }
-    });
-  }
-
-  const response = await axios.get<VentasResponse>(
-    `${BASE_URL}/ventas-locales/v2`,
-    { params: cleanParams }
+  const headers = await authHeaders();
+  const response = await axios.get<ListV2Response<VentaV2DTO>>(
+    `${URL_API_V2}/v2/ventas`,
+    { params: goParams, headers }
   );
 
-  return response.data.body;
+  const data = response.data.items.map(adaptVentaV2ToLocal);
+  return {
+    data,
+    pagination: {
+      hasNextPage: !!response.data.next_cursor,
+      hasPreviousPage: false,
+      nextCursor: response.data.next_cursor ?? null,
+      previousCursor: null,
+      limit: data.length,
+    },
+    filters: {
+      applied: goParams,
+      sortBy: "FECHA_VENTA",
+      sortOrder: "desc",
+    },
+  };
 };
 
 export const getVentaLocalCompleta = async (ventaId: string): Promise<VentaCompleta> => {
