@@ -1,4 +1,4 @@
-import { User, Phone, MapPin, Home, Building, Map, Shield } from "lucide-react";
+import { User, Phone, MapPin, Home, Building, Map, Shield, Navigation } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -56,10 +56,10 @@ const ClienteTab = ({ data, errors, onUpdate }: ClienteTabProps) => {
               value={data.nombreCliente}
               onChange={(e) => onUpdate("nombreCliente", e.target.value.toUpperCase())}
               placeholder="Nombre completo del cliente"
-              className={getFieldError(errors, "nombreCliente") ? "border-red-500" : ""}
+              className={getFieldError(errors, "cliente.nombreCliente") ? "border-red-500" : ""}
             />
-            {getFieldError(errors, "nombreCliente") && (
-              <p className="text-xs text-red-500">{getFieldError(errors, "nombreCliente")}</p>
+            {getFieldError(errors, "cliente.nombreCliente") && (
+              <p className="text-xs text-red-500">{getFieldError(errors, "cliente.nombreCliente")}</p>
             )}
           </div>
 
@@ -75,24 +75,39 @@ const ClienteTab = ({ data, errors, onUpdate }: ClienteTabProps) => {
               value={data.telefono}
               onChange={(e) => onUpdate("telefono", e.target.value.replace(/\D/g, "").slice(0, 10))}
               placeholder="10 dígitos"
-              className={getFieldError(errors, "telefono") ? "border-red-500" : ""}
+              className={getFieldError(errors, "cliente.telefono") ? "border-red-500" : ""}
             />
-            {getFieldError(errors, "telefono") && (
-              <p className="text-xs text-red-500">{getFieldError(errors, "telefono")}</p>
+            {getFieldError(errors, "cliente.telefono") && (
+              <p className="text-xs text-red-500">{getFieldError(errors, "cliente.telefono")}</p>
             )}
           </div>
 
-          {/* Aval o Responsable */}
+          {/* Aval */}
           <div className="space-y-2">
-            <Label htmlFor="avalOResponsable" className="text-sm font-medium flex items-center gap-1">
+            <Label htmlFor="aval" className="text-sm font-medium flex items-center gap-1">
               <Shield className="h-3 w-3" />
               Aval o Responsable
             </Label>
             <Input
-              id="avalOResponsable"
-              value={data.avalOResponsable}
-              onChange={(e) => onUpdate("avalOResponsable", e.target.value.toUpperCase())}
+              id="aval"
+              value={data.aval}
+              onChange={(e) => onUpdate("aval", e.target.value.toUpperCase())}
               placeholder="Nombre del aval"
+            />
+          </div>
+
+          {/* Referencia */}
+          <div className="md:col-span-2 space-y-2">
+            <Label htmlFor="referencia" className="text-sm font-medium flex items-center gap-1">
+              <Navigation className="h-3 w-3" />
+              Referencia de ubicación
+            </Label>
+            <Input
+              id="referencia"
+              value={data.referencia}
+              onChange={(e) => onUpdate("referencia", e.target.value.slice(0, 99))}
+              placeholder="Ej: casa azul en la esquina"
+              maxLength={99}
             />
           </div>
         </div>
@@ -106,33 +121,33 @@ const ClienteTab = ({ data, errors, onUpdate }: ClienteTabProps) => {
         </legend>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Dirección (Calle) */}
+          {/* Calle */}
           <div className="md:col-span-2 space-y-2">
-            <Label htmlFor="direccion" className="text-sm font-medium">
+            <Label htmlFor="calle" className="text-sm font-medium">
               Calle <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="direccion"
-              value={data.direccion}
-              onChange={(e) => onUpdate("direccion", e.target.value.toUpperCase())}
+              id="calle"
+              value={data.calle}
+              onChange={(e) => onUpdate("calle", e.target.value.toUpperCase())}
               placeholder="Nombre de la calle"
-              className={getFieldError(errors, "direccion") ? "border-red-500" : ""}
+              className={getFieldError(errors, "cliente.calle") ? "border-red-500" : ""}
             />
-            {getFieldError(errors, "direccion") && (
-              <p className="text-xs text-red-500">{getFieldError(errors, "direccion")}</p>
+            {getFieldError(errors, "cliente.calle") && (
+              <p className="text-xs text-red-500">{getFieldError(errors, "cliente.calle")}</p>
             )}
           </div>
 
-          {/* Número */}
+          {/* Número Exterior */}
           <div className="space-y-2">
-            <Label htmlFor="numero" className="text-sm font-medium flex items-center gap-1">
+            <Label htmlFor="numeroExterior" className="text-sm font-medium flex items-center gap-1">
               <Home className="h-3 w-3" />
               Número
             </Label>
             <Input
-              id="numero"
-              value={data.numero}
-              onChange={(e) => onUpdate("numero", e.target.value.toUpperCase())}
+              id="numeroExterior"
+              value={data.numeroExterior}
+              onChange={(e) => onUpdate("numeroExterior", e.target.value.toUpperCase())}
               placeholder="Ej: 123-A"
             />
           </div>

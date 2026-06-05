@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import dayjs from "dayjs";
-import { Copy, Loader2, Pencil, X } from "lucide-react";
+import { Copy, Pencil, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import useVentaV2 from "@/hooks/useVentaV2";
-import useGetVentaLocalCompleta from "@/hooks/useGetVentaLocalCompleta";
 import EditarVentaSheet from "../EditarVentaSheet";
 import { VentaV2 } from "@/services/api/ventaV2Types";
 
@@ -55,7 +54,6 @@ export const VentaDetalleModal = ({ ventaId, onClose }: Props) => {
   const { venta, loading, error, refetch } = useVentaV2(ventaId);
   const [activeTab, setActiveTab] = useState("resumen");
   const [editOpen, setEditOpen] = useState(false);
-  const legacy = useGetVentaLocalCompleta(editOpen ? ventaId : null);
 
   const handleCopyFolio = useCallback(() => {
     if (!venta) return;
@@ -186,21 +184,13 @@ export const VentaDetalleModal = ({ ventaId, onClose }: Props) => {
           </div>
         )}
 
-        {legacy.venta && (
+        {editOpen && venta && (
           <EditarVentaSheet
-            venta={legacy.venta}
+            venta={venta}
             open={editOpen}
             onOpenChange={setEditOpen}
-            onSuccess={() => {
-              refetch();
-              legacy.refetch();
-            }}
+            onSuccess={() => { refetch(); }}
           />
-        )}
-        {editOpen && legacy.loading && (
-          <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-            <Loader2 className="h-6 w-6 animate-spin text-foreground" />
-          </div>
         )}
 
         <MobileNotice />

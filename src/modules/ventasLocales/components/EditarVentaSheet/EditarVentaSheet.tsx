@@ -22,10 +22,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import { VentaCompleta } from "../../../../services/api/getVentasLocales";
-import useUpdateVentaLocal from "../../../../hooks/useUpdateVentaLocal";
-import useEditarVentaForm from "./useEditarVentaForm";
-import { TabValue } from "./types";
+import type { VentaV2 } from "@/services/api/ventaV2Types";
+import { useVentaEditState } from "../../presentation/hooks/useVentaEditState";
+import { useGuardarEdicionVenta } from "../../presentation/hooks/useGuardarEdicionVenta";
+import type { TabValue } from "./types";
+import type { PasoEdicion } from "../../application/dto/EdicionVentaResult";
 
 import ClienteTab from "./tabs/ClienteTab";
 import FinancieroTab from "./tabs/FinancieroTab";
@@ -37,7 +38,7 @@ import ImagenesTab from "./tabs/ImagenesTab";
 // ============================================================================
 
 interface EditarVentaSheetProps {
-  venta: VentaCompleta;
+  venta: VentaV2;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
@@ -55,6 +56,49 @@ const TABS_CONFIG: { value: TabValue; label: string; icon: typeof User }[] = [
 ];
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+const PASO_LABELS: Record<PasoEdicion, string> = {
+  cliente: "cliente",
+  header: "datos generales",
+  combos: "combos",
+  productos: "productos",
+  eliminar_imagen: "eliminar imagen",
+  adjuntar_imagen: "subir imagen",
+};
+
+function humanizePaso(paso: PasoEdicion): string {
+  return PASO_LABELS[paso] ?? paso;
+}
+
+function humanizePasos(pasos: PasoEdicion[]): string {
+  const unique = Array.from(new Set(pasos.map(humanizePaso)));
+  return unique.join(", ");
+}
+
+function mapFieldToTab(field: string): TabValue {
+  if (
+    field.startsWith("cliente.") ||
+    field === "cliente" ||
+    field === "gps"
+  ) {
+    return "cliente";
+  }
+  if (
+    field.startsWith("financiero.") ||
+    field === "financiero" ||
+    /^(monto|plan|dia_cobranza|nota|fecha_venta)/.test(field)
+  ) {
+    return "financiero";
+  }
+  if (field.startsWith("productos")) {
+    return "productos";
+  }
+  return "cliente";
+}
+
+// ============================================================================
 // Component
 // ============================================================================
 
@@ -67,12 +111,12 @@ const EditarVentaSheet = ({
   const [activeTab, setActiveTab] = useState<TabValue>("cliente");
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
-  const { update, loading: saving } = useUpdateVentaLocal();
+  const { saving, guardar } = useGuardarEdicionVenta();
 
   const {
     formData,
     isDirty,
-    validation,
+    errors,
     updateCliente,
     updateFinanciero,
     updateAlmacenes,
@@ -85,24 +129,24 @@ const EditarVentaSheet = ({
     removeImagen,
     restoreImagen,
     reset,
-    getPayload,
-  } = useEditarVentaForm(venta);
+    getInput,
+  } = useVentaEditState(venta);
 
-  // Calcular precios totales de productos activos
+  // Auto-computed totals from active products
   const { precioTotalCalculado, montoACortoPlazoCalculado, totalContadoCalculado } = useMemo(() => {
     const productosActivos = formData.productos.filter((p) => !p.isDeleted);
     return {
       precioTotalCalculado: productosActivos.reduce(
-        (total, p) => total + p.precioLista * p.cantidad,
-        0
+        (total, p) => total + p.precioAnual * p.cantidad,
+        0,
       ),
       montoACortoPlazoCalculado: productosActivos.reduce(
         (total, p) => total + p.precioCortoPlazo * p.cantidad,
-        0
+        0,
       ),
       totalContadoCalculado: productosActivos.reduce(
         (total, p) => total + p.precioContado * p.cantidad,
-        0
+        0,
       ),
     };
   }, [formData.productos]);
@@ -126,61 +170,34 @@ const EditarVentaSheet = ({
   };
 
   const handleSave = async () => {
-    if (!validation.isValid) {
-      // Find first tab with error
-      const errorTabs = validation.errors.map((e) => {
-        if (e.field.startsWith("nombreCliente") || e.field.startsWith("direccion") || e.field.startsWith("telefono")) {
-          return "cliente";
-        }
-        if (e.field.startsWith("precioTotal") || e.field.startsWith("parcialidad") || e.field.startsWith("frecPago")) {
-          return "financiero";
-        }
-        if (e.field.startsWith("productos")) {
-          return "productos";
-        }
-        return "cliente";
-      });
-
-      const firstErrorTab = errorTabs[0] as TabValue;
+    const inputResult = getInput();
+    if (!inputResult.ok) {
+      const firstErrorTab = mapFieldToTab(inputResult.errors[0]?.field ?? "");
       setActiveTab(firstErrorTab);
-
       toast.error("Hay errores en el formulario", {
-        description: validation.errors[0]?.message,
+        description: inputResult.errors[0]?.message,
       });
       return;
     }
 
-    try {
-      const { datos, imagenesNuevas } = getPayload();
+    const result = await guardar(inputResult.input);
 
-      const response = await update({
-        localSaleId: formData.localSaleId,
-        datos,
-        imagenesNuevas,
+    if (result.errorParcial) {
+      const stepsLabel =
+        result.pasosExitosos.length > 0
+          ? `Se guardó: ${humanizePasos(result.pasosExitosos)}.`
+          : "No se pudo aplicar ningún cambio.";
+      toast.error(`Error en paso "${humanizePaso(result.errorParcial.paso)}"`, {
+        description: `${stepsLabel} Error: ${result.errorParcial.error.message}`,
       });
-
-      toast.success("Venta actualizada", {
-        description: response.mensaje,
-      });
-
-      // Show additional info if there were inventory changes
-      if (response.cambiosProductos && !response.cambiosProductos.sinCambios) {
-        const { devueltos, agregados } = response.cambiosProductos;
-        if (devueltos > 0 || agregados > 0) {
-          toast.info("Cambios de inventario", {
-            description: `${devueltos} producto(s) devuelto(s), ${agregados} producto(s) agregado(s)`,
-          });
-        }
-      }
-
-      onOpenChange(false);
-      onSuccess?.();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Error desconocido";
-      toast.error("Error al guardar", {
-        description: errorMessage,
-      });
+      return;
     }
+
+    toast.success("Venta actualizada", {
+      description: `Cambios guardados: ${humanizePasos(result.pasosExitosos)}`,
+    });
+    onOpenChange(false);
+    onSuccess?.();
   };
 
   // ==========================================================================
@@ -206,7 +223,7 @@ const EditarVentaSheet = ({
               <div>
                 <SheetTitle className="text-white text-xl">Editar Venta</SheetTitle>
                 <SheetDescription className="text-blue-100">
-                  ID: {venta.LOCAL_SALE_ID.slice(0, 8)}...
+                  ID: {venta.id.slice(0, 8)}...
                 </SheetDescription>
               </div>
               <Button
@@ -226,22 +243,7 @@ const EditarVentaSheet = ({
               <TabsList className="grid w-full grid-cols-4 h-auto p-1">
                 {TABS_CONFIG.map((tab) => {
                   const Icon = tab.icon;
-                  const hasError = validation.errors.some((e) => {
-                    if (tab.value === "cliente") {
-                      return ["nombreCliente", "direccion", "telefono"].some((f) =>
-                        e.field.includes(f)
-                      );
-                    }
-                    if (tab.value === "financiero") {
-                      return ["precioTotal", "parcialidad", "frecPago"].some((f) =>
-                        e.field.includes(f)
-                      );
-                    }
-                    if (tab.value === "productos") {
-                      return e.field.startsWith("productos");
-                    }
-                    return false;
-                  });
+                  const hasError = errors.some((e) => mapFieldToTab(e.field) === tab.value);
 
                   return (
                     <TabsTrigger
@@ -268,7 +270,7 @@ const EditarVentaSheet = ({
                 <TabsContent value="cliente" className="mt-0">
                   <ClienteTab
                     data={formData.cliente}
-                    errors={validation.errors}
+                    errors={errors}
                     onUpdate={updateCliente}
                   />
                 </TabsContent>
@@ -276,7 +278,7 @@ const EditarVentaSheet = ({
                 <TabsContent value="financiero" className="mt-0">
                   <FinancieroTab
                     data={formData.financiero}
-                    errors={validation.errors}
+                    errors={errors}
                     precioTotalCalculado={precioTotalCalculado}
                     montoACortoPlazoCalculado={montoACortoPlazoCalculado}
                     totalContadoCalculado={totalContadoCalculado}
@@ -288,7 +290,7 @@ const EditarVentaSheet = ({
                   <ProductosTab
                     productos={formData.productos}
                     almacenes={formData.almacenes}
-                    errors={validation.errors}
+                    errors={errors}
                     onAdd={addProducto}
                     onUpdate={updateProducto}
                     onRemove={removeProducto}
@@ -299,6 +301,7 @@ const EditarVentaSheet = ({
 
                 <TabsContent value="imagenes" className="mt-0">
                   <ImagenesTab
+                    ventaId={venta.id}
                     imagenes={formData.imagenes}
                     onAdd={addImagenes}
                     onUpdateDescripcion={updateImagenDescripcion}

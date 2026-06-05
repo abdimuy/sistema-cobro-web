@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import useGetAlmacenById, { ArticuloAlmacen } from "../../../../hooks/useGetAlmacenById";
-import { ProductoFormData } from "./types";
+import { ProductoFormData, AlmacenesFormData } from "./types";
 
 // ============================================================================
 // Types
@@ -21,31 +21,31 @@ import { ProductoFormData } from "./types";
 interface AgregarProductoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  almacenOrigenId: number;
+  almacenes: AlmacenesFormData;
   productosExistentes: ProductoFormData[];
-  onAgregar: (producto: ProductoFormData) => void;
+  onAgregar: (producto: Omit<ProductoFormData, "id" | "isNew" | "isDeleted">) => void;
 }
 
 // ============================================================================
 // Helper: Parse precios from string
 // ============================================================================
 
-const parsePrecios = (preciosStr: string): { lista: number; cortoPlazo: number; contado: number } => {
+const parsePrecios = (
+  preciosStr: string,
+): { precioAnual: number; precioCortoPlazo: number; precioContado: number } => {
   try {
-    // El formato puede ser JSON o string separado
     if (preciosStr.startsWith("{")) {
       const parsed = JSON.parse(preciosStr);
       return {
-        lista: parsed.PRECIO_LISTA || parsed.precioLista || 0,
-        cortoPlazo: parsed.PRECIO_CORTO_PLAZO || parsed.precioCortoPlazo || 0,
-        contado: parsed.PRECIO_CONTADO || parsed.precioContado || 0,
+        precioAnual: parsed.PRECIO_LISTA || parsed.precioLista || parsed.precioAnual || 0,
+        precioCortoPlazo: parsed.PRECIO_CORTO_PLAZO || parsed.precioCortoPlazo || 0,
+        precioContado: parsed.PRECIO_CONTADO || parsed.precioContado || 0,
       };
     }
-    // Intentar parsear como número simple
     const precio = parseFloat(preciosStr) || 0;
-    return { lista: precio, cortoPlazo: precio, contado: precio };
+    return { precioAnual: precio, precioCortoPlazo: precio, precioContado: precio };
   } catch {
-    return { lista: 0, cortoPlazo: 0, contado: 0 };
+    return { precioAnual: 0, precioCortoPlazo: 0, precioContado: 0 };
   }
 };
 
@@ -86,14 +86,20 @@ const ProductoCard = ({ articulo, disabled, onSelect }: ProductoCardProps) => {
 
         <div className="text-right flex-shrink-0">
           <Badge
-            variant={articulo.EXISTENCIAS > 10 ? "default" : articulo.EXISTENCIAS > 0 ? "secondary" : "destructive"}
+            variant={
+              articulo.EXISTENCIAS > 10
+                ? "default"
+                : articulo.EXISTENCIAS > 0
+                  ? "secondary"
+                  : "destructive"
+            }
             className="text-xs"
           >
             Stock: {articulo.EXISTENCIAS}
           </Badge>
-          {precios.lista > 0 && (
+          {precios.precioAnual > 0 && (
             <p className="text-xs text-muted-foreground mt-1">
-              ${precios.lista.toLocaleString()}
+              ${precios.precioAnual.toLocaleString()}
             </p>
           )}
         </div>
@@ -127,7 +133,7 @@ const ProductoCard = ({ articulo, disabled, onSelect }: ProductoCardProps) => {
 const AgregarProductoDialog = ({
   open,
   onOpenChange,
-  almacenOrigenId,
+  almacenes,
   productosExistentes,
   onAgregar,
 }: AgregarProductoDialogProps) => {
@@ -135,14 +141,14 @@ const AgregarProductoDialog = ({
   const [cantidad, setCantidad] = useState(1);
   const [selectedArticulo, setSelectedArticulo] = useState<ArticuloAlmacen | null>(null);
 
-  const { articulos, loading, error } = useGetAlmacenById(open ? almacenOrigenId : null);
+  const { articulos, loading, error } = useGetAlmacenById(open ? almacenes.almacenOrigenID : null);
 
   // IDs de productos que ya están en la venta (no eliminados)
   const productosExistentesIds = useMemo(() => {
     return new Set(
       productosExistentes
         .filter((p) => !p.isDeleted)
-        .map((p) => p.articuloId)
+        .map((p) => p.articuloId),
     );
   }, [productosExistentes]);
 
@@ -153,7 +159,7 @@ const AgregarProductoDialog = ({
     return articulos.filter(
       (a) =>
         a.ARTICULO.toLowerCase().includes(searchLower) ||
-        a.ARTICULO_ID.toString().includes(search)
+        a.ARTICULO_ID.toString().includes(search),
     );
   }, [articulos, search]);
 
@@ -167,33 +173,31 @@ const AgregarProductoDialog = ({
     onOpenChange(isOpen);
   };
 
-  // Seleccionar producto para confirmar cantidad
   const handleSelectArticulo = (articulo: ArticuloAlmacen) => {
     setSelectedArticulo(articulo);
     setCantidad(1);
   };
 
-  // Confirmar y agregar producto
   const handleConfirmarAgregar = () => {
     if (!selectedArticulo || cantidad <= 0) return;
 
     const precios = parsePrecios(selectedArticulo.PRECIOS);
 
-    const nuevoProducto: ProductoFormData = {
+    const nuevoProducto: Omit<ProductoFormData, "id" | "isNew" | "isDeleted"> = {
       articuloId: selectedArticulo.ARTICULO_ID,
       articulo: selectedArticulo.ARTICULO,
       cantidad,
-      precioLista: precios.lista,
-      precioCortoPlazo: precios.cortoPlazo,
-      precioContado: precios.contado,
-      isNew: true,
-      isDeleted: false,
+      precioAnual: precios.precioAnual,
+      precioCortoPlazo: precios.precioCortoPlazo,
+      precioContado: precios.precioContado,
+      comboID: null,
+      almacenOrigenID: almacenes.almacenOrigenID,
+      almacenDestinoID: almacenes.almacenDestinoID,
     };
 
     onAgregar(nuevoProducto);
     setSelectedArticulo(null);
     setCantidad(1);
-    // No cerramos el dialog para permitir agregar más productos
   };
 
   return (

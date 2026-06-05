@@ -2,8 +2,8 @@ import { useRef, useCallback } from "react";
 import { Image, Upload, Trash2, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getImageUrl } from "../../../../../services/api/getVentasLocales";
 import { ImagenFormData } from "../types";
+import AuthenticatedImage from "../../detalle/AuthenticatedImage";
 import dayjs from "dayjs";
 
 // ============================================================================
@@ -11,6 +11,7 @@ import dayjs from "dayjs";
 // ============================================================================
 
 interface ImagenesTabProps {
+  ventaId: string;
   imagenes: ImagenFormData[];
   onAdd: (files: File[]) => void;
   onUpdateDescripcion: (id: string, descripcion: string) => void;
@@ -24,15 +25,15 @@ interface ImagenesTabProps {
 
 interface ImagenCardProps {
   imagen: ImagenFormData;
+  ventaId: string;
   onUpdateDescripcion: (descripcion: string) => void;
   onRemove: () => void;
   onRestore: () => void;
 }
 
-const ImagenCard = ({ imagen, onUpdateDescripcion, onRemove, onRestore }: ImagenCardProps) => {
-  const isDeleted = imagen.isDeleted;
-  const isNew = imagen.isNew;
-  const imageUrl = imagen.previewUrl || getImageUrl(imagen.imgPath);
+const ImagenCard = ({ imagen, ventaId, onUpdateDescripcion, onRemove, onRestore }: ImagenCardProps) => {
+  const isDeleted = imagen.kind === "existing" && imagen.isDeleted;
+  const isNew = imagen.kind === "new";
 
   return (
     <div
@@ -48,15 +49,20 @@ const ImagenCard = ({ imagen, onUpdateDescripcion, onRemove, onRestore }: Imagen
     >
       {/* Image */}
       <div className="relative aspect-square bg-muted">
-        <img
-          src={imageUrl}
-          alt={imagen.imgDesc}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjwvc3ZnPg==";
-          }}
-        />
+        {imagen.kind === "existing" ? (
+          <AuthenticatedImage
+            ventaId={ventaId}
+            imagenId={imagen.id}
+            alt={imagen.descripcion ?? ""}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <img
+            src={imagen.previewUrl}
+            alt={imagen.descripcion}
+            className="w-full h-full object-cover"
+          />
+        )}
 
         {/* Badges */}
         <div className="absolute top-2 left-2 flex gap-1">
@@ -107,15 +113,17 @@ const ImagenCard = ({ imagen, onUpdateDescripcion, onRemove, onRestore }: Imagen
       {/* Info */}
       <div className="p-3">
         <Input
-          value={imagen.imgDesc}
+          value={imagen.descripcion}
           onChange={(e) => onUpdateDescripcion(e.target.value)}
           placeholder="Descripción de la imagen"
           disabled={isDeleted}
           className="text-sm h-8"
         />
-        <p className="text-xs text-muted-foreground/60 mt-2">
-          {dayjs(imagen.fechaSubida).format("DD/MM/YYYY HH:mm")}
-        </p>
+        {imagen.kind === "existing" && (
+          <p className="text-xs text-muted-foreground/60 mt-2">
+            {dayjs(imagen.createdAt).format("DD/MM/YYYY HH:mm")}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -138,14 +146,14 @@ const Dropzone = ({ onFilesSelected }: DropzoneProps) => {
       e.stopPropagation();
 
       const files = Array.from(e.dataTransfer.files).filter((file) =>
-        file.type.startsWith("image/")
+        file.type.startsWith("image/"),
       );
 
       if (files.length > 0) {
         onFilesSelected(files);
       }
     },
-    [onFilesSelected]
+    [onFilesSelected],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -159,12 +167,11 @@ const Dropzone = ({ onFilesSelected }: DropzoneProps) => {
       if (files.length > 0) {
         onFilesSelected(files);
       }
-      // Reset input
       if (inputRef.current) {
         inputRef.current.value = "";
       }
     },
-    [onFilesSelected]
+    [onFilesSelected],
   );
 
   return (
@@ -207,15 +214,20 @@ const Dropzone = ({ onFilesSelected }: DropzoneProps) => {
 // ============================================================================
 
 const ImagenesTab = ({
+  ventaId,
   imagenes,
   onAdd,
   onUpdateDescripcion,
   onRemove,
   onRestore,
 }: ImagenesTabProps) => {
-  const activeImagenes = imagenes.filter((img) => !img.isDeleted);
-  const deletedImagenes = imagenes.filter((img) => img.isDeleted);
-  const newImagenes = imagenes.filter((img) => img.isNew && !img.isDeleted);
+  const activeImagenes = imagenes.filter(
+    (img) => !(img.kind === "existing" && img.isDeleted),
+  );
+  const deletedImagenes = imagenes.filter(
+    (img) => img.kind === "existing" && img.isDeleted,
+  );
+  const newImagenes = imagenes.filter((img) => img.kind === "new");
 
   return (
     <div className="space-y-6">
@@ -252,6 +264,7 @@ const ImagenesTab = ({
             <ImagenCard
               key={imagen.id}
               imagen={imagen}
+              ventaId={ventaId}
               onUpdateDescripcion={(desc) => onUpdateDescripcion(imagen.id, desc)}
               onRemove={() => onRemove(imagen.id)}
               onRestore={() => onRestore(imagen.id)}

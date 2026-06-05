@@ -39,7 +39,7 @@ const TIPOS_VENTA = [
   { value: "CREDITO", label: "Crédito" },
 ];
 
-const DIAS_SEMANA = [
+const DIAS_SEMANA: Array<{ value: FinancieroFormData["diaCobranzaSemana"]; label: string }> = [
   { value: "LUNES", label: "Lunes" },
   { value: "MARTES", label: "Martes" },
   { value: "MIERCOLES", label: "Miércoles" },
@@ -48,12 +48,6 @@ const DIAS_SEMANA = [
   { value: "SABADO", label: "Sábado" },
   { value: "DOMINGO", label: "Domingo" },
 ];
-
-// Normaliza el día quitando acentos para comparación
-const normalizeDia = (dia: string): string => {
-  if (!dia) return "";
-  return dia.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-};
 
 // ============================================================================
 // Helpers
@@ -74,15 +68,25 @@ const formatCurrency = (value: number): string => {
 // Component
 // ============================================================================
 
-const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCalculado, totalContadoCalculado, onUpdate }: FinancieroTabProps) => {
+const FinancieroTab = ({
+  data,
+  errors,
+  precioTotalCalculado,
+  montoACortoPlazoCalculado,
+  totalContadoCalculado,
+  onUpdate,
+}: FinancieroTabProps) => {
   const isCredito = data.tipoVenta === "CREDITO";
+  const isMensual = data.frecPago === "MENSUAL";
 
-  const handleNumberChange = (
-    field: keyof FinancieroFormData,
-    value: string
-  ) => {
-    const numValue = parseFloat(value) || 0;
-    onUpdate(field, numValue);
+  const handleFrecPagoChange = (value: string) => {
+    onUpdate("frecPago", value as FinancieroFormData["frecPago"]);
+    // Clear the day field that no longer applies
+    if (value === "MENSUAL") {
+      onUpdate("diaCobranzaSemana", "");
+    } else {
+      onUpdate("diaCobranzaMes", 0);
+    }
   };
 
   return (
@@ -121,6 +125,91 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
         </p>
       </div>
 
+      {/* Montos editables */}
+      <fieldset className="space-y-4">
+        <legend className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
+          <DollarSign className="h-4 w-4 text-blue-600" />
+          Montos
+        </legend>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Monto Anual */}
+          <div className="space-y-2">
+            <Label htmlFor="montoAnual" className="text-sm font-medium">
+              Monto Lista
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+              <Input
+                id="montoAnual"
+                type="text"
+                inputMode="decimal"
+                value={data.montoAnual}
+                onChange={(e) => onUpdate("montoAnual", e.target.value)}
+                className={`pl-7 ${getFieldError(errors, "financiero.montoAnual") ? "border-red-500" : ""}`}
+                placeholder="0.00"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground/60">
+              Calculado: {formatCurrency(precioTotalCalculado)}
+            </p>
+            {getFieldError(errors, "financiero.montoAnual") && (
+              <p className="text-xs text-red-500">{getFieldError(errors, "financiero.montoAnual")}</p>
+            )}
+          </div>
+
+          {/* Monto Corto Plazo */}
+          <div className="space-y-2">
+            <Label htmlFor="montoCortoPlazo" className="text-sm font-medium">
+              Monto Corto Plazo
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+              <Input
+                id="montoCortoPlazo"
+                type="text"
+                inputMode="decimal"
+                value={data.montoCortoPlazo}
+                onChange={(e) => onUpdate("montoCortoPlazo", e.target.value)}
+                className={`pl-7 ${getFieldError(errors, "financiero.montoCortoPlazo") ? "border-red-500" : ""}`}
+                placeholder="0.00"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground/60">
+              Calculado: {formatCurrency(montoACortoPlazoCalculado)}
+            </p>
+            {getFieldError(errors, "financiero.montoCortoPlazo") && (
+              <p className="text-xs text-red-500">{getFieldError(errors, "financiero.montoCortoPlazo")}</p>
+            )}
+          </div>
+
+          {/* Monto Contado */}
+          <div className="space-y-2">
+            <Label htmlFor="montoContado" className="text-sm font-medium">
+              Monto Contado
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+              <Input
+                id="montoContado"
+                type="text"
+                inputMode="decimal"
+                value={data.montoContado}
+                onChange={(e) => onUpdate("montoContado", e.target.value)}
+                className={`pl-7 ${getFieldError(errors, "financiero.montoContado") ? "border-red-500" : ""}`}
+                placeholder="0.00"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground/60">
+              Calculado: {formatCurrency(totalContadoCalculado)}
+            </p>
+            {getFieldError(errors, "financiero.montoContado") && (
+              <p className="text-xs text-red-500">{getFieldError(errors, "financiero.montoContado")}</p>
+            )}
+          </div>
+        </div>
+      </fieldset>
+
       {/* Tipo de Venta */}
       <fieldset className="space-y-4">
         <legend className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
@@ -134,9 +223,13 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
           </Label>
           <Select
             value={data.tipoVenta}
-            onValueChange={(value) => onUpdate("tipoVenta", value as FinancieroFormData["tipoVenta"])}
+            disabled
           >
-            <SelectTrigger id="tipoVenta">
+            <SelectTrigger
+              id="tipoVenta"
+              title="Para cambiar tipo de venta, cancelá y creá una nueva"
+              className="opacity-70 cursor-not-allowed"
+            >
               <SelectValue placeholder="Seleccionar tipo" />
             </SelectTrigger>
             <SelectContent>
@@ -147,6 +240,9 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
               ))}
             </SelectContent>
           </Select>
+          <p className="text-xs text-muted-foreground/60">
+            Para cambiar tipo de venta, cancelá y creá una nueva.
+          </p>
         </div>
       </fieldset>
 
@@ -168,11 +264,10 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                 <Input
                   id="enganche"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={data.enganche || ""}
-                  onChange={(e) => handleNumberChange("enganche", e.target.value)}
+                  type="text"
+                  inputMode="decimal"
+                  value={data.enganche}
+                  onChange={(e) => onUpdate("enganche", e.target.value)}
                   className="pl-7"
                   placeholder="0.00"
                 />
@@ -188,17 +283,16 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                 <Input
                   id="parcialidad"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={data.parcialidad || ""}
-                  onChange={(e) => handleNumberChange("parcialidad", e.target.value)}
-                  className={`pl-7 ${getFieldError(errors, "parcialidad") ? "border-red-500" : ""}`}
+                  type="text"
+                  inputMode="decimal"
+                  value={data.parcialidad}
+                  onChange={(e) => onUpdate("parcialidad", e.target.value)}
+                  className={`pl-7 ${getFieldError(errors, "financiero.parcialidad") ? "border-red-500" : ""}`}
                   placeholder="0.00"
                 />
               </div>
-              {getFieldError(errors, "parcialidad") && (
-                <p className="text-xs text-red-500">{getFieldError(errors, "parcialidad")}</p>
+              {getFieldError(errors, "financiero.parcialidad") && (
+                <p className="text-xs text-red-500">{getFieldError(errors, "financiero.parcialidad")}</p>
               )}
             </div>
 
@@ -209,11 +303,11 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
               </Label>
               <Select
                 value={data.frecPago}
-                onValueChange={(value) => onUpdate("frecPago", value as FinancieroFormData["frecPago"])}
+                onValueChange={handleFrecPagoChange}
               >
                 <SelectTrigger
                   id="frecPago"
-                  className={getFieldError(errors, "frecPago") ? "border-red-500" : ""}
+                  className={getFieldError(errors, "financiero.frecPago") ? "border-red-500" : ""}
                 >
                   <SelectValue placeholder="Seleccionar frecuencia" />
                 </SelectTrigger>
@@ -225,8 +319,8 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
                   ))}
                 </SelectContent>
               </Select>
-              {getFieldError(errors, "frecPago") && (
-                <p className="text-xs text-red-500">{getFieldError(errors, "frecPago")}</p>
+              {getFieldError(errors, "financiero.frecPago") && (
+                <p className="text-xs text-red-500">{getFieldError(errors, "financiero.frecPago")}</p>
               )}
             </div>
 
@@ -236,21 +330,45 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
                 <Calendar className="h-3 w-3" />
                 Día de Cobranza
               </Label>
-              <Select
-                value={normalizeDia(data.diaCobranza)}
-                onValueChange={(value) => onUpdate("diaCobranza", value)}
-              >
-                <SelectTrigger id="diaCobranza">
-                  <SelectValue placeholder="Seleccionar día" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DIAS_SEMANA.map((dia) => (
-                    <SelectItem key={dia.value} value={dia.value}>
-                      {dia.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isMensual ? (
+                <Input
+                  id="diaCobranzaMes"
+                  type="number"
+                  min={1}
+                  max={31}
+                  value={data.diaCobranzaMes || ""}
+                  onChange={(e) => onUpdate("diaCobranzaMes", parseInt(e.target.value, 10) || 0)}
+                  placeholder="Día del mes (1-31)"
+                  className={getFieldError(errors, "financiero.diaCobranzaMes") ? "border-red-500" : ""}
+                />
+              ) : (
+                <Select
+                  value={data.diaCobranzaSemana}
+                  onValueChange={(value) =>
+                    onUpdate("diaCobranzaSemana", value as FinancieroFormData["diaCobranzaSemana"])
+                  }
+                >
+                  <SelectTrigger
+                    id="diaCobranzaSemana"
+                    className={getFieldError(errors, "financiero.diaCobranzaSemana") ? "border-red-500" : ""}
+                  >
+                    <SelectValue placeholder="Seleccionar día" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DIAS_SEMANA.map((dia) => (
+                      <SelectItem key={dia.value} value={dia.value as string}>
+                        {dia.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {getFieldError(errors, "financiero.diaCobranzaMes") && (
+                <p className="text-xs text-red-500">{getFieldError(errors, "financiero.diaCobranzaMes")}</p>
+              )}
+              {getFieldError(errors, "financiero.diaCobranzaSemana") && (
+                <p className="text-xs text-red-500">{getFieldError(errors, "financiero.diaCobranzaSemana")}</p>
+              )}
             </div>
           </div>
         </fieldset>
@@ -258,17 +376,17 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
 
       {/* Plazo */}
       <div className="space-y-2">
-        <Label htmlFor="tiempoACortoPlazoMeses" className="text-sm font-medium flex items-center gap-2">
+        <Label htmlFor="plazoMeses" className="text-sm font-medium flex items-center gap-2">
           <Calendar className="h-4 w-4 text-purple-600" />
           Plazo a Corto Plazo (meses)
         </Label>
         <Input
-          id="tiempoACortoPlazoMeses"
+          id="plazoMeses"
           type="number"
           min="0"
           max="120"
-          value={data.tiempoACortoPlazoMeses || ""}
-          onChange={(e) => handleNumberChange("tiempoACortoPlazoMeses", e.target.value)}
+          value={data.plazoMeses || ""}
+          onChange={(e) => onUpdate("plazoMeses", parseInt(e.target.value, 10) || 0)}
           placeholder="0"
         />
       </div>
@@ -295,25 +413,29 @@ const FinancieroTab = ({ data, errors, precioTotalCalculado, montoACortoPlazoCal
         </div>
       </fieldset>
 
-      {/* Resumen */}
+      {/* Resumen de crédito */}
       {isCredito && (
         <div className="bg-muted rounded-lg p-4 border">
           <h4 className="text-sm font-semibold text-foreground mb-3">Resumen de Crédito</h4>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="text-muted-foreground">Precio Total:</div>
+            <div className="text-muted-foreground">Precio Lista:</div>
             <div className="font-semibold text-green-600 text-right">
               {formatCurrency(precioTotalCalculado)}
             </div>
 
             <div className="text-muted-foreground">Enganche:</div>
-            <div className="font-medium text-right">{formatCurrency(data.enganche)}</div>
+            <div className="font-medium text-right">
+              {formatCurrency(parseFloat(data.enganche) || 0)}
+            </div>
 
             <div className="text-muted-foreground">Parcialidad:</div>
-            <div className="font-medium text-right">{formatCurrency(data.parcialidad)}</div>
+            <div className="font-medium text-right">
+              {formatCurrency(parseFloat(data.parcialidad) || 0)}
+            </div>
 
             <div className="text-muted-foreground font-medium">Saldo a financiar:</div>
             <div className="font-semibold text-right text-orange-600">
-              {formatCurrency(precioTotalCalculado - data.enganche)}
+              {formatCurrency(precioTotalCalculado - (parseFloat(data.enganche) || 0))}
             </div>
           </div>
         </div>

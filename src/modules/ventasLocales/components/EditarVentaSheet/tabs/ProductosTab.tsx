@@ -22,7 +22,7 @@ interface ProductosTabProps {
   productos: ProductoFormData[];
   almacenes: AlmacenesFormData;
   errors: ValidationError[];
-  onAdd: (producto: ProductoFormData) => void;
+  onAdd: (producto: Omit<ProductoFormData, "id" | "isNew" | "isDeleted">) => void;
   onUpdate: (index: number, field: keyof ProductoFormData, value: ProductoFormData[keyof ProductoFormData]) => void;
   onRemove: (index: number) => void;
   onRestore: (index: number) => void;
@@ -42,8 +42,8 @@ const AlmacenesSection = ({ almacenes, onUpdate }: AlmacenesSectionProps) => {
   const [expanded, setExpanded] = useState(false);
   const { almacenes: listaAlmacenes, loading: loadingAlmacenes, getAlmacenById } = useGetAlmacenes();
 
-  const almacenOrigen = getAlmacenById(almacenes.almacenOrigenId);
-  const almacenDestino = getAlmacenById(almacenes.almacenDestinoId);
+  const almacenOrigen = getAlmacenById(almacenes.almacenOrigenID);
+  const almacenDestino = getAlmacenById(almacenes.almacenDestinoID);
 
   return (
     <div className="p-4 bg-muted rounded-lg border border-border">
@@ -85,8 +85,8 @@ const AlmacenesSection = ({ almacenes, onUpdate }: AlmacenesSectionProps) => {
                 Almacén Origen
               </Label>
               <Select
-                value={almacenes.almacenOrigenId.toString()}
-                onValueChange={(value) => onUpdate("almacenOrigenId", parseInt(value, 10))}
+                value={almacenes.almacenOrigenID.toString()}
+                onValueChange={(value) => onUpdate("almacenOrigenID", parseInt(value, 10))}
               >
                 <SelectTrigger id="almacenOrigen">
                   <SelectValue placeholder={loadingAlmacenes ? "Cargando..." : "Seleccionar"} />
@@ -108,8 +108,8 @@ const AlmacenesSection = ({ almacenes, onUpdate }: AlmacenesSectionProps) => {
                 Almacén Destino
               </Label>
               <Select
-                value={almacenes.almacenDestinoId.toString()}
-                onValueChange={(value) => onUpdate("almacenDestinoId", parseInt(value, 10))}
+                value={almacenes.almacenDestinoID.toString()}
+                onValueChange={(value) => onUpdate("almacenDestinoID", parseInt(value, 10))}
               >
                 <SelectTrigger id="almacenDestino">
                   <SelectValue placeholder={loadingAlmacenes ? "Cargando..." : "Seleccionar"} />
@@ -241,18 +241,18 @@ const ProductoCard = ({
       {/* Precios editables */}
       <div className="grid grid-cols-3 gap-2">
         <div className="space-y-1">
-          <Label htmlFor={`precioLista-${index}`} className="text-xs text-muted-foreground">
+          <Label htmlFor={`precioAnual-${index}`} className="text-xs text-muted-foreground">
             Lista
           </Label>
           <div className="relative">
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-xs">$</span>
             <Input
-              id={`precioLista-${index}`}
+              id={`precioAnual-${index}`}
               type="number"
               min="0"
               step="0.01"
-              value={producto.precioLista}
-              onChange={(e) => onUpdate("precioLista", parseFloat(e.target.value) || 0)}
+              value={producto.precioAnual}
+              onChange={(e) => onUpdate("precioAnual", parseFloat(e.target.value) || 0)}
               disabled={isDeleted}
               className="h-8 pl-5 text-sm font-semibold text-foreground bg-muted dark:bg-muted"
             />
@@ -300,7 +300,7 @@ const ProductoCard = ({
       <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
         <span className="text-xs text-muted-foreground">Subtotal (Lista):</span>
         <span className="font-semibold text-foreground">
-          {formatCurrency(producto.precioLista * producto.cantidad)}
+          {formatCurrency(producto.precioAnual * producto.cantidad)}
         </span>
       </div>
     </div>
@@ -332,11 +332,11 @@ const ProductosTab = ({
   const totales = activeProductos.reduce(
     (acc, p) => ({
       cantidad: acc.cantidad + p.cantidad,
-      lista: acc.lista + p.precioLista * p.cantidad,
+      lista: acc.lista + p.precioAnual * p.cantidad,
       cortoPlazo: acc.cortoPlazo + p.precioCortoPlazo * p.cantidad,
       contado: acc.contado + p.precioContado * p.cantidad,
     }),
-    { cantidad: 0, lista: 0, cortoPlazo: 0, contado: 0 }
+    { cantidad: 0, lista: 0, cortoPlazo: 0, contado: 0 },
   );
 
   return (
@@ -381,7 +381,7 @@ const ProductosTab = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {productos.map((producto, index) => (
           <ProductoCard
-            key={`${producto.articuloId}-${index}`}
+            key={`${producto.id}-${index}`}
             producto={producto}
             index={index}
             errors={errors}
@@ -419,7 +419,7 @@ const ProductosTab = ({
       <AgregarProductoDialog
         open={showAgregarDialog}
         onOpenChange={setShowAgregarDialog}
-        almacenOrigenId={almacenes.almacenOrigenId}
+        almacenes={almacenes}
         productosExistentes={productos}
         onAgregar={onAdd}
       />
