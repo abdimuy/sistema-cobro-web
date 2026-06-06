@@ -36,11 +36,11 @@ interface Palette {
 
 const palette: Record<StepKey, Palette> = {
   borrador: {
-    bg: "bg-foreground",
+    bg: "bg-muted-foreground",
     fg: "text-foreground",
-    border: "border-foreground",
-    halo: "ring-foreground/10",
-    rail: "bg-foreground/70",
+    border: "border-muted-foreground",
+    halo: "ring-muted-foreground/15",
+    rail: "bg-muted-foreground/70",
     caption: "text-foreground",
   },
   revisada: {
