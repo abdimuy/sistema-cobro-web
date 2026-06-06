@@ -69,10 +69,14 @@ export function VentasColumnSelector({
     const dst = result.destination.index;
     if (src === dst) return;
 
-    const next = [...visibleColumns];
-    const [moved] = next.splice(src, 1);
-    next.splice(dst, 0, moved);
-    onChange(next);
+    // The Draggable index is relative to the non-pinned slice rendered above.
+    // Reorder that slice and concat pinned + reordered to rebuild visibleColumns.
+    const draggable = visibleColumns.filter((id) => !pinnedColumns.includes(id));
+    const [moved] = draggable.splice(src, 1);
+    draggable.splice(dst, 0, moved);
+
+    const pinnedInOrder = visibleColumns.filter((id) => pinnedColumns.includes(id));
+    onChange([...pinnedInOrder, ...draggable]);
   };
 
   const allVisible = visibleColumns.length === COLUMNS.length;
