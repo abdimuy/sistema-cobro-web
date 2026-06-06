@@ -21,6 +21,8 @@ import { UnderlineTab } from "./shell/UnderlineTabsBar";
 import { DiscardChangesDialog } from "./piezas/DiscardChangesDialog";
 import { ResumenTab } from "./tabs/ResumenTab";
 import { ClienteTab } from "./tabs/ClienteTab";
+import { PlanTab } from "./tabs/PlanTab";
+import { ProductosTab } from "./tabs/ProductosTab";
 import { WIPPlaceholder } from "./tabs/WIPPlaceholder";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -78,6 +80,16 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
     errors,
     updateCliente,
     updateGps,
+    updateFinanciero,
+    updateAlmacenes,
+    addProducto,
+    updateProducto,
+    removeProducto,
+    restoreProducto,
+    addCombo,
+    updateCombo,
+    removeCombo,
+    restoreCombo,
     reset,
     getInput,
   } = useVentaEditState(venta);
@@ -114,6 +126,15 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
         .reduce((sum, p) => sum + p.precioAnual * p.cantidad, 0),
     [formData.productos],
   );
+
+  const preciosCalculados = useMemo(() => {
+    const active = formData.productos.filter((p) => !p.isDeleted);
+    return {
+      anual: active.reduce((s, p) => s + p.precioAnual * p.cantidad, 0),
+      cortoPlazo: active.reduce((s, p) => s + p.precioCortoPlazo * p.cantidad, 0),
+      contado: active.reduce((s, p) => s + p.precioContado * p.cantidad, 0),
+    };
+  }, [formData.productos]);
 
   // ── Cambios count (one per section + per imagen) ────────────────────────────
 
@@ -276,11 +297,32 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
                   </TabsContent>
 
                   <TabsContent value="plan">
-                    <WIPPlaceholder section="Plan" />
+                    <PlanTab
+                      data={formData.financiero}
+                      errors={errors}
+                      preciosCalculados={preciosCalculados}
+                      onUpdate={updateFinanciero}
+                    />
                   </TabsContent>
 
                   <TabsContent value="productos">
-                    <WIPPlaceholder section="Productos" />
+                    <div className="relative">
+                      <ProductosTab
+                        productos={formData.productos}
+                        combos={formData.combos}
+                        almacenes={formData.almacenes}
+                        errors={errors}
+                        onAddProducto={addProducto}
+                        onUpdateProducto={updateProducto}
+                        onRemoveProducto={removeProducto}
+                        onRestoreProducto={restoreProducto}
+                        onAddCombo={addCombo}
+                        onUpdateCombo={updateCombo}
+                        onRemoveCombo={removeCombo}
+                        onRestoreCombo={restoreCombo}
+                        onUpdateAlmacenesDefault={updateAlmacenes}
+                      />
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="vendedores">

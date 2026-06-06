@@ -6,6 +6,7 @@ interface MontoInputProps {
   onChange: (next: string) => void;
   error?: boolean;
   placeholder?: string;
+  compact?: boolean;
 }
 
 export const MontoInput = ({
@@ -13,6 +14,7 @@ export const MontoInput = ({
   onChange,
   error,
   placeholder,
+  compact,
 }: MontoInputProps) => (
   <div className="relative">
     <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground">
@@ -23,6 +25,7 @@ export const MontoInput = ({
       inputMode="decimal"
       className={cn(
         "pl-7 font-mono text-right tabular-nums",
+        compact ? "h-7 text-xs" : "h-9 text-sm",
         error && "border-destructive/60 focus-visible:ring-destructive/30",
       )}
       value={value}

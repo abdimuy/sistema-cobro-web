@@ -7,6 +7,7 @@ interface CantidadInputProps {
   onChange: (next: number) => void;
   error?: boolean;
   placeholder?: string;
+  compact?: boolean;
 }
 
 export const CantidadInput = ({
@@ -14,6 +15,7 @@ export const CantidadInput = ({
   onChange,
   error,
   placeholder,
+  compact,
 }: CantidadInputProps) => {
   const [raw, setRaw] = useState<string>(String(value));
 
@@ -37,6 +39,7 @@ export const CantidadInput = ({
       inputMode="decimal"
       className={cn(
         "font-mono tabular-nums",
+        compact ? "h-7 text-xs" : "h-9 text-sm",
         error && "border-destructive/60 focus-visible:ring-destructive/30",
       )}
       value={raw}
