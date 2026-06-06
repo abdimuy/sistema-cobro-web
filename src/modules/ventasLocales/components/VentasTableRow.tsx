@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import dayjs from "dayjs";
 import {
   Eye,
   Phone,
@@ -21,6 +22,27 @@ import { VentaLocal } from "@/services/api/getVentasLocales";
 import { ColumnId, ColumnWidths, COLUMNS } from "./columns";
 import { formatCurrency, formatPhone, copyToClipboard } from "./utils";
 import { cn } from "@/lib/utils";
+
+const formatDate = (iso: string): string => dayjs(iso).format("DD/MM/YYYY HH:mm");
+
+const SITUACION_STYLES: Record<NonNullable<VentaLocal["SITUACION"]>, string> = {
+  borrador: "bg-muted text-muted-foreground border-border",
+  revisada: "bg-chart-4/15 text-chart-4 border-chart-4/30",
+  aprobada: "bg-chart-2/15 text-chart-2 border-chart-2/30",
+  cancelada: "bg-destructive/15 text-destructive border-destructive/30",
+};
+
+const SITUACION_LABELS: Record<NonNullable<VentaLocal["SITUACION"]>, string> = {
+  borrador: "Borrador",
+  revisada: "Revisada",
+  aprobada: "Aprobada",
+  cancelada: "Cancelada",
+};
+
+const SINCRONIZACION_STYLES: Record<NonNullable<VentaLocal["SINCRONIZACION"]>, string> = {
+  pendiente: "bg-chart-4/15 text-chart-4 border-chart-4/30",
+  aplicada: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-400",
+};
 
 interface VentasTableRowProps {
   venta: VentaLocal;
@@ -301,6 +323,237 @@ export function VentasTableRow({
                 hour12: false,
               })}
             </span>
+          </TableCell>
+        );
+
+      case "situacion": {
+        const s = venta.SITUACION;
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            {s ? (
+              <span className={cn(
+                "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
+                SITUACION_STYLES[s]
+              )}>
+                {SITUACION_LABELS[s]}
+              </span>
+            ) : (
+              <span className="text-muted-foreground text-sm">—</span>
+            )}
+          </TableCell>
+        );
+      }
+
+      case "sincronizacion": {
+        const s = venta.SINCRONIZACION;
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            {s ? (
+              <span className={cn(
+                "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
+                SINCRONIZACION_STYLES[s]
+              )}>
+                {s === "aplicada" ? "Aplicada" : "Pendiente"}
+              </span>
+            ) : (
+              <span className="text-muted-foreground text-sm">—</span>
+            )}
+          </TableCell>
+        );
+      }
+
+      case "estado":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className={cn(
+              "text-xs uppercase tracking-wider",
+              venta.ESTADO === "deleted" ? "text-destructive" : "text-muted-foreground"
+            )}>
+              {venta.ESTADO ?? "—"}
+            </span>
+          </TableCell>
+        );
+
+      case "microsipFolio":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            {venta.MICROSIP_FOLIO ? (
+              <div className="flex items-center gap-1">
+                <span className="font-mono text-xs">{venta.MICROSIP_FOLIO}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                  onClick={(e) => { e.stopPropagation(); handleCopy(venta.MICROSIP_FOLIO!, "folio"); }}
+                >
+                  {copiedField === "folio" ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                </Button>
+              </div>
+            ) : (
+              <span className="text-muted-foreground text-sm">—</span>
+            )}
+          </TableCell>
+        );
+
+      case "microsipDoctoPvId":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="font-mono text-xs text-muted-foreground tabular-nums">
+              {venta.MICROSIP_DOCTO_PV_ID ?? "—"}
+            </span>
+          </TableCell>
+        );
+
+      case "microsipAplicadaAt":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {venta.MICROSIP_APLICADA_AT ? formatDate(venta.MICROSIP_APLICADA_AT) : "—"}
+            </span>
+          </TableCell>
+        );
+
+      case "montoContado":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-sm tabular-nums text-muted-foreground">
+              {venta.MONTO_CONTADO !== undefined ? formatCurrency(venta.MONTO_CONTADO) : "—"}
+            </span>
+          </TableCell>
+        );
+
+      case "plazoMeses":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-sm tabular-nums text-muted-foreground">
+              {venta.PLAZO_MESES ? `${venta.PLAZO_MESES} m` : "—"}
+            </span>
+          </TableCell>
+        );
+
+      case "clienteId":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            {venta.CLIENTE_ID ? (
+              <span className="font-mono text-xs tabular-nums">{venta.CLIENTE_ID}</span>
+            ) : (
+              <span className="inline-flex items-center rounded-full bg-chart-4/15 text-chart-4 border border-chart-4/30 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider">Nuevo</span>
+            )}
+          </TableCell>
+        );
+
+      case "aval":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-sm text-muted-foreground truncate block">{venta.AVAL_O_RESPONSABLE || "—"}</span>
+          </TableCell>
+        );
+
+      case "referencia":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-sm text-muted-foreground truncate block" title={venta.REFERENCIA}>{venta.REFERENCIA || "—"}</span>
+          </TableCell>
+        );
+
+      case "gps":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            {venta.LATITUD && venta.LONGITUD ? (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); openInMaps(); }}
+                className="font-mono text-[11px] tabular-nums text-foreground hover:underline"
+              >
+                {venta.LATITUD.toFixed(4)}, {venta.LONGITUD.toFixed(4)}
+              </button>
+            ) : (
+              <span className="text-muted-foreground text-sm">—</span>
+            )}
+          </TableCell>
+        );
+
+      case "productosCount":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="font-mono text-xs tabular-nums">{venta.PRODUCTOS_COUNT ?? 0}</span>
+          </TableCell>
+        );
+
+      case "combosCount":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="font-mono text-xs tabular-nums">{venta.COMBOS_COUNT ?? 0}</span>
+          </TableCell>
+        );
+
+      case "imagenesCount":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="font-mono text-xs tabular-nums">{venta.IMAGENES_COUNT ?? 0}</span>
+          </TableCell>
+        );
+
+      case "nota":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-sm text-muted-foreground truncate block" title={venta.NOTA}>{venta.NOTA || "—"}</span>
+          </TableCell>
+        );
+
+      case "createdAt":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-xs text-muted-foreground tabular-nums">{venta.CREATED_AT ? formatDate(venta.CREATED_AT) : "—"}</span>
+          </TableCell>
+        );
+
+      case "updatedAt":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-xs text-muted-foreground tabular-nums">{venta.UPDATED_AT ? formatDate(venta.UPDATED_AT) : "—"}</span>
+          </TableCell>
+        );
+
+      case "updatedBy":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="font-mono text-[10px] text-muted-foreground truncate block" title={venta.UPDATED_BY}>{venta.UPDATED_BY ? venta.UPDATED_BY.slice(0, 8) : "—"}</span>
+          </TableCell>
+        );
+
+      case "aprobadoAt":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-xs text-muted-foreground tabular-nums">{venta.APROBADO_AT ? formatDate(venta.APROBADO_AT) : "—"}</span>
+          </TableCell>
+        );
+
+      case "aprobadoBy":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="font-mono text-[10px] text-muted-foreground truncate block" title={venta.APROBADO_BY ?? undefined}>{venta.APROBADO_BY ? venta.APROBADO_BY.slice(0, 8) : "—"}</span>
+          </TableCell>
+        );
+
+      case "canceladoAt":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-xs text-muted-foreground tabular-nums">{venta.CANCELADO_AT ? formatDate(venta.CANCELADO_AT) : "—"}</span>
+          </TableCell>
+        );
+
+      case "canceladoBy":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="font-mono text-[10px] text-muted-foreground truncate block" title={venta.CANCELADO_BY ?? undefined}>{venta.CANCELADO_BY ? venta.CANCELADO_BY.slice(0, 8) : "—"}</span>
+          </TableCell>
+        );
+
+      case "cancelReason":
+        return (
+          <TableCell className={alignClass} style={cellStyle}>
+            <span className="text-sm text-destructive/80 truncate block" title={venta.CANCEL_REASON ?? undefined}>{venta.CANCEL_REASON || "—"}</span>
           </TableCell>
         );
 

@@ -40,6 +40,10 @@ interface VentaV2DTO {
   imagenes: ImagenV2[];
   created_at: string;
   updated_at: string;
+  created_by?: string;
+  updated_by?: string;
+  aprobacion?: { at: string; by: string } | null;
+  cancelacion?: { at: string; by: string; reason: string } | null;
 }
 
 interface ListV2Response<T> { items: T[]; next_cursor?: string }
@@ -81,6 +85,28 @@ const adaptVentaV2ToLocal = (v: VentaV2DTO): VentaLocal => {
     ZONA_CLIENTE_ID: v.direccion.zona_cliente_id ?? undefined,
     ZONA_CLIENTE: undefined,
     ENVIADO: true,
+    SITUACION: v.situacion as VentaLocal["SITUACION"],
+    SINCRONIZACION: v.sincronizacion as VentaLocal["SINCRONIZACION"],
+    ESTADO: v.estado as VentaLocal["ESTADO"],
+    MICROSIP_FOLIO: v.microsip_folio,
+    MICROSIP_DOCTO_PV_ID: v.microsip_docto_pv_id,
+    MICROSIP_APLICADA_AT: v.microsip_aplicada_at,
+    MONTO_CONTADO: numOrUndef(v.montos.contado),
+    PLAZO_MESES: v.plan_credito?.plazo_meses,
+    CLIENTE_ID: v.cliente.cliente_id,
+    REFERENCIA: v.cliente.referencia ?? undefined,
+    CREATED_AT: v.created_at,
+    UPDATED_AT: v.updated_at,
+    CREATED_BY: v.created_by,
+    UPDATED_BY: v.updated_by,
+    APROBADO_AT: v.aprobacion?.at ?? null,
+    APROBADO_BY: v.aprobacion?.by ?? null,
+    CANCELADO_AT: v.cancelacion?.at ?? null,
+    CANCELADO_BY: v.cancelacion?.by ?? null,
+    CANCEL_REASON: v.cancelacion?.reason ?? null,
+    PRODUCTOS_COUNT: v.productos.length,
+    COMBOS_COUNT: v.combos.length,
+    IMAGENES_COUNT: v.imagenes.length,
     vendedores: v.vendedores.map((ve) => ({
       LOCAL_SALE_ID: v.id,
       VENDEDOR_EMAIL: ve.email,
@@ -129,6 +155,28 @@ export interface VentaLocal {
   ZONA_CLIENTE?: string;
   ENVIADO?: boolean;
   vendedores?: VendedorVenta[];
+  SITUACION?: "borrador" | "revisada" | "aprobada" | "cancelada";
+  SINCRONIZACION?: "pendiente" | "aplicada";
+  ESTADO?: "active" | "deleted";
+  MICROSIP_FOLIO?: string | null;
+  MICROSIP_DOCTO_PV_ID?: number | null;
+  MICROSIP_APLICADA_AT?: string | null;
+  MONTO_CONTADO?: number;
+  PLAZO_MESES?: number;
+  CLIENTE_ID?: number | null;
+  REFERENCIA?: string;
+  CREATED_AT?: string;
+  UPDATED_AT?: string;
+  CREATED_BY?: string;
+  UPDATED_BY?: string;
+  APROBADO_AT?: string | null;
+  APROBADO_BY?: string | null;
+  CANCELADO_AT?: string | null;
+  CANCELADO_BY?: string | null;
+  CANCEL_REASON?: string | null;
+  PRODUCTOS_COUNT?: number;
+  COMBOS_COUNT?: number;
+  IMAGENES_COUNT?: number;
 }
 
 // ============================================================================

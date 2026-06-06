@@ -17,7 +17,31 @@ export type ColumnId =
   | "creador"
   | "almacen"
   | "diaCobranza"
-  | "fecha";
+  | "fecha"
+  | "situacion"
+  | "sincronizacion"
+  | "estado"
+  | "microsipFolio"
+  | "microsipDoctoPvId"
+  | "microsipAplicadaAt"
+  | "montoContado"
+  | "plazoMeses"
+  | "clienteId"
+  | "aval"
+  | "referencia"
+  | "gps"
+  | "productosCount"
+  | "combosCount"
+  | "imagenesCount"
+  | "nota"
+  | "createdAt"
+  | "updatedAt"
+  | "updatedBy"
+  | "aprobadoAt"
+  | "aprobadoBy"
+  | "canceladoAt"
+  | "canceladoBy"
+  | "cancelReason";
 
 export interface ColumnDef {
   id: ColumnId;
@@ -162,7 +186,40 @@ export const COLUMNS: ColumnDef[] = [
     defaultVisible: false,
     width: "w-[100px]",
   },
-];
+  // Estado del workflow
+  { id: "situacion", label: "Situación", defaultVisible: true, width: "w-[110px]" },
+  { id: "sincronizacion", label: "Sincronización", shortLabel: "Sinc.", defaultVisible: true, width: "w-[110px]" },
+  { id: "estado", label: "Estado", defaultVisible: false, width: "w-[90px]" },
+  // Microsip
+  { id: "microsipFolio", label: "Folio Microsip", shortLabel: "Folio", defaultVisible: true, width: "w-[110px]" },
+  { id: "microsipDoctoPvId", label: "Docto PV ID", defaultVisible: false, align: "right", width: "w-[110px]" },
+  { id: "microsipAplicadaAt", label: "Aplicada en", defaultVisible: false, width: "w-[150px]" },
+  // Montos / plan extra
+  { id: "montoContado", label: "Monto Contado", shortLabel: "M. Cont.", defaultVisible: false, align: "right", width: "w-[110px]" },
+  { id: "plazoMeses", label: "Plazo", defaultVisible: false, align: "right", width: "w-[70px]" },
+  // Cliente
+  { id: "clienteId", label: "Cliente ID", defaultVisible: false, align: "right", width: "w-[100px]" },
+  { id: "aval", label: "Aval", defaultVisible: false, width: "w-[140px]" },
+  { id: "referencia", label: "Referencia", defaultVisible: false, width: "w-[150px]" },
+  // Ubicación
+  { id: "gps", label: "GPS", defaultVisible: false, width: "w-[140px]" },
+  // Conteos
+  { id: "productosCount", label: "# Productos", shortLabel: "# Prod.", defaultVisible: false, align: "right", width: "w-[90px]" },
+  { id: "combosCount", label: "# Combos", defaultVisible: false, align: "right", width: "w-[90px]" },
+  { id: "imagenesCount", label: "# Imágenes", shortLabel: "# Img.", defaultVisible: false, align: "right", width: "w-[90px]" },
+  // Otros
+  { id: "nota", label: "Nota", defaultVisible: false, width: "w-[200px]" },
+  // Auditoría
+  { id: "createdAt", label: "Creada", defaultVisible: false, width: "w-[150px]" },
+  { id: "updatedAt", label: "Actualizada", defaultVisible: false, width: "w-[150px]" },
+  { id: "updatedBy", label: "Actualizada por", shortLabel: "Act. por", defaultVisible: false, width: "w-[140px]" },
+  // Aprobación / cancelación
+  { id: "aprobadoAt", label: "Aprobada en", defaultVisible: false, width: "w-[150px]" },
+  { id: "aprobadoBy", label: "Aprobada por", shortLabel: "Apr. por", defaultVisible: false, width: "w-[140px]" },
+  { id: "canceladoAt", label: "Cancelada en", defaultVisible: false, width: "w-[150px]" },
+  { id: "canceladoBy", label: "Cancelada por", shortLabel: "Canc. por", defaultVisible: false, width: "w-[140px]" },
+  { id: "cancelReason", label: "Motivo cancelación", shortLabel: "Motivo", defaultVisible: false, width: "w-[200px]" },
+] as ColumnDef[];
 
 export const DEFAULT_VISIBLE_COLUMNS: ColumnId[] = COLUMNS
   .filter((col) => col.defaultVisible)
@@ -222,6 +279,30 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ColumnId, number> = {
   almacen: 130,
   diaCobranza: 100,
   fecha: 150,
+  situacion: 110,
+  sincronizacion: 110,
+  estado: 90,
+  microsipFolio: 110,
+  microsipDoctoPvId: 110,
+  microsipAplicadaAt: 150,
+  montoContado: 110,
+  plazoMeses: 70,
+  clienteId: 100,
+  aval: 140,
+  referencia: 150,
+  gps: 140,
+  productosCount: 90,
+  combosCount: 90,
+  imagenesCount: 90,
+  nota: 200,
+  createdAt: 150,
+  updatedAt: 150,
+  updatedBy: 140,
+  aprobadoAt: 150,
+  aprobadoBy: 140,
+  canceladoAt: 150,
+  canceladoBy: 140,
+  cancelReason: 200,
 };
 
 export type ColumnWidths = Record<ColumnId, number>;
