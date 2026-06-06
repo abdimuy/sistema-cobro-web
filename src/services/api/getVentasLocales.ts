@@ -214,6 +214,7 @@ export interface VentasParams {
   sortOrder?: "asc" | "desc";
   // Options
   includeTotal?: boolean;
+  incluirCanceladas?: boolean;
 }
 
 export interface VentasPagination {
@@ -296,6 +297,7 @@ export const getVentasLocales = async (
   if (params?.fechaInicio) goParams.desde = params.fechaInicio;
   if (params?.fechaFin) goParams.hasta = params.fechaFin;
   if (params?.tipoVenta) goParams.tipo_venta = params.tipoVenta;
+  if (params?.incluirCanceladas) goParams.incluir_canceladas = true;
   if (params?.cursor) goParams.cursor = params.cursor;
   if (params?.limit) goParams.limit = params.limit;
 

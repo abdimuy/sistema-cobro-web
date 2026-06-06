@@ -100,6 +100,21 @@ export function VentasViewSwitcher({
             <span className="font-medium">
               {activeView?.name ?? "Vista sin nombre"}
             </span>
+            {activeView?.filters?.situacion?.length === 1 && (
+              <span className="ml-1.5 inline-flex items-center rounded-full bg-muted/40 px-1.5 py-0 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+                {activeView.filters.situacion[0]}
+              </span>
+            )}
+            {activeView?.filters?.sincronizacion?.length === 1 && (
+              <span className="ml-1.5 inline-flex items-center rounded-full bg-muted/40 px-1.5 py-0 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+                {activeView.filters.sincronizacion[0]}
+              </span>
+            )}
+            {activeView?.filters?.tipoVenta && (
+              <span className="ml-1.5 inline-flex items-center rounded-full bg-muted/40 px-1.5 py-0 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+                {activeView.filters.tipoVenta}
+              </span>
+            )}
             {hasUnsavedChanges && (
               <span
                 className="ml-0.5 inline-block h-1.5 w-1.5 rounded-full bg-chart-4/70 flex-shrink-0"
