@@ -1,3 +1,28 @@
+export type ColumnGroup =
+  | "Estado"
+  | "Identificación"
+  | "Cliente"
+  | "Ubicación"
+  | "Plan"
+  | "Montos"
+  | "Microsip"
+  | "Conteos"
+  | "Auditoría"
+  | "Otros";
+
+export const COLUMN_GROUPS: ColumnGroup[] = [
+  "Estado",
+  "Identificación",
+  "Cliente",
+  "Ubicación",
+  "Plan",
+  "Montos",
+  "Microsip",
+  "Conteos",
+  "Auditoría",
+  "Otros",
+];
+
 export type ColumnId =
   | "id"
   | "cliente"
@@ -52,6 +77,7 @@ export interface ColumnDef {
   sortKey?: string;
   align?: "left" | "right" | "center";
   width?: string;
+  group?: ColumnGroup;
 }
 
 export const COLUMNS: ColumnDef[] = [
@@ -60,6 +86,7 @@ export const COLUMNS: ColumnDef[] = [
     label: "ID",
     defaultVisible: true,
     width: "w-[90px]",
+    group: "Identificación",
   },
   {
     id: "fecha",
@@ -68,6 +95,7 @@ export const COLUMNS: ColumnDef[] = [
     sortable: true,
     sortKey: "fechaVenta",
     width: "w-[150px]",
+    group: "Identificación",
   },
   {
     id: "cliente",
@@ -76,24 +104,28 @@ export const COLUMNS: ColumnDef[] = [
     sortable: true,
     sortKey: "nombreCliente",
     width: "min-w-[180px]",
+    group: "Cliente",
   },
   {
     id: "telefono",
     label: "Teléfono",
     defaultVisible: true,
     width: "w-[100px]",
+    group: "Cliente",
   },
   {
     id: "direccion",
     label: "Dirección",
     defaultVisible: false,
     width: "min-w-[200px]",
+    group: "Ubicación",
   },
   {
     id: "colonia",
     label: "Colonia",
     defaultVisible: false,
     width: "w-[120px]",
+    group: "Ubicación",
   },
   {
     id: "ciudad",
@@ -102,12 +134,14 @@ export const COLUMNS: ColumnDef[] = [
     sortable: true,
     sortKey: "ciudad",
     width: "w-[130px]",
+    group: "Ubicación",
   },
   {
     id: "poblacion",
     label: "Población",
     defaultVisible: false,
     width: "w-[120px]",
+    group: "Ubicación",
   },
   {
     id: "total",
@@ -117,6 +151,7 @@ export const COLUMNS: ColumnDef[] = [
     sortKey: "precioTotal",
     align: "right",
     width: "w-[110px]",
+    group: "Montos",
   },
   {
     id: "montoCorto",
@@ -125,6 +160,7 @@ export const COLUMNS: ColumnDef[] = [
     defaultVisible: true,
     align: "right",
     width: "w-[110px]",
+    group: "Montos",
   },
   {
     id: "enganche",
@@ -132,6 +168,7 @@ export const COLUMNS: ColumnDef[] = [
     defaultVisible: false,
     align: "right",
     width: "w-[100px]",
+    group: "Montos",
   },
   {
     id: "parcialidad",
@@ -139,6 +176,7 @@ export const COLUMNS: ColumnDef[] = [
     defaultVisible: false,
     align: "right",
     width: "w-[100px]",
+    group: "Montos",
   },
   {
     id: "tipo",
@@ -147,6 +185,7 @@ export const COLUMNS: ColumnDef[] = [
     sortable: true,
     sortKey: "tipoVenta",
     width: "w-[90px]",
+    group: "Plan",
   },
   {
     id: "frecuencia",
@@ -154,30 +193,35 @@ export const COLUMNS: ColumnDef[] = [
     shortLabel: "Frec.",
     defaultVisible: true,
     width: "w-[90px]",
+    group: "Plan",
   },
   {
     id: "zona",
     label: "Zona",
     defaultVisible: true,
     width: "w-[70px]",
+    group: "Ubicación",
   },
   {
     id: "vendedor",
     label: "Vendedor",
     defaultVisible: false,
     width: "w-[140px]",
+    group: "Otros",
   },
   {
     id: "creador",
     label: "Creador",
     defaultVisible: false,
     width: "w-[140px]",
+    group: "Otros",
   },
   {
     id: "almacen",
     label: "Almacén",
     defaultVisible: false,
     width: "w-[130px]",
+    group: "Otros",
   },
   {
     id: "diaCobranza",
@@ -185,40 +229,41 @@ export const COLUMNS: ColumnDef[] = [
     shortLabel: "Día Cob.",
     defaultVisible: false,
     width: "w-[100px]",
+    group: "Plan",
   },
   // Estado del workflow
-  { id: "situacion", label: "Situación", defaultVisible: true, width: "w-[110px]" },
-  { id: "sincronizacion", label: "Sincronización", shortLabel: "Sinc.", defaultVisible: true, width: "w-[110px]" },
-  { id: "estado", label: "Estado", defaultVisible: false, width: "w-[90px]" },
+  { id: "situacion", label: "Situación", defaultVisible: true, width: "w-[110px]", group: "Estado" as ColumnGroup },
+  { id: "sincronizacion", label: "Sincronización", shortLabel: "Sinc.", defaultVisible: true, width: "w-[110px]", group: "Estado" as ColumnGroup },
+  { id: "estado", label: "Estado", defaultVisible: false, width: "w-[90px]", group: "Estado" as ColumnGroup },
   // Microsip
-  { id: "microsipFolio", label: "Folio Microsip", shortLabel: "Folio", defaultVisible: true, width: "w-[110px]" },
-  { id: "microsipDoctoPvId", label: "Docto PV ID", defaultVisible: false, align: "right", width: "w-[110px]" },
-  { id: "microsipAplicadaAt", label: "Aplicada en", defaultVisible: false, width: "w-[150px]" },
+  { id: "microsipFolio", label: "Folio Microsip", shortLabel: "Folio", defaultVisible: true, width: "w-[110px]", group: "Microsip" as ColumnGroup },
+  { id: "microsipDoctoPvId", label: "Docto PV ID", defaultVisible: false, align: "right" as const, width: "w-[110px]", group: "Microsip" as ColumnGroup },
+  { id: "microsipAplicadaAt", label: "Aplicada en", defaultVisible: false, width: "w-[150px]", group: "Microsip" as ColumnGroup },
   // Montos / plan extra
-  { id: "montoContado", label: "Monto Contado", shortLabel: "M. Cont.", defaultVisible: false, align: "right", width: "w-[110px]" },
-  { id: "plazoMeses", label: "Plazo", defaultVisible: false, align: "right", width: "w-[70px]" },
+  { id: "montoContado", label: "Monto Contado", shortLabel: "M. Cont.", defaultVisible: false, align: "right" as const, width: "w-[110px]", group: "Montos" as ColumnGroup },
+  { id: "plazoMeses", label: "Plazo", defaultVisible: false, align: "right" as const, width: "w-[70px]", group: "Plan" as ColumnGroup },
   // Cliente
-  { id: "clienteId", label: "Cliente ID", defaultVisible: false, align: "right", width: "w-[100px]" },
-  { id: "aval", label: "Aval", defaultVisible: false, width: "w-[140px]" },
-  { id: "referencia", label: "Referencia", defaultVisible: false, width: "w-[150px]" },
+  { id: "clienteId", label: "Cliente ID", defaultVisible: false, align: "right" as const, width: "w-[100px]", group: "Identificación" as ColumnGroup },
+  { id: "aval", label: "Aval", defaultVisible: false, width: "w-[140px]", group: "Cliente" as ColumnGroup },
+  { id: "referencia", label: "Referencia", defaultVisible: false, width: "w-[150px]", group: "Cliente" as ColumnGroup },
   // Ubicación
-  { id: "gps", label: "GPS", defaultVisible: false, width: "w-[140px]" },
+  { id: "gps", label: "GPS", defaultVisible: false, width: "w-[140px]", group: "Ubicación" as ColumnGroup },
   // Conteos
-  { id: "productosCount", label: "# Productos", shortLabel: "# Prod.", defaultVisible: false, align: "right", width: "w-[90px]" },
-  { id: "combosCount", label: "# Combos", defaultVisible: false, align: "right", width: "w-[90px]" },
-  { id: "imagenesCount", label: "# Imágenes", shortLabel: "# Img.", defaultVisible: false, align: "right", width: "w-[90px]" },
+  { id: "productosCount", label: "# Productos", shortLabel: "# Prod.", defaultVisible: false, align: "right" as const, width: "w-[90px]", group: "Conteos" as ColumnGroup },
+  { id: "combosCount", label: "# Combos", defaultVisible: false, align: "right" as const, width: "w-[90px]", group: "Conteos" as ColumnGroup },
+  { id: "imagenesCount", label: "# Imágenes", shortLabel: "# Img.", defaultVisible: false, align: "right" as const, width: "w-[90px]", group: "Conteos" as ColumnGroup },
   // Otros
-  { id: "nota", label: "Nota", defaultVisible: false, width: "w-[200px]" },
+  { id: "nota", label: "Nota", defaultVisible: false, width: "w-[200px]", group: "Otros" as ColumnGroup },
   // Auditoría
-  { id: "createdAt", label: "Creada", defaultVisible: false, width: "w-[150px]" },
-  { id: "updatedAt", label: "Actualizada", defaultVisible: false, width: "w-[150px]" },
-  { id: "updatedBy", label: "Actualizada por", shortLabel: "Act. por", defaultVisible: false, width: "w-[140px]" },
+  { id: "createdAt", label: "Creada", defaultVisible: false, width: "w-[150px]", group: "Auditoría" as ColumnGroup },
+  { id: "updatedAt", label: "Actualizada", defaultVisible: false, width: "w-[150px]", group: "Auditoría" as ColumnGroup },
+  { id: "updatedBy", label: "Actualizada por", shortLabel: "Act. por", defaultVisible: false, width: "w-[140px]", group: "Auditoría" as ColumnGroup },
   // Aprobación / cancelación
-  { id: "aprobadoAt", label: "Aprobada en", defaultVisible: false, width: "w-[150px]" },
-  { id: "aprobadoBy", label: "Aprobada por", shortLabel: "Apr. por", defaultVisible: false, width: "w-[140px]" },
-  { id: "canceladoAt", label: "Cancelada en", defaultVisible: false, width: "w-[150px]" },
-  { id: "canceladoBy", label: "Cancelada por", shortLabel: "Canc. por", defaultVisible: false, width: "w-[140px]" },
-  { id: "cancelReason", label: "Motivo cancelación", shortLabel: "Motivo", defaultVisible: false, width: "w-[200px]" },
+  { id: "aprobadoAt", label: "Aprobada en", defaultVisible: false, width: "w-[150px]", group: "Auditoría" as ColumnGroup },
+  { id: "aprobadoBy", label: "Aprobada por", shortLabel: "Apr. por", defaultVisible: false, width: "w-[140px]", group: "Auditoría" as ColumnGroup },
+  { id: "canceladoAt", label: "Cancelada en", defaultVisible: false, width: "w-[150px]", group: "Auditoría" as ColumnGroup },
+  { id: "canceladoBy", label: "Cancelada por", shortLabel: "Canc. por", defaultVisible: false, width: "w-[140px]", group: "Auditoría" as ColumnGroup },
+  { id: "cancelReason", label: "Motivo cancelación", shortLabel: "Motivo", defaultVisible: false, width: "w-[200px]", group: "Auditoría" as ColumnGroup },
 ] as ColumnDef[];
 
 export const DEFAULT_VISIBLE_COLUMNS: ColumnId[] = COLUMNS
