@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 
@@ -33,6 +34,15 @@ import {
   MAX_PINNED,
 } from "./components/columns";
 import { VentasDensityToggle } from "./components/VentasDensityToggle";
+import {
+  VentaView,
+  PRESET_VIEWS,
+  loadCustomViews,
+  saveCustomViews,
+  loadActiveViewId,
+  saveActiveViewId,
+} from "./components/views";
+import { VentasViewSwitcher } from "./components/VentasViewSwitcher";
 
 export default function VentasLocales() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -66,6 +76,10 @@ export default function VentasLocales() {
   // Pinned columns state
   const [pinnedColumns, setPinnedColumns] = useState<ColumnId[]>(loadPinnedColumns);
 
+  // Saved views state
+  const [customViews, setCustomViews] = useState<VentaView[]>(loadCustomViews);
+  const [activeViewId, setActiveViewIdState] = useState<string | null>(loadActiveViewId);
+
   // Save column preferences when they change
   useEffect(() => {
     saveVisibleColumns(visibleColumns);
@@ -82,6 +96,14 @@ export default function VentasLocales() {
   useEffect(() => {
     savePinnedColumns(pinnedColumns);
   }, [pinnedColumns]);
+
+  useEffect(() => {
+    saveCustomViews(customViews);
+  }, [customViews]);
+
+  useEffect(() => {
+    saveActiveViewId(activeViewId);
+  }, [activeViewId]);
 
   // Data hooks
   const {
@@ -153,6 +175,77 @@ export default function VentasLocales() {
     });
   }, []);
 
+  // Views derived state
+  const allViews = useMemo(
+    () => [...PRESET_VIEWS, ...customViews],
+    [customViews]
+  );
+  const activeView = useMemo(
+    () => allViews.find((v) => v.id === activeViewId) ?? null,
+    [allViews, activeViewId]
+  );
+  const hasUnsavedChanges = useMemo(() => {
+    if (!activeView) return false;
+    const colsChanged =
+      JSON.stringify(visibleColumns) !==
+      JSON.stringify(activeView.visibleColumns);
+    const pinnedChanged =
+      JSON.stringify(pinnedColumns) !==
+      JSON.stringify(activeView.pinnedColumns);
+    const densityChanged = density !== activeView.density;
+    return colsChanged || pinnedChanged || densityChanged;
+  }, [activeView, visibleColumns, pinnedColumns, density]);
+
+  const handleSelectView = useCallback(
+    (id: string) => {
+      const v = allViews.find((x) => x.id === id);
+      if (!v) return;
+      setVisibleColumns([...v.visibleColumns]);
+      setPinnedColumns([...v.pinnedColumns]);
+      setDensity(v.density);
+      if (Object.keys(v.columnWidths).length > 0) {
+        setColumnWidths((prev) => ({ ...prev, ...v.columnWidths }));
+      }
+      setActiveViewIdState(id);
+    },
+    [allViews]
+  );
+
+  const handleSaveAsNew = useCallback(
+    (name: string) => {
+      const newView: VentaView = {
+        id: crypto.randomUUID(),
+        name,
+        visibleColumns: [...visibleColumns],
+        pinnedColumns: [...pinnedColumns],
+        columnWidths: { ...columnWidths },
+        density,
+      };
+      setCustomViews((prev) => [...prev, newView]);
+      setActiveViewIdState(newView.id);
+      toast.success(`Vista "${name}" guardada`);
+    },
+    [visibleColumns, pinnedColumns, columnWidths, density]
+  );
+
+  const handleDeleteView = useCallback(
+    (id: string) => {
+      setCustomViews((prev) => prev.filter((v) => v.id !== id));
+      if (activeViewId === id) setActiveViewIdState(null);
+    },
+    [activeViewId]
+  );
+
+  const handleRenameView = useCallback((id: string, newName: string) => {
+    setCustomViews((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, name: newName } : v))
+    );
+  }, []);
+
+  const handleResetToView = useCallback(() => {
+    if (activeView) handleSelectView(activeView.id);
+  }, [activeView, handleSelectView]);
+
   // Check if any filters are applied
   const hasFilters = useMemo(() => {
     return !!(
@@ -200,6 +293,16 @@ export default function VentasLocales() {
               className="flex-1 min-w-0"
             />
             <div className="flex items-center gap-2 flex-shrink-0">
+              <VentasViewSwitcher
+                activeViewId={activeViewId}
+                views={allViews}
+                hasUnsavedChanges={hasUnsavedChanges}
+                onSelectView={handleSelectView}
+                onSaveAsNew={handleSaveAsNew}
+                onDeleteView={handleDeleteView}
+                onRenameView={handleRenameView}
+                onResetToView={handleResetToView}
+              />
               <VentasFilters
                 params={params}
                 onParamsChange={setParams}
