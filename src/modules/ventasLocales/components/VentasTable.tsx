@@ -51,21 +51,21 @@ function SortableHeader({
       variant="ghost"
       size="sm"
       className={cn(
-        "-ml-3 h-8 text-xs font-medium text-muted-foreground hover:text-foreground",
+        "-ml-3 h-8 min-w-0 max-w-full text-xs font-medium text-muted-foreground hover:text-foreground",
         isActive && "text-foreground",
         align === "right" && "ml-auto -mr-3"
       )}
       onClick={() => onSort(sortKey as VentasParams["sortBy"])}
     >
-      {label}
+      <span className="truncate">{label}</span>
       {isActive ? (
         currentOrder === "asc" ? (
-          <ArrowUp className="ml-1.5 h-3 w-3" />
+          <ArrowUp className="ml-1.5 h-3 w-3 flex-shrink-0" />
         ) : (
-          <ArrowDown className="ml-1.5 h-3 w-3" />
+          <ArrowDown className="ml-1.5 h-3 w-3 flex-shrink-0" />
         )
       ) : (
-        <ArrowUpDown className="ml-1.5 h-3 w-3 opacity-50" />
+        <ArrowUpDown className="ml-1.5 h-3 w-3 flex-shrink-0 opacity-50" />
       )}
     </Button>
   );
@@ -201,7 +201,7 @@ export function VentasTable({
     const colDef = COLUMNS.find((c) => c.id === columnId);
     if (!colDef) return null;
 
-    const label = colDef.shortLabel || colDef.label;
+    const label = colDef.label;
     const width = columnWidths[columnId];
     const isPinned = pinnedColumns.includes(columnId);
     const isLastPinned =
@@ -228,7 +228,12 @@ export function VentasTable({
 
     if (colDef.sortable && colDef.sortKey) {
       return (
-        <TableHead key={columnId} className={extraClass} style={stickyStyle}>
+        <TableHead
+          key={columnId}
+          className={extraClass}
+          style={stickyStyle}
+          title={label}
+        >
           <SortableHeader
             label={label}
             sortKey={colDef.sortKey}
@@ -247,8 +252,9 @@ export function VentasTable({
         key={columnId}
         className={cn(extraClass, colDef.align === "right" && "text-right")}
         style={stickyStyle}
+        title={label}
       >
-        <span className="text-xs font-medium text-muted-foreground">
+        <span className="block truncate text-xs font-medium text-muted-foreground">
           {label}
         </span>
         <ResizeHandle columnId={columnId} onResize={onColumnResize} />

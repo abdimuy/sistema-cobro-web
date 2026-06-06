@@ -71,7 +71,6 @@ export type ColumnId =
 export interface ColumnDef {
   id: ColumnId;
   label: string;
-  shortLabel?: string;
   defaultVisible: boolean;
   sortable?: boolean;
   sortKey?: string;
@@ -155,8 +154,7 @@ export const COLUMNS: ColumnDef[] = [
   },
   {
     id: "montoCorto",
-    label: "Monto C.P.",
-    shortLabel: "M. C.P.",
+    label: "Corto plazo",
     defaultVisible: true,
     align: "right",
     width: "w-[110px]",
@@ -190,9 +188,8 @@ export const COLUMNS: ColumnDef[] = [
   {
     id: "frecuencia",
     label: "Frecuencia",
-    shortLabel: "Frec.",
     defaultVisible: true,
-    width: "w-[90px]",
+    width: "w-[110px]",
     group: "Plan",
   },
   {
@@ -225,22 +222,21 @@ export const COLUMNS: ColumnDef[] = [
   },
   {
     id: "diaCobranza",
-    label: "Día Cobranza",
-    shortLabel: "Día Cob.",
+    label: "Día cobranza",
     defaultVisible: false,
-    width: "w-[100px]",
+    width: "w-[120px]",
     group: "Plan",
   },
   // Estado del workflow
   { id: "situacion", label: "Situación", defaultVisible: true, width: "w-[110px]", group: "Estado" as ColumnGroup },
-  { id: "sincronizacion", label: "Sincronización", shortLabel: "Sinc.", defaultVisible: true, width: "w-[110px]", group: "Estado" as ColumnGroup },
+  { id: "sincronizacion", label: "Sincronización", defaultVisible: true, width: "w-[130px]", group: "Estado" as ColumnGroup },
   { id: "estado", label: "Estado", defaultVisible: false, width: "w-[90px]", group: "Estado" as ColumnGroup },
   // Microsip
-  { id: "microsipFolio", label: "Folio Microsip", shortLabel: "Folio", defaultVisible: true, width: "w-[110px]", group: "Microsip" as ColumnGroup },
+  { id: "microsipFolio", label: "Folio Microsip", defaultVisible: true, width: "w-[130px]", group: "Microsip" as ColumnGroup },
   { id: "microsipDoctoPvId", label: "Docto PV ID", defaultVisible: false, align: "right" as const, width: "w-[110px]", group: "Microsip" as ColumnGroup },
   { id: "microsipAplicadaAt", label: "Aplicada en", defaultVisible: false, width: "w-[150px]", group: "Microsip" as ColumnGroup },
   // Montos / plan extra
-  { id: "montoContado", label: "Monto Contado", shortLabel: "M. Cont.", defaultVisible: false, align: "right" as const, width: "w-[110px]", group: "Montos" as ColumnGroup },
+  { id: "montoContado", label: "Contado", defaultVisible: false, align: "right" as const, width: "w-[110px]", group: "Montos" as ColumnGroup },
   { id: "plazoMeses", label: "Plazo", defaultVisible: false, align: "right" as const, width: "w-[70px]", group: "Plan" as ColumnGroup },
   // Cliente
   { id: "clienteId", label: "Cliente ID", defaultVisible: false, align: "right" as const, width: "w-[100px]", group: "Identificación" as ColumnGroup },
@@ -249,21 +245,21 @@ export const COLUMNS: ColumnDef[] = [
   // Ubicación
   { id: "gps", label: "GPS", defaultVisible: false, width: "w-[140px]", group: "Ubicación" as ColumnGroup },
   // Conteos
-  { id: "productosCount", label: "# Productos", shortLabel: "# Prod.", defaultVisible: false, align: "right" as const, width: "w-[90px]", group: "Conteos" as ColumnGroup },
-  { id: "combosCount", label: "# Combos", defaultVisible: false, align: "right" as const, width: "w-[90px]", group: "Conteos" as ColumnGroup },
-  { id: "imagenesCount", label: "# Imágenes", shortLabel: "# Img.", defaultVisible: false, align: "right" as const, width: "w-[90px]", group: "Conteos" as ColumnGroup },
+  { id: "productosCount", label: "Productos", defaultVisible: false, align: "right" as const, width: "w-[100px]", group: "Conteos" as ColumnGroup },
+  { id: "combosCount", label: "Combos", defaultVisible: false, align: "right" as const, width: "w-[100px]", group: "Conteos" as ColumnGroup },
+  { id: "imagenesCount", label: "Imágenes", defaultVisible: false, align: "right" as const, width: "w-[100px]", group: "Conteos" as ColumnGroup },
   // Otros
   { id: "nota", label: "Nota", defaultVisible: false, width: "w-[200px]", group: "Otros" as ColumnGroup },
   // Auditoría
   { id: "createdAt", label: "Creada", defaultVisible: false, width: "w-[150px]", group: "Auditoría" as ColumnGroup },
   { id: "updatedAt", label: "Actualizada", defaultVisible: false, width: "w-[150px]", group: "Auditoría" as ColumnGroup },
-  { id: "updatedBy", label: "Actualizada por", shortLabel: "Act. por", defaultVisible: false, width: "w-[140px]", group: "Auditoría" as ColumnGroup },
+  { id: "updatedBy", label: "Actualizada por", defaultVisible: false, width: "w-[150px]", group: "Auditoría" as ColumnGroup },
   // Aprobación / cancelación
   { id: "aprobadoAt", label: "Aprobada en", defaultVisible: false, width: "w-[150px]", group: "Auditoría" as ColumnGroup },
-  { id: "aprobadoBy", label: "Aprobada por", shortLabel: "Apr. por", defaultVisible: false, width: "w-[140px]", group: "Auditoría" as ColumnGroup },
+  { id: "aprobadoBy", label: "Aprobada por", defaultVisible: false, width: "w-[140px]", group: "Auditoría" as ColumnGroup },
   { id: "canceladoAt", label: "Cancelada en", defaultVisible: false, width: "w-[150px]", group: "Auditoría" as ColumnGroup },
-  { id: "canceladoBy", label: "Cancelada por", shortLabel: "Canc. por", defaultVisible: false, width: "w-[140px]", group: "Auditoría" as ColumnGroup },
-  { id: "cancelReason", label: "Motivo cancelación", shortLabel: "Motivo", defaultVisible: false, width: "w-[200px]", group: "Auditoría" as ColumnGroup },
+  { id: "canceladoBy", label: "Cancelada por", defaultVisible: false, width: "w-[150px]", group: "Auditoría" as ColumnGroup },
+  { id: "cancelReason", label: "Motivo cancelación", defaultVisible: false, width: "w-[200px]", group: "Auditoría" as ColumnGroup },
 ] as ColumnDef[];
 
 export const DEFAULT_VISIBLE_COLUMNS: ColumnId[] = COLUMNS
@@ -315,17 +311,17 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ColumnId, number> = {
   enganche: 100,
   parcialidad: 100,
   tipo: 90,
-  frecuencia: 90,
+  frecuencia: 110,
   zona: 70,
   vendedor: 140,
   creador: 140,
   almacen: 130,
-  diaCobranza: 100,
+  diaCobranza: 120,
   fecha: 150,
   situacion: 110,
-  sincronizacion: 110,
+  sincronizacion: 130,
   estado: 90,
-  microsipFolio: 110,
+  microsipFolio: 130,
   microsipDoctoPvId: 110,
   microsipAplicadaAt: 150,
   montoContado: 110,
@@ -334,17 +330,17 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ColumnId, number> = {
   aval: 140,
   referencia: 150,
   gps: 140,
-  productosCount: 90,
-  combosCount: 90,
-  imagenesCount: 90,
+  productosCount: 100,
+  combosCount: 100,
+  imagenesCount: 100,
   nota: 200,
   createdAt: 150,
   updatedAt: 150,
-  updatedBy: 140,
+  updatedBy: 150,
   aprobadoAt: 150,
   aprobadoBy: 140,
   canceladoAt: 150,
-  canceladoBy: 140,
+  canceladoBy: 150,
   cancelReason: 200,
 };
 
