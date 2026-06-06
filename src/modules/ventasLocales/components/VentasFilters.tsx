@@ -8,6 +8,8 @@ import {
   X,
   ChevronDown,
   Users,
+  Tag,
+  RefreshCw,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -59,6 +61,8 @@ export function VentasFilters({
     params.fechaInicio,
     params.fechaFin,
     params.tipoVenta,
+    params.situacion,
+    params.sincronizacion,
     params.almacenId,
     params.zonaClienteId,
     params.vendedorEmails,
@@ -71,6 +75,8 @@ export function VentasFilters({
       fechaInicio: undefined,
       fechaFin: undefined,
       tipoVenta: undefined,
+      situacion: undefined,
+      sincronizacion: undefined,
       almacenId: undefined,
       zonaClienteId: undefined,
       vendedorEmails: undefined,
@@ -211,6 +217,62 @@ export function VentasFilters({
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="CONTADO">Contado</SelectItem>
                   <SelectItem value="CREDITO">Crédito</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Situación */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Tag className="h-3 w-3" />
+                Situación
+              </Label>
+              <Select
+                value={params.situacion || "all"}
+                onValueChange={(v) =>
+                  onParamsChange({
+                    situacion:
+                      v === "all"
+                        ? undefined
+                        : (v as "borrador" | "revisada" | "aprobada" | "cancelada"),
+                  })
+                }
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="borrador">Borrador</SelectItem>
+                  <SelectItem value="revisada">Revisada</SelectItem>
+                  <SelectItem value="aprobada">Aprobada</SelectItem>
+                  <SelectItem value="cancelada">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Sincronización */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <RefreshCw className="h-3 w-3" />
+                Sincronización
+              </Label>
+              <Select
+                value={params.sincronizacion || "all"}
+                onValueChange={(v) =>
+                  onParamsChange({
+                    sincronizacion:
+                      v === "all" ? undefined : (v as "pendiente" | "aplicada"),
+                  })
+                }
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="pendiente">Pendiente</SelectItem>
+                  <SelectItem value="aplicada">Aplicada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
