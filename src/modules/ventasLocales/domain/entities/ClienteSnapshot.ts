@@ -19,8 +19,10 @@ export class ClienteSnapshot {
     aval: string | null;
     referencia: string | null;
   }): ClienteSnapshot {
-    const aval = input.aval !== null ? input.aval.trim() : null;
-    let referencia = input.referencia !== null ? input.referencia.trim() : null;
+    // `!= null` (loose) so undefined is treated as null. The mapper is supposed
+    // to normalize, but the VO is the last line of defense.
+    const aval = input.aval != null ? input.aval.trim() : null;
+    let referencia = input.referencia != null ? input.referencia.trim() : null;
     // Silently truncate referencia to max length — caller may pass raw backend data
     if (referencia !== null && referencia.length > REFERENCIA_MAX_LEN) {
       referencia = referencia.slice(0, REFERENCIA_MAX_LEN);

@@ -24,7 +24,7 @@ export class Direccion {
     }
     return new Direccion(
       calle,
-      input.numeroExterior !== null ? input.numeroExterior.trim() : null,
+      input.numeroExterior != null ? input.numeroExterior.trim() : null,
       input.colonia.trim(),
       input.poblacion.trim(),
       input.ciudad.trim(),

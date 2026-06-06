@@ -44,14 +44,16 @@ function unwrap<T>(v: T | DomainError, ctx: string): T {
 }
 
 function mapDireccion(dto: DireccionV2): Direccion {
+  // Backend `omitempty` for nullable pointer fields means absent keys arrive
+  // as `undefined`, not `null`. Normalize before handing to the VO factories.
   return unwrap(
     Direccion.create({
       calle: dto.calle,
-      numeroExterior: dto.numero_exterior,
+      numeroExterior: dto.numero_exterior ?? null,
       colonia: dto.colonia,
       poblacion: dto.poblacion,
       ciudad: dto.ciudad,
-      zonaClienteID: dto.zona_cliente_id,
+      zonaClienteID: dto.zona_cliente_id ?? null,
     }),
     "direccion",
   );
@@ -84,29 +86,34 @@ function mapPlanCredito(dto: PlanCreditoV2): PlanCredito {
 }
 
 function mapDiaCobranza(dto: DiaCobranzaV2): DiaCobranza | null {
-  // Both null — no dia_cobranza set yet; treat as null (not an error).
-  if (dto.semana === null && dto.mes === null) {
+  // Normalize undefined → null (Go `omitempty` drops the keys entirely).
+  const semana = dto.semana ?? null;
+  const mes = dto.mes ?? null;
+  if (semana === null && mes === null) {
     return null;
   }
-  if (dto.semana !== null) {
-    return unwrap(DiaCobranza.semana(dto.semana), "dia_cobranza.semana");
+  if (semana !== null) {
+    return unwrap(DiaCobranza.semana(semana), "dia_cobranza.semana");
   }
-  // dto.mes is non-null here
-  return unwrap(DiaCobranza.mes(dto.mes!), "dia_cobranza.mes");
+  return unwrap(DiaCobranza.mes(mes!), "dia_cobranza.mes");
 }
 
 function mapCliente(dto: ClienteSnapshotV2): ClienteSnapshot {
   const nombre = unwrap(NombreCliente.create(dto.nombre), "cliente.nombre");
+  // Normalize undefined → null for every nullable pointer field. Go's
+  // `omitempty` drops null pointers from the JSON entirely, so the runtime
+  // value is `undefined` even when the static type says `string | null`.
+  const telefonoRaw = dto.telefono ?? null;
   let telefono = null;
-  if (dto.telefono !== null && dto.telefono.trim() !== "") {
-    telefono = unwrap(Telefono.create(dto.telefono), "cliente.telefono");
+  if (telefonoRaw !== null && telefonoRaw.trim() !== "") {
+    telefono = unwrap(Telefono.create(telefonoRaw), "cliente.telefono");
   }
   return ClienteSnapshot.create({
-    clienteID: dto.cliente_id,
+    clienteID: dto.cliente_id ?? null,
     nombre,
     telefono,
-    aval: dto.aval,
-    referencia: dto.referencia,
+    aval: dto.aval ?? null,
+    referencia: dto.referencia ?? null,
   });
 }
 
@@ -118,11 +125,19 @@ function mapProducto(dto: ProductoV2): Producto {
 
   let almacenes: AlmacenesPair | null = null;
   const comboID = dto.combo_id ?? null;
+  const almacenOrigen = dto.almacen_origen_id ?? null;
+  const almacenDestino = dto.almacen_destino_id ?? null;
 
   if (comboID === null) {
     // Not in a combo — must have almacenes
+    if (almacenOrigen === null || almacenDestino === null) {
+      throw new DomainError(
+        "producto_almacenes_requeridos",
+        `producto[${dto.id}]: un producto fuera de combo requiere almacen_origen_id y almacen_destino_id`,
+      );
+    }
     almacenes = unwrap(
-      AlmacenesPair.create(dto.almacen_origen_id!, dto.almacen_destino_id!),
+      AlmacenesPair.create(almacenOrigen, almacenDestino),
       `producto[${dto.id}].almacenes`,
     );
   }
@@ -171,7 +186,7 @@ export function imagenV2ToDomain(dto: ImagenV2): ImagenExistente {
     storageKey: dto.storage_key,
     mime: dto.mime,
     sizeBytes: dto.size_bytes,
-    descripcion: dto.descripcion,
+    descripcion: dto.descripcion ?? null,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at,
     createdBy: dto.created_by,
@@ -184,8 +199,8 @@ export function ventaV2ToDomain(dto: VentaV2): Venta {
   const direccion = mapDireccion(dto.direccion);
   const gps = mapGPS(dto.gps);
   const montos = mapMontos(dto.montos);
-  const planCredito = dto.plan_credito !== null ? mapPlanCredito(dto.plan_credito) : null;
-  const diaCobranza = dto.dia_cobranza !== null ? mapDiaCobranza(dto.dia_cobranza) : null;
+  const planCredito = dto.plan_credito != null ? mapPlanCredito(dto.plan_credito) : null;
+  const diaCobranza = dto.dia_cobranza != null ? mapDiaCobranza(dto.dia_cobranza) : null;
   const combos = dto.combos.map(mapCombo);
   const productos = dto.productos.map(mapProducto);
   const vendedores = dto.vendedores.map(mapVendedor);
@@ -204,14 +219,14 @@ export function ventaV2ToDomain(dto: VentaV2): Venta {
     montos,
     planCredito,
     diaCobranza,
-    nota: dto.nota,
+    nota: dto.nota ?? null,
     combos,
     productos,
     vendedores,
     imagenes,
-    microsipFolio: dto.microsip_folio,
-    microsipDoctoPVID: dto.microsip_docto_pv_id,
-    microsipAplicadaAt: dto.microsip_aplicada_at,
+    microsipFolio: dto.microsip_folio ?? null,
+    microsipDoctoPVID: dto.microsip_docto_pv_id ?? null,
+    microsipAplicadaAt: dto.microsip_aplicada_at ?? null,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at,
     createdBy: dto.created_by,
