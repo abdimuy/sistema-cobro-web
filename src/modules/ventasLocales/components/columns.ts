@@ -370,3 +370,38 @@ export function saveColumnWidths(widths: ColumnWidths): void {
     // Ignore errors
   }
 }
+
+// ─── Density ─────────────────────────────────────────────────────────────────
+
+export type Density = "compact" | "normal" | "comfortable";
+
+export const DENSITY_OPTIONS: ReadonlyArray<{
+  value: Density;
+  label: string;
+  rowHeight: number;
+}> = [
+  { value: "compact", label: "Compacta", rowHeight: 32 },
+  { value: "normal", label: "Normal", rowHeight: 40 },
+  { value: "comfortable", label: "Cómoda", rowHeight: 52 },
+];
+
+const DENSITY_STORAGE_KEY = "ventas-density";
+
+export function loadDensity(): Density {
+  try {
+    const stored = localStorage.getItem(DENSITY_STORAGE_KEY);
+    if (stored === "compact" || stored === "normal" || stored === "comfortable")
+      return stored;
+  } catch {
+    /* ignore */
+  }
+  return "normal";
+}
+
+export function saveDensity(d: Density): void {
+  try {
+    localStorage.setItem(DENSITY_STORAGE_KEY, d);
+  } catch {
+    /* ignore */
+  }
+}

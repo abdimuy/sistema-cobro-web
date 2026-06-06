@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { VentaLocal, VentasParams } from "@/services/api/getVentasLocales";
 import { VentasTableRow } from "./VentasTableRow";
-import { ColumnId, COLUMNS, ColumnWidths } from "./columns";
+import { ColumnId, COLUMNS, ColumnWidths, Density } from "./columns";
 import { cn } from "@/lib/utils";
 
 interface VentasTableProps {
@@ -23,6 +23,7 @@ interface VentasTableProps {
   onSort: (column: VentasParams["sortBy"]) => void;
   onViewDetails: (ventaId: string) => void;
   getAlmacenName: (id: number) => string;
+  density?: Density;
 }
 
 interface SortableHeaderProps {
@@ -136,10 +137,12 @@ export function VentasTable({
   onSort,
   onViewDetails,
   getAlmacenName,
+  density = "normal",
   infiniteScroll,
 }: VentasTableProps & { infiniteScroll?: InfiniteScrollProps }) {
   const scrollContainerRef = useRef<HTMLTableElement>(null);
   const loadMoreRef = useRef<HTMLTableRowElement>(null);
+
 
   // Infinite scroll observer inside the table container
   const handleObserver = useCallback(
@@ -223,7 +226,13 @@ export function VentasTable({
             <TableHead className="w-[50px] bg-card" style={{ width: "50px", minWidth: "50px" }} />
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody
+          className={cn(
+            density === "compact" && "[&_tr]:h-8 [&_td]:py-0",
+            density === "normal" && "[&_tr]:h-10 [&_td]:py-1",
+            density === "comfortable" && "[&_tr]:h-[52px] [&_td]:py-2"
+          )}
+        >
           {ventas.map((venta) => (
             <VentasTableRow
               key={venta.LOCAL_SALE_ID}

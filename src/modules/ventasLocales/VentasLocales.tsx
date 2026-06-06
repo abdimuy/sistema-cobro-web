@@ -24,6 +24,8 @@ import {
   ColumnId,
   ColumnWidths,
 } from "./components";
+import { loadDensity, saveDensity, Density } from "./components/columns";
+import { VentasDensityToggle } from "./components/VentasDensityToggle";
 
 export default function VentasLocales() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -51,6 +53,9 @@ export default function VentasLocales() {
   // Column widths state
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>(loadColumnWidths);
 
+  // Density state
+  const [density, setDensity] = useState<Density>(loadDensity);
+
   // Save column preferences when they change
   useEffect(() => {
     saveVisibleColumns(visibleColumns);
@@ -59,6 +64,10 @@ export default function VentasLocales() {
   useEffect(() => {
     saveColumnWidths(columnWidths);
   }, [columnWidths]);
+
+  useEffect(() => {
+    saveDensity(density);
+  }, [density]);
 
   // Data hooks
   const {
@@ -176,6 +185,7 @@ export default function VentasLocales() {
                 zonas={zonas}
                 vendedores={vendedoresOptions}
               />
+              <VentasDensityToggle density={density} onChange={setDensity} />
               <VentasColumnSelector
                 visibleColumns={visibleColumns}
                 onChange={setVisibleColumns}
@@ -207,6 +217,7 @@ export default function VentasLocales() {
             onSort={updateSort}
             onViewDetails={handleViewDetails}
             getAlmacenName={getAlmacenName}
+            density={density}
             infiniteScroll={{
               hasMore,
               isLoading: loadingMore,
