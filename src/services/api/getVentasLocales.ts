@@ -197,6 +197,8 @@ export interface VentasParams {
   // Exact filters
   zonaClienteId?: number;
   tipoVenta?: "CONTADO" | "CREDITO";
+  situacion?: "borrador" | "revisada" | "aprobada" | "cancelada";
+  sincronizacion?: "pendiente" | "aplicada";
   userEmail?: string;
   almacenId?: number;
   enviado?: boolean;
@@ -297,6 +299,8 @@ export const getVentasLocales = async (
   if (params?.fechaInicio) goParams.desde = params.fechaInicio;
   if (params?.fechaFin) goParams.hasta = params.fechaFin;
   if (params?.tipoVenta) goParams.tipo_venta = params.tipoVenta;
+  if (params?.situacion) goParams.situacion = params.situacion;
+  if (params?.sincronizacion) goParams.sincronizacion = params.sincronizacion;
   if (params?.incluirCanceladas) goParams.incluir_canceladas = true;
   if (params?.cursor) goParams.cursor = params.cursor;
   if (params?.limit) goParams.limit = params.limit;

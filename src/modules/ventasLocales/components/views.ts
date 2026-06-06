@@ -3,12 +3,11 @@ import type { SituacionVenta } from "@/services/api/ventaV2Types";
 import type { VentasParams } from "@/services/api/getVentasLocales";
 
 export interface VentaViewFilters {
-  // Server-side (pasan al API como params)
+  // Todo server-side ahora
   tipoVenta?: "CONTADO" | "CREDITO";
   incluirCanceladas?: boolean;
-  // Client-side (se aplican al array después del fetch)
-  situacion?: SituacionVenta[];
-  sincronizacion?: ("pendiente" | "aplicada")[];
+  situacion?: SituacionVenta;
+  sincronizacion?: "pendiente" | "aplicada";
 }
 
 export interface VentaViewSort {
@@ -62,7 +61,7 @@ export const PRESET_VIEWS: VentaView[] = [
     columnWidths: {},
     density: "compact",
     sort: { by: "fechaVenta", order: "desc" },
-    filters: { incluirCanceladas: false, sincronizacion: ["pendiente"] },
+    filters: { incluirCanceladas: false, sincronizacion: "pendiente" },
     isPreset: true,
   },
   {
@@ -73,7 +72,7 @@ export const PRESET_VIEWS: VentaView[] = [
     columnWidths: {},
     density: "normal",
     sort: { by: "fechaVenta", order: "asc" },
-    filters: { incluirCanceladas: false, situacion: ["revisada"] },
+    filters: { incluirCanceladas: false, situacion: "revisada" },
     isPreset: true,
   },
   {
@@ -95,7 +94,7 @@ export const PRESET_VIEWS: VentaView[] = [
     columnWidths: {},
     density: "normal",
     sort: { by: "fechaVenta", order: "desc" },
-    filters: { incluirCanceladas: true, situacion: ["cancelada"] },
+    filters: { incluirCanceladas: true, situacion: "cancelada" },
     isPreset: true,
   },
 ];
@@ -105,13 +104,28 @@ export function loadCustomViews(): VentaView[] {
     const stored = localStorage.getItem(VIEWS_STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored) as VentaView[];
-      return parsed.filter((v) => !v.isPreset).map((v) => ({
-        ...v,
-        pinnedColumns: v.pinnedColumns ?? [],
-        columnWidths: v.columnWidths ?? {},
-        density: v.density ?? "normal",
-        visibleColumns: v.visibleColumns ?? [],
-      }));
+      return parsed.filter((v) => !v.isPreset).map((v) => {
+        const next: VentaView = {
+          ...v,
+          pinnedColumns: v.pinnedColumns ?? [],
+          columnWidths: v.columnWidths ?? {},
+          density: v.density ?? "normal",
+          visibleColumns: v.visibleColumns ?? [],
+        };
+        // Migrate array-shaped filters to single string (backend takes one value)
+        if (v.filters && typeof v.filters === "object") {
+          const f = v.filters as Record<string, unknown>;
+          const sit = Array.isArray(f.situacion) ? f.situacion[0] : f.situacion;
+          const sinc = Array.isArray(f.sincronizacion) ? f.sincronizacion[0] : f.sincronizacion;
+          next.filters = {
+            tipoVenta: f.tipoVenta as VentaViewFilters["tipoVenta"],
+            incluirCanceladas: f.incluirCanceladas as boolean | undefined,
+            situacion: sit as VentaViewFilters["situacion"],
+            sincronizacion: sinc as VentaViewFilters["sincronizacion"],
+          };
+        }
+        return next;
+      });
     }
   } catch {
     /* ignore */

@@ -100,14 +100,14 @@ export function VentasViewSwitcher({
             <span className="font-medium">
               {activeView?.name ?? "Vista sin nombre"}
             </span>
-            {activeView?.filters?.situacion?.length === 1 && (
+            {activeView?.filters?.situacion && (
               <span className="ml-1.5 inline-flex items-center rounded-full bg-muted/40 px-1.5 py-0 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
-                {activeView.filters.situacion[0]}
+                {activeView.filters.situacion}
               </span>
             )}
-            {activeView?.filters?.sincronizacion?.length === 1 && (
+            {activeView?.filters?.sincronizacion && (
               <span className="ml-1.5 inline-flex items-center rounded-full bg-muted/40 px-1.5 py-0 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
-                {activeView.filters.sincronizacion[0]}
+                {activeView.filters.sincronizacion}
               </span>
             )}
             {activeView?.filters?.tipoVenta && (

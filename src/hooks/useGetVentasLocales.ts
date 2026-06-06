@@ -185,6 +185,8 @@ export function useGetVentasLocales(initialParams?: Partial<VentasParams>): UseV
     params.enviado,
     params.vendedorEmails,
     params.incluirCanceladas,
+    params.situacion,
+    params.sincronizacion,
     fetchInitial,
   ]);
 

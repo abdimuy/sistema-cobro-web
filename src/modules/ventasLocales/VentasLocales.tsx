@@ -36,7 +36,6 @@ import {
 import { VentasDensityToggle } from "./components/VentasDensityToggle";
 import {
   VentaView,
-  VentaViewFilters,
   PRESET_VIEWS,
   loadCustomViews,
   saveCustomViews,
@@ -81,8 +80,6 @@ export default function VentasLocales() {
   const [customViews, setCustomViews] = useState<VentaView[]>(loadCustomViews);
   const [activeViewId, setActiveViewIdState] = useState<string | null>(loadActiveViewId);
 
-  // Client-side filters (applied after fetch)
-  const [clientFilters, setClientFilters] = useState<VentaViewFilters>({});
 
   // Save column preferences when they change
   useEffect(() => {
@@ -126,22 +123,6 @@ export default function VentasLocales() {
   const { almacenes, getAlmacenById } = useGetAlmacenes();
   const { zonas } = useGetZonasCliente();
   const { vendedores: vendedoresOptions } = useGetVendedores();
-
-  // Client-side filtering applied on top of server results
-  const filteredVentas = useMemo(() => {
-    let result = ventas;
-    if (clientFilters.situacion && clientFilters.situacion.length > 0) {
-      result = result.filter(
-        (v) => v.SITUACION != null && clientFilters.situacion!.includes(v.SITUACION)
-      );
-    }
-    if (clientFilters.sincronizacion && clientFilters.sincronizacion.length > 0) {
-      result = result.filter(
-        (v) => v.SINCRONIZACION != null && clientFilters.sincronizacion!.includes(v.SINCRONIZACION)
-      );
-    }
-    return result;
-  }, [ventas, clientFilters]);
 
   // Handlers
   const handleSearch = useCallback(
@@ -206,22 +187,18 @@ export default function VentasLocales() {
   );
   const hasUnsavedChanges = useMemo(() => {
     if (!activeView) return false;
-    const colsChanged =
-      JSON.stringify(visibleColumns) !==
-      JSON.stringify(activeView.visibleColumns);
-    const pinnedChanged =
-      JSON.stringify(pinnedColumns) !==
-      JSON.stringify(activeView.pinnedColumns);
-    const densityChanged = density !== activeView.density;
-    const filtChanged =
-      JSON.stringify(clientFilters) !== JSON.stringify(activeView.filters ?? {});
+    const cols = JSON.stringify(visibleColumns) !== JSON.stringify(activeView.visibleColumns);
+    const pinned = JSON.stringify(pinnedColumns) !== JSON.stringify(activeView.pinnedColumns);
+    const den = density !== activeView.density;
+    const sit = (params.situacion ?? null) !== (activeView.filters?.situacion ?? null);
+    const sinc = (params.sincronizacion ?? null) !== (activeView.filters?.sincronizacion ?? null);
+    const tipo = (params.tipoVenta ?? null) !== (activeView.filters?.tipoVenta ?? null);
+    const inc = (params.incluirCanceladas ?? false) !== (activeView.filters?.incluirCanceladas ?? false);
     const sortChanged =
       (params.sortBy ?? null) !== (activeView.sort?.by ?? null) ||
       (params.sortOrder ?? null) !== (activeView.sort?.order ?? null);
-    const tipoChanged =
-      (params.tipoVenta ?? null) !== (activeView.filters?.tipoVenta ?? null);
-    return colsChanged || pinnedChanged || densityChanged || filtChanged || sortChanged || tipoChanged;
-  }, [activeView, visibleColumns, pinnedColumns, density, clientFilters, params]);
+    return cols || pinned || den || sit || sinc || tipo || inc || sortChanged;
+  }, [activeView, visibleColumns, pinnedColumns, density, params]);
 
   const handleSelectView = useCallback(
     (id: string) => {
@@ -233,16 +210,16 @@ export default function VentasLocales() {
       if (Object.keys(v.columnWidths).length > 0) {
         setColumnWidths((prev) => ({ ...prev, ...v.columnWidths }));
       }
-      // Server-side filters + sort → merge into params
+      // All filters + sort → merge into params (all server-side now)
       setParams({
         tipoVenta: v.filters?.tipoVenta,
         incluirCanceladas: v.filters?.incluirCanceladas,
+        situacion: v.filters?.situacion,
+        sincronizacion: v.filters?.sincronizacion,
         sortBy: v.sort?.by,
         sortOrder: v.sort?.order,
         cursor: undefined,
       });
-      // Client-side filters
-      setClientFilters(v.filters ?? {});
       setActiveViewIdState(id);
     },
     [allViews, setParams]
@@ -266,14 +243,19 @@ export default function VentasLocales() {
         pinnedColumns: [...pinnedColumns],
         columnWidths: { ...columnWidths },
         density,
-        filters: { ...clientFilters, tipoVenta: params.tipoVenta, incluirCanceladas: params.incluirCanceladas },
+        filters: {
+          tipoVenta: params.tipoVenta,
+          incluirCanceladas: params.incluirCanceladas,
+          situacion: params.situacion,
+          sincronizacion: params.sincronizacion,
+        },
         sort: params.sortBy ? { by: params.sortBy, order: params.sortOrder } : undefined,
       };
       setCustomViews((prev) => [...prev, newView]);
       setActiveViewIdState(newView.id);
       toast.success(`Vista "${name}" guardada`);
     },
-    [visibleColumns, pinnedColumns, columnWidths, density, clientFilters, params]
+    [visibleColumns, pinnedColumns, columnWidths, density, params]
   );
 
   const handleDeleteView = useCallback(
@@ -374,16 +356,16 @@ export default function VentasLocales() {
       <div className="flex-1 overflow-hidden min-h-0">
         {error ? (
           <VentasErrorState message={error} onRetry={refetch} />
-        ) : loading && filteredVentas.length === 0 ? (
+        ) : loading && ventas.length === 0 ? (
           <VentasLoadingSkeleton rows={12} />
-        ) : filteredVentas.length === 0 ? (
+        ) : ventas.length === 0 ? (
           <VentasEmptyState
             hasFilters={hasFilters}
             onClearFilters={handleClearFilters}
           />
         ) : (
           <VentasTable
-            ventas={filteredVentas}
+            ventas={ventas}
             visibleColumns={visibleColumns}
             pinnedColumns={pinnedColumns}
             columnWidths={columnWidths}
