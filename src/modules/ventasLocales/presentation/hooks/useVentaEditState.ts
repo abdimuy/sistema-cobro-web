@@ -1061,6 +1061,7 @@ export function useVentaEditState(venta: VentaV2) {
     formData,
     isDirty,
     errors,
+    ventaOriginal: dominioVenta,
     updateCliente,
     updateFinanciero,
     updateAlmacenes,

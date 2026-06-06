@@ -12,8 +12,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import useVentaV2 from "@/hooks/useVentaV2";
-import EditarVentaSheet from "../EditarVentaSheet";
-import EditarVentaModal, { isNuevoEditor } from "../EditarVentaModal";
+import EditarVentaModal from "../EditarVentaModal";
 import { VentaV2 } from "@/services/api/ventaV2Types";
 
 import VentaDetalleHero from "./VentaDetalleHero";
@@ -186,21 +185,12 @@ export const VentaDetalleModal = ({ ventaId, onClose }: Props) => {
         )}
 
         {editOpen && venta && (
-          isNuevoEditor() ? (
-            <EditarVentaModal
-              venta={venta}
-              open={editOpen}
-              onOpenChange={setEditOpen}
-              onSuccess={() => { refetch(); }}
-            />
-          ) : (
-            <EditarVentaSheet
-              venta={venta}
-              open={editOpen}
-              onOpenChange={setEditOpen}
-              onSuccess={() => { refetch(); }}
-            />
-          )
+          <EditarVentaModal
+            venta={venta}
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            onSuccess={() => { refetch(); }}
+          />
         )}
 
         <MobileNotice />

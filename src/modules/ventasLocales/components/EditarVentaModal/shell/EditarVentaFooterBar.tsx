@@ -2,6 +2,8 @@ import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ValidationError } from "../../../presentation/hooks/useVentaEditState";
+import type { DiffSummary } from "./computeDiffSummary";
+import { ReviewChangesPopover } from "./ReviewChangesPopover";
 
 // Section mapping for errors
 function fieldToSection(field: string): string {
@@ -53,8 +55,9 @@ interface Props {
   cambiosCount: number;
   errors: ValidationError[];
   saving: boolean;
+  diffSummary: DiffSummary;
   onDiscard: () => void;
-  onSave: () => void;
+  onConfirmSave: () => void;
 }
 
 export const EditarVentaFooterBar = ({
@@ -62,8 +65,9 @@ export const EditarVentaFooterBar = ({
   cambiosCount,
   errors,
   saving,
+  diffSummary,
   onDiscard,
-  onSave,
+  onConfirmSave,
 }: Props) => (
   <footer className="sticky bottom-0 z-10 flex items-center justify-between gap-2 border-t border-border/60 bg-background/95 px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
     <FooterCounter cambiosCount={cambiosCount} errors={errors} />
@@ -76,14 +80,13 @@ export const EditarVentaFooterBar = ({
       >
         Descartar
       </Button>
-      <Button
-        variant="default"
-        size="sm"
-        onClick={onSave}
-        disabled={errors.length > 0 || saving || !isDirty}
-      >
-        {saving ? "Guardando..." : "Revisar y guardar"}
-      </Button>
+      <ReviewChangesPopover
+        diffSummary={diffSummary}
+        isDirty={isDirty}
+        hasErrors={errors.length > 0}
+        saving={saving}
+        onConfirmSave={onConfirmSave}
+      />
     </div>
   </footer>
 );

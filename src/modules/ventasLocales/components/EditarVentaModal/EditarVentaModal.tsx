@@ -12,6 +12,9 @@ import type { VentaV2 } from "@/services/api/ventaV2Types";
 import { useVentaEditState } from "../../presentation/hooks/useVentaEditState";
 import { useGuardarEdicionVenta } from "../../presentation/hooks/useGuardarEdicionVenta";
 import type { PasoEdicion } from "../../application/dto/EdicionVentaResult";
+import { computeDiffSummary } from "./shell/computeDiffSummary";
+import { Vendedor } from "../../domain/entities/Vendedor";
+import { apiClient } from "../../infrastructure/http/apiClient";
 
 import VentaWorkflowTimeline from "../detalle/VentaWorkflowTimeline";
 import { EditarVentaHeaderBar } from "./shell/EditarVentaHeaderBar";
@@ -79,6 +82,7 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
     formData,
     isDirty,
     errors,
+    ventaOriginal,
     updateCliente,
     updateGps,
     updateFinanciero,
@@ -171,6 +175,11 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
 
   const diffSections = useMemo(() => buildDiffSections(formData, venta), [formData, venta]);
 
+  const diffSummary = useMemo(
+    () => computeDiffSummary(formData, ventaOriginal),
+    [formData, ventaOriginal],
+  );
+
   // ── Handlers ────────────────────────────────────────────────────────────────
 
   const handleDiscard = () => {
@@ -187,7 +196,7 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
     }
   };
 
-  const handleSave = async () => {
+  const handleConfirmSave = async () => {
     const inputResult = getInput();
     if (!inputResult.ok) {
       const firstTab = mapFieldToTab(inputResult.errors[0]?.field ?? "");
@@ -198,7 +207,44 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
       return;
     }
 
-    const result = await guardar(inputResult.input);
+    // Resolve usuario_id for any new vendedores with empty usuarioID
+    let inputToSave = inputResult.input;
+    if (inputToSave.cambios.vendedores) {
+      const needsResolve = inputToSave.cambios.vendedores.filter(
+        (v) => !v.usuarioID || v.usuarioID === "",
+      );
+      if (needsResolve.length > 0) {
+        try {
+          const emails = needsResolve.map((v) => v.email);
+          const response = await apiClient.post<{
+            vendedores: { email: string; usuario_id: string }[];
+          }>("/usuarios/ensure-vendedores-by-email", { emails });
+          const byEmail = new Map(
+            response.data.vendedores.map((d) => [d.email, d.usuario_id]),
+          );
+          const resolvedVendedores = inputToSave.cambios.vendedores.map((v) => {
+            if (v.usuarioID && v.usuarioID !== "") return v;
+            const resolved = byEmail.get(v.email);
+            if (!resolved) return v;
+            return Vendedor.create({
+              id: v.id,
+              usuarioID: resolved,
+              email: v.email,
+              nombre: v.nombre,
+            });
+          });
+          inputToSave = {
+            ...inputToSave,
+            cambios: { ...inputToSave.cambios, vendedores: resolvedVendedores },
+          };
+        } catch {
+          toast.error("No se pudo resolver el ID de los vendedores nuevos");
+          return;
+        }
+      }
+    }
+
+    const result = await guardar(inputToSave);
 
     if (result.errorParcial) {
       const stepsLabel =
@@ -365,8 +411,9 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
               cambiosCount={cambiosCount}
               errors={errors}
               saving={saving}
+              diffSummary={diffSummary}
               onDiscard={handleRequestDiscard}
-              onSave={handleSave}
+              onConfirmSave={handleConfirmSave}
             />
           </div>
         </DialogContent>
