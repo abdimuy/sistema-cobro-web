@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings2, GripVertical } from "lucide-react";
+import { Settings2, GripVertical, Pin } from "lucide-react";
 import {
   DragDropContext,
   Droppable,
@@ -19,18 +19,23 @@ import {
   COLUMN_GROUPS,
   ColumnId,
   DEFAULT_VISIBLE_COLUMNS,
+  MAX_PINNED,
 } from "./columns";
 import { cn } from "@/lib/utils";
 
 interface VentasColumnSelectorProps {
   visibleColumns: ColumnId[];
   onChange: (columns: ColumnId[]) => void;
+  pinnedColumns: ColumnId[];
+  onTogglePin: (id: ColumnId) => void;
   className?: string;
 }
 
 export function VentasColumnSelector({
   visibleColumns,
   onChange,
+  pinnedColumns,
+  onTogglePin,
   className,
 }: VentasColumnSelectorProps) {
   const [query, setQuery] = useState("");
@@ -73,11 +78,14 @@ export function VentasColumnSelector({
   const allVisible = visibleColumns.length === COLUMNS.length;
 
   const filteredColumns = query
-    ? COLUMNS.filter((c) => c.label.toLowerCase().includes(query.toLowerCase()))
+    ? COLUMNS.filter((c) =>
+        c.label.toLowerCase().includes(query.toLowerCase())
+      )
     : COLUMNS;
 
   const visibleCount = visibleColumns.length;
   const totalCount = COLUMNS.length;
+  const pinnedCount = pinnedColumns.length;
 
   return (
     <Popover onOpenChange={(open) => { if (!open) setQuery(""); }}>
@@ -122,26 +130,89 @@ export function VentasColumnSelector({
           ) : query ? (
             // Flat list when searching
             <div className="p-2">
-              {filteredColumns.map((column) => (
-                <label
-                  key={column.id}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 cursor-pointer"
-                >
-                  <Checkbox
-                    checked={visibleColumns.includes(column.id)}
-                    onCheckedChange={(checked) =>
-                      handleToggle(column.id, checked as boolean)
-                    }
-                    className="h-4 w-4"
-                  />
-                  <span className="text-sm">{column.label}</span>
-                </label>
-              ))}
+              {filteredColumns.map((column) => {
+                const isPinned = pinnedColumns.includes(column.id);
+                return (
+                  <div
+                    key={column.id}
+                    className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50"
+                  >
+                    <Checkbox
+                      checked={visibleColumns.includes(column.id)}
+                      onCheckedChange={(checked) =>
+                        handleToggle(column.id, checked as boolean)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <label className="text-sm flex-1 cursor-pointer">
+                      {column.label}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onTogglePin(column.id);
+                      }}
+                      disabled={!isPinned && pinnedCount >= MAX_PINNED}
+                      className={cn(
+                        "h-6 w-6 rounded-md inline-flex items-center justify-center transition-colors",
+                        isPinned
+                          ? "text-foreground"
+                          : "opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                      )}
+                      aria-label={isPinned ? "Desfijar" : "Fijar"}
+                    >
+                      <Pin
+                        className={cn(
+                          "h-3 w-3",
+                          isPinned && "fill-current"
+                        )}
+                      />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           ) : (
-            // No search: show drag-to-reorder section + grouped picker
+            // No search: drag-to-reorder + grouped picker
             <div className="p-2">
-              {/* Drag-to-reorder: visible columns */}
+              {/* Drag-to-reorder: visible columns (pinned shown above, not draggable) */}
+              {pinnedColumns.length > 0 && (
+                <>
+                  <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground px-2 py-1.5">
+                    Fijadas
+                  </div>
+                  {pinnedColumns.map((id) => {
+                    const col = COLUMNS.find((c) => c.id === id);
+                    if (!col) return null;
+                    return (
+                      <div
+                        key={id}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50"
+                      >
+                        <Pin className="h-3 w-3 text-muted-foreground fill-current flex-shrink-0" />
+                        <Checkbox
+                          checked
+                          onCheckedChange={() => handleToggle(id, false)}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-sm flex-1">{col.label}</span>
+                        <button
+                          type="button"
+                          onClick={() => onTogglePin(id)}
+                          className="h-6 w-6 rounded-md inline-flex items-center justify-center text-foreground hover:text-muted-foreground transition-colors"
+                          aria-label="Desfijar"
+                        >
+                          <Pin className="h-3 w-3 fill-current" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                  <div className="border-t border-border/30 my-1" />
+                </>
+              )}
+
               <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground px-2 py-1.5">
                 Orden actual
               </div>
@@ -153,79 +224,107 @@ export function VentasColumnSelector({
                       {...provided.droppableProps}
                       className="mb-2"
                     >
-                      {visibleColumns.map((id, index) => {
-                        const col = COLUMNS.find((c) => c.id === id);
-                        if (!col) return null;
-                        return (
-                          <Draggable key={id} draggableId={id} index={index}>
-                            {(dragProvided, snapshot) => (
-                              <div
-                                ref={dragProvided.innerRef}
-                                {...dragProvided.draggableProps}
-                                className={cn(
-                                  "flex items-center gap-2 px-2 py-1.5 rounded-md",
-                                  snapshot.isDragging
-                                    ? "bg-muted shadow-sm"
-                                    : "hover:bg-muted/50"
-                                )}
-                              >
+                      {visibleColumns
+                        .filter((id) => !pinnedColumns.includes(id))
+                        .map((id, index) => {
+                          const col = COLUMNS.find((c) => c.id === id);
+                          if (!col) return null;
+                          const isPinned = pinnedColumns.includes(id);
+                          return (
+                            <Draggable key={id} draggableId={id} index={index}>
+                              {(dragProvided, snapshot) => (
                                 <div
-                                  {...dragProvided.dragHandleProps}
-                                  className="flex-shrink-0 cursor-grab active:cursor-grabbing"
+                                  ref={dragProvided.innerRef}
+                                  {...dragProvided.draggableProps}
+                                  className={cn(
+                                    "group flex items-center gap-2 px-2 py-1.5 rounded-md",
+                                    snapshot.isDragging
+                                      ? "bg-muted shadow-sm"
+                                      : "hover:bg-muted/50"
+                                  )}
                                 >
-                                  <GripVertical className="h-3 w-3 text-muted-foreground/60" />
+                                  <div
+                                    {...dragProvided.dragHandleProps}
+                                    className="flex-shrink-0 cursor-grab active:cursor-grabbing"
+                                  >
+                                    <GripVertical className="h-3 w-3 text-muted-foreground/60" />
+                                  </div>
+                                  <Checkbox
+                                    checked
+                                    onCheckedChange={() =>
+                                      handleToggle(id, false)
+                                    }
+                                    className="h-4 w-4"
+                                  />
+                                  <span className="text-sm flex-1">
+                                    {col.label}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      onTogglePin(id);
+                                    }}
+                                    disabled={
+                                      !isPinned && pinnedCount >= MAX_PINNED
+                                    }
+                                    className={cn(
+                                      "h-6 w-6 rounded-md inline-flex items-center justify-center transition-colors",
+                                      isPinned
+                                        ? "text-foreground"
+                                        : "opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                                    )}
+                                    aria-label={isPinned ? "Desfijar" : "Fijar"}
+                                  >
+                                    <Pin
+                                      className={cn(
+                                        "h-3 w-3",
+                                        isPinned && "fill-current"
+                                      )}
+                                    />
+                                  </button>
                                 </div>
-                                <Checkbox
-                                  checked
-                                  onCheckedChange={() =>
-                                    handleToggle(id, false)
-                                  }
-                                  className="h-4 w-4"
-                                />
-                                <span className="text-sm">{col.label}</span>
-                              </div>
-                            )}
-                          </Draggable>
-                        );
-                      })}
+                              )}
+                            </Draggable>
+                          );
+                        })}
                       {provided.placeholder}
                     </div>
                   )}
                 </Droppable>
               </DragDropContext>
 
-              {/* Grouped picker: all columns */}
+              {/* Grouped picker: hidden columns only */}
               <div className="border-t border-border/40 pt-1 mt-1">
                 <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground px-2 py-1.5">
                   Todas las columnas
                 </div>
                 {COLUMN_GROUPS.map((group) => {
-                  const groupColumns = COLUMNS.filter((c) => c.group === group);
+                  const groupColumns = COLUMNS.filter(
+                    (c) => c.group === group && !visibleColumns.includes(c.id)
+                  );
                   if (groupColumns.length === 0) return null;
                   return (
                     <div key={group}>
                       <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60 px-2 py-1 mt-1">
                         {group}
                       </div>
-                      {groupColumns.map((column) => {
-                        const isVisible = visibleColumns.includes(column.id);
-                        if (isVisible) return null; // already shown in order section
-                        return (
-                          <label
-                            key={column.id}
-                            className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 cursor-pointer"
-                          >
-                            <Checkbox
-                              checked={false}
-                              onCheckedChange={(checked) =>
-                                handleToggle(column.id, checked as boolean)
-                              }
-                              className="h-4 w-4"
-                            />
-                            <span className="text-sm">{column.label}</span>
-                          </label>
-                        );
-                      })}
+                      {groupColumns.map((column) => (
+                        <label
+                          key={column.id}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={false}
+                            onCheckedChange={(checked) =>
+                              handleToggle(column.id, checked as boolean)
+                            }
+                            className="h-4 w-4"
+                          />
+                          <span className="text-sm">{column.label}</span>
+                        </label>
+                      ))}
                     </div>
                   );
                 })}

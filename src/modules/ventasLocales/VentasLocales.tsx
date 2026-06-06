@@ -24,7 +24,14 @@ import {
   ColumnId,
   ColumnWidths,
 } from "./components";
-import { loadDensity, saveDensity, Density } from "./components/columns";
+import {
+  loadDensity,
+  saveDensity,
+  Density,
+  loadPinnedColumns,
+  savePinnedColumns,
+  MAX_PINNED,
+} from "./components/columns";
 import { VentasDensityToggle } from "./components/VentasDensityToggle";
 
 export default function VentasLocales() {
@@ -56,6 +63,9 @@ export default function VentasLocales() {
   // Density state
   const [density, setDensity] = useState<Density>(loadDensity);
 
+  // Pinned columns state
+  const [pinnedColumns, setPinnedColumns] = useState<ColumnId[]>(loadPinnedColumns);
+
   // Save column preferences when they change
   useEffect(() => {
     saveVisibleColumns(visibleColumns);
@@ -68,6 +78,10 @@ export default function VentasLocales() {
   useEffect(() => {
     saveDensity(density);
   }, [density]);
+
+  useEffect(() => {
+    savePinnedColumns(pinnedColumns);
+  }, [pinnedColumns]);
 
   // Data hooks
   const {
@@ -131,6 +145,14 @@ export default function VentasLocales() {
     setColumnWidths((prev) => ({ ...prev, [columnId]: width }));
   }, []);
 
+  const handleTogglePin = useCallback((id: ColumnId) => {
+    setPinnedColumns((prev) => {
+      if (prev.includes(id)) return prev.filter((p) => p !== id);
+      if (prev.length >= MAX_PINNED) return prev;
+      return [...prev, id];
+    });
+  }, []);
+
   // Check if any filters are applied
   const hasFilters = useMemo(() => {
     return !!(
@@ -189,6 +211,8 @@ export default function VentasLocales() {
               <VentasColumnSelector
                 visibleColumns={visibleColumns}
                 onChange={setVisibleColumns}
+                pinnedColumns={pinnedColumns}
+                onTogglePin={handleTogglePin}
               />
             </div>
           </div>
@@ -210,6 +234,7 @@ export default function VentasLocales() {
           <VentasTable
             ventas={ventas}
             visibleColumns={visibleColumns}
+            pinnedColumns={pinnedColumns}
             columnWidths={columnWidths}
             onColumnResize={handleColumnResize}
             sortBy={params.sortBy}

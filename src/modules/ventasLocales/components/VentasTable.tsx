@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback, useEffect, useMemo } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   Table,
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 interface VentasTableProps {
   ventas: VentaLocal[];
   visibleColumns: ColumnId[];
+  pinnedColumns?: ColumnId[];
   columnWidths: ColumnWidths;
   onColumnResize: (columnId: ColumnId, width: number) => void;
   sortBy: VentasParams["sortBy"];
@@ -130,6 +131,7 @@ interface InfiniteScrollProps {
 export function VentasTable({
   ventas,
   visibleColumns,
+  pinnedColumns = [],
   columnWidths,
   onColumnResize,
   sortBy,
@@ -143,11 +145,34 @@ export function VentasTable({
   const scrollContainerRef = useRef<HTMLTableElement>(null);
   const loadMoreRef = useRef<HTMLTableRowElement>(null);
 
+  // Ordered columns: pinned first, then the rest in user order
+  const orderedColumns = useMemo(
+    () => [
+      ...pinnedColumns.filter((id) => visibleColumns.includes(id)),
+      ...visibleColumns.filter((id) => !pinnedColumns.includes(id)),
+    ],
+    [pinnedColumns, visibleColumns]
+  );
+
+  // Cumulative left offsets for sticky pinned columns
+  const pinnedOffsets = useMemo(() => {
+    const offsets: Partial<Record<ColumnId, number>> = {};
+    let acc = 0;
+    for (const id of pinnedColumns) {
+      offsets[id] = acc;
+      acc += columnWidths[id] ?? 0;
+    }
+    return offsets;
+  }, [pinnedColumns, columnWidths]);
 
   // Infinite scroll observer inside the table container
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
-      if (entries[0].isIntersecting && infiniteScroll?.hasMore && !infiniteScroll?.isLoading) {
+      if (
+        entries[0].isIntersecting &&
+        infiniteScroll?.hasMore &&
+        !infiniteScroll?.isLoading
+      ) {
         infiniteScroll.onLoadMore();
       }
     },
@@ -178,14 +203,32 @@ export function VentasTable({
 
     const label = colDef.shortLabel || colDef.label;
     const width = columnWidths[columnId];
+    const isPinned = pinnedColumns.includes(columnId);
+    const isLastPinned =
+      pinnedColumns.length > 0 &&
+      pinnedColumns[pinnedColumns.length - 1] === columnId;
+
+    const stickyStyle: React.CSSProperties = isPinned
+      ? {
+          width: `${width}px`,
+          minWidth: `${width}px`,
+          position: "sticky",
+          left: pinnedOffsets[columnId] ?? 0,
+          zIndex: 11,
+          background: "var(--card)",
+        }
+      : { width: `${width}px`, minWidth: `${width}px` };
+
+    const extraClass = cn(
+      "relative",
+      colDef.align === "right" && !colDef.sortable && "text-right",
+      isPinned && "shadow-[1px_0_0_0_var(--border)]",
+      isLastPinned && "shadow-[6px_0_8px_-4px_rgba(0,0,0,0.08)]"
+    );
 
     if (colDef.sortable && colDef.sortKey) {
       return (
-        <TableHead
-          key={columnId}
-          className="relative"
-          style={{ width: `${width}px`, minWidth: `${width}px` }}
-        >
+        <TableHead key={columnId} className={extraClass} style={stickyStyle}>
           <SortableHeader
             label={label}
             sortKey={colDef.sortKey}
@@ -202,8 +245,8 @@ export function VentasTable({
     return (
       <TableHead
         key={columnId}
-        className={cn("relative", colDef.align === "right" && "text-right")}
-        style={{ width: `${width}px`, minWidth: `${width}px` }}
+        className={cn(extraClass, colDef.align === "right" && "text-right")}
+        style={stickyStyle}
       >
         <span className="text-xs font-medium text-muted-foreground">
           {label}
@@ -222,8 +265,11 @@ export function VentasTable({
       >
         <TableHeader className="sticky top-0 z-10 bg-card">
           <TableRow className="hover:bg-transparent border-b border-border/50">
-            {visibleColumns.map(renderHeader)}
-            <TableHead className="w-[50px] bg-card" style={{ width: "50px", minWidth: "50px" }} />
+            {orderedColumns.map(renderHeader)}
+            <TableHead
+              className="w-[50px] bg-card"
+              style={{ width: "50px", minWidth: "50px" }}
+            />
           </TableRow>
         </TableHeader>
         <TableBody
@@ -237,7 +283,9 @@ export function VentasTable({
             <VentasTableRow
               key={venta.LOCAL_SALE_ID}
               venta={venta}
-              visibleColumns={visibleColumns}
+              visibleColumns={orderedColumns}
+              pinnedColumns={pinnedColumns}
+              pinnedOffsets={pinnedOffsets}
               columnWidths={columnWidths}
               onViewDetails={() => onViewDetails(venta.LOCAL_SALE_ID)}
               getAlmacenName={getAlmacenName}
@@ -246,7 +294,10 @@ export function VentasTable({
           {/* Infinite scroll trigger inside table */}
           {infiniteScroll && (
             <tr ref={loadMoreRef}>
-              <td colSpan={visibleColumns.length + 1} className="h-10 text-center">
+              <td
+                colSpan={orderedColumns.length + 1}
+                className="h-10 text-center"
+              >
                 {infiniteScroll.isLoading && (
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />

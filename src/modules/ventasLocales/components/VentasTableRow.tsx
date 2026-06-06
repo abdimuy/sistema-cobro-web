@@ -47,6 +47,8 @@ const SINCRONIZACION_STYLES: Record<NonNullable<VentaLocal["SINCRONIZACION"]>, s
 interface VentasTableRowProps {
   venta: VentaLocal;
   visibleColumns: ColumnId[];
+  pinnedColumns?: ColumnId[];
+  pinnedOffsets?: Partial<Record<ColumnId, number>>;
   columnWidths: ColumnWidths;
   onViewDetails: () => void;
   getAlmacenName: (id: number) => string;
@@ -55,6 +57,8 @@ interface VentasTableRowProps {
 export function VentasTableRow({
   venta,
   visibleColumns,
+  pinnedColumns = [],
+  pinnedOffsets = {},
   columnWidths,
   onViewDetails,
   getAlmacenName,
@@ -84,7 +88,24 @@ export function VentasTableRow({
     const colDef = getColumnDef(columnId);
     const alignClass = colDef?.align === "right" ? "text-right" : "";
     const width = columnWidths[columnId];
-    const cellStyle = { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` };
+    const isPinned = pinnedColumns.includes(columnId);
+    const isLastPinned =
+      pinnedColumns.length > 0 &&
+      pinnedColumns[pinnedColumns.length - 1] === columnId;
+    const cellStyle: React.CSSProperties = isPinned
+      ? {
+          width: `${width}px`,
+          minWidth: `${width}px`,
+          maxWidth: `${width}px`,
+          position: "sticky",
+          left: pinnedOffsets[columnId] ?? 0,
+          zIndex: 1,
+          background: "inherit",
+          boxShadow: isLastPinned
+            ? "6px 0 8px -4px rgba(0,0,0,0.08)"
+            : "1px 0 0 0 var(--border)",
+        }
+      : { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` };
 
     switch (columnId) {
       case "id":

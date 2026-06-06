@@ -405,3 +405,34 @@ export function saveDensity(d: Density): void {
     /* ignore */
   }
 }
+
+// ─── Pinned columns ──────────────────────────────────────────────────────────
+
+export const MAX_PINNED = 2;
+const PINNED_STORAGE_KEY = "ventas-pinned-columns";
+
+export function loadPinnedColumns(): ColumnId[] {
+  try {
+    const stored = localStorage.getItem(PINNED_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as ColumnId[];
+      return parsed
+        .filter((id) => COLUMNS.some((col) => col.id === id))
+        .slice(0, MAX_PINNED);
+    }
+  } catch {
+    /* ignore */
+  }
+  return [];
+}
+
+export function savePinnedColumns(pinned: ColumnId[]): void {
+  try {
+    localStorage.setItem(
+      PINNED_STORAGE_KEY,
+      JSON.stringify(pinned.slice(0, MAX_PINNED))
+    );
+  } catch {
+    /* ignore */
+  }
+}
