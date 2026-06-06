@@ -505,6 +505,18 @@ export function useVentaEditState(venta: VentaV2) {
     [],
   );
 
+  // ── gps ────────────────────────────────────────────────────────────────────
+
+  const updateGps = useCallback(
+    (field: "latitud" | "longitud", value: number) => {
+      setFormData((prev) => ({
+        ...prev,
+        gps: { ...prev.gps, [field]: value },
+      }));
+    },
+    [],
+  );
+
   // ── productos ──────────────────────────────────────────────────────────────
 
   const addProducto = useCallback(
@@ -1052,6 +1064,7 @@ export function useVentaEditState(venta: VentaV2) {
     updateCliente,
     updateFinanciero,
     updateAlmacenes,
+    updateGps,
     addProducto,
     updateProducto,
     removeProducto,
