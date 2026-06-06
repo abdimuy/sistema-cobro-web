@@ -23,7 +23,8 @@ import { ResumenTab } from "./tabs/ResumenTab";
 import { ClienteTab } from "./tabs/ClienteTab";
 import { PlanTab } from "./tabs/PlanTab";
 import { ProductosTab } from "./tabs/ProductosTab";
-import { WIPPlaceholder } from "./tabs/WIPPlaceholder";
+import { VendedoresTab } from "./tabs/VendedoresTab";
+import { ImagenesTab } from "./tabs/ImagenesTab";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,10 +87,18 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
     updateProducto,
     removeProducto,
     restoreProducto,
+    addVendedor,
+    updateVendedor,
+    removeVendedor,
+    restoreVendedor,
     addCombo,
     updateCombo,
     removeCombo,
     restoreCombo,
+    addImagenes,
+    updateImagenDescripcion,
+    removeImagen,
+    restoreImagen,
     reset,
     getInput,
   } = useVentaEditState(venta);
@@ -326,11 +335,26 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
                   </TabsContent>
 
                   <TabsContent value="vendedores">
-                    <WIPPlaceholder section="Vendedores" />
+                    <VendedoresTab
+                      vendedores={formData.vendedores}
+                      errors={errors}
+                      onAdd={addVendedor}
+                      onUpdate={updateVendedor}
+                      onRemove={removeVendedor}
+                      onRestore={restoreVendedor}
+                    />
                   </TabsContent>
 
                   <TabsContent value="imagenes">
-                    <WIPPlaceholder section="Imágenes" />
+                    <ImagenesTab
+                      ventaId={venta.id}
+                      imagenes={formData.imagenes}
+                      errors={errors}
+                      onAdd={addImagenes}
+                      onUpdateDescripcion={updateImagenDescripcion}
+                      onRemove={removeImagen}
+                      onRestore={restoreImagen}
+                    />
                   </TabsContent>
                 </div>
               </Tabs>
