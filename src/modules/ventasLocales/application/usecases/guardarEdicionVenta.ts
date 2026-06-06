@@ -7,6 +7,7 @@ import { actualizarClienteVenta } from "./actualizarClienteVenta";
 import { actualizarHeaderVenta } from "./actualizarHeaderVenta";
 import { reemplazarCombosVenta } from "./reemplazarCombosVenta";
 import { reemplazarProductosVenta } from "./reemplazarProductosVenta";
+import { reemplazarVendedoresVenta } from "./reemplazarVendedoresVenta";
 import { adjuntarImagenVenta } from "./adjuntarImagenVenta";
 import { eliminarImagenVenta } from "./eliminarImagenVenta";
 
@@ -94,6 +95,21 @@ export async function guardarEdicionVenta(
     }
     venta = out;
     pasosExitosos.push("productos");
+  }
+
+  // 4.5 Vendedores
+  if (input.cambios.vendedores !== undefined) {
+    const out = await runStep(() =>
+      reemplazarVendedoresVenta(deps, {
+        ventaID: venta.id,
+        vendedores: input.cambios.vendedores!,
+      }),
+    );
+    if (isStepError(out)) {
+      return { ventaActualizada: venta, pasosExitosos, errorParcial: { paso: "vendedores", error: out.__error } };
+    }
+    venta = out;
+    pasosExitosos.push("vendedores");
   }
 
   // 5. Eliminar imágenes (server IDs)

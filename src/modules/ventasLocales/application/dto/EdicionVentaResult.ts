@@ -6,6 +6,7 @@ export type PasoEdicion =
   | "header"
   | "combos"
   | "productos"
+  | "vendedores"
   | "eliminar_imagen"
   | "adjuntar_imagen";
 

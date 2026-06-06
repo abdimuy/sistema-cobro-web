@@ -2,6 +2,7 @@ import type { Venta } from "../../domain/entities/Venta";
 import type { ClienteSnapshot } from "../../domain/entities/ClienteSnapshot";
 import type { Combo } from "../../domain/entities/Combo";
 import type { Producto } from "../../domain/entities/Producto";
+import type { Vendedor } from "../../domain/entities/Vendedor";
 import type { ImagenNueva } from "../../domain/entities/Imagen";
 import type { Direccion } from "../../domain/values/Direccion";
 import type { GPSCoords } from "../../domain/values/GPSCoords";
@@ -26,6 +27,7 @@ export type EdicionVentaInput = {
     header?: HeaderCambios;
     productos?: ReadonlyArray<Producto>;
     combos?: ReadonlyArray<Combo>;
+    vendedores?: ReadonlyArray<Vendedor>;
     imagenesNuevas: ReadonlyArray<ImagenNueva>;    // empty array = none
     imagenesAEliminar: ReadonlyArray<string>;      // server IDs to delete; empty = none
   };

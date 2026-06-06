@@ -64,6 +64,7 @@ const PASO_LABELS: Record<PasoEdicion, string> = {
   header: "datos generales",
   combos: "combos",
   productos: "productos",
+  vendedores: "vendedores",
   eliminar_imagen: "eliminar imagen",
   adjuntar_imagen: "subir imagen",
 };

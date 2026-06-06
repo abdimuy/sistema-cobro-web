@@ -2,6 +2,7 @@ import type { Venta } from "../../domain/entities/Venta";
 import type { ClienteSnapshot } from "../../domain/entities/ClienteSnapshot";
 import type { Combo } from "../../domain/entities/Combo";
 import type { Producto } from "../../domain/entities/Producto";
+import type { Vendedor } from "../../domain/entities/Vendedor";
 import type { ImagenExistente, ImagenNueva } from "../../domain/entities/Imagen";
 import type { Direccion } from "../../domain/values/Direccion";
 import type { GPSCoords } from "../../domain/values/GPSCoords";
@@ -35,6 +36,11 @@ export type CombosInput = {
   combos: ReadonlyArray<Combo>;
 };
 
+export type VendedoresInput = {
+  ventaID: string;
+  vendedores: ReadonlyArray<Vendedor>;
+};
+
 export type AdjuntarImagenInput = {
   ventaID: string;
   imagen: ImagenNueva;
@@ -51,6 +57,7 @@ export interface VentaEditPort {
   actualizarCliente(input: ClienteInput): Promise<Venta>;
   reemplazarProductos(input: ProductosInput): Promise<Venta>;
   reemplazarCombos(input: CombosInput): Promise<Venta>;
+  reemplazarVendedores(input: VendedoresInput): Promise<Venta>;
   adjuntarImagen(input: AdjuntarImagenInput): Promise<ImagenExistente>;
   eliminarImagen(input: EliminarImagenInput): Promise<void>;
 }

@@ -4,6 +4,7 @@ import type {
   ClienteInput,
   ProductosInput,
   CombosInput,
+  VendedoresInput,
   AdjuntarImagenInput,
   EliminarImagenInput,
 } from "../../application/ports/VentaEditPort";
@@ -16,6 +17,7 @@ import {
   toActualizarClienteBody,
   toReemplazarProductosBody,
   toReemplazarCombosBody,
+  toReemplazarVendedoresBody,
 } from "../mappers/domainToV2Dto";
 import { mapAxiosError } from "../mappers/errorMapper";
 import type { VentaV2, ImagenV2 } from "../../../../services/api/ventaV2Types";
@@ -60,6 +62,15 @@ export class HttpVentaEditAdapter implements VentaEditPort {
   async reemplazarCombos(input: CombosInput): Promise<Venta> {
     try {
       const res = await apiClient.put<VentaV2>(`/ventas/${input.ventaID}/combos`, toReemplazarCombosBody(input));
+      return ventaV2ToDomain(res.data);
+    } catch (err) {
+      throw mapAxiosError(err);
+    }
+  }
+
+  async reemplazarVendedores(input: VendedoresInput): Promise<Venta> {
+    try {
+      const res = await apiClient.put<VentaV2>(`/ventas/${input.ventaID}/vendedores`, toReemplazarVendedoresBody(input));
       return ventaV2ToDomain(res.data);
     } catch (err) {
       throw mapAxiosError(err);

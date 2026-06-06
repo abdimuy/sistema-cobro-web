@@ -4,6 +4,8 @@ import { ventaV2ToDomain } from "../../infrastructure/mappers/ventaV2ToDomain";
 import type { Venta } from "../../domain/entities/Venta";
 import { ClienteSnapshot } from "../../domain/entities/ClienteSnapshot";
 import { Producto } from "../../domain/entities/Producto";
+import { Vendedor } from "../../domain/entities/Vendedor";
+import { Combo } from "../../domain/entities/Combo";
 import { DomainError } from "../../domain/errors";
 import { NombreCliente } from "../../domain/values/NombreCliente";
 import { Telefono } from "../../domain/values/Telefono";
@@ -74,6 +76,28 @@ export type ProductoFormData = {
   isDeleted?: boolean;
 };
 
+export type VendedorFormData = {
+  id: string;
+  usuarioID: string;
+  email: string;
+  nombre: string;
+  isNew?: boolean;
+  isDeleted?: boolean;
+};
+
+export type ComboFormData = {
+  id: string;
+  nombre: string;
+  precioAnual: number;
+  precioCortoPlazo: number;
+  precioContado: number;
+  cantidad: number;
+  almacenOrigenID: number;
+  almacenDestinoID: number;
+  isNew?: boolean;
+  isDeleted?: boolean;
+};
+
 export type ImagenFormData =
   | { kind: "existing"; id: string; storageKey: string; descripcion: string; mime: string; createdAt: string; isDeleted: boolean }
   | { kind: "new"; id: string; file: File; descripcion: string; previewUrl: string };
@@ -88,6 +112,8 @@ export type EditarVentaFormData = {
   cliente: ClienteFormData;
   financiero: FinancieroFormData;
   productos: ProductoFormData[];
+  vendedores: VendedorFormData[];
+  combos: ComboFormData[];
   imagenes: ImagenFormData[];
   almacenes: AlmacenesFormData; // default almacenes for AgregarProductoDialog
   gps: GPSFormData;
@@ -150,6 +176,28 @@ function proyectarVentaAFormData(dominioVenta: Venta): EditarVentaFormData {
     isDeleted: false,
   }));
 
+  const vendedores: VendedorFormData[] = dominioVenta.vendedores.map((v) => ({
+    id: v.id,
+    usuarioID: v.usuarioID,
+    email: v.email,
+    nombre: v.nombre,
+    isNew: false,
+    isDeleted: false,
+  }));
+
+  const combos: ComboFormData[] = dominioVenta.combos.map((c) => ({
+    id: c.id,
+    nombre: c.nombre,
+    precioAnual: c.precioAnual.toNumber(),
+    precioCortoPlazo: c.precioCorto.toNumber(),
+    precioContado: c.precioContado.toNumber(),
+    cantidad: c.cantidad.toNumber(),
+    almacenOrigenID: c.almacenes.origenID,
+    almacenDestinoID: c.almacenes.destinoID,
+    isNew: false,
+    isDeleted: false,
+  }));
+
   const imagenes: ImagenFormData[] = dominioVenta.imagenes.map((img) => ({
     kind: "existing" as const,
     id: img.id,
@@ -190,6 +238,8 @@ function proyectarVentaAFormData(dominioVenta: Venta): EditarVentaFormData {
     cliente,
     financiero,
     productos,
+    vendedores,
+    combos,
     imagenes,
     almacenes,
     gps: { latitud: dominioVenta.gps.latitud, longitud: dominioVenta.gps.longitud },
@@ -266,6 +316,46 @@ function productosDiffers(productos: ProductoFormData[], v: Venta): boolean {
   // Check for new (isNew=true) or deleted-existing products
   const hasNew = productos.some((p) => p.isNew && !p.isDeleted);
   const hasDeletedExisting = productos.some((p) => !p.isNew && p.isDeleted);
+  if (hasNew || hasDeletedExisting) return true;
+  return false;
+}
+
+function vendedoresDiffers(vendedores: VendedorFormData[], v: Venta): boolean {
+  const active = vendedores.filter((x) => !x.isDeleted);
+  const original = v.vendedores;
+  if (active.length !== original.length) return true;
+  for (let i = 0; i < active.length; i++) {
+    const f = active[i];
+    const o = original[i];
+    if (f.id !== o.id) return true;
+    if (f.usuarioID !== o.usuarioID) return true;
+    if (f.email !== o.email) return true;
+    if (f.nombre !== o.nombre) return true;
+  }
+  const hasNew = vendedores.some((p) => p.isNew && !p.isDeleted);
+  const hasDeletedExisting = vendedores.some((p) => !p.isNew && p.isDeleted);
+  if (hasNew || hasDeletedExisting) return true;
+  return false;
+}
+
+function combosDiffers(combos: ComboFormData[], v: Venta): boolean {
+  const active = combos.filter((p) => !p.isDeleted);
+  const original = v.combos;
+  if (active.length !== original.length) return true;
+  for (let i = 0; i < active.length; i++) {
+    const f = active[i];
+    const o = original[i];
+    if (f.id !== o.id) return true;
+    if (f.nombre !== o.nombre) return true;
+    if (f.cantidad !== o.cantidad.toNumber()) return true;
+    if (f.precioAnual !== o.precioAnual.toNumber()) return true;
+    if (f.precioCortoPlazo !== o.precioCorto.toNumber()) return true;
+    if (f.precioContado !== o.precioContado.toNumber()) return true;
+    if (f.almacenOrigenID !== o.almacenes.origenID) return true;
+    if (f.almacenDestinoID !== o.almacenes.destinoID) return true;
+  }
+  const hasNew = combos.some((p) => p.isNew && !p.isDeleted);
+  const hasDeletedExisting = combos.some((p) => !p.isNew && p.isDeleted);
   if (hasNew || hasDeletedExisting) return true;
   return false;
 }
@@ -365,11 +455,13 @@ export function useVentaEditState(venta: VentaV2) {
     const clienteChanged = clienteDiffers(formData.cliente, dominioVenta);
     const headerChanged = headerDiffers(formData.financiero, formData.gps, dominioVenta);
     const productosChanged = productosDiffers(formData.productos, dominioVenta);
+    const vendedoresChanged = vendedoresDiffers(formData.vendedores, dominioVenta);
+    const combosChanged = combosDiffers(formData.combos, dominioVenta);
     const imagenesNuevas = formData.imagenes.filter((i) => i.kind === "new").length > 0;
     const imagenesAEliminar = formData.imagenes.filter(
       (i) => i.kind === "existing" && i.isDeleted,
     ).length > 0;
-    return clienteChanged || headerChanged || productosChanged || imagenesNuevas || imagenesAEliminar;
+    return clienteChanged || headerChanged || productosChanged || vendedoresChanged || combosChanged || imagenesNuevas || imagenesAEliminar;
   }, [formData, dominioVenta]);
 
   // ── cliente ────────────────────────────────────────────────────────────────
@@ -463,6 +555,132 @@ export function useVentaEditState(venta: VentaV2) {
       ...prev,
       productos: prev.productos.map((p, i) =>
         i === index ? { ...p, isDeleted: false } : p,
+      ),
+    }));
+  }, []);
+
+  // ── vendedores ─────────────────────────────────────────────────────────────
+
+  const addVendedor = useCallback(
+    (v: Omit<VendedorFormData, "id" | "isNew" | "isDeleted">) => {
+      setFormData((prev) => ({
+        ...prev,
+        vendedores: [
+          ...prev.vendedores,
+          {
+            ...v,
+            id: crypto.randomUUID(),
+            isNew: true,
+            isDeleted: false,
+          },
+        ],
+      }));
+    },
+    [],
+  );
+
+  const updateVendedor = useCallback(
+    (
+      index: number,
+      field: keyof VendedorFormData,
+      value: VendedorFormData[keyof VendedorFormData],
+    ) => {
+      setFormData((prev) => ({
+        ...prev,
+        vendedores: prev.vendedores.map((v, i) =>
+          i === index ? { ...v, [field]: value } : v,
+        ),
+      }));
+    },
+    [],
+  );
+
+  const removeVendedor = useCallback((index: number) => {
+    setFormData((prev) => {
+      const v = prev.vendedores[index];
+      if (v.isNew) {
+        return {
+          ...prev,
+          vendedores: prev.vendedores.filter((_, i) => i !== index),
+        };
+      }
+      return {
+        ...prev,
+        vendedores: prev.vendedores.map((vd, i) =>
+          i === index ? { ...vd, isDeleted: true } : vd,
+        ),
+      };
+    });
+  }, []);
+
+  const restoreVendedor = useCallback((index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      vendedores: prev.vendedores.map((v, i) =>
+        i === index ? { ...v, isDeleted: false } : v,
+      ),
+    }));
+  }, []);
+
+  // ── combos ─────────────────────────────────────────────────────────────────
+
+  const addCombo = useCallback(
+    (c: Omit<ComboFormData, "id" | "isNew" | "isDeleted">) => {
+      setFormData((prev) => ({
+        ...prev,
+        combos: [
+          ...prev.combos,
+          {
+            ...c,
+            id: crypto.randomUUID(),
+            isNew: true,
+            isDeleted: false,
+          },
+        ],
+      }));
+    },
+    [],
+  );
+
+  const updateCombo = useCallback(
+    (
+      index: number,
+      field: keyof ComboFormData,
+      value: ComboFormData[keyof ComboFormData],
+    ) => {
+      setFormData((prev) => ({
+        ...prev,
+        combos: prev.combos.map((c, i) =>
+          i === index ? { ...c, [field]: value } : c,
+        ),
+      }));
+    },
+    [],
+  );
+
+  const removeCombo = useCallback((index: number) => {
+    setFormData((prev) => {
+      const c = prev.combos[index];
+      if (c.isNew) {
+        return {
+          ...prev,
+          combos: prev.combos.filter((_, i) => i !== index),
+        };
+      }
+      return {
+        ...prev,
+        combos: prev.combos.map((cb, i) =>
+          i === index ? { ...cb, isDeleted: true } : cb,
+        ),
+      };
+    });
+  }, []);
+
+  const restoreCombo = useCallback((index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      combos: prev.combos.map((c, i) =>
+        i === index ? { ...c, isDeleted: false } : c,
       ),
     }));
   }, []);
@@ -746,6 +964,49 @@ export function useVentaEditState(venta: VentaV2) {
       }
     }
 
+    // ── vendedores cambios ────────────────────────────────────────────────────
+    let vendedoresVOs: ReadonlyArray<Vendedor> | undefined;
+    if (vendedoresDiffers(formData.vendedores, dominioVenta)) {
+      const built: Vendedor[] = [];
+      const active = formData.vendedores.filter((p) => !p.isDeleted);
+      for (const v of active) {
+        built.push(Vendedor.create({
+          id: v.id,
+          usuarioID: v.usuarioID,
+          email: v.email,
+          nombre: v.nombre,
+        }));
+      }
+      vendedoresVOs = built;
+    }
+
+    // ── combos cambios ────────────────────────────────────────────────────────
+    let combosVOs: ReadonlyArray<Combo> | undefined;
+    if (combosDiffers(formData.combos, dominioVenta)) {
+      const built: Combo[] = [];
+      const active = formData.combos.filter((p) => !p.isDeleted);
+      for (const c of active) {
+        const cantR = Cantidad.create(c.cantidad);
+        if (cantR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].cantidad`, message: cantR.message }); continue; }
+        const paR = Monto.create(c.precioAnual);
+        if (paR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].precioAnual`, message: paR.message }); continue; }
+        const pcpR = Monto.create(c.precioCortoPlazo);
+        if (pcpR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].precioCortoPlazo`, message: pcpR.message }); continue; }
+        const pctR = Monto.create(c.precioContado);
+        if (pctR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].precioContado`, message: pctR.message }); continue; }
+        const almR = AlmacenesPair.create(c.almacenOrigenID, c.almacenDestinoID);
+        if (almR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].almacenes`, message: almR.message }); continue; }
+        built.push(Combo.create({
+          id: c.id, nombre: c.nombre,
+          precioAnual: paR, precioCorto: pcpR, precioContado: pctR,
+          cantidad: cantR, almacenes: almR,
+        }));
+      }
+      if (validationErrors.length === 0) {
+        combosVOs = built;
+      }
+    }
+
     if (validationErrors.length > 0) {
       return { ok: false, errors: validationErrors };
     }
@@ -774,6 +1035,8 @@ export function useVentaEditState(venta: VentaV2) {
         ...(clienteSnapshot !== undefined ? { cliente: clienteSnapshot } : {}),
         ...(headerCambios !== undefined ? { header: headerCambios } : {}),
         ...(productosVOs !== undefined ? { productos: productosVOs } : {}),
+        ...(vendedoresVOs !== undefined ? { vendedores: vendedoresVOs } : {}),
+        ...(combosVOs !== undefined ? { combos: combosVOs } : {}),
         imagenesNuevas,
         imagenesAEliminar,
       },
@@ -793,6 +1056,14 @@ export function useVentaEditState(venta: VentaV2) {
     updateProducto,
     removeProducto,
     restoreProducto,
+    addVendedor,
+    updateVendedor,
+    removeVendedor,
+    restoreVendedor,
+    addCombo,
+    updateCombo,
+    removeCombo,
+    restoreCombo,
     addImagenes,
     updateImagenDescripcion,
     removeImagen,

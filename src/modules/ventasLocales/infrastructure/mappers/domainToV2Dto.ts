@@ -3,7 +3,7 @@
  * The body interfaces below mirror the Go server DTOs in
  * internal/ventas/infra/venthttp/dto.go.
  */
-import type { HeaderInput, ClienteInput, ProductosInput, CombosInput } from "../../application/ports/VentaEditPort";
+import type { HeaderInput, ClienteInput, ProductosInput, CombosInput, VendedoresInput } from "../../application/ports/VentaEditPort";
 
 // ---------------------------------------------------------------------------
 // Body type definitions (mirrors Go DTOs)
@@ -95,6 +95,18 @@ export type ComboDTOBody = {
 /** PUT /v2/ventas/{id}/combos */
 export type ReemplazarCombosBody = {
   combos: ComboDTOBody[];
+};
+
+export type VendedorDTOBody = {
+  id: string;
+  usuario_id: string;
+  email: string;
+  nombre: string;
+};
+
+/** PUT /v2/ventas/{id}/vendedores */
+export type ReemplazarVendedoresBody = {
+  vendedores: VendedorDTOBody[];
 };
 
 // ---------------------------------------------------------------------------
@@ -209,4 +221,15 @@ export function toReemplazarCombosBody(input: CombosInput): ReemplazarCombosBody
   }));
 
   return { combos };
+}
+
+export function toReemplazarVendedoresBody(input: VendedoresInput): ReemplazarVendedoresBody {
+  return {
+    vendedores: input.vendedores.map((v) => ({
+      id: v.id,
+      usuario_id: v.usuarioID,
+      email: v.email,
+      nombre: v.nombre,
+    })),
+  };
 }

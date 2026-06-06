@@ -1,5 +1,5 @@
 // Port
-export type { VentaEditPort, HeaderInput, ClienteInput, ProductosInput, CombosInput, AdjuntarImagenInput, EliminarImagenInput } from "./ports/VentaEditPort";
+export type { VentaEditPort, HeaderInput, ClienteInput, ProductosInput, CombosInput, VendedoresInput, AdjuntarImagenInput, EliminarImagenInput } from "./ports/VentaEditPort";
 
 // DTOs
 export type { EdicionVentaInput, HeaderCambios } from "./dto/EdicionVentaInput";
