@@ -279,14 +279,12 @@ export function loadVisibleColumns(): ColumnId[] {
     if (stored) {
       const parsed = JSON.parse(stored) as ColumnId[];
       // Get valid stored columns
-      const validStoredIds = new Set(
-        parsed.filter((id) => COLUMNS.some((col) => col.id === id))
+      // Preserve user's custom order — only drop unknown ids
+      const filtered = parsed.filter((id) =>
+        COLUMNS.some((col) => col.id === id)
       );
-      if (validStoredIds.size > 0) {
-        // Return columns in COLUMNS order, filtered by what was stored
-        return COLUMNS
-          .filter((col) => validStoredIds.has(col.id))
-          .map((col) => col.id);
+      if (filtered.length > 0) {
+        return filtered;
       }
     }
   } catch {
