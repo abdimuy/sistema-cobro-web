@@ -8,16 +8,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle2, GitCompare } from "lucide-react";
+import { CheckCircle2, GitCompare } from "lucide-react";
 
 import type { FailedIntent, Manifest } from "../domain/entities";
 import type { UploadMap } from "../application/dto";
 import { useBlobParts } from "../presentation/hooks/useBlobParts";
 import { useMultipartEditState } from "./multipartEditor/useMultipartEditState";
 import { MultipartEditor } from "./multipartEditor/MultipartEditor";
+import { VentaReplayForm } from "./ventaReplayForm/VentaReplayForm";
 
 // ReplayWithSheet is the unified replay-with surface. For JSON intents
 // it renders an original-vs-edited JSON editor; for blob intents
@@ -138,7 +136,14 @@ function MultipartIndicator({
   );
 }
 
-// ─── JSON branch (existing behavior, preserved) ──────────────────────────────
+// ─── JSON branch ─────────────────────────────────────────────────────────────
+//
+// VentaReplayForm owns the editor surface — for venta-shaped bodies it
+// renders the ventasLocales tabs (Cliente, Plan, Productos, …); for
+// anything else it falls back to a raw-JSON textarea. The body it
+// surfaces is the live, parsed value the operator is composing; this
+// branch tracks dirtiness vs. the captured original and arms the
+// submit button accordingly.
 
 function JsonBranch({
   intent,
@@ -146,59 +151,26 @@ function JsonBranch({
   onSubmitJson,
   onCancel,
 }: ReplayWithSheetProps) {
-  const originalText = useMemo(() => prettyPrint(intent?.body), [intent]);
-  const [text, setText] = useState(originalText);
-  const [error, setError] = useState<string | null>(null);
+  const originalBody = useMemo(() => intent?.body ?? {}, [intent]);
+  const originalKey = useMemo(() => stableStringify(originalBody), [originalBody]);
+  const [draft, setDraft] = useState<unknown>(originalBody);
 
   useEffect(() => {
-    setText(originalText);
-    setError(null);
-  }, [originalText]);
+    setDraft(originalBody);
+  }, [originalBody]);
 
-  const parsed = useMemo(() => {
-    if (!text.trim()) return { ok: false as const, error: "el body no puede estar vacío" };
-    try {
-      return { ok: true as const, value: JSON.parse(text) };
-    } catch (e) {
-      return {
-        ok: false as const,
-        error: e instanceof Error ? e.message : "JSON inválido",
-      };
-    }
-  }, [text]);
-
-  const dirty = text !== originalText;
-  const canSubmit = parsed.ok && dirty && !pending;
-
-  const handleSubmit = () => {
-    if (!parsed.ok) {
-      setError(parsed.error);
-      return;
-    }
-    onSubmitJson(parsed.value);
-  };
+  const dirty = useMemo(() => stableStringify(draft) !== originalKey, [draft, originalKey]);
+  const canSubmit = dirty && !pending;
 
   return (
     <>
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 min-h-0">
-        <OriginalPane originalText={originalText} />
-        <EditorPane
-          text={text}
-          onChange={(v) => {
-            setText(v);
-            setError(null);
-          }}
-          parseError={parsed.ok ? null : parsed.error}
-          dirty={dirty}
+      <div className="flex-1 min-h-0">
+        <VentaReplayForm
+          initialBody={originalBody}
+          onChange={setDraft}
+          key={intent?.id ?? "none"}
         />
       </div>
-
-      {error && (
-        <div className="px-6 py-2 border-t border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
-          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
 
       <SheetFooter className="px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 flex-row justify-between sm:justify-between gap-2">
         <DiffIndicator dirty={dirty} />
@@ -208,7 +180,7 @@ function JsonBranch({
           </Button>
           <Button
             disabled={!canSubmit}
-            onClick={handleSubmit}
+            onClick={() => onSubmitJson(draft)}
             data-testid="replay-with-submit"
           >
             {pending ? "Replayeando…" : "Guardar y reenviar"}
@@ -219,65 +191,23 @@ function JsonBranch({
   );
 }
 
-function OriginalPane({ originalText }: { originalText: string }) {
-  return (
-    <section className="flex flex-col min-h-0 border-b lg:border-b-0 lg:border-r border-zinc-200 dark:border-zinc-800">
-      <header className="px-4 py-2 text-[10px] uppercase tracking-wider text-zinc-500 font-medium bg-zinc-50 dark:bg-zinc-900/40 border-b border-zinc-200/60 dark:border-zinc-800/60 flex items-center gap-1.5">
-        <span>Original</span>
-      </header>
-      <ScrollArea className="flex-1">
-        <pre className="px-4 py-3 text-xs font-mono leading-relaxed text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap break-all">
-          {originalText}
-        </pre>
-      </ScrollArea>
-    </section>
-  );
-}
-
-function EditorPane({
-  text,
-  onChange,
-  parseError,
-  dirty,
-}: {
-  text: string;
-  onChange: (next: string) => void;
-  parseError: string | null;
-  dirty: boolean;
-}) {
-  return (
-    <section className="flex flex-col min-h-0">
-      <header className="px-4 py-2 text-[10px] uppercase tracking-wider text-zinc-500 font-medium bg-zinc-50 dark:bg-zinc-900/40 border-b border-zinc-200/60 dark:border-zinc-800/60 flex items-center justify-between">
-        <span>Editado</span>
-        {dirty && (
-          <span className="text-[10px] text-amber-600 dark:text-amber-400 normal-case">
-            modificado
-          </span>
-        )}
-      </header>
-      <Textarea
-        value={text}
-        onChange={(e) => onChange(e.target.value)}
-        spellCheck={false}
-        className={cn(
-          "flex-1 rounded-none border-0 resize-none font-mono text-xs leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3",
-          parseError && "bg-red-50/40 dark:bg-red-950/10",
-        )}
-        data-testid="replay-with-textarea"
-        aria-invalid={parseError ? "true" : undefined}
-        aria-label="Body corregido"
-      />
-      {parseError && (
-        <div
-          className="px-4 py-1.5 text-[11px] text-red-700 dark:text-red-300 border-t border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20 flex items-center gap-1.5"
-          data-testid="replay-with-parse-error"
-        >
-          <AlertCircle className="h-3 w-3" />
-          <span className="font-mono">{parseError}</span>
-        </div>
-      )}
-    </section>
-  );
+// stableStringify sorts object keys recursively so structurally-equal
+// objects produce identical strings regardless of property order.
+// Used to track form vs. original dirtiness — the form may re-emit
+// fields in a different order than they came in over the wire.
+function stableStringify(v: unknown): string {
+  return JSON.stringify(v, function (_, value) {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const obj = value as Record<string, unknown>;
+      return Object.keys(obj)
+        .sort()
+        .reduce<Record<string, unknown>>((acc, k) => {
+          acc[k] = obj[k];
+          return acc;
+        }, {});
+    }
+    return value;
+  });
 }
 
 function DiffIndicator({ dirty }: { dirty: boolean }) {
@@ -297,11 +227,3 @@ function DiffIndicator({ dirty }: { dirty: boolean }) {
   );
 }
 
-function prettyPrint(body: unknown): string {
-  if (body === null || body === undefined) return "{}";
-  try {
-    return JSON.stringify(body, null, 2);
-  } catch {
-    return String(body);
-  }
-}

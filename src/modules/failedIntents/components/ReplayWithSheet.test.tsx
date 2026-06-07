@@ -2,6 +2,42 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+// Mock catalog hooks so the embedded VentaReplayForm doesn't try to
+// hit Firebase / the API when the body is venta-shaped.
+vi.mock("@/hooks/useGetAlmacenes", () => ({
+  __esModule: true,
+  default: () => ({
+    almacenes: [
+      { ALMACEN_ID: 1, ALMACEN: "MATRIZ", EXISTENCIAS: 0 },
+      { ALMACEN_ID: 2, ALMACEN: "BODEGA", EXISTENCIAS: 0 },
+    ],
+    getAlmacenById: () => undefined,
+    loading: false,
+    error: null,
+    refetch: async () => {},
+  }),
+}));
+
+vi.mock("@/hooks/useGetZonasCliente", () => ({
+  __esModule: true,
+  default: () => ({
+    zonas: [{ ZONA_CLIENTE_ID: 4, ZONA_CLIENTE: "CENTRO" }],
+    loading: false,
+    error: null,
+    getZonaById: () => undefined,
+    refetch: async () => {},
+  }),
+}));
+
+vi.mock("@/hooks/useGetVendedores", () => ({
+  __esModule: true,
+  default: () => ({
+    vendedores: [],
+    loading: false,
+    error: null,
+  }),
+}));
+
 import { ReplayWithSheet } from "./ReplayWithSheet";
 import { makeFakeIntent, FakeRepoPort } from "../application/__tests__/fakeRepoPort";
 import { FailedIntentsProvider } from "../presentation/context/FailedIntentsContext";
@@ -34,13 +70,15 @@ function renderSheet(props: {
 }
 
 describe("ReplayWithSheet — JSON branch", () => {
-  it("seeds the editor with the pretty-printed original body", () => {
+  it("seeds the JSON view with the pretty-printed original body when the body is not venta-shaped", () => {
     const intent = makeFakeIntent({
       hasBlob: false,
       body: { cliente: "Carlos" },
     });
     renderSheet({ intent });
-    const ta = screen.getByTestId("replay-with-textarea") as HTMLTextAreaElement;
+    const ta = screen.getByTestId(
+      "venta-replay-form-json-textarea",
+    ) as HTMLTextAreaElement;
     expect(JSON.parse(ta.value)).toEqual({ cliente: "Carlos" });
   });
 
@@ -62,16 +100,66 @@ describe("ReplayWithSheet — JSON branch", () => {
     });
     renderSheet({ intent, onSubmitJson });
 
-    const ta = screen.getByTestId("replay-with-textarea") as HTMLTextAreaElement;
+    const ta = screen.getByTestId(
+      "venta-replay-form-json-textarea",
+    ) as HTMLTextAreaElement;
     await user.clear(ta);
     await user.click(ta);
     await user.paste('{"cliente":"FIXED"}');
 
     const submit = screen.getByTestId("replay-with-submit");
-    expect(submit).not.toBeDisabled();
+    await waitFor(() => expect(submit).not.toBeDisabled());
     await user.click(submit);
 
     expect(onSubmitJson).toHaveBeenCalledWith({ cliente: "FIXED" });
+  });
+
+  it("renders the venta form (tabs + hero) when the body is venta-shaped", () => {
+    const ventaBody = {
+      id: "11111111-1111-1111-1111-111111111111",
+      cliente: { cliente_id: 7, nombre: "CARLOS MENDEZ" },
+      direccion: {
+        calle: "AV X",
+        colonia: "CENTRO",
+        poblacion: "AGS",
+        ciudad: "AGS",
+      },
+      gps: { latitud: 21.88, longitud: -102.29 },
+      fecha_venta: "2026-06-06T10:00:00Z",
+      tipo_venta: "CONTADO",
+      montos: { anual: "1000.00", corto_plazo: "1000.00", contado: "1000.00" },
+      combos: [],
+      productos: [
+        {
+          id: "22222222-2222-2222-2222-222222222222",
+          articulo_id: 100,
+          articulo: "SILLA",
+          cantidad: "1",
+          precio_anual: "1000.00",
+          precio_corto: "1000.00",
+          precio_contado: "1000.00",
+          combo_id: null,
+          almacen_origen_id: 1,
+          almacen_destino_id: 2,
+        },
+      ],
+      vendedores: [
+        {
+          id: "33333333-3333-3333-3333-333333333333",
+          usuario_id: "44444444-4444-4444-4444-444444444444",
+          email: "v@muebleriamsp.mx",
+          nombre: "JUAN",
+        },
+      ],
+    };
+    const intent = makeFakeIntent({ hasBlob: false, body: ventaBody });
+    renderSheet({ intent });
+
+    expect(screen.getByTestId("venta-replay-form-hero")).toHaveTextContent(
+      "11111111-1111-1111-1111-111111111111",
+    );
+    expect(screen.getByRole("tab", { name: /cliente/i })).toBeInTheDocument();
+    expect(screen.queryByTestId("venta-replay-form-json-textarea")).toBeNull();
   });
 });
 

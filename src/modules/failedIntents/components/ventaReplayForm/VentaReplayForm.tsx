@@ -196,28 +196,25 @@ function FormBranch({
   const edit = useVentaReplayEdit(initialBody);
   const [activeTab, setActiveTab] = useState<TabId>("resumen");
 
-  // Push the latest serialized body to the parent every time form state
-  // changes. The hook returns null while there are validation errors;
-  // we still want to surface the (invalid) body so the parent can
-  // decide whether to enable the submit button based on its own
-  // criteria — instead we route through formDataToCrearVentaBody once
-  // edits stabilize. The most pragmatic compromise: emit on every form
-  // update with the LATEST shape, even when errors exist, by going
-  // through the mapper directly via state.formData.
-  const stateRef = useRef(edit.state);
-  stateRef.current = edit.state;
+  // Push the latest serialized body to the parent whenever the form
+  // state actually changes. Depending on `state.formData` (which only
+  // changes via setFormData) means this effect only fires on real
+  // edits — not every render — so we avoid the infinite loop you'd
+  // get from emitting a freshly-allocated body on each render.
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const buildRef = useRef(edit.buildSubmitPayload);
+  buildRef.current = edit.buildSubmitPayload;
+
+  const formData = edit.available ? edit.state.formData : null;
 
   useEffect(() => {
-    if (!edit.available) return;
-    const payload = edit.buildSubmitPayload();
+    if (formData === null) return;
+    const payload = buildRef.current();
     if (payload !== null) {
-      onChange(payload);
+      onChangeRef.current(payload);
     }
-    // We deliberately do NOT depend on `onChange` (the caller often
-    // passes an inline lambda). The effect re-runs every render
-    // because `edit` is a fresh object each render — this is the
-    // same cadence the form data changes at, which is what we want.
-  });
+  }, [formData]);
 
   if (!edit.available) {
     return (
