@@ -124,6 +124,54 @@ describe("useReplayAction", () => {
     expect(port.replayWithCalls).toHaveLength(0);
   });
 
+  it("replayWithMultipart succeeds for a blob intent + valid manifest", async () => {
+    const port = new FakeRepoPort();
+    const intent = makeFakeIntent({ hasBlob: true });
+    const { result } = renderHook(() => useReplayAction(), {
+      wrapper: wrapWith(port),
+    });
+
+    const manifest = [
+      {
+        name: "venta_json",
+        source: { kind: "field", value: new TextEncoder().encode("{}") },
+      },
+    ] as const;
+
+    await act(async () => {
+      await result.current.replayWithMultipart(
+        intent,
+        manifest,
+        new Map(),
+      );
+    });
+
+    expect(result.current.state.status).toBe("success");
+    expect(port.replayWithMultipartCalls).toHaveLength(1);
+  });
+
+  it("replayWithMultipart rejects when intent is JSON (use-case guard)", async () => {
+    const port = new FakeRepoPort();
+    const intent = makeFakeIntent({ hasBlob: false });
+    const { result } = renderHook(() => useReplayAction(), {
+      wrapper: wrapWith(port),
+    });
+    const manifest = [
+      {
+        name: "x",
+        source: { kind: "field", value: new Uint8Array() },
+      },
+    ] as const;
+    await act(async () => {
+      await result.current.replayWithMultipart(intent, manifest, new Map());
+    });
+    expect(result.current.state.status).toBe("error");
+    if (result.current.state.status === "error") {
+      expect(result.current.state.error.code).toBe("intent_not_multipart");
+    }
+    expect(port.replayWithMultipartCalls).toHaveLength(0);
+  });
+
   it("reset returns the hook to idle", async () => {
     const port = new FakeRepoPort();
     const { result } = renderHook(() => useReplayAction(), {

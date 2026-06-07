@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState } from "react";
-import type { FailedIntent } from "../../domain/entities";
-import type { ReplayResult } from "../../application/dto";
+import type { FailedIntent, Manifest } from "../../domain/entities";
+import type { ReplayResult, UploadMap } from "../../application/dto";
 import { useFailedIntentsPort } from "../context/FailedIntentsContext";
 import { replayIntent } from "../../application/usecases/replayIntent";
 import { replayConBodyEditado } from "../../application/usecases/replayConBodyEditado";
+import { replayConMultipartEditado } from "../../application/usecases/replayConMultipartEditado";
 import { DomainError } from "../../domain/errors";
 
 export type ReplayActionState =
@@ -18,6 +19,11 @@ export type UseReplayActionReturn = {
   replayWith: (
     intent: FailedIntent,
     body: unknown,
+  ) => Promise<ReplayResult | null>;
+  replayWithMultipart: (
+    intent: FailedIntent,
+    manifest: Manifest,
+    uploads: UploadMap,
   ) => Promise<ReplayResult | null>;
   reset: () => void;
 };
@@ -80,9 +86,41 @@ export function useReplayAction(): UseReplayActionReturn {
     [port],
   );
 
+  const replayWithMultipart = useCallback(
+    async (
+      intent: FailedIntent,
+      manifest: Manifest,
+      uploads: UploadMap,
+    ): Promise<ReplayResult | null> => {
+      if (pendingRef.current) return null;
+      pendingRef.current = true;
+      setState({ status: "pending" });
+      try {
+        const result = await replayConMultipartEditado(
+          port,
+          intent,
+          manifest,
+          uploads,
+        );
+        setState({ status: "success", result });
+        return result;
+      } catch (e) {
+        const err =
+          e instanceof DomainError
+            ? e
+            : new DomainError("error_inesperado", String(e));
+        setState({ status: "error", error: err });
+        return null;
+      } finally {
+        pendingRef.current = false;
+      }
+    },
+    [port],
+  );
+
   const reset = useCallback(() => {
     setState({ status: "idle" });
   }, []);
 
-  return { state, replay, replayWith, reset };
+  return { state, replay, replayWith, replayWithMultipart, reset };
 }
