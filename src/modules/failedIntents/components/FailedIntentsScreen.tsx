@@ -14,6 +14,7 @@ import { StatusFilter, type StatusFilterValue } from "./StatusFilter";
 import { FailedIntentsTable } from "./FailedIntentsTable";
 import { Inspector } from "./Inspector";
 import { ReplayConfirmDialog } from "./ReplayConfirmDialog";
+import { ReplayWithSheet } from "./ReplayWithSheet";
 import { ResolverDialog } from "./ResolverDialog";
 
 // FailedIntentsScreen is the composed admin screen — the dueño opens
@@ -31,6 +32,7 @@ export function FailedIntentsScreen() {
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("new");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [replayConfirmOpen, setReplayConfirmOpen] = useState(false);
+  const [replayWithOpen, setReplayWithOpen] = useState(false);
   const [resolverOpen, setResolverOpen] = useState(false);
 
   const listStatus = statusFilter === "all" ? undefined : statusFilter;
@@ -70,6 +72,7 @@ export function FailedIntentsScreen() {
         });
       }
       setReplayConfirmOpen(false);
+      setReplayWithOpen(false);
       detail.refresh();
       list.refresh();
       replay.reset();
@@ -79,6 +82,7 @@ export function FailedIntentsScreen() {
         id: `replay-err-${selectedId}`,
       });
       setReplayConfirmOpen(false);
+      setReplayWithOpen(false);
       replay.reset();
     }
     // intentionally narrow deps — these flags only change once per request
@@ -115,12 +119,7 @@ export function FailedIntentsScreen() {
       if (!detail.intent) return;
       if (action === "replay") setReplayConfirmOpen(true);
       else if (action === "resolve") setResolverOpen(true);
-      else if (action === "replay-with") {
-        toast.info("Próximamente", {
-          description: "El editor estructurado se habilita en la próxima entrega",
-          id: "replay-with-coming-soon",
-        });
-      }
+      else if (action === "replay-with") setReplayWithOpen(true);
     },
     [detail.intent],
   );
@@ -203,6 +202,16 @@ export function FailedIntentsScreen() {
           if (selectedId) void replay.replay(selectedId);
         }}
         onCancel={() => setReplayConfirmOpen(false)}
+      />
+
+      <ReplayWithSheet
+        intent={detail.intent}
+        open={replayWithOpen}
+        pending={replay.state.status === "pending"}
+        onSubmit={(body) => {
+          if (detail.intent) void replay.replayWith(detail.intent, body);
+        }}
+        onCancel={() => setReplayWithOpen(false)}
       />
 
       <ResolverDialog
