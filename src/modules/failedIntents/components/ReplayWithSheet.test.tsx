@@ -307,4 +307,96 @@ describe("ReplayWithSheet — Multipart branch", () => {
       "field",
     );
   });
+
+  it("renders the venta form inside the datos field when its body is venta-shaped", async () => {
+    const ventaBody = {
+      id: "11111111-1111-1111-1111-111111111111",
+      cliente: { cliente_id: 7, nombre: "CARLOS MENDEZ" },
+      direccion: {
+        calle: "AV X",
+        colonia: "CENTRO",
+        poblacion: "AGS",
+        ciudad: "AGS",
+      },
+      gps: { latitud: 21.88, longitud: -102.29 },
+      fecha_venta: "2026-06-06T10:00:00Z",
+      tipo_venta: "CONTADO",
+      montos: { anual: "1000.00", corto_plazo: "1000.00", contado: "1000.00" },
+      combos: [],
+      productos: [
+        {
+          id: "22222222-2222-2222-2222-222222222222",
+          articulo_id: 100,
+          articulo: "SILLA",
+          cantidad: "1",
+          precio_anual: "1000.00",
+          precio_corto: "1000.00",
+          precio_contado: "1000.00",
+          combo_id: null,
+          almacen_origen_id: 1,
+          almacen_destino_id: 2,
+        },
+      ],
+      vendedores: [
+        {
+          id: "33333333-3333-3333-3333-333333333333",
+          usuario_id: "44444444-4444-4444-4444-444444444444",
+          email: "v@muebleriamsp.mx",
+          nombre: "JUAN",
+        },
+      ],
+    };
+    const port = new FakeRepoPort();
+    port.getBlobPartsResponse = {
+      contentType: "multipart/form-data; boundary=---x",
+      parts: [
+        {
+          index: 0,
+          name: "datos",
+          kind: BlobPartKind.field(),
+          contentType: "application/json",
+          filename: null,
+          sizeBytes: JSON.stringify(ventaBody).length,
+          value: new TextEncoder().encode(JSON.stringify(ventaBody)),
+        },
+      ],
+    };
+    const intent = makeFakeIntent({ hasBlob: true });
+    renderSheet({ intent, port });
+
+    await waitFor(() =>
+      expect(screen.getByTestId("multipart-editor")).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("venta-replay-form-hero")).toHaveTextContent(
+      "11111111-1111-1111-1111-111111111111",
+    );
+    // The regular textarea must NOT be present for the datos field.
+    expect(screen.queryByTestId("part-field-textarea-0")).toBeNull();
+  });
+
+  it("falls back to the regular textarea when the datos field body is not venta-shaped", async () => {
+    const port = new FakeRepoPort();
+    port.getBlobPartsResponse = {
+      contentType: "multipart/form-data; boundary=---x",
+      parts: [
+        {
+          index: 0,
+          name: "datos",
+          kind: BlobPartKind.field(),
+          contentType: "application/json",
+          filename: null,
+          sizeBytes: 14,
+          value: new TextEncoder().encode(`{"not":"venta"}`),
+        },
+      ],
+    };
+    const intent = makeFakeIntent({ hasBlob: true });
+    renderSheet({ intent, port });
+
+    await waitFor(() =>
+      expect(screen.getByTestId("multipart-editor")).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("part-field-textarea-0")).toBeInTheDocument();
+    expect(screen.queryByTestId("venta-replay-form-hero")).toBeNull();
+  });
 });

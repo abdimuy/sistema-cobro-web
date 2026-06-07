@@ -16,6 +16,8 @@ import {
 
 import type { BlobPart } from "../../domain/entities";
 import type { PartEditAction } from "./useMultipartEditState";
+import { VentaReplayForm } from "../ventaReplayForm/VentaReplayForm";
+import { isVentaShapedBody } from "../../infrastructure/mappers/isVentaShapedBody";
 
 const PREVIEWABLE_IMAGE_TYPES = new Set([
   "image/jpeg",
@@ -84,6 +86,22 @@ function FieldCard({
     return original;
   }, [action, original]);
 
+  // For the canonical venta multipart, the `datos` field carries the
+  // full CrearVentaBody as JSON. If we can parse it and it's
+  // venta-shaped, host VentaReplayForm inside this card so the
+  // operator gets the tab editor instead of a textarea full of JSON.
+  const ventaForm = useMemo(() => {
+    if (part.name !== "datos") return null;
+    if (part.contentType !== "application/json") return null;
+    try {
+      const parsed = JSON.parse(editedText);
+      if (!isVentaShapedBody(parsed)) return null;
+      return { initialBody: parsed };
+    } catch {
+      return null;
+    }
+  }, [part.name, part.contentType, editedText]);
+
   const isTextFriendly = TEXT_FIELD_TYPES.has(part.contentType);
   const isRemoved = action.kind === "remove";
   const isEdited = action.kind === "field";
@@ -107,7 +125,19 @@ function FieldCard({
     >
       <CardHeader part={part} dirty={isEdited} />
       <div className="px-3 py-2 space-y-2">
-        {isTextFriendly ? (
+        {ventaForm !== null ? (
+          <VentaReplayForm
+            initialBody={ventaForm.initialBody}
+            onChange={(next) => {
+              const text = JSON.stringify(next);
+              if (text === original) {
+                onAction({ kind: "keep" });
+              } else {
+                onAction({ kind: "field", value: new TextEncoder().encode(text) });
+              }
+            }}
+          />
+        ) : isTextFriendly ? (
           <Textarea
             value={editedText}
             onChange={(e) => {
