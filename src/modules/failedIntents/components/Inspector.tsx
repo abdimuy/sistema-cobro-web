@@ -247,7 +247,10 @@ function ActionsTab({
   intent: FailedIntent;
   onAction: (action: InspectorAction) => void;
 }) {
-  const replayWithDisabled = intent.hasBlob || intent.status.isTerminal();
+  // Replay-with is now available for blob intents too — the sheet renders
+  // a per-part multipart editor (keep/replace/remove + add new files).
+  // The only disable left is terminal status.
+  const replayWithDisabled = intent.status.isTerminal();
   const replayDisabled = intent.status.isTerminal() && intent.status.value !== "retried_fail";
   return (
     <TooltipProvider delayDuration={200}>
@@ -270,17 +273,15 @@ function ActionsTab({
           title="Replay con correcciones"
           description={
             intent.hasBlob
-              ? "No disponible para subidas multipart"
-              : "Editá el body antes de reenviar"
+              ? "Editá las partes del multipart (campos + archivos) antes de reenviar"
+              : "Editá el body JSON antes de reenviar"
           }
           disabled={replayWithDisabled}
           onClick={() => onAction("replay-with")}
           tooltip={
-            intent.hasBlob
-              ? "No se puede editar el body de un intento con archivos"
-              : intent.status.isTerminal()
-                ? "Este intento ya está en estado terminal"
-                : undefined
+            intent.status.isTerminal()
+              ? "Este intento ya está en estado terminal"
+              : undefined
           }
         />
         <ActionCard

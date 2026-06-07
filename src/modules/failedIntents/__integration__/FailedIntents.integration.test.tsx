@@ -66,11 +66,12 @@ describe("FailedIntents integration", () => {
     await user.click(screen.getByRole("tab", { name: /body/i }));
     expect(screen.getByText(/subida multipart/i)).toBeInTheDocument();
 
-    // Replay-with action card disabled for the multipart row.
+    // Replay-with action card is now ENABLED for multipart rows — it
+    // opens the part-by-part multipart editor instead of the JSON one.
     await user.click(screen.getByRole("tab", { name: /acciones/i }));
     expect(
       screen.getByTestId("action-replay-con-correcciones"),
-    ).toBeDisabled();
+    ).not.toBeDisabled();
   });
 
   it("Replay tal cual: confirm dialog → 200 → success toast → refresh", async () => {

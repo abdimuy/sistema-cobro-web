@@ -38,8 +38,11 @@ describe("Inspector", () => {
     expect(screen.getByText(/HTTP 422/i)).toBeInTheDocument();
   });
 
-  it("disables the Replay con correcciones button for blob intents", async () => {
-    const intent = makeFakeIntent({ hasBlob: true });
+  it("Replay con correcciones is enabled for blob intents (multipart editor)", async () => {
+    const intent = makeFakeIntent({
+      hasBlob: true,
+      status: IntentStatus.create("new") as IntentStatus,
+    });
     render(
       <Inspector
         intent={intent}
@@ -50,7 +53,10 @@ describe("Inspector", () => {
     );
     await clickActionsTab();
     const btn = screen.getByTestId("action-replay-con-correcciones");
-    expect(btn).toBeDisabled();
+    expect(btn).not.toBeDisabled();
+    // The description tells the operator the editor handles parts +
+    // files, not just JSON.
+    expect(btn.textContent).toMatch(/multipart|archivos|campos/i);
   });
 
   it("Replay tal cual is enabled for a `new` JSON intent", async () => {

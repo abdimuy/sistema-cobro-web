@@ -208,8 +208,13 @@ export function FailedIntentsScreen() {
         intent={detail.intent}
         open={replayWithOpen}
         pending={replay.state.status === "pending"}
-        onSubmit={(body) => {
+        onSubmitJson={(body) => {
           if (detail.intent) void replay.replayWith(detail.intent, body);
+        }}
+        onSubmitMultipart={(manifest, uploads) => {
+          if (detail.intent) {
+            void replay.replayWithMultipart(detail.intent, manifest, uploads);
+          }
         }}
         onCancel={() => setReplayWithOpen(false)}
       />

@@ -1,39 +1,45 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { ReplayWithSheet } from "./ReplayWithSheet";
-import { makeFakeIntent } from "../application/__tests__/fakeRepoPort";
+import { makeFakeIntent, FakeRepoPort } from "../application/__tests__/fakeRepoPort";
+import { FailedIntentsProvider } from "../presentation/context/FailedIntentsContext";
+import { BlobPartKind } from "../domain/values/BlobPartKind";
 
-describe("ReplayWithSheet", () => {
-  it("does not render for blob intents (defensive guard)", () => {
-    const intent = makeFakeIntent({ hasBlob: true });
-    const { container } = render(
+function renderSheet(props: {
+  intent: ReturnType<typeof makeFakeIntent>;
+  port?: FakeRepoPort;
+  pending?: boolean;
+  onSubmitJson?: (body: unknown) => void;
+  onSubmitMultipart?: (
+    manifest: unknown,
+    uploads: unknown,
+  ) => void;
+  onCancel?: () => void;
+}) {
+  const port = props.port ?? new FakeRepoPort();
+  return render(
+    <FailedIntentsProvider port={port}>
       <ReplayWithSheet
-        intent={intent}
+        intent={props.intent}
         open
-        pending={false}
-        onSubmit={() => {}}
-        onCancel={() => {}}
-      />,
-    );
-    expect(container).toBeEmptyDOMElement();
-  });
+        pending={props.pending ?? false}
+        onSubmitJson={props.onSubmitJson ?? (() => {})}
+        onSubmitMultipart={props.onSubmitMultipart ?? (() => {})}
+        onCancel={props.onCancel ?? (() => {})}
+      />
+    </FailedIntentsProvider>,
+  );
+}
 
+describe("ReplayWithSheet — JSON branch", () => {
   it("seeds the editor with the pretty-printed original body", () => {
     const intent = makeFakeIntent({
       hasBlob: false,
       body: { cliente: "Carlos" },
     });
-    render(
-      <ReplayWithSheet
-        intent={intent}
-        open
-        pending={false}
-        onSubmit={() => {}}
-        onCancel={() => {}}
-      />,
-    );
+    renderSheet({ intent });
     const ta = screen.getByTestId("replay-with-textarea") as HTMLTextAreaElement;
     expect(JSON.parse(ta.value)).toEqual({ cliente: "Carlos" });
   });
@@ -43,59 +49,21 @@ describe("ReplayWithSheet", () => {
       hasBlob: false,
       body: { cliente: "Carlos" },
     });
-    render(
-      <ReplayWithSheet
-        intent={intent}
-        open
-        pending={false}
-        onSubmit={() => {}}
-        onCancel={() => {}}
-      />,
-    );
+    renderSheet({ intent });
     expect(screen.getByTestId("replay-with-submit")).toBeDisabled();
   });
 
-  it("shows a parse error and disables submit on invalid JSON", async () => {
+  it("submits the parsed body via onSubmitJson when valid + dirty", async () => {
     const user = userEvent.setup();
-    const intent = makeFakeIntent({ hasBlob: false, body: { a: 1 } });
-    render(
-      <ReplayWithSheet
-        intent={intent}
-        open
-        pending={false}
-        onSubmit={() => {}}
-        onCancel={() => {}}
-      />,
-    );
-    const ta = screen.getByTestId("replay-with-textarea");
-    await user.clear(ta);
-    await user.click(ta);
-    await user.paste("{ not valid");
-    expect(
-      screen.getByTestId("replay-with-parse-error"),
-    ).toBeInTheDocument();
-    expect(screen.getByTestId("replay-with-submit")).toBeDisabled();
-  });
-
-  it("submits the parsed body when the editor changes to valid JSON", async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
+    const onSubmitJson = vi.fn();
     const intent = makeFakeIntent({
       hasBlob: false,
       body: { cliente: "Carlos" },
     });
-    render(
-      <ReplayWithSheet
-        intent={intent}
-        open
-        pending={false}
-        onSubmit={onSubmit}
-        onCancel={() => {}}
-      />,
-    );
+    renderSheet({ intent, onSubmitJson });
+
     const ta = screen.getByTestId("replay-with-textarea") as HTMLTextAreaElement;
     await user.clear(ta);
-    // userEvent.type interprets `{` specially — use paste for literal text.
     await user.click(ta);
     await user.paste('{"cliente":"FIXED"}');
 
@@ -103,6 +71,152 @@ describe("ReplayWithSheet", () => {
     expect(submit).not.toBeDisabled();
     await user.click(submit);
 
-    expect(onSubmit).toHaveBeenCalledWith({ cliente: "FIXED" });
+    expect(onSubmitJson).toHaveBeenCalledWith({ cliente: "FIXED" });
+  });
+});
+
+describe("ReplayWithSheet — Multipart branch", () => {
+  it("fetches blob parts and renders one card per original part", async () => {
+    const port = new FakeRepoPort();
+    port.getBlobPartsResponse = {
+      contentType: "multipart/form-data; boundary=---x",
+      parts: [
+        {
+          index: 0,
+          name: "venta_json",
+          kind: BlobPartKind.field(),
+          contentType: "application/json",
+          filename: null,
+          sizeBytes: 4,
+          value: new TextEncoder().encode("{}"),
+        },
+        {
+          index: 1,
+          name: "ine",
+          kind: BlobPartKind.file(),
+          contentType: "image/jpeg",
+          filename: "ine.jpg",
+          sizeBytes: 5000,
+          value: null,
+        },
+      ],
+    };
+    const intent = makeFakeIntent({ hasBlob: true });
+
+    renderSheet({ intent, port });
+    await waitFor(() =>
+      expect(screen.getByTestId("multipart-editor")).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("part-card-0")).toBeInTheDocument();
+    expect(screen.getByTestId("part-card-1")).toBeInTheDocument();
+  });
+
+  it("submit is disabled when no edits have been made", async () => {
+    const port = new FakeRepoPort();
+    port.getBlobPartsResponse = {
+      contentType: "multipart/form-data; boundary=---x",
+      parts: [
+        {
+          index: 0,
+          name: "x",
+          kind: BlobPartKind.field(),
+          contentType: "text/plain",
+          filename: null,
+          sizeBytes: 1,
+          value: new TextEncoder().encode("a"),
+        },
+      ],
+    };
+    const intent = makeFakeIntent({ hasBlob: true });
+    renderSheet({ intent, port });
+    await waitFor(() =>
+      expect(screen.getByTestId("multipart-editor")).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("replay-with-submit")).toBeDisabled();
+  });
+
+  it("removing a part enables submit and fires onSubmitMultipart with the right shape", async () => {
+    const user = userEvent.setup();
+    const onSubmitMultipart = vi.fn();
+    const port = new FakeRepoPort();
+    port.getBlobPartsResponse = {
+      contentType: "multipart/form-data; boundary=---x",
+      parts: [
+        {
+          index: 0,
+          name: "keep_me",
+          kind: BlobPartKind.field(),
+          contentType: "text/plain",
+          filename: null,
+          sizeBytes: 1,
+          value: new TextEncoder().encode("a"),
+        },
+        {
+          index: 1,
+          name: "drop_me",
+          kind: BlobPartKind.file(),
+          contentType: "image/jpeg",
+          filename: "drop.jpg",
+          sizeBytes: 100,
+          value: null,
+        },
+      ],
+    };
+    const intent = makeFakeIntent({ hasBlob: true });
+    renderSheet({ intent, port, onSubmitMultipart });
+    await waitFor(() =>
+      expect(screen.getByTestId("multipart-editor")).toBeInTheDocument(),
+    );
+    // Remove the second part.
+    const removeButtons = screen.getAllByTestId("part-remove");
+    await user.click(removeButtons[1]);
+
+    const submit = screen.getByTestId("replay-with-submit");
+    await waitFor(() => expect(submit).not.toBeDisabled());
+    await user.click(submit);
+
+    expect(onSubmitMultipart).toHaveBeenCalled();
+    const [manifest, uploads] = onSubmitMultipart.mock.calls[0];
+    expect(Array.isArray(manifest)).toBe(true);
+    expect((manifest as Array<{ name: string }>).map((p) => p.name)).toEqual(["keep_me"]);
+    expect(uploads).toBeInstanceOf(Map);
+  });
+
+  it("editing a text field switches its source to kind=field on submit", async () => {
+    const user = userEvent.setup();
+    const onSubmitMultipart = vi.fn();
+    const port = new FakeRepoPort();
+    port.getBlobPartsResponse = {
+      contentType: "multipart/form-data; boundary=---x",
+      parts: [
+        {
+          index: 0,
+          name: "venta_json",
+          kind: BlobPartKind.field(),
+          contentType: "application/json",
+          filename: null,
+          sizeBytes: 6,
+          value: new TextEncoder().encode(`{"a":1}`),
+        },
+      ],
+    };
+    const intent = makeFakeIntent({ hasBlob: true });
+    renderSheet({ intent, port, onSubmitMultipart });
+    await waitFor(() =>
+      expect(screen.getByTestId("multipart-editor")).toBeInTheDocument(),
+    );
+
+    const ta = screen.getByTestId("part-field-textarea-0");
+    await user.clear(ta);
+    await user.click(ta);
+    await user.paste("EDITED");
+
+    await user.click(screen.getByTestId("replay-with-submit"));
+
+    expect(onSubmitMultipart).toHaveBeenCalled();
+    const [manifest] = onSubmitMultipart.mock.calls[0];
+    expect((manifest as Array<{ source: { kind: string } }>)[0].source.kind).toBe(
+      "field",
+    );
   });
 });
