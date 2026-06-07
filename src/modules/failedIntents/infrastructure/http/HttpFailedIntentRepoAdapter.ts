@@ -1,6 +1,10 @@
 import type { AxiosInstance } from "axios";
 
-import type { FailedIntent } from "../../domain/entities";
+import type {
+  FailedIntent,
+  BlobPartsBundle,
+  Manifest,
+} from "../../domain/entities";
 import { ReplayOutcome } from "../../domain/values";
 import { DomainError } from "../../domain/errors";
 import type { FailedIntentRepoPort } from "../../application/ports/FailedIntentRepoPort";
@@ -9,6 +13,7 @@ import type {
   ListOutput,
   ResolveInput,
   ReplayResult,
+  UploadMap,
 } from "../../application/dto";
 
 import {
@@ -96,6 +101,32 @@ export class HttpFailedIntentRepoAdapter implements FailedIntentRepoPort {
     } catch (e) {
       throw apperrorToDomainError(e);
     }
+  }
+
+  // Multipart edit path — implemented in the next infrastructure commit.
+  // Stubs throw so a misconfigured caller fails loud instead of silently
+  // returning bad data.
+  async getBlobParts(_intentId: string, _signal?: AbortSignal): Promise<BlobPartsBundle> {
+    throw new DomainError(
+      "not_implemented",
+      "getBlobParts aún no está implementado",
+    );
+  }
+  async downloadBlobPart(_intentId: string, _index: number, _signal?: AbortSignal): Promise<Blob> {
+    throw new DomainError(
+      "not_implemented",
+      "downloadBlobPart aún no está implementado",
+    );
+  }
+  async replayWithMultipart(
+    _intentId: string,
+    _manifest: Manifest,
+    _uploads: UploadMap,
+  ): Promise<ReplayResult> {
+    throw new DomainError(
+      "not_implemented",
+      "replayWithMultipart aún no está implementado",
+    );
   }
 
   async resolve(input: ResolveInput): Promise<FailedIntent> {

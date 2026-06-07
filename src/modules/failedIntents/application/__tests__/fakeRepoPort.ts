@@ -1,4 +1,8 @@
-import type { FailedIntent } from "../../domain/entities";
+import type {
+  FailedIntent,
+  BlobPartsBundle,
+  Manifest,
+} from "../../domain/entities";
 import {
   IntentStatus,
   HttpMethod,
@@ -10,6 +14,7 @@ import type {
   ListOutput,
   ResolveInput,
   ReplayResult,
+  UploadMap,
 } from "../dto";
 
 // FakeRepoPort is a hand-rolled in-memory implementation of
@@ -22,6 +27,13 @@ export class FakeRepoPort implements FailedIntentRepoPort {
   replayCalls: Array<{ intentId: string }> = [];
   replayWithCalls: Array<{ intentId: string; body: unknown }> = [];
   resolveCalls: Array<{ input: ResolveInput }> = [];
+  getBlobPartsCalls: Array<{ intentId: string }> = [];
+  downloadBlobPartCalls: Array<{ intentId: string; index: number }> = [];
+  replayWithMultipartCalls: Array<{
+    intentId: string;
+    manifest: Manifest;
+    uploads: UploadMap;
+  }> = [];
 
   listResponse: ListOutput | (() => ListOutput) = {
     items: [],
@@ -43,6 +55,18 @@ export class FakeRepoPort implements FailedIntentRepoPort {
     status: IntentStatus.create("ignored") as IntentStatus,
     notes: "test",
   });
+  getBlobPartsResponse: BlobPartsBundle | (() => BlobPartsBundle) = {
+    contentType: "multipart/form-data; boundary=---test",
+    parts: [],
+  };
+  downloadBlobPartResponse: Blob | (() => Blob) = new Blob(["test bytes"], {
+    type: "application/octet-stream",
+  });
+  replayWithMultipartResponse: ReplayResult | (() => ReplayResult) = {
+    outcome: ReplayOutcome.create("retried_ok") as ReplayOutcome,
+    replayHttpStatus: 201,
+    replayBodyPreview: '{"ok":true}',
+  };
 
   // When set, the next call to the matching method throws this error.
   throwOnNext: Partial<Record<keyof FailedIntentRepoPort, Error>> = {};
@@ -76,6 +100,28 @@ export class FakeRepoPort implements FailedIntentRepoPort {
     const e = this.takeThrow("resolve");
     if (e) throw e;
     return resolve(this.resolveResponse);
+  }
+  async getBlobParts(intentId: string): Promise<BlobPartsBundle> {
+    this.getBlobPartsCalls.push({ intentId });
+    const e = this.takeThrow("getBlobParts");
+    if (e) throw e;
+    return resolve(this.getBlobPartsResponse);
+  }
+  async downloadBlobPart(intentId: string, index: number): Promise<Blob> {
+    this.downloadBlobPartCalls.push({ intentId, index });
+    const e = this.takeThrow("downloadBlobPart");
+    if (e) throw e;
+    return resolve(this.downloadBlobPartResponse);
+  }
+  async replayWithMultipart(
+    intentId: string,
+    manifest: Manifest,
+    uploads: UploadMap,
+  ): Promise<ReplayResult> {
+    this.replayWithMultipartCalls.push({ intentId, manifest, uploads });
+    const e = this.takeThrow("replayWithMultipart");
+    if (e) throw e;
+    return resolve(this.replayWithMultipartResponse);
   }
 
   private takeThrow(method: keyof FailedIntentRepoPort): Error | undefined {

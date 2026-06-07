@@ -1,9 +1,10 @@
-import type { FailedIntent } from "../../domain/entities";
+import type { FailedIntent, BlobPartsBundle, Manifest } from "../../domain/entities";
 import type {
   ListInput,
   ListOutput,
   ResolveInput,
   ReplayResult,
+  UploadMap,
 } from "../dto";
 
 // FailedIntentRepoPort is the outbound interface the failedIntents module
@@ -16,4 +17,17 @@ export interface FailedIntentRepoPort {
   replay(intentId: string): Promise<ReplayResult>;
   replayWith(intentId: string, body: unknown): Promise<ReplayResult>;
   resolve(input: ResolveInput): Promise<FailedIntent>;
+
+  // ── Multipart edit path ──
+  getBlobParts(intentId: string, signal?: AbortSignal): Promise<BlobPartsBundle>;
+  downloadBlobPart(
+    intentId: string,
+    index: number,
+    signal?: AbortSignal,
+  ): Promise<Blob>;
+  replayWithMultipart(
+    intentId: string,
+    manifest: Manifest,
+    uploads: UploadMap,
+  ): Promise<ReplayResult>;
 }

@@ -5,3 +5,5 @@ export type { ReplayOutcomeValue } from "./ReplayOutcome";
 export { HttpMethod } from "./HttpMethod";
 export type { HttpMethodValue } from "./HttpMethod";
 export { Cursor } from "./Cursor";
+export { BlobPartKind } from "./BlobPartKind";
+export type { BlobPartKindValue } from "./BlobPartKind";
