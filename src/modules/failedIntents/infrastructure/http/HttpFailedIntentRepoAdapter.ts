@@ -22,6 +22,11 @@ import {
 } from "../mappers/dtoToFailedIntent";
 import { domainToResolveBody } from "../mappers/domainToResolveBody";
 import { apperrorToDomainError } from "../mappers/apperrorToDomainError";
+import {
+  blobPartsDtoToBundle,
+  type BlobPartsResponseDTO,
+} from "../mappers/blobPartsDtoToBundle";
+import { manifestToFormData } from "../mappers/manifestToFormData";
 
 type ListResponseDTO = {
   items: FailedIntentDTO[];
@@ -103,30 +108,102 @@ export class HttpFailedIntentRepoAdapter implements FailedIntentRepoPort {
     }
   }
 
-  // Multipart edit path — implemented in the next infrastructure commit.
-  // Stubs throw so a misconfigured caller fails loud instead of silently
-  // returning bad data.
-  async getBlobParts(_intentId: string, _signal?: AbortSignal): Promise<BlobPartsBundle> {
-    throw new DomainError(
-      "not_implemented",
-      "getBlobParts aún no está implementado",
-    );
+  async getBlobParts(
+    intentId: string,
+    signal?: AbortSignal,
+  ): Promise<BlobPartsBundle> {
+    try {
+      const { data } = await this.client.get<BlobPartsResponseDTO>(
+        `${ADMIN_BASE}/${encodeURIComponent(intentId)}/blob-parts`,
+        { signal },
+      );
+      return blobPartsDtoToBundle(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
   }
-  async downloadBlobPart(_intentId: string, _index: number, _signal?: AbortSignal): Promise<Blob> {
-    throw new DomainError(
-      "not_implemented",
-      "downloadBlobPart aún no está implementado",
-    );
+
+  async downloadBlobPart(
+    intentId: string,
+    index: number,
+    signal?: AbortSignal,
+  ): Promise<Blob> {
+    try {
+      // arraybuffer + manual Blob wrap is more portable than responseType:
+      // 'blob' which behaves inconsistently in jsdom/test environments.
+      const response = await this.client.get<ArrayBuffer>(
+        `${ADMIN_BASE}/${encodeURIComponent(intentId)}/blob-parts/${index}/download`,
+        { signal, responseType: "arraybuffer" },
+      );
+      const ct =
+        response.headers["content-type"] ?? "application/octet-stream";
+      return new Blob([response.data], { type: ct });
+    } catch (e) {
+      // axios returns the error body as ArrayBuffer too when responseType is
+      // arraybuffer; decode it before handing off to the apperror mapper so
+      // codes / messages survive.
+      throw apperrorToDomainError(normalizeBinaryError(e));
+    }
   }
+
   async replayWithMultipart(
-    _intentId: string,
-    _manifest: Manifest,
-    _uploads: UploadMap,
+    intentId: string,
+    manifest: Manifest,
+    uploads: UploadMap,
   ): Promise<ReplayResult> {
-    throw new DomainError(
-      "not_implemented",
-      "replayWithMultipart aún no está implementado",
-    );
+    // We bypass axios for this one path because its FormData detection
+    // behaves inconsistently across node, jsdom, and real browsers
+    // (sometimes the multipart boundary header isn't set). The Fetch
+    // API encodes FormData uniformly. We still piggy-back on the axios
+    // baseURL + auth interceptor by reading them off the client instance.
+    const fd = manifestToFormData(manifest, uploads);
+    const url =
+      String(this.client.defaults.baseURL ?? "") +
+      `${ADMIN_BASE}/${encodeURIComponent(intentId)}/replay-with-multipart`;
+
+    // Mirror the apiClient's Bearer-token interceptor.
+    const headers: Record<string, string> = {};
+    try {
+      const { auth } = await import("../../../../../firebase");
+      const token = await auth.currentUser?.getIdToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+    } catch {
+      // In tests without a firebase module the token is simply omitted.
+    }
+
+    let resp: Response;
+    try {
+      resp = await fetch(url, {
+        method: "POST",
+        body: fd,
+        headers,
+      });
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+
+    if (!resp.ok) {
+      // Build an axios-error-shaped object so the apperror mapper handles
+      // it the same way as the other endpoints — the body's `code` field
+      // is what matters.
+      let parsed: unknown = {};
+      try {
+        parsed = await resp.json();
+      } catch {
+        /* leave empty */
+      }
+      throw apperrorToDomainError(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ({
+          isAxiosError: true,
+          response: { status: resp.status, data: parsed },
+          message: resp.statusText,
+        } as any),
+      );
+    }
+
+    const dto = (await resp.json()) as ReplayResponseDTO;
+    return this.parseReplay(dto);
   }
 
   async resolve(input: ResolveInput): Promise<FailedIntent> {
@@ -150,4 +227,25 @@ export class HttpFailedIntentRepoAdapter implements FailedIntentRepoPort {
       replayBodyPreview: dto.replay_body_preview,
     };
   }
+}
+
+// normalizeBinaryError decodes an axios error whose response.data is an
+// ArrayBuffer (the price of responseType: 'arraybuffer') back into a
+// JSON object so apperrorToDomainError can pull the code out.
+function normalizeBinaryError(e: unknown): unknown {
+  if (typeof e !== "object" || e === null) return e;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ax = e as any;
+  const buf = ax?.response?.data;
+  if (buf && (buf instanceof ArrayBuffer || ArrayBuffer.isView(buf))) {
+    try {
+      const text = new TextDecoder().decode(
+        buf instanceof ArrayBuffer ? new Uint8Array(buf) : (buf as Uint8Array),
+      );
+      ax.response.data = JSON.parse(text);
+    } catch {
+      // Leave as is; the mapper will fall through to http_<status>.
+    }
+  }
+  return e;
 }

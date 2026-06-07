@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import type { FailedIntentDTO } from "../../../modules/failedIntents/infrastructure/mappers/dtoToFailedIntent";
+import type { BlobPartsResponseDTO } from "../../../modules/failedIntents/infrastructure/mappers/blobPartsDtoToBundle";
 
 // All failed-intents MSW handlers live here, keyed off the URL pattern
 // the production adapter uses. Tests register them via
@@ -41,7 +42,23 @@ export type FailedIntentsHandlerOptions = {
     assertCall?: (intentId: string, body: unknown) => void;
     error?: { status: number; body: ErrorBody };
   };
+  blobParts?: {
+    byId: Record<string, BlobPartsResponseDTO>;
+    onMissing?: () => HttpResponse<ErrorBody>;
+  };
+  downloadBlobPart?: {
+    // Map of `${intentId}:${index}` → bytes + content-type.
+    byKey: Record<string, { bytes: BlobPart; contentType: string }>;
+    assertCall?: (intentId: string, index: number) => void;
+  };
+  replayWithMultipart?: {
+    response?: ReplayResponseDTO;
+    assertCall?: (intentId: string, body: FormData) => void;
+    error?: { status: number; body: ErrorBody };
+  };
 };
+
+type BlobPart = ArrayBuffer | Uint8Array | string;
 
 export function failedIntentsHandlers(opts: FailedIntentsHandlerOptions = {}) {
   const o = opts;
@@ -99,6 +116,60 @@ export function failedIntentsHandlers(opts: FailedIntentsHandlerOptions = {}) {
       }
       return HttpResponse.json(
         o.replayWith?.response ?? {
+          outcome: "retried_ok",
+          replay_http_status: 201,
+          replay_body_preview: '{"ok":true}',
+        },
+      );
+    }),
+
+    http.get(`${ADMIN_BASE}/:id/blob-parts`, ({ params }) => {
+      const id = String(params.id);
+      const dto = o.blobParts?.byId?.[id];
+      if (!dto) {
+        return (
+          o.blobParts?.onMissing?.() ??
+          HttpResponse.json(
+            { code: "failed_intent_no_blob", message: "sin blob" },
+            { status: 422 },
+          )
+        );
+      }
+      return HttpResponse.json(dto);
+    }),
+
+    http.get(`${ADMIN_BASE}/:id/blob-parts/:index/download`, ({ params }) => {
+      const id = String(params.id);
+      const index = Number(params.index);
+      o.downloadBlobPart?.assertCall?.(id, index);
+      const entry = o.downloadBlobPart?.byKey?.[`${id}:${index}`];
+      if (!entry) {
+        return HttpResponse.json(
+          { code: "part_index_out_of_range", message: "fuera de rango" },
+          { status: 422 },
+        );
+      }
+      const body =
+        typeof entry.bytes === "string"
+          ? new TextEncoder().encode(entry.bytes)
+          : entry.bytes;
+      return new HttpResponse(body as BodyInit, {
+        status: 200,
+        headers: { "Content-Type": entry.contentType },
+      });
+    }),
+
+    http.post(`${ADMIN_BASE}/:id/replay-with-multipart`, async ({ params, request }) => {
+      const id = String(params.id);
+      const fd = await request.formData();
+      o.replayWithMultipart?.assertCall?.(id, fd);
+      if (o.replayWithMultipart?.error) {
+        return HttpResponse.json(o.replayWithMultipart.error.body, {
+          status: o.replayWithMultipart.error.status,
+        });
+      }
+      return HttpResponse.json(
+        o.replayWithMultipart?.response ?? {
           outcome: "retried_ok",
           replay_http_status: 201,
           replay_body_preview: '{"ok":true}',
