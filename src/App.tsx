@@ -16,6 +16,7 @@ import GarantiaDetalle from "./modules/garantias/GarantiaDetails";
 import AsignacionAlmacenes from "./modules/almacenes/AsignacionAlmacenes";
 import Traspasos from "./modules/traspasos/Traspasos";
 import InventarioDetalle from "./modules/traspasos/InventarioDetalle";
+import FailedIntents from "./modules/failedIntents/FailedIntents";
 
 // Auth Components
 import LoginPage from "./components/auth/LoginPage";
@@ -104,6 +105,10 @@ function App() {
               } />
 
               {/* Rutas de Administración - Solo Admin y Super Admin */}
+              <Route path="/failed-intents" element={
+                <ProtectedRoute requiredModule="FAILED_INTENTS"><FailedIntents /></ProtectedRoute>
+              } />
+
               <Route path="/settings" element={
                 <ProtectedRoute requiredModule="USUARIOS" requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
                   <Settings />

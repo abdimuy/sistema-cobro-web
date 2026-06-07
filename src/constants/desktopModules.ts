@@ -4,5 +4,6 @@ export const desktopModules = [
   { key: 'GARANTIAS', label: 'Garantías' },
   { key: 'ALMACENES', label: 'Asignar Vendedores' },
   { key: 'INVENTARIO', label: 'Inventario Camionetas' },
-  { key: 'USUARIOS', label: 'Usuarios' }
+  { key: 'USUARIOS', label: 'Usuarios' },
+  { key: 'FAILED_INTENTS', label: 'Ventas Fallidas' }
 ];

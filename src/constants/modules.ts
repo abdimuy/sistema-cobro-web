@@ -1,6 +1,6 @@
 import { ModuleConfig } from '../types/auth';
 import { ROLES } from './roles';
-import { Home, BarChart3, ShoppingCart, Shield, Truck, Package, Users } from 'lucide-react';
+import { Home, BarChart3, ShoppingCart, Shield, Truck, Package, Users, AlertTriangle } from 'lucide-react';
 
 export const DESKTOP_MODULES: ModuleConfig[] = [
   {
@@ -52,6 +52,14 @@ export const DESKTOP_MODULES: ModuleConfig[] = [
     icon: Users,
     color: 'blue',
     requiredRole: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+  },
+  {
+    key: 'FAILED_INTENTS',
+    label: 'Ventas Fallidas',
+    path: '/failed-intents',
+    icon: AlertTriangle,
+    color: 'red',
+    requiredRole: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
   }
 ];
 
@@ -66,11 +74,12 @@ export const ROUTE_TO_MODULE: Record<string, string> = {
   '/inventario-camionetas': 'INVENTARIO',
   '/almacenes/:almacenId/inventario': 'INVENTARIO',
   '/settings': 'USUARIOS',
-  '/create-user': 'USUARIOS'
+  '/create-user': 'USUARIOS',
+  '/failed-intents': 'FAILED_INTENTS'
 };
 
 // Módulos que requieren permisos especiales
-export const PROTECTED_MODULES = ['USUARIOS'];
+export const PROTECTED_MODULES = ['USUARIOS', 'FAILED_INTENTS'];
 
 // Módulos siempre accesibles (para usuarios autenticados)
 export const PUBLIC_MODULES = ['HOME'];
