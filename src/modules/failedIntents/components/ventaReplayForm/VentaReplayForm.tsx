@@ -39,23 +39,45 @@ export type VentaReplayFormProps = {
 };
 
 export function VentaReplayForm({ initialBody, onChange }: VentaReplayFormProps) {
+  // jsonText is the raw textarea contents — also the source of truth
+  // for the live body. The form view reads its bootstrap snapshot
+  // from this; the JSON view edits it directly.
+  const [jsonText, setJsonText] = useState<string>(() => prettyPrint(initialBody));
+  const [jsonError, setJsonError] = useState<string | null>(null);
+
+  // currentBody = whatever jsonText parses to right now. Falls back to
+  // initialBody when the operator typed something un-parseable, so the
+  // form can still render with the last-known shape.
+  const currentBody = useMemo<unknown>(() => {
+    try {
+      return JSON.parse(jsonText);
+    } catch {
+      return initialBody;
+    }
+  }, [jsonText, initialBody]);
+
   // canEditAsVentaForm runs the structural guard AND a trial domain
   // bootstrap — if any VO rejects a value (telefono format, monto
   // negativo, GPS fuera de rango, etc.) we fall back to JSON view
-  // automatically so the operator sees the raw body and can fix it,
-  // instead of getting stuck on a "no se puede editar" placeholder.
-  const formAvailable = useMemo(() => canEditAsVentaForm(initialBody), [initialBody]);
+  // automatically so the operator sees the raw body and can fix it.
+  // Evaluating against currentBody (not initialBody) means the toggle
+  // re-enables as soon as the operator corrects the rejected value in
+  // the JSON view.
+  const formAvailable = useMemo(() => canEditAsVentaForm(currentBody), [currentBody]);
 
+  // formAvailableInitial decides the default view on first mount.
+  const formAvailableInitial = useRef(canEditAsVentaForm(initialBody)).current;
   const [view, setView] = useState<View>(() => {
-    if (!formAvailable) return "json";
+    if (!formAvailableInitial) return "json";
     const stored = readStoredView();
     return stored ?? "form";
   });
 
-  // jsonText is the raw textarea contents while in JSON view. We keep
-  // it in state so the operator's in-progress edits survive toggling.
-  const [jsonText, setJsonText] = useState<string>(() => prettyPrint(initialBody));
-  const [jsonError, setJsonError] = useState<string | null>(null);
+  // formBootstrapKey re-mounts FormBranch every time the operator
+  // toggles BACK to the form view, so the form picks up the latest
+  // body after a JSON edit. Without this, useVentaEditState's internal
+  // useState would freeze on its first-mount initialFormData.
+  const [formBootstrapKey, setFormBootstrapKey] = useState(0);
 
   // When initialBody changes from the parent (e.g. parent re-mounted
   // with a different intent), reset the JSON text to match.
@@ -71,6 +93,7 @@ export function VentaReplayForm({ initialBody, onChange }: VentaReplayFormProps)
   const handleToggle = useCallback(
     (next: View) => {
       setView(next);
+      if (next === "form") setFormBootstrapKey((k) => k + 1);
       try {
         sessionStorage.setItem(VIEW_STORAGE_KEY, next);
       } catch {
@@ -101,7 +124,7 @@ export function VentaReplayForm({ initialBody, onChange }: VentaReplayFormProps)
   return (
     <section className="flex flex-col h-full min-h-0" data-testid="venta-replay-form">
       <Header
-        ventaId={readBodyId(initialBody)}
+        ventaId={readBodyId(currentBody)}
         view={view}
         onToggle={handleToggle}
         formAvailable={formAvailable && jsonError === null}
@@ -109,7 +132,8 @@ export function VentaReplayForm({ initialBody, onChange }: VentaReplayFormProps)
 
       {view === "form" && formAvailable ? (
         <FormBranch
-          initialBody={initialBody}
+          key={formBootstrapKey}
+          initialBody={currentBody}
           onChange={(next) => {
             onChange(next);
             setJsonText(prettyPrint(next));
