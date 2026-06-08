@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CampoInline } from "../piezas/CampoInline";
 import { SeleccionarAlmacenCombobox } from "../piezas/SeleccionarAlmacenCombobox";
@@ -6,6 +6,7 @@ import { ProductosTableInline } from "../piezas/ProductosTableInline";
 import { CombosTableInline } from "../piezas/CombosTableInline";
 import { AgregarProductoPanel } from "../panels/AgregarProductoPanel";
 import { AgregarComboPanel } from "../panels/AgregarComboPanel";
+import useGetAlmacenes from "@/hooks/useGetAlmacenes";
 import type {
   ProductoFormData,
   ComboFormData,
@@ -82,8 +83,11 @@ export const ProductosTab = ({
   const hasNoActiveProductos =
     productos.filter((p) => !p.isDeleted).length === 0;
 
-  // Pass [] for almacenes list — real hook integration is future work
-  const almacenesList: ReadonlyArray<{ id: number; nombre: string }> = [];
+  const { almacenes: almacenesCatalog } = useGetAlmacenes();
+  const almacenesList = useMemo(
+    () => almacenesCatalog.map((a) => ({ id: a.ALMACEN_ID, nombre: a.ALMACEN })),
+    [almacenesCatalog],
+  );
 
   return (
     <div className="relative space-y-6">

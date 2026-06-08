@@ -24,12 +24,32 @@ export type UseVentaReplayEdit =
       available: true;
       state: UseVentaEditStateReturn;
       buildSubmitPayload: () => unknown | null;
+      bootstrapError: null;
     }
   | {
       available: false;
       state: null;
       buildSubmitPayload: () => null;
+      // bootstrapError is the message from the domain VO that rejected
+      // a value in the body (e.g. "el telefono no cumple el formato
+      // E.164"). null when the body fails the structural guard
+      // entirely (in which case no specific field can be blamed).
+      bootstrapError: string | null;
     };
+
+// canEditAsVentaForm pre-flights both the structural guard and the
+// domain-level validation. Used by the shell to decide the default
+// view (form vs. JSON) before mounting the form branch.
+export function canEditAsVentaForm(body: unknown): boolean {
+  const projected = crearVentaBodyToVentaV2(body);
+  if (projected === null) return false;
+  try {
+    ventaV2ToDomain(projected);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // useVentaEditState calls ventaV2ToDomain internally, which throws on
 // bad data. We need to call the hook unconditionally (rules of hooks),
@@ -71,16 +91,19 @@ const PLACEHOLDER_VENTA = crearVentaBodyToVentaV2({
 }) as VentaV2;
 
 export function useVentaReplayEdit(initialBody: unknown): UseVentaReplayEdit {
-  const bootstrap = useMemo<{ ok: true; venta: VentaV2 } | { ok: false }>(() => {
+  const bootstrap = useMemo<
+    { ok: true; venta: VentaV2 } | { ok: false; error: string | null }
+  >(() => {
     const projected = crearVentaBodyToVentaV2(initialBody);
-    if (projected === null) return { ok: false };
+    if (projected === null) return { ok: false, error: null };
     try {
       // Trial-run the projection through the domain mapper so we know
       // useVentaEditState (which calls the same mapper) won't throw.
       ventaV2ToDomain(projected);
       return { ok: true, venta: projected };
-    } catch {
-      return { ok: false };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "valor inválido en el body";
+      return { ok: false, error: msg };
     }
   }, [initialBody]);
 
@@ -98,6 +121,7 @@ export function useVentaReplayEdit(initialBody: unknown): UseVentaReplayEdit {
       available: false,
       state: null,
       buildSubmitPayload: () => null,
+      bootstrapError: bootstrap.error,
     };
   }
 
@@ -105,5 +129,6 @@ export function useVentaReplayEdit(initialBody: unknown): UseVentaReplayEdit {
     available: true,
     state,
     buildSubmitPayload,
+    bootstrapError: null,
   };
 }

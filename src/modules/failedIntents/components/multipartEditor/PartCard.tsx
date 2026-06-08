@@ -90,9 +90,13 @@ function FieldCard({
   // full CrearVentaBody as JSON. If we can parse it and it's
   // venta-shaped, host VentaReplayForm inside this card so the
   // operator gets the tab editor instead of a textarea full of JSON.
+  //
+  // Content-Type is unreliable for form-data fields — the browser /
+  // multipart parser usually leaves it blank or set to a generic
+  // octet-stream — so we don't gate on it. The combination of
+  // name="datos" + JSON parseable + venta-shaped is enough.
   const ventaForm = useMemo(() => {
     if (part.name !== "datos") return null;
-    if (part.contentType !== "application/json") return null;
     try {
       const parsed = JSON.parse(editedText);
       if (!isVentaShapedBody(parsed)) return null;
@@ -100,9 +104,17 @@ function FieldCard({
     } catch {
       return null;
     }
-  }, [part.name, part.contentType, editedText]);
+  }, [part.name, editedText]);
 
-  const isTextFriendly = TEXT_FIELD_TYPES.has(part.contentType);
+  // isTextFriendly drives the textarea-vs-input fallback. Beyond the
+  // declared content types we also treat "the field is named datos"
+  // and "the bytes look like JSON" as textarea-worthy — multipart
+  // parsers often leave contentType blank for form-data fields.
+  const isTextFriendly =
+    TEXT_FIELD_TYPES.has(part.contentType) ||
+    part.name === "datos" ||
+    editedText.trimStart().startsWith("{") ||
+    editedText.trimStart().startsWith("[");
   const isRemoved = action.kind === "remove";
   const isEdited = action.kind === "field";
 

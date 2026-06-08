@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { URL_API } from "../constants/api";
+import { URL_API_V2 } from "../constants/api";
+import { auth } from "../../firebase";
 
 export interface Almacen {
   ALMACEN_ID: number;
@@ -7,9 +8,16 @@ export interface Almacen {
   EXISTENCIAS: number;
 }
 
+// Wire shape returned by the Go backend. Translated to the public
+// UPPER_SNAKE_CASE shape below so consumers stay untouched.
+interface AlmacenWire {
+  almacen_id: number;
+  almacen: string;
+  existencias: number;
+}
+
 interface AlmacenesResponse {
-  error: string;
-  body: Almacen[];
+  items: AlmacenWire[];
 }
 
 interface UseGetAlmacenesReturn {
@@ -23,6 +31,17 @@ interface UseGetAlmacenesReturn {
 // Cache global para evitar múltiples peticiones
 let almacenesCache: Almacen[] | null = null;
 let cachePromise: Promise<Almacen[]> | null = null;
+
+const authHeaders = async (): Promise<Record<string, string>> => {
+  const token = await auth.currentUser?.getIdToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const fromWire = (w: AlmacenWire): Almacen => ({
+  ALMACEN_ID: w.almacen_id,
+  ALMACEN: w.almacen,
+  EXISTENCIAS: w.existencias,
+});
 
 const useGetAlmacenes = (): UseGetAlmacenesReturn => {
   const [almacenes, setAlmacenes] = useState<Almacen[]>(almacenesCache || []);
@@ -43,15 +62,15 @@ const useGetAlmacenes = (): UseGetAlmacenesReturn => {
     // Crear nueva petición
     cachePromise = (async () => {
       try {
-        const response = await fetch(`${URL_API}/almacenes`);
-        const data: AlmacenesResponse = await response.json();
-
-        if (data.error) {
-          throw new Error(data.error);
+        const headers = await authHeaders();
+        const response = await fetch(`${URL_API_V2}/v2/almacenes`, { headers });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        almacenesCache = data.body;
-        return data.body;
+        const data: AlmacenesResponse = await response.json();
+        const mapped = (data.items || []).map(fromWire);
+        almacenesCache = mapped;
+        return mapped;
       } catch (err) {
         console.error("Error fetching almacenes:", err);
         throw err;

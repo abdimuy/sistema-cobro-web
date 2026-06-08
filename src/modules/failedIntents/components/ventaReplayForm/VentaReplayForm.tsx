@@ -12,8 +12,10 @@ import { VendedoresTab } from "@/modules/ventasLocales/components/EditarVentaMod
 import { ResumenTab } from "@/modules/ventasLocales/components/EditarVentaModal/tabs/ResumenTab";
 import { UnderlineTab } from "@/modules/ventasLocales/components/EditarVentaModal/shell/UnderlineTabsBar";
 
-import { isVentaShapedBody } from "../../infrastructure/mappers/isVentaShapedBody";
-import { useVentaReplayEdit } from "../../presentation/hooks/useVentaReplayEdit";
+import {
+  useVentaReplayEdit,
+  canEditAsVentaForm,
+} from "../../presentation/hooks/useVentaReplayEdit";
 
 // VentaReplayForm is the editor surface for a CrearVentaBody captured
 // in a FailedIntent. It reuses the ventasLocales editor tabs verbatim,
@@ -37,7 +39,12 @@ export type VentaReplayFormProps = {
 };
 
 export function VentaReplayForm({ initialBody, onChange }: VentaReplayFormProps) {
-  const formAvailable = useMemo(() => isVentaShapedBody(initialBody), [initialBody]);
+  // canEditAsVentaForm runs the structural guard AND a trial domain
+  // bootstrap — if any VO rejects a value (telefono format, monto
+  // negativo, GPS fuera de rango, etc.) we fall back to JSON view
+  // automatically so the operator sees the raw body and can fix it,
+  // instead of getting stuck on a "no se puede editar" placeholder.
+  const formAvailable = useMemo(() => canEditAsVentaForm(initialBody), [initialBody]);
 
   const [view, setView] = useState<View>(() => {
     if (!formAvailable) return "json";
@@ -218,8 +225,19 @@ function FormBranch({
 
   if (!edit.available) {
     return (
-      <div className="px-6 py-4 text-xs text-zinc-500">
-        El body no se puede editar como venta. Usá la vista JSON.
+      <div
+        className="px-6 py-4 text-xs text-zinc-600 dark:text-zinc-300 space-y-1"
+        data-testid="venta-replay-form-bootstrap-error"
+      >
+        <p>El body no se puede editar como venta.</p>
+        {edit.bootstrapError && (
+          <p className="font-mono text-[11px] text-red-600 dark:text-red-400">
+            {edit.bootstrapError}
+          </p>
+        )}
+        <p className="text-zinc-500">
+          Usá la vista JSON para revisar y corregir el valor rechazado.
+        </p>
       </div>
     );
   }

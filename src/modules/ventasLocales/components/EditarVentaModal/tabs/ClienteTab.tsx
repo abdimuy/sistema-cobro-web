@@ -1,9 +1,11 @@
+import { useMemo } from "react";
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CampoInline } from "../piezas/CampoInline";
 import { SeleccionarZonaCombobox } from "../piezas/SeleccionarZonaCombobox";
+import useGetZonasCliente from "@/hooks/useGetZonasCliente";
 import type { ClienteFormData, GPSFormData, ValidationError } from "../../../presentation/hooks/useVentaEditState";
 
 const getFieldError = (errors: ValidationError[], field: string): string | undefined =>
@@ -29,6 +31,12 @@ export const ClienteTab = ({ data, gps, errors, onUpdate, onUpdateGps }: Props) 
   const nombreError = getFieldError(errors, "cliente.nombreCliente");
   const telefonoError = getFieldError(errors, "cliente.telefono");
   const calleError = getFieldError(errors, "cliente.calle");
+
+  const { zonas } = useGetZonasCliente();
+  const zonasCombobox = useMemo(
+    () => zonas.map((z) => ({ id: z.ZONA_CLIENTE_ID, nombre: z.ZONA_CLIENTE })),
+    [zonas],
+  );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -149,7 +157,7 @@ export const ClienteTab = ({ data, gps, errors, onUpdate, onUpdateGps }: Props) 
             <SeleccionarZonaCombobox
               value={data.zonaClienteId}
               onChange={(next) => onUpdate("zonaClienteId", next)}
-              zonas={[]}
+              zonas={zonasCombobox}
             />
           </CampoInline>
 

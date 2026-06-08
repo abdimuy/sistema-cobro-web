@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { URL_API } from "../constants/api";
+import { URL_API_V2 } from "../constants/api";
+import { auth } from "../../firebase";
 
 export interface AlmacenInfo {
   ALMACEN_ID: number;
@@ -16,12 +17,26 @@ export interface ArticuloAlmacen {
   PRECIOS: string;
 }
 
-interface AlmacenResponse {
-  error: string;
-  body: {
-    ARTICULOS: ArticuloAlmacen[];
-    ALMACEN: AlmacenInfo;
-  };
+// Wire shapes returned by the Go backend (snake_case). Translated below
+// into the UPPER_SNAKE_CASE the rest of the app already consumes — the
+// 20+ downstream components keep working untouched.
+interface AlmacenInfoWire {
+  almacen_id: number;
+  almacen: string;
+  existencias: number;
+}
+
+interface ArticuloAlmacenWire {
+  articulo_id: number;
+  articulo: string;
+  existencias: number;
+  linea_articulo_id: number;
+  linea_articulo: string;
+  precios: string;
+}
+
+interface ArticulosResponse {
+  items: ArticuloAlmacenWire[];
 }
 
 interface UseGetAlmacenByIdReturn {
@@ -32,7 +47,27 @@ interface UseGetAlmacenByIdReturn {
   refetch: () => Promise<void>;
 }
 
-const useGetAlmacenById = (almacenId: number | null): UseGetAlmacenByIdReturn => {
+const authHeaders = async (): Promise<Record<string, string>> => {
+  const token = await auth.currentUser?.getIdToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const fromAlmacenWire = (w: AlmacenInfoWire): AlmacenInfo => ({
+  ALMACEN_ID: w.almacen_id,
+  ALMACEN: w.almacen,
+  EXISTENCIAS: w.existencias,
+});
+
+const fromArticuloWire = (w: ArticuloAlmacenWire): ArticuloAlmacen => ({
+  ARTICULO_ID: w.articulo_id,
+  ARTICULO: w.articulo,
+  EXISTENCIAS: w.existencias,
+  LINEA_ARTICULO_ID: w.linea_articulo_id,
+  LINEA_ARTICULO: w.linea_articulo,
+  PRECIOS: w.precios,
+});
+
+const useGetAlmacenById = (almacenId: number | null, comparation: string = ""): UseGetAlmacenByIdReturn => {
   const [almacen, setAlmacen] = useState<AlmacenInfo | null>(null);
   const [articulos, setArticulos] = useState<ArticuloAlmacen[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -49,48 +84,39 @@ const useGetAlmacenById = (almacenId: number | null): UseGetAlmacenByIdReturn =>
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${URL_API}/almacenes/${almacenId}`);
+      const headers = await authHeaders();
+      const buscarParam = comparation ? `?buscar=${encodeURIComponent(comparation)}` : "";
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Two parallel fetches: almacen info + articulos. The legacy v1
+      // endpoint returned both in one response; the v2 backend splits
+      // them so each remains a clean read-only endpoint.
+      const [almacenRes, articulosRes] = await Promise.all([
+        fetch(`${URL_API_V2}/v2/almacenes/${almacenId}`, { headers }),
+        fetch(`${URL_API_V2}/v2/almacenes/${almacenId}/articulos${buscarParam}`, { headers }),
+      ]);
+
+      if (!almacenRes.ok) {
+        if (almacenRes.status === 404) {
+          setError("Almacén no encontrado");
+        } else {
+          setError(`HTTP error! status: ${almacenRes.status}`);
+        }
+        setAlmacen(null);
+        setArticulos([]);
+        return;
       }
-
-      const data: AlmacenResponse = await response.json();
-
-      if (data.error) {
-        setError(data.error);
+      if (!articulosRes.ok) {
+        setError(`HTTP error! status: ${articulosRes.status}`);
         setAlmacen(null);
         setArticulos([]);
         return;
       }
 
-      // Extraer el almacén y los artículos del body
-      if (data.body) {
-        // Si viene ALMACEN en la respuesta, usarlo
-        if (data.body.ALMACEN) {
-          setAlmacen(data.body.ALMACEN);
-          setArticulos(data.body.ARTICULOS || []);
-        }
-        // Si solo vienen ARTICULOS, crear objeto almacén básico
-        else if (data.body.ARTICULOS !== undefined) {
-          // Crear objeto almacén con la info básica que tenemos
-          setAlmacen({
-            ALMACEN_ID: almacenId,
-            ALMACEN: `Almacén ${almacenId}`, // Temporal, se actualizará con useGetAlmacenes
-            EXISTENCIAS: 0
-          });
-          setArticulos(data.body.ARTICULOS || []);
-        }
-        else {
-          setError("Estructura de respuesta inválida");
-          setAlmacen(null);
-          setArticulos([]);
-        }
-      } else {
-        setError("Almacén no encontrado en la respuesta");
-        setAlmacen(null);
-        setArticulos([]);
-      }
+      const almacenWire: AlmacenInfoWire = await almacenRes.json();
+      const articulosData: ArticulosResponse = await articulosRes.json();
+
+      setAlmacen(fromAlmacenWire(almacenWire));
+      setArticulos((articulosData.items || []).map(fromArticuloWire));
     } catch (err) {
       console.error("Error fetching almacen:", err);
       setError(err instanceof Error ? err.message : "Error al cargar almacén");
@@ -103,7 +129,7 @@ const useGetAlmacenById = (almacenId: number | null): UseGetAlmacenByIdReturn =>
 
   useEffect(() => {
     fetchAlmacen();
-  }, [almacenId]);
+  }, [almacenId, comparation]);
 
   return { almacen, articulos, loading, error, refetch: fetchAlmacen };
 };

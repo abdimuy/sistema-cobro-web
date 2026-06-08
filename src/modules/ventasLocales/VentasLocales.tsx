@@ -225,14 +225,28 @@ export default function VentasLocales() {
     [allViews, setParams]
   );
 
-  // Apply persisted active view once on mount (re-syncs filters + sort)
+  // Apply persisted active view once on mount: only re-sync filters + sort.
+  // Visual preferences (visibleColumns, pinnedColumns, columnWidths, density)
+  // are already restored from their own localStorage entries on initial state,
+  // and reflect the user's latest manual tweaks. Re-applying the whole view
+  // here would overwrite those tweaks every reload — which is why columns the
+  // user added/removed kept disappearing.
   const initialViewAppliedRef = useRef(false);
   useEffect(() => {
-    if (!initialViewAppliedRef.current && activeViewId) {
-      handleSelectView(activeViewId);
-      initialViewAppliedRef.current = true;
-    }
-  }, [activeViewId, handleSelectView]);
+    if (initialViewAppliedRef.current || !activeViewId) return;
+    const v = allViews.find((x) => x.id === activeViewId);
+    if (!v) return;
+    initialViewAppliedRef.current = true;
+    setParams({
+      tipoVenta: v.filters?.tipoVenta,
+      incluirCanceladas: v.filters?.incluirCanceladas,
+      situacion: v.filters?.situacion,
+      sincronizacion: v.filters?.sincronizacion,
+      sortBy: v.sort?.by,
+      sortOrder: v.sort?.order,
+      cursor: undefined,
+    });
+  }, [activeViewId, allViews, setParams]);
 
   const handleSaveAsNew = useCallback(
     (name: string) => {
