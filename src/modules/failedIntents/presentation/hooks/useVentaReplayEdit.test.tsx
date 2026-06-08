@@ -65,12 +65,17 @@ describe("useVentaReplayEdit", () => {
     expect(result.current.buildSubmitPayload()).toBeNull();
   });
 
-  it("reports available=false when ventaV2ToDomain throws on invalid data", () => {
+  it("stays available=true with sanitized values when the body has out-of-domain values", () => {
+    // The mapper sanitizes invalid monto strings to "0.00" instead of
+    // killing the form; the operator sees the corrected value in the
+    // field and the form's per-field validation marks anything still
+    // wrong. The hook NEVER goes to available=false on bad values —
+    // only on structural failures (no productos, no cliente.nombre).
     const body = makeValidBody();
     (body.montos as Record<string, unknown>).anual = "not-a-number";
     const { result } = renderHook(() => useVentaReplayEdit(body));
-    expect(result.current.available).toBe(false);
-    expect(result.current.state).toBeNull();
+    expect(result.current.available).toBe(true);
+    expect(result.current.state!.formData.financiero.montoAnual).toBe("0.00");
   });
 
   it("buildSubmitPayload reflects edits applied via state callbacks", () => {

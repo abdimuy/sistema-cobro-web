@@ -12,10 +12,8 @@ import { VendedoresTab } from "@/modules/ventasLocales/components/EditarVentaMod
 import { ResumenTab } from "@/modules/ventasLocales/components/EditarVentaModal/tabs/ResumenTab";
 import { UnderlineTab } from "@/modules/ventasLocales/components/EditarVentaModal/shell/UnderlineTabsBar";
 
-import {
-  useVentaReplayEdit,
-  canEditAsVentaForm,
-} from "../../presentation/hooks/useVentaReplayEdit";
+import { useVentaReplayEdit } from "../../presentation/hooks/useVentaReplayEdit";
+import { isVentaShapedBody } from "../../infrastructure/mappers/isVentaShapedBody";
 
 // VentaReplayForm is the editor surface for a CrearVentaBody captured
 // in a FailedIntent. It reuses the ventasLocales editor tabs verbatim,
@@ -56,17 +54,15 @@ export function VentaReplayForm({ initialBody, onChange }: VentaReplayFormProps)
     }
   }, [jsonText, initialBody]);
 
-  // canEditAsVentaForm runs the structural guard AND a trial domain
-  // bootstrap — if any VO rejects a value (telefono format, monto
-  // negativo, GPS fuera de rango, etc.) we fall back to JSON view
-  // automatically so the operator sees the raw body and can fix it.
-  // Evaluating against currentBody (not initialBody) means the toggle
-  // re-enables as soon as the operator corrects the rejected value in
-  // the JSON view.
-  const formAvailable = useMemo(() => canEditAsVentaForm(currentBody), [currentBody]);
+  // If the body has the structural shape of a venta, the form can
+  // host it. Per-field domain validation happens INSIDE the form via
+  // useVentaEditState.errors[] — values the backend rejected show up
+  // as red fields the operator can fix in place. We only fall back to
+  // JSON view when the body is structurally NOT a venta.
+  const formAvailable = useMemo(() => isVentaShapedBody(currentBody), [currentBody]);
 
   // formAvailableInitial decides the default view on first mount.
-  const formAvailableInitial = useRef(canEditAsVentaForm(initialBody)).current;
+  const formAvailableInitial = useRef(isVentaShapedBody(initialBody)).current;
   const [view, setView] = useState<View>(() => {
     if (!formAvailableInitial) return "json";
     const stored = readStoredView();
@@ -248,20 +244,15 @@ function FormBranch({
   }, [formData]);
 
   if (!edit.available) {
+    // Reached only when the body fails the structural guard. The
+    // shell's formAvailable check should have already routed us to
+    // JSON view; this branch exists as a defensive fallback.
     return (
       <div
-        className="px-6 py-4 text-xs text-zinc-600 dark:text-zinc-300 space-y-1"
+        className="px-6 py-4 text-xs text-zinc-500"
         data-testid="venta-replay-form-bootstrap-error"
       >
-        <p>El body no se puede editar como venta.</p>
-        {edit.bootstrapError && (
-          <p className="font-mono text-[11px] text-red-600 dark:text-red-400">
-            {edit.bootstrapError}
-          </p>
-        )}
-        <p className="text-zinc-500">
-          Usá la vista JSON para revisar y corregir el valor rechazado.
-        </p>
+        El body no tiene forma de venta. Usá la vista JSON.
       </div>
     );
   }
