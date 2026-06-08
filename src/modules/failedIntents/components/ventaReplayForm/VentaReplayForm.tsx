@@ -129,7 +129,10 @@ export function VentaReplayForm({ initialBody, onChange }: VentaReplayFormProps)
   );
 
   return (
-    <section className="flex flex-col h-full min-h-0" data-testid="venta-replay-form">
+    <section
+      className="flex flex-col h-full min-h-[560px]"
+      data-testid="venta-replay-form"
+    >
       <Header
         ventaId={readBodyId(currentBody)}
         view={view}
@@ -399,13 +402,15 @@ function JsonBranch({
   parseError: string | null;
 }) {
   return (
-    <section className="flex flex-col flex-1 min-h-0">
+    <section className="flex flex-col flex-1 min-h-[480px]">
       <Textarea
         value={text}
         onChange={(e) => onChange(e.target.value)}
         spellCheck={false}
         className={cn(
-          "flex-1 rounded-none border-0 resize-none font-mono text-xs leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3",
+          "flex-1 min-h-[420px] rounded-none border-0 resize-none font-mono text-[12px] leading-[1.55]",
+          "focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3",
+          "tab-size-2 [tab-size:2]",
           parseError && "bg-red-50/40 dark:bg-red-950/10",
         )}
         data-testid="venta-replay-form-json-textarea"
