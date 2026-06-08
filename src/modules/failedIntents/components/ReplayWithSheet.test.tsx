@@ -69,6 +69,42 @@ function renderSheet(props: {
   );
 }
 
+describe("ReplayWithSheet — backend rejection banner", () => {
+  it("shows the backend's http status, error code and message prominently", () => {
+    const intent = makeFakeIntent({
+      hasBlob: false,
+      body: { cliente: "Carlos" },
+      httpStatus: 422,
+      errorCode: "plazo_meses_invalido",
+      errorMessage: "el plazo en meses debe ser un entero mayor o igual a 1",
+      retryCount: 2,
+    });
+    renderSheet({ intent });
+    const banner = screen.getByTestId("backend-rejection-banner");
+    expect(banner).toBeInTheDocument();
+    expect(banner).toHaveTextContent("422");
+    expect(banner).toHaveTextContent("plazo_meses_invalido");
+    expect(banner).toHaveTextContent(
+      "el plazo en meses debe ser un entero mayor o igual a 1",
+    );
+    expect(banner).toHaveTextContent(/2/); // retry count surfaced somewhere
+  });
+
+  it("falls back gracefully when error_code is null", () => {
+    const intent = makeFakeIntent({
+      hasBlob: false,
+      body: { cliente: "Carlos" },
+      httpStatus: 500,
+      errorCode: null,
+      errorMessage: null,
+      retryCount: 0,
+    });
+    renderSheet({ intent });
+    const banner = screen.getByTestId("backend-rejection-banner");
+    expect(banner).toHaveTextContent("500");
+  });
+});
+
 describe("ReplayWithSheet — JSON branch", () => {
   it("seeds the JSON view with the pretty-printed original body when the body is not venta-shaped", () => {
     const intent = makeFakeIntent({

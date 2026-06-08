@@ -8,7 +8,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, GitCompare } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, GitCompare, AlertOctagon, RotateCcw } from "lucide-react";
 
 import type { FailedIntent, Manifest } from "../domain/entities";
 import type { UploadMap } from "../application/dto";
@@ -61,6 +62,8 @@ export function ReplayWithSheet(props: ReplayWithSheetProps) {
               : "Editá el body del intento y reenvialo. La idempotency-key se genera fresca para evitar conflictos."}
           </SheetDescription>
         </SheetHeader>
+
+        {intent && <BackendRejectionBanner intent={intent} />}
 
         {intent?.hasBlob ? (
           <MultipartBranch {...props} intent={intent} />
@@ -225,5 +228,85 @@ function DiffIndicator({ dirty }: { dirty: boolean }) {
       Body modificado
     </span>
   );
+}
+
+// ─── Backend rejection banner ───────────────────────────────────────────────
+//
+// Surfaces the original backend error (status + error_code +
+// error_message) above the editor. This is the single most important
+// piece of context the operator needs to know what to fix — without
+// it they're guessing what the backend rejected.
+
+function BackendRejectionBanner({ intent }: { intent: FailedIntent }) {
+  const tone = httpStatusTone(intent.httpStatus);
+  return (
+    <div
+      data-testid="backend-rejection-banner"
+      className={`px-6 py-3 border-b ${tone.border} ${tone.bg}`}
+    >
+      <div className="flex items-start gap-2.5">
+        <AlertOctagon className={`h-4 w-4 mt-0.5 shrink-0 ${tone.icon}`} />
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant="outline"
+              className={`font-mono text-[10px] uppercase ${tone.badge}`}
+            >
+              HTTP {intent.httpStatus}
+            </Badge>
+            {intent.errorCode && (
+              <span
+                className={`font-mono text-[11px] ${tone.code}`}
+                data-testid="backend-rejection-code"
+              >
+                {intent.errorCode}
+              </span>
+            )}
+            {intent.retryCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500">
+                <RotateCcw className="h-3 w-3" />
+                {intent.retryCount} reintento{intent.retryCount === 1 ? "" : "s"}
+              </span>
+            )}
+          </div>
+          <p
+            className={`text-[12px] leading-snug ${tone.message}`}
+            data-testid="backend-rejection-message"
+          >
+            {intent.errorMessage ?? "Sin mensaje del backend"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function httpStatusTone(status: number): {
+  border: string;
+  bg: string;
+  icon: string;
+  badge: string;
+  code: string;
+  message: string;
+} {
+  // 4xx = operator-fixable (validation, conflict). 5xx = server-side.
+  if (status >= 500) {
+    return {
+      border: "border-purple-300 dark:border-purple-900/50",
+      bg: "bg-purple-50/60 dark:bg-purple-950/20",
+      icon: "text-purple-700 dark:text-purple-400",
+      badge: "border-purple-300 text-purple-700 dark:text-purple-300",
+      code: "text-purple-800 dark:text-purple-300",
+      message: "text-purple-900 dark:text-purple-100",
+    };
+  }
+  return {
+    border: "border-red-300 dark:border-red-900/50",
+    bg: "bg-red-50/60 dark:bg-red-950/20",
+    icon: "text-red-700 dark:text-red-400",
+    badge: "border-red-300 text-red-700 dark:text-red-300",
+    code: "text-red-800 dark:text-red-300",
+    message: "text-red-900 dark:text-red-100",
+  };
 }
 
