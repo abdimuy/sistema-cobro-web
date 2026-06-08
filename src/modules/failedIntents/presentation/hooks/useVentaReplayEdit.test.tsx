@@ -78,6 +78,29 @@ describe("useVentaReplayEdit", () => {
     expect(result.current.state!.formData.financiero.montoAnual).toBe("0.00");
   });
 
+  it("exposes the corrections audit trail from the bootstrap mapper", () => {
+    const body = makeValidBody();
+    (body.cliente as Record<string, unknown>).telefono = "BAD";
+    (body.montos as Record<string, unknown>).anual = "not-a-number";
+    const { result } = renderHook(() => useVentaReplayEdit(body));
+    expect(result.current.corrections.length).toBeGreaterThanOrEqual(2);
+    const paths = result.current.corrections.map((c) => c.path);
+    expect(paths).toEqual(
+      expect.arrayContaining(["cliente.telefono", "montos.anual"]),
+    );
+  });
+
+  it("returns an empty corrections array when the body is clean", () => {
+    const { result } = renderHook(() => useVentaReplayEdit(makeValidBody()));
+    expect(result.current.corrections).toEqual([]);
+  });
+
+  it("returns an empty corrections array when the body is not venta-shaped", () => {
+    const { result } = renderHook(() => useVentaReplayEdit({ foo: "bar" }));
+    expect(result.current.available).toBe(false);
+    expect(result.current.corrections).toEqual([]);
+  });
+
   it("buildSubmitPayload reflects edits applied via state callbacks", () => {
     const { result } = renderHook(() => useVentaReplayEdit(makeValidBody()));
     act(() => {

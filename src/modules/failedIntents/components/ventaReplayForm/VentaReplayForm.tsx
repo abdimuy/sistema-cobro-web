@@ -14,6 +14,8 @@ import { UnderlineTab } from "@/modules/ventasLocales/components/EditarVentaModa
 
 import { useVentaReplayEdit } from "../../presentation/hooks/useVentaReplayEdit";
 import { isVentaShapedBody } from "../../infrastructure/mappers/isVentaShapedBody";
+import { crearVentaBodyToVentaV2WithCorrections } from "../../infrastructure/mappers/crearVentaBodyToVentaV2WithCorrections";
+import { AuditTrailBanner } from "./AuditTrailBanner";
 
 // VentaReplayForm is the editor surface for a CrearVentaBody captured
 // in a FailedIntent. It reuses the ventasLocales editor tabs verbatim,
@@ -60,6 +62,15 @@ export function VentaReplayForm({ initialBody, onChange }: VentaReplayFormProps)
   // as red fields the operator can fix in place. We only fall back to
   // JSON view when the body is structurally NOT a venta.
   const formAvailable = useMemo(() => isVentaShapedBody(currentBody), [currentBody]);
+
+  // corrections is the audit trail of every sanitization the mapper
+  // applied when bootstrapping the form. Re-computed against
+  // currentBody so corrections disappear as the operator edits the
+  // values that triggered them in the JSON view.
+  const corrections = useMemo(
+    () => crearVentaBodyToVentaV2WithCorrections(currentBody).corrections,
+    [currentBody],
+  );
 
   // formAvailableInitial decides the default view on first mount.
   const formAvailableInitial = useRef(isVentaShapedBody(initialBody)).current;
@@ -125,6 +136,8 @@ export function VentaReplayForm({ initialBody, onChange }: VentaReplayFormProps)
         onToggle={handleToggle}
         formAvailable={formAvailable && jsonError === null}
       />
+
+      <AuditTrailBanner corrections={corrections} />
 
       {view === "form" && formAvailable ? (
         <FormBranch

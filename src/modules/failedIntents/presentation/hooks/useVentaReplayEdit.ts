@@ -2,20 +2,15 @@ import { useCallback, useMemo } from "react";
 import type { VentaV2 } from "@/services/api/ventaV2Types";
 import { useVentaEditState } from "@/modules/ventasLocales/presentation/hooks/useVentaEditState";
 import { crearVentaBodyToVentaV2 } from "../../infrastructure/mappers/crearVentaBodyToVentaV2";
+import { crearVentaBodyToVentaV2WithCorrections } from "../../infrastructure/mappers/crearVentaBodyToVentaV2WithCorrections";
+import type { Correction } from "../../infrastructure/mappers/crearVentaBodyToVentaV2WithCorrections";
 import { formDataToCrearVentaBody } from "../../infrastructure/mappers/formDataToCrearVentaBody";
 
 // useVentaReplayEdit wraps useVentaEditState so the ventasLocales tabs
-// can drive a CrearVentaBody captured in a FailedIntent. The captured
-// body is projected to a synthetic VentaV2 (sentinel defaults for the
-// response-only fields + sanitization for values that would trip a
-// domain VO), the form is bootstrapped from that, and
-// buildSubmitPayload serializes the form back to the wire shape. The
-// original body remains the source of truth for the venta id.
-//
-// available=false ONLY when the body fails the structural guard
-// (no productos, no cliente.nombre, etc.). Structurally-valid bodies
-// always mount — bad values get surfaced as per-field errors inside
-// the form's own validation, not by killing the form.
+// can drive a CrearVentaBody captured in a FailedIntent. Returns the
+// editor state plus the audit-trail `corrections` recorded by the
+// bootstrap mapper — every silent sanitization is on the record so
+// the UI can surface them to the operator.
 
 type UseVentaEditStateReturn = ReturnType<typeof useVentaEditState>;
 
@@ -24,17 +19,15 @@ export type UseVentaReplayEdit =
       available: true;
       state: UseVentaEditStateReturn;
       buildSubmitPayload: () => unknown | null;
+      corrections: ReadonlyArray<Correction>;
     }
   | {
       available: false;
       state: null;
       buildSubmitPayload: () => null;
+      corrections: ReadonlyArray<Correction>;
     };
 
-// PLACEHOLDER_VENTA is what we hand useVentaEditState when the body
-// fails the structural guard (so we still satisfy the rules of hooks
-// and call useVentaEditState unconditionally). available=false then
-// silences buildSubmitPayload so the placeholder's edits never leak.
 const PLACEHOLDER_VENTA = crearVentaBodyToVentaV2({
   id: "00000000-0000-0000-0000-000000000000",
   cliente: { nombre: "placeholder" },
@@ -69,27 +62,25 @@ const PLACEHOLDER_VENTA = crearVentaBodyToVentaV2({
 }) as VentaV2;
 
 export function useVentaReplayEdit(initialBody: unknown): UseVentaReplayEdit {
-  const ventaSintetica = useMemo<VentaV2 | null>(
-    () => crearVentaBodyToVentaV2(initialBody),
+  const bootstrap = useMemo(
+    () => crearVentaBodyToVentaV2WithCorrections(initialBody),
     [initialBody],
   );
 
-  // useVentaEditState is called unconditionally. When the body fails
-  // the structural guard, we hand it the placeholder and ignore the
-  // resulting state via the available=false branch below.
-  const state = useVentaEditState(ventaSintetica ?? PLACEHOLDER_VENTA);
+  const state = useVentaEditState(bootstrap.venta ?? PLACEHOLDER_VENTA);
 
   const buildSubmitPayload = useCallback((): unknown | null => {
-    if (ventaSintetica === null) return null;
+    if (bootstrap.venta === null) return null;
     if (state.errors.length > 0) return null;
     return formDataToCrearVentaBody(state.formData, initialBody);
-  }, [ventaSintetica, state, initialBody]);
+  }, [bootstrap, state, initialBody]);
 
-  if (ventaSintetica === null) {
+  if (bootstrap.venta === null) {
     return {
       available: false,
       state: null,
       buildSubmitPayload: () => null,
+      corrections: bootstrap.corrections,
     };
   }
 
@@ -97,5 +88,6 @@ export function useVentaReplayEdit(initialBody: unknown): UseVentaReplayEdit {
     available: true,
     state,
     buildSubmitPayload,
+    corrections: bootstrap.corrections,
   };
 }
