@@ -1,11 +1,18 @@
 import dayjs from "dayjs";
 import { VentaV2 } from "@/services/api/ventaV2Types";
 import VentaAplicadaCard from "./VentaAplicadaCard";
+import VentaEventosTimeline from "./VentaEventosTimeline";
 
 const fmtDate = (iso: string): string => dayjs(iso).format("DD MMM YYYY · HH:mm:ss");
 
 export const VentaAuditoriaTab = ({ venta }: { venta: VentaV2 }) => (
   <div className="space-y-6">
+    <Section title="Historial de eventos">
+      <div className="px-4 py-3">
+        <VentaEventosTimeline ventaID={venta.id} />
+      </div>
+    </Section>
+
     {venta.sincronizacion === "aplicada" && <VentaAplicadaCard venta={venta} />}
 
     <Section title="Identificadores">
