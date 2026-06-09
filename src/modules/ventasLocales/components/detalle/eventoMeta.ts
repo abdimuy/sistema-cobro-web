@@ -2,7 +2,7 @@ import {
   FilePlus,
   ImagePlus,
   ImageMinus,
-  Send,
+  Eye,
   CheckCircle2,
   Building2,
   XCircle,
@@ -56,7 +56,7 @@ export function eventoMeta(evento: VentaEvento): EventoMeta {
       return { label: "Imagen eliminada", Icon: ImageMinus, detail: "" };
 
     case "venta.enviada_a_revision":
-      return { label: "Enviada a revisión", Icon: Send, detail: "" };
+      return { label: "Revisada", Icon: Eye, detail: "" };
 
     case "venta.aprobada":
       return { label: "Aprobada", Icon: CheckCircle2, detail: "" };
