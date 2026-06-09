@@ -32,19 +32,19 @@ export const VentaAuditoriaTab = ({ venta }: { venta: VentaV2 }) => (
 
     <Section title="Auditoría">
       <Row label="Created at" value={fmtDate(venta.created_at)} mono />
-      <Row label="Created by" value={venta.created_by} mono />
+      <ActorRow label="Created by" nombre={venta.created_by_nombre} id={venta.created_by} />
       <Row label="Updated at" value={fmtDate(venta.updated_at)} mono />
-      <Row label="Updated by" value={venta.updated_by} mono />
+      <ActorRow label="Updated by" nombre={venta.updated_by_nombre} id={venta.updated_by} />
       {venta.aprobacion && (
         <>
           <Row label="Aprobada at" value={fmtDate(venta.aprobacion.at)} mono />
-          <Row label="Aprobada by" value={venta.aprobacion.by} mono />
+          <ActorRow label="Aprobada by" nombre={venta.aprobacion.by_nombre} id={venta.aprobacion.by} />
         </>
       )}
       {venta.cancelacion && (
         <>
           <Row label="Cancelada at" value={fmtDate(venta.cancelacion.at)} mono />
-          <Row label="Cancelada by" value={venta.cancelacion.by} mono />
+          <ActorRow label="Cancelada by" nombre={venta.cancelacion.by_nombre} id={venta.cancelacion.by} />
           <Row label="Motivo" value={venta.cancelacion.reason} />
         </>
       )}
@@ -60,6 +60,11 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
     <dl className="divide-y divide-border/60 rounded-lg border border-border/60">{children}</dl>
   </section>
 );
+
+// ActorRow renders an audit actor by display name when the backend resolved
+// it, falling back to the raw UUID (monospace) when the name is unavailable.
+const ActorRow = ({ label, nombre, id }: { label: string; nombre?: string; id: string }) =>
+  nombre ? <Row label={label} value={nombre} /> : <Row label={label} value={id} mono />;
 
 const Row = ({ label, value, mono }: { label: string; value: string; mono?: boolean }) => (
   <div className="grid grid-cols-[180px_1fr] gap-4 px-4 py-2.5">

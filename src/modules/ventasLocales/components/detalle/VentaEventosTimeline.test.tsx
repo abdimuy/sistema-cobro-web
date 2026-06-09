@@ -60,9 +60,91 @@ describe("eventoMeta — label mapping", () => {
     expect(meta.detail).toBe("");
   });
 
+  it("maps traspaso.creado with almacén route + count", () => {
+    const meta = eventoMeta(
+      makeEvento({
+        eventType: "traspaso.creado",
+        payload: {
+          almacen_origen_nombre: "CAMIONETA NISSAN 2000 - JUEVES",
+          almacen_destino_nombre: "TIENDA DE EXHIBICION",
+          detalles_count: 1,
+          folio: "MST000123",
+        },
+      }),
+    );
+    expect(meta.detail).toBe("CAMIONETA NISSAN 2000 - JUEVES → TIENDA DE EXHIBICION · 1 art.");
+  });
+
+  it("pluralizes the traspaso article count", () => {
+    const meta = eventoMeta(
+      makeEvento({
+        eventType: "traspaso.creado",
+        payload: {
+          almacen_origen_nombre: "BODEGA",
+          almacen_destino_nombre: "TIENDA",
+          detalles_count: 3,
+        },
+      }),
+    );
+    expect(meta.detail).toBe("BODEGA → TIENDA · 3 arts.");
+  });
+
+  it("falls back to the folio when almacén names are absent", () => {
+    const meta = eventoMeta(
+      makeEvento({
+        eventType: "traspaso.creado",
+        payload: { folio: "MST000123", detalles_count: 2 },
+      }),
+    );
+    expect(meta.detail).toBe("MST000123 · 2 arts.");
+  });
+
   it("maps traspaso.reversado", () => {
     const meta = eventoMeta(makeEvento({ eventType: "traspaso.reversado", payload: {} }));
     expect(meta.label).toBe("Traspaso revertido");
+  });
+
+  it("maps traspaso.reversado with route detail", () => {
+    const meta = eventoMeta(
+      makeEvento({
+        eventType: "traspaso.reversado",
+        payload: {
+          almacen_origen_nombre: "TIENDA",
+          almacen_destino_nombre: "CAMIONETA NISSAN",
+          detalles_count: 1,
+        },
+      }),
+    );
+    expect(meta.detail).toBe("TIENDA → CAMIONETA NISSAN · 1 art.");
+  });
+
+  it("maps venta.productos_reemplazados with count", () => {
+    const meta = eventoMeta(
+      makeEvento({ eventType: "venta.productos_reemplazados", payload: { productos_count: 4 } }),
+    );
+    expect(meta.label).toBe("Productos actualizados");
+    expect(meta.detail).toBe("4 productos");
+  });
+
+  it("maps venta.combos_reemplazados with count (singular)", () => {
+    const meta = eventoMeta(
+      makeEvento({ eventType: "venta.combos_reemplazados", payload: { combos_count: 1 } }),
+    );
+    expect(meta.label).toBe("Combos actualizados");
+    expect(meta.detail).toBe("1 combo");
+  });
+
+  it("maps venta.vendedores_reemplazados with count", () => {
+    const meta = eventoMeta(
+      makeEvento({ eventType: "venta.vendedores_reemplazados", payload: { vendedores_count: 2 } }),
+    );
+    expect(meta.label).toBe("Vendedores actualizados");
+    expect(meta.detail).toBe("2 vendedores");
+  });
+
+  it("omits the count detail when the payload lacks it", () => {
+    const meta = eventoMeta(makeEvento({ eventType: "venta.productos_reemplazados", payload: {} }));
+    expect(meta.detail).toBe("");
   });
 
   it("maps venta.cancelada with reason", () => {
@@ -159,6 +241,37 @@ describe("VentaEventosTimeline", () => {
     expect(screen.getByText("Aprobada")).toBeInTheDocument();
     expect(screen.getByText("Aplicada en Microsip")).toBeInTheDocument();
     expect(screen.getByText("Folio Y00002214")).toBeInTheDocument();
+  });
+
+  it("renders the traspaso route detail", () => {
+    const eventos: VentaEvento[] = [
+      makeEvento({
+        id: "1",
+        eventType: "traspaso.creado",
+        payload: {
+          almacen_origen_nombre: "CAMIONETA NISSAN 2000 - JUEVES",
+          almacen_destino_nombre: "TIENDA DE EXHIBICION",
+          detalles_count: 1,
+        },
+      }),
+    ];
+    mockUseVentaEventos.mockReturnValue({ eventos, isLoading: false, error: null });
+
+    render(<VentaEventosTimeline ventaID="test-id" />);
+    expect(screen.getByText("Traspaso de inventario creado")).toBeInTheDocument();
+    expect(
+      screen.getByText("CAMIONETA NISSAN 2000 - JUEVES → TIENDA DE EXHIBICION · 1 art."),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the edit count detail", () => {
+    const eventos: VentaEvento[] = [
+      makeEvento({ id: "1", eventType: "venta.productos_reemplazados", payload: { productos_count: 5 } }),
+    ];
+    mockUseVentaEventos.mockReturnValue({ eventos, isLoading: false, error: null });
+
+    render(<VentaEventosTimeline ventaID="test-id" />);
+    expect(screen.getByText("5 productos")).toBeInTheDocument();
   });
 
   it("renders size detail for imagen_adjuntada", () => {

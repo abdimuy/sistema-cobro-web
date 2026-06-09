@@ -2,8 +2,8 @@ import axios, { AxiosInstance } from "axios";
 import { URL_API_V2 } from "../../constants/api";
 import { auth } from "../../../firebase";
 
-export interface CancelacionV2 { at: string; by: string; reason: string }
-export interface AprobacionV2 { at: string; by: string }
+export interface CancelacionV2 { at: string; by: string; by_nombre?: string; reason: string }
+export interface AprobacionV2 { at: string; by: string; by_nombre?: string }
 export interface ClienteSnapshotV2 { cliente_id: number | null; nombre: string; telefono: string | null; aval: string | null; referencia: string | null }
 export interface DireccionV2 { calle: string; numero_exterior: string | null; colonia: string; poblacion: string; ciudad: string; zona_cliente_id: number | null }
 export interface GPSV2 { latitud: number; longitud: number }
@@ -43,7 +43,9 @@ export interface VentaV2 {
   created_at: string;
   updated_at: string;
   created_by: string;
+  created_by_nombre?: string;
   updated_by: string;
+  updated_by_nombre?: string;
 }
 
 export const ventaV2Http: AxiosInstance = axios.create({

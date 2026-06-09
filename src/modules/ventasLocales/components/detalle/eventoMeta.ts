@@ -30,6 +30,40 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function asString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function asNumber(value: unknown): number | null {
+  return typeof value === "number" ? value : null;
+}
+
+function pluralize(count: number, singular: string, plural: string): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+// traspasoDetail builds the stock-route line for traspaso events. The backend
+// injects almacen_origen_nombre / almacen_destino_nombre into the payload; when
+// both are present it reads "ORIGEN → DESTINO · N art.". Without names it falls
+// back to the MST folio so the row still carries a usable reference.
+function traspasoDetail(payload: Record<string, unknown>): string {
+  const origen = asString(payload.almacen_origen_nombre);
+  const destino = asString(payload.almacen_destino_nombre);
+  const folio = asString(payload.folio);
+  const count = asNumber(payload.detalles_count);
+
+  const parts: string[] = [];
+  if (origen && destino) {
+    parts.push(`${origen} → ${destino}`);
+  } else if (folio) {
+    parts.push(folio);
+  }
+  if (count !== null) {
+    parts.push(`${count} art${count === 1 ? "." : "s."}`);
+  }
+  return parts.join(" · ");
+}
+
 export function eventoMeta(evento: VentaEvento): EventoMeta {
   const { eventType, payload } = evento;
 
@@ -84,20 +118,46 @@ export function eventoMeta(evento: VentaEvento): EventoMeta {
     case "venta.cliente_actualizado":
       return { label: "Cliente actualizado", Icon: UserPen, detail: "" };
 
-    case "venta.productos_reemplazados":
-      return { label: "Productos actualizados", Icon: Package, detail: "" };
+    case "venta.productos_reemplazados": {
+      const count = asNumber(payload.productos_count);
+      return {
+        label: "Productos actualizados",
+        Icon: Package,
+        detail: count !== null ? pluralize(count, "producto", "productos") : "",
+      };
+    }
 
-    case "venta.combos_reemplazados":
-      return { label: "Combos actualizados", Icon: Boxes, detail: "" };
+    case "venta.combos_reemplazados": {
+      const count = asNumber(payload.combos_count);
+      return {
+        label: "Combos actualizados",
+        Icon: Boxes,
+        detail: count !== null ? pluralize(count, "combo", "combos") : "",
+      };
+    }
 
-    case "venta.vendedores_reemplazados":
-      return { label: "Vendedores actualizados", Icon: Users, detail: "" };
+    case "venta.vendedores_reemplazados": {
+      const count = asNumber(payload.vendedores_count);
+      return {
+        label: "Vendedores actualizados",
+        Icon: Users,
+        detail: count !== null ? pluralize(count, "vendedor", "vendedores") : "",
+      };
+    }
 
     case "traspaso.creado":
-      return { label: "Traspaso de inventario creado", Icon: Truck, detail: "" };
+      return {
+        label: "Traspaso de inventario creado",
+        Icon: Truck,
+        detail: traspasoDetail(payload),
+      };
 
     case "traspaso.reversado":
-      return { label: "Traspaso revertido", Icon: Truck, detail: "" };
+      return {
+        label: "Traspaso revertido",
+        Icon: Truck,
+        detail: traspasoDetail(payload),
+      };
 
     default:
       return { label: eventType, Icon: Circle, detail: "" };
