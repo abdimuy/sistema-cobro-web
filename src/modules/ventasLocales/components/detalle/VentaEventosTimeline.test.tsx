@@ -15,6 +15,7 @@ function makeEvento(overrides: Partial<VentaEvento> = {}): VentaEvento {
     eventType: "venta.creada",
     payload: { tipo_venta: "CREDITO" },
     occurredAt: new Date("2026-06-09T07:22:33Z"),
+    actorNombre: "",
     ...overrides,
   };
 }
@@ -182,5 +183,26 @@ describe("VentaEventosTimeline", () => {
 
     render(<VentaEventosTimeline ventaID="test-id" />);
     expect(screen.getByText("nueva.funcionalidad.futura")).toBeInTheDocument();
+  });
+
+  it("renders the actor name when present", () => {
+    const eventos: VentaEvento[] = [
+      makeEvento({ id: "1", eventType: "venta.aprobada", payload: {}, actorNombre: "Aldrich Cortero" }),
+    ];
+    mockUseVentaEventos.mockReturnValue({ eventos, isLoading: false, error: null });
+
+    render(<VentaEventosTimeline ventaID="test-id" />);
+    expect(screen.getByText("Aldrich Cortero")).toBeInTheDocument();
+  });
+
+  it("omits the actor line when no actor is present", () => {
+    const eventos: VentaEvento[] = [
+      makeEvento({ id: "1", eventType: "venta.imagen_adjuntada", payload: { size_bytes: 1024 }, actorNombre: "" }),
+    ];
+    mockUseVentaEventos.mockReturnValue({ eventos, isLoading: false, error: null });
+
+    render(<VentaEventosTimeline ventaID="test-id" />);
+    // No "por …" actor line is rendered.
+    expect(screen.queryByText(/^por /)).not.toBeInTheDocument();
   });
 });

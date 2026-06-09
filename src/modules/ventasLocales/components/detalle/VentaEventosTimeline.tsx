@@ -70,6 +70,11 @@ const EventoRow = ({ evento, isLast }: { evento: VentaEvento; isLast: boolean })
       {/* Content column */}
       <div className={cn("pb-4 min-w-0", isLast && "pb-0")}>
         <p className="text-sm font-medium text-foreground leading-none">{label}</p>
+        {evento.actorNombre && (
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            por <span className="text-foreground/80">{evento.actorNombre}</span>
+          </p>
+        )}
         {detail && (
           <p className="mt-0.5 text-[11px] text-muted-foreground">{detail}</p>
         )}

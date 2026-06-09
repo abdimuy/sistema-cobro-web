@@ -8,6 +8,8 @@ interface VentaEventoDTO {
   event_type: string;
   payload: Record<string, unknown>;
   occurred_at: string;
+  actor_id?: string;
+  actor_nombre?: string;
 }
 
 interface VentaEventosResponseDTO {
@@ -20,6 +22,7 @@ function dtoToEvento(dto: VentaEventoDTO): VentaEvento {
     eventType: dto.event_type,
     payload: dto.payload,
     occurredAt: new Date(dto.occurred_at),
+    actorNombre: dto.actor_nombre ?? "",
   };
 }
 
