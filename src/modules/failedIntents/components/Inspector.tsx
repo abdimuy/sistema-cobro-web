@@ -247,30 +247,46 @@ function ActionsTab({
   intent: FailedIntent;
   onAction: (action: InspectorAction) => void;
 }) {
-  // Replay-with is now available for blob intents too — the sheet renders
-  // a per-part multipart editor (keep/replace/remove + add new files).
-  // The only disable left is terminal status.
-  const replayWithDisabled = intent.status.isTerminal();
-  const replayDisabled = intent.status.isTerminal() && intent.status.value !== "retried_fail";
+  // Bloqueo de acciones por estado del intent:
+  //
+  //   • new           → todo habilitado (la venta requiere atención).
+  //   • retried_fail  → ambos reenvíos habilitados; marcar resuelto NO
+  //                     (el backend exige status=new para Resolver).
+  //   • retried_ok    → todo deshabilitado (la venta ya se guardó: otro
+  //                     reenvío crearía una venta duplicada porque la
+  //                     idempotency-key del replay es fresca cada vez).
+  //   • resolved_manual / ignored → todo deshabilitado (el operador ya
+  //                                  cerró el intent explícitamente).
+  //
+  // La distinción crítica: retried_fail SIGUE permitiendo reenvíos
+  // porque la venta NO se guardó; el intent está esperando otro intento.
+  // Los demás estados terminales son "cerrados con éxito o por decisión
+  // del admin" y un nuevo reenvío crearía data duplicada / no deseada.
+  const status = intent.status.value;
+  const closedSuccessfully =
+    status === "retried_ok" ||
+    status === "resolved_manual" ||
+    status === "ignored";
+  const replayDisabled = closedSuccessfully;
+  const replayWithDisabled = closedSuccessfully;
+  const resolveDisabled = intent.status.isTerminal();
+  const closedTooltip =
+    "Este intento ya está cerrado — un nuevo reenvío crearía data duplicada";
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-2">
         <ActionCard
           icon={<RotateCw className="h-4 w-4" />}
-          title="Replay tal cual"
+          title="Reenviar sin cambios"
           description="Reenvía el body original con una nueva idempotency-key"
           primary
           disabled={replayDisabled}
           onClick={() => onAction("replay")}
-          tooltip={
-            replayDisabled
-              ? "Este intento ya está en estado terminal"
-              : undefined
-          }
+          tooltip={replayDisabled ? closedTooltip : undefined}
         />
         <ActionCard
           icon={<Pencil className="h-4 w-4" />}
-          title="Replay con correcciones"
+          title="Editar y reenviar"
           description={
             intent.hasBlob
               ? "Editá las partes del multipart (campos + archivos) antes de reenviar"
@@ -278,21 +294,17 @@ function ActionsTab({
           }
           disabled={replayWithDisabled}
           onClick={() => onAction("replay-with")}
-          tooltip={
-            intent.status.isTerminal()
-              ? "Este intento ya está en estado terminal"
-              : undefined
-          }
+          tooltip={replayWithDisabled ? closedTooltip : undefined}
         />
         <ActionCard
           icon={<CheckCircle2 className="h-4 w-4" />}
           title="Marcar como resuelto"
           description="Cerrar el intento sin reintentar"
-          disabled={intent.status.isTerminal()}
+          disabled={resolveDisabled}
           onClick={() => onAction("resolve")}
           tooltip={
-            intent.status.isTerminal()
-              ? "Este intento ya está en estado terminal"
+            resolveDisabled
+              ? "Este intento ya está cerrado"
               : undefined
           }
         />

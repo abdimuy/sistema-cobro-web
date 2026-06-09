@@ -70,11 +70,11 @@ describe("FailedIntents integration", () => {
     // opens the part-by-part multipart editor instead of the JSON one.
     await user.click(screen.getByRole("tab", { name: /acciones/i }));
     expect(
-      screen.getByTestId("action-replay-con-correcciones"),
+      screen.getByTestId("action-editar-y-reenviar"),
     ).not.toBeDisabled();
   });
 
-  it("Replay tal cual: confirm dialog → 200 → success toast → refresh", async () => {
+  it("Reenviar sin cambios: confirm dialog → 200 → success toast → refresh", async () => {
     let listCalls = 0;
     server.use(
       ...failedIntentsHandlers({
@@ -111,7 +111,7 @@ describe("FailedIntents integration", () => {
       expect(screen.getByText(/POST \/v2\/ventas/i)).toBeInTheDocument(),
     );
     await user.click(screen.getByRole("tab", { name: /acciones/i }));
-    await user.click(screen.getByTestId("action-replay-tal-cual"));
+    await user.click(screen.getByTestId("action-reenviar-sin-cambios"));
     await user.click(screen.getByTestId("replay-confirm-button"));
 
     await waitFor(() =>
