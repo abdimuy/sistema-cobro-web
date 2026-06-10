@@ -7,9 +7,12 @@ Cambiar el número de versión en estos 4 archivos:
 | Archivo | Campo |
 |---------|-------|
 | `package.json` | `"version"` |
-| `src/constants/version.ts` | `APP_VERSION` |
+| `.env.production` | `VITE_APP_VERSION` (versión mostrada dentro de la app) |
 | `src-tauri/tauri.conf.json` | `"version"` |
 | `src-tauri/Cargo.toml` | `version` |
+
+> `src/constants/version.ts` ya **NO** se edita: lee `VITE_APP_VERSION` del `.env`
+> con fallback a prod. Mantén el fallback alineado con la versión de prod.
 
 ## 2. Commit y tag
 
@@ -41,6 +44,36 @@ El push del tag dispara el GitHub Action (`release.yml`) que:
 ## 5. Verificar
 
 Los usuarios con la app abierta verán la notificación de actualización en máximo 30 minutos (o al reiniciar la app). Un click en "Descargar e instalar" actualiza y reinicia automáticamente.
+
+## Build de PRUEBA (entorno apidev / apidb)
+
+Build paralelo al de prod, instalable lado a lado (identifier `…sistema.test`),
+que apunta a los túneles de prueba y **no** se mezcla con el canal de prod.
+
+**Versión de prueba — cambiar en estos 2 archivos** (los demás quedan en la versión de prod):
+
+| Archivo | Campo |
+|---------|-------|
+| `src-tauri/tauri.test.conf.json` | `"version"` (versión del instalador) |
+| `.env.test` | `VITE_APP_VERSION` (versión mostrada en la app) |
+
+Usar un prerelease que ordene **por debajo** de prod, p.ej. `1.13.2-test.1`.
+(`package.json` / `Cargo.toml` se quedan en la versión de prod; la versión del
+instalador de prueba la fija `tauri.test.conf.json`.)
+
+**Compilar (Windows, vía CI):**
+
+```bash
+git tag v1.13.2-test.1        # debe empatar con tauri.test.conf.json y el endpoint del updater
+git push origin v1.13.2-test.1
+```
+
+El tag `v*-test*` dispara `release-test.yml` (no `release.yml`, que los excluye):
+compila **solo NSIS** en `windows-latest` (el MSI/WiX exige prerelease numérico)
+y crea un **draft release**. Los testers bajan el `.exe` a mano; el auto-updater
+de prod (canal `latest`) nunca lo ve.
+
+**Compilar local (Mac/Windows):** `npm run tauri:build:test`.
 
 ## Notas
 
