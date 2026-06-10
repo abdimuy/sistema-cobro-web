@@ -1,24 +1,28 @@
-name: Release
+name: Release Test
+
+# Compila el build de PRUEBA (config src-tauri/tauri.test.conf.json → apunta a
+# apidev/apidb vía .env.test) en un runner Windows y publica un release DRAFT
+# (el auto-updater de prod solo ve releases *published* del canal `latest`, así
+# que esto no afecta a producción). Los testers bajan el instalador a mano.
+#
+# Se dispara empujando un tag `v*-test*` (p.ej. v1.13.2-test.1) o manualmente.
 
 on:
+  workflow_dispatch:
   push:
     tags:
-      - 'v*'
-      - '!v*-test*'  # los tags de prueba los maneja release-test.yml (draft)
-  workflow_dispatch:
+      - 'v*-test*'
 
 jobs:
-  release:
+  release-test:
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
           - platform: 'windows-latest'
-            args: ''
+            args: '--config src-tauri/tauri.test.conf.json'
 
     runs-on: ${{ matrix.platform }}
 
@@ -32,23 +36,21 @@ jobs:
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
 
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Build the app
+      - name: Build the TEST app (Windows)
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: v__VERSION__
-          releaseName: 'Sistema Muebles San Pablo v__VERSION__'
-          releaseBody: 'Descarga los instaladores para tu sistema operativo.'
+          tagName: v1.13.2-test.1
+          releaseName: 'Sistema Muebles San Pablo TEST v1.13.2-test.1'
+          releaseBody: 'Build de PRUEBA (apidev/apidb). Instalable junto al de producción. NO publicar al canal de prod.'
           releaseDraft: true
-          prerelease: false
+          prerelease: true
           args: ${{ matrix.args }}
           updaterJsonPreferNsis: true
