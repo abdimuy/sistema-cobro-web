@@ -1,7 +1,9 @@
-// Base de configuración = PRODUCCIÓN. El overlay de prueba se aplica vía Vite
-// mode (`--mode test` → `.env.test`); el build normal usa `.env.production`.
-// Los fallbacks de abajo son los valores de PROD: si no hay variable de entorno,
-// el build apunta a producción.
+// Entorno por Vite mode (3, igual que los flavors del Android):
+//   development (`npm run dev` / `tauri:dev`) → `.env.development` → LOCAL
+//   test        (`build:test` / `tauri:build:test`) → `.env.test`  → server pruebas
+//   production  (`build` / `tauri:build`)            → `.env.production` → prod
+// Los fallbacks de abajo son los de PROD: solo aplican como red de seguridad
+// si NO hay variable de entorno (p. ej. un build sin su `.env`).
 //
 // Legacy node (sys_msp_backend). Prod: msp2025; prueba: apidb.
 export const URL_API = import.meta.env.VITE_URL_API ?? "https://msp2025.loclx.io";
