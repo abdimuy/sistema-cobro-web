@@ -44,7 +44,7 @@ export const VentaActionBar = ({ venta, onClose, onUpdated }: Props) => {
               size="sm"
               onClick={() => setCancelOpen(true)}
               disabled={actions.isPending}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="border border-red-500/30 text-red-600 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
             >
               <X className="mr-1.5 h-3.5 w-3.5" />
               Cancelar venta
