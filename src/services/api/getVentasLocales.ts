@@ -363,10 +363,20 @@ export interface VendedorOption {
 }
 
 export const getVendedores = async (): Promise<VendedorOption[]> => {
-  const response = await axios.get<{ body: VendedorOption[]; error: string }>(
-    `${BASE_URL}/ventas-locales/vendedores`
+  // Fuente de vendedores: colección `users` de Firestore, vía la API legacy
+  // (GET /notificaciones/usuarios-firebase → todos los usuarios). Antes pegaba
+  // a /ventas-locales/vendedores, que solo traía DISTINCT de ventas pasadas
+  // (MSP_LOCAL_SALE_VENDEDOR) → faltaban vendedores que aún no habían vendido.
+  // TODO: migrar a la API Go cuando exponga el listado de vendedores.
+  const response = await axios.get<{ email: string; nombre: string }[]>(
+    `${BASE_URL}/notificaciones/usuarios-firebase`
   );
-  return response.data.body;
+  return (response.data ?? [])
+    .filter((u) => u.email)
+    .map((u) => ({
+      VENDEDOR_EMAIL: u.email,
+      NOMBRE_VENDEDOR: u.nombre ?? u.email,
+    }));
 };
 
 export const getImageUrl = (imagePath: string): string => {
