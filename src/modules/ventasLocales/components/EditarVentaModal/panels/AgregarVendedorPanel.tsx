@@ -72,15 +72,18 @@ export const AgregarVendedorPanel = ({
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop + panel use `fixed` (not `absolute`): DialogContent is
+          translate-centered, so a fixed descendant anchors to the modal box,
+          giving a full modal-height drawer. With `absolute` it was clipped to
+          the short VendedoresTab container. z above header/tabs/footer. */}
       <div
-        className="absolute inset-0 z-20 bg-background/60 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
         onClick={handleClose}
       />
       {/* Panel */}
       <aside
         className={cn(
-          "absolute inset-y-0 right-0 z-30 flex w-full max-w-[480px] flex-col",
+          "fixed inset-y-0 right-0 z-50 flex w-full max-w-[480px] flex-col",
           "border-l border-border/60 bg-background shadow-2xl",
           "animate-in slide-in-from-right-4 duration-200",
         )}
