@@ -190,6 +190,16 @@ const StepColumn = ({ step, state }: { step: Step; state: NodeState }) => {
             "border border-dashed border-muted-foreground/40 bg-background text-muted-foreground/50"
         )}
       >
+        {/* Breathing halo: subtle radar pulse on the in-progress step. */}
+        {isActive && (
+          <span
+            aria-hidden
+            className={cn(
+              "timeline-halo pointer-events-none absolute inset-0 rounded-full border-2",
+              p.border
+            )}
+          />
+        )}
         {isDone || isApplied ? (
           <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
         ) : (
