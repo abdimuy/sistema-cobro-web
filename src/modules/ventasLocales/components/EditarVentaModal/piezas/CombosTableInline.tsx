@@ -165,12 +165,7 @@ export const CombosTableInline = ({
                       onChange={(v) => onUpdate(index, "almacenOrigenID", v ?? 0)}
                       almacenes={almacenes}
                       placeholder="Origen"
-                    />
-                    <SeleccionarAlmacenCombobox
-                      value={c.almacenDestinoID}
-                      onChange={(v) => onUpdate(index, "almacenDestinoID", v ?? 0)}
-                      almacenes={almacenes}
-                      placeholder="Destino"
+                      disabled
                     />
                   </div>
                 </TableCell>

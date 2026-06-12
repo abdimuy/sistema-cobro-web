@@ -100,28 +100,17 @@ export const ProductosTab = ({
             </h3>
           </div>
           <div className="px-5 py-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="max-w-sm">
               <CampoInline
                 label="Almacén de origen"
-                helper="Se aplica a productos nuevos no incluidos en un combo."
+                helper="Informativo: de aquí salió el inventario al crear la venta. El traspaso ya se hizo, no se edita desde aquí."
               >
                 <SeleccionarAlmacenCombobox
                   value={almacenes.almacenOrigenID > 0 ? almacenes.almacenOrigenID : null}
                   onChange={(v) => onUpdateAlmacenesDefault("almacenOrigenID", v ?? 0)}
                   almacenes={almacenesList}
                   placeholder="Origen"
-                />
-              </CampoInline>
-              <CampoInline label="Almacén de destino">
-                <SeleccionarAlmacenCombobox
-                  value={
-                    almacenes.almacenDestinoID > 0 ? almacenes.almacenDestinoID : null
-                  }
-                  onChange={(v) =>
-                    onUpdateAlmacenesDefault("almacenDestinoID", v ?? 0)
-                  }
-                  almacenes={almacenesList}
-                  placeholder="Destino"
+                  disabled
                 />
               </CampoInline>
             </div>

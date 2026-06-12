@@ -190,12 +190,7 @@ export const ProductosTableInline = ({
                         onChange={(v) => onUpdate(index, "almacenOrigenID", v)}
                         almacenes={almacenes}
                         placeholder="Origen"
-                      />
-                      <SeleccionarAlmacenCombobox
-                        value={p.almacenDestinoID}
-                        onChange={(v) => onUpdate(index, "almacenDestinoID", v)}
-                        almacenes={almacenes}
-                        placeholder="Destino"
+                        disabled
                       />
                     </div>
                   ) : (
