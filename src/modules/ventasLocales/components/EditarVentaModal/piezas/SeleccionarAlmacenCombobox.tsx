@@ -52,7 +52,13 @@ export const SeleccionarAlmacenCombobox = ({
       <PopoverContent className="w-[280px] p-0" align="start">
         <Command>
           <CommandInput placeholder="Buscar almacén..." />
-          <CommandList>
+          <CommandList
+            onWheel={(e) => {
+              // El scroll-lock del Dialog (react-remove-scroll) bloquea el
+              // wheel nativo sobre este Popover portaleado; lo scrolleamos a mano.
+              e.currentTarget.scrollTop += e.deltaY;
+            }}
+          >
             <CommandEmpty>Sin resultados</CommandEmpty>
             {almacenes.map((almacen) => (
               <CommandItem
