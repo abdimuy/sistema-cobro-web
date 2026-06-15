@@ -4,6 +4,7 @@ import type {
   RefreshResult,
 } from "../../domain/entities";
 import { Segmento, EstadoPago, Tier } from "../../domain/values";
+import { DomainError } from "../../domain/errors";
 import type { WinbackAnalyticsPort } from "../ports/WinbackAnalyticsPort";
 import type {
   ListarWinbackInput,
@@ -79,11 +80,11 @@ function resolve<T>(v: T | (() => T)): T {
 }
 
 // Helper: assert that VO.create returned the VO, not a DomainError.
-function mustCreate<T>(v: T | { code: string }): T {
-  if (v instanceof Error) {
-    throw new Error(`VO.create failed unexpectedly: ${(v as Error).message}`);
+function mustCreate<T>(v: T | DomainError): T {
+  if (v instanceof DomainError) {
+    throw new Error(`VO.create failed unexpectedly: ${v.message}`);
   }
-  return v as T;
+  return v;
 }
 
 export function makeFakeWinbackItem(

@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { dtoToWinbackItem } from "./dtoToWinbackItem";
-import { DomainError } from "../../domain/errors";
 import type { WinbackItemDTO } from "../http/dtos";
 
 function buildValidDTO(overrides: Partial<WinbackItemDTO> = {}): WinbackItemDTO {

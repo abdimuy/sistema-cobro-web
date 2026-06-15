@@ -1,15 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import WinbackTable from "./WinbackTable";
 import { makeFakeWinbackItem } from "../application/__tests__/fakeWinbackPort";
 import { Segmento, EstadoPago, Tier } from "../domain/values";
+import { DomainError } from "../domain/errors";
 
-function mustCreate<T>(v: T | { code: string }): T {
-  if (v instanceof Error) {
-    throw new Error(`VO.create failed: ${(v as Error).message}`);
+function mustCreate<T>(v: T | DomainError): T {
+  if (v instanceof DomainError) {
+    throw new Error(`VO.create failed: ${v.message}`);
   }
-  return v as T;
+  return v;
 }
 
 const itemA = makeFakeWinbackItem({
