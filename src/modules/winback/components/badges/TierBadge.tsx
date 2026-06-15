@@ -53,7 +53,7 @@ interface Props {
 const TierBadge: React.FC<Props> = ({ value }) => {
   const colors = getTierColors(value);
   // Tier displays just the letter
-  const label = ["A", "B", "C", "D"].includes(value) ? value : value;
+  const label = ["A", "B", "C", "D"].includes(value) ? value : "?";
 
   return (
     <span

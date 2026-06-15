@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ export function WinbackScreen() {
     incluirActivos,
   });
 
-  const { attribution, isLoading: attributionLoading } = useAttribution({
+  const { attribution, isLoading: attributionLoading, error: attributionError } = useAttribution({
     zona,
   });
 
@@ -47,10 +47,14 @@ export function WinbackScreen() {
   } = useRefrescarWinback();
 
   // ── Derived zona options from loaded items ─────────────────────────────────
+  const zonaOptionsRef = useRef<string[]>([]);
   const zonaOptions = useMemo(() => {
-    const unique = Array.from(new Set(items.map((i) => i.zona)));
-    return unique.sort();
-  }, [items]);
+    if (zona === undefined) {
+      const unique = Array.from(new Set(items.map((i) => i.zona))).sort();
+      zonaOptionsRef.current = unique;
+    }
+    return zonaOptionsRef.current;
+  }, [items, zona]);
 
   // ── Selected item for drawer ───────────────────────────────────────────────
   const [selected, setSelected] = useState<WinbackItem | null>(null);
@@ -107,6 +111,12 @@ export function WinbackScreen() {
 
       {/* Attribution panel */}
       <AttributionPanel attribution={attribution} isLoading={attributionLoading} />
+      {/* Attribution-level error */}
+      {attributionError && (
+        <p className="font-mono text-[12px] text-destructive" role="alert">
+          {attributionError.message}
+        </p>
+      )}
 
       {/* List-level error */}
       {error && (

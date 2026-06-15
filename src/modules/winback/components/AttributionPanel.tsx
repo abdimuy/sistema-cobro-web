@@ -52,14 +52,14 @@ const AttributionPanel: React.FC<AttributionPanelProps> = ({
           />
 
           {/* Uplift — prominent */}
-          <div className="flex flex-col gap-0.5">
+          <dl className="flex flex-col gap-0.5">
             <dt className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               Uplift
             </dt>
             <dd className="font-serif tabular text-[28px] font-normal leading-none text-foreground">
               {formatUplift(attribution.uplift)}
             </dd>
-          </div>
+          </dl>
         </div>
       )}
     </div>
@@ -82,7 +82,7 @@ interface StatBlockProps {
 }
 
 const StatBlock: React.FC<StatBlockProps> = ({ label, count, rate }) => (
-  <div className="flex flex-col gap-0.5">
+  <dl className="flex flex-col gap-0.5">
     <dt className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
       {label}
     </dt>
@@ -92,7 +92,7 @@ const StatBlock: React.FC<StatBlockProps> = ({ label, count, rate }) => (
     <dd className="tabular font-mono text-[12px] text-muted-foreground">
       {rate}
     </dd>
-  </div>
+  </dl>
 );
 
 export default AttributionPanel;

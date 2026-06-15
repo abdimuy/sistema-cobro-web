@@ -4,6 +4,7 @@ import { DomainError } from "../../domain/errors";
 import { useWinbackPort } from "../context/WinbackContext";
 import { listarWinback } from "../../application/usecases/listarWinback";
 import type { ListarWinbackInput } from "../../application/dto";
+import { toDomainError } from "./lib/toDomainError";
 
 export type UseListarWinbackReturn = {
   items: ReadonlyArray<WinbackItem>;
@@ -66,10 +67,4 @@ export function useListarWinback(
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 
   return { items, isLoading, error, refresh };
-}
-
-function toDomainError(e: unknown): DomainError {
-  if (e instanceof DomainError) return e;
-  if (e instanceof Error) return new DomainError("error_inesperado", e.message);
-  return new DomainError("error_inesperado", String(e));
 }

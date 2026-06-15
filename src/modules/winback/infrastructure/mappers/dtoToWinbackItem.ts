@@ -6,12 +6,16 @@ import { Tier } from "../../domain/values/Tier";
 import type { WinbackItemDTO } from "../http/dtos";
 
 export function dtoToWinbackItem(dto: WinbackItemDTO): WinbackItem {
-  const fechaUltimaCompra = new Date(dto.fecha_ultima_compra);
-  if (isNaN(fechaUltimaCompra.getTime())) {
-    throw new DomainError(
-      "fecha_ultima_compra_invalida",
-      "fecha_ultima_compra no es un timestamp válido",
-    );
+  let fechaUltimaCompra: Date | null = null;
+  if (dto.fecha_ultima_compra !== "") {
+    const d = new Date(dto.fecha_ultima_compra);
+    if (isNaN(d.getTime())) {
+      throw new DomainError(
+        "fecha_ultima_compra_invalida",
+        "fecha_ultima_compra no es un timestamp válido",
+      );
+    }
+    fechaUltimaCompra = d;
   }
 
   const segmento = Segmento.create(dto.segmento);
@@ -20,12 +24,16 @@ export function dtoToWinbackItem(dto: WinbackItemDTO): WinbackItem {
   const estadoPago = EstadoPago.create(dto.estado_pago);
   if (estadoPago instanceof DomainError) throw estadoPago;
 
-  const fechaUltimoPago = new Date(dto.fecha_ultimo_pago);
-  if (isNaN(fechaUltimoPago.getTime())) {
-    throw new DomainError(
-      "fecha_ultimo_pago_invalida",
-      "fecha_ultimo_pago no es un timestamp válido",
-    );
+  let fechaUltimoPago: Date | null = null;
+  if (dto.fecha_ultimo_pago !== "") {
+    const d = new Date(dto.fecha_ultimo_pago);
+    if (isNaN(d.getTime())) {
+      throw new DomainError(
+        "fecha_ultimo_pago_invalida",
+        "fecha_ultimo_pago no es un timestamp válido",
+      );
+    }
+    fechaUltimoPago = d;
   }
 
   const tier = Tier.create(dto.tier);

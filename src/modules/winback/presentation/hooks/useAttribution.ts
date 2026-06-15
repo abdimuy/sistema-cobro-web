@@ -3,6 +3,7 @@ import type { WinbackAttribution } from "../../domain/entities";
 import { DomainError } from "../../domain/errors";
 import { useWinbackPort } from "../context/WinbackContext";
 import { obtenerAttribution } from "../../application/usecases/obtenerAttribution";
+import { toDomainError } from "./lib/toDomainError";
 
 export type UseAttributionReturn = {
   attribution: WinbackAttribution | null;
@@ -55,10 +56,4 @@ export function useAttribution(
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 
   return { attribution, isLoading, error, refresh };
-}
-
-function toDomainError(e: unknown): DomainError {
-  if (e instanceof DomainError) return e;
-  if (e instanceof Error) return new DomainError("error_inesperado", e.message);
-  return new DomainError("error_inesperado", String(e));
 }

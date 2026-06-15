@@ -3,6 +3,7 @@ import {
   formatMoney,
   formatPercent,
   formatFecha,
+  formatFechaOrDash,
   formatRecencia,
   formatDiasLargo,
 } from "./format";
@@ -13,7 +14,7 @@ describe("formatMoney", () => {
     expect(result).toContain("1");
     expect(result).toContain("500");
     // Should be currency formatted (contains $ or MX$ depending on locale)
-    expect(result).toMatch(/[\$\d]/);
+    expect(result).toMatch(/[$\d]/);
   });
 
   it("formats zero", () => {
@@ -91,5 +92,16 @@ describe("formatDiasLargo", () => {
   it("appends \" días\" suffix", () => {
     expect(formatDiasLargo(90)).toBe("90 días");
     expect(formatDiasLargo(1)).toBe("1 días");
+  });
+});
+
+describe("formatFechaOrDash", () => {
+  it("returns '—' when date is null", () => {
+    expect(formatFechaOrDash(null)).toBe("—");
+  });
+
+  it("delegates to formatFecha when date is non-null", () => {
+    const d = new Date(2026, 5, 14);
+    expect(formatFechaOrDash(d)).toBe(formatFecha(d));
   });
 });

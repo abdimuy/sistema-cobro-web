@@ -38,6 +38,11 @@ export function formatFecha(d: Date): string {
   return dateShortFmt.format(d);
 }
 
+/** Returns the formatted date or "—" when d is null (client with no history). */
+export function formatFechaOrDash(d: Date | null): string {
+  return d ? formatFecha(d) : "—";
+}
+
 /** Compact recencia label for table cells (e.g. "90 d"). */
 export function formatRecencia(dias: number): string {
   return `${dias} d`;

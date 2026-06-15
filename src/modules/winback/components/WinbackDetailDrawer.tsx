@@ -14,7 +14,7 @@ import TierBadge from "./badges/TierBadge";
 import {
   formatMoney,
   formatPercent,
-  formatFecha,
+  formatFechaOrDash,
   formatDiasLargo,
 } from "./lib/format";
 
@@ -124,8 +124,8 @@ const DrawerBody: React.FC<BodyProps> = ({ item }) => {
           <Stat label="Por liquidar" value={formatPercent(item.porLiquidarPct)} />
           <Stat label="Recencia" value={formatDiasLargo(item.recenciaDias)} />
           <Stat label="Frecuencia" value={`${item.frecuencia} compras`} />
-          <Stat label="Última compra" value={formatFecha(item.fechaUltimaCompra)} />
-          <Stat label="Último pago" value={formatFecha(item.fechaUltimoPago)} />
+          <Stat label="Última compra" value={formatFechaOrDash(item.fechaUltimaCompra)} />
+          <Stat label="Último pago" value={formatFechaOrDash(item.fechaUltimoPago)} />
         </dl>
       </section>
 

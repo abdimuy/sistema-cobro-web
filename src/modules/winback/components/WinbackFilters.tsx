@@ -21,8 +21,8 @@ const segmentoLabels: Record<SegmentoValue, string> = {
 };
 
 interface WinbackFiltersProps {
-  segmento?: SegmentoValue | "ALL";
-  zona?: string | "ALL";
+  segmento?: SegmentoValue;
+  zona?: string;
   incluirActivos: boolean;
   zonaOptions: string[];
   onSegmentoChange: (v: SegmentoValue | undefined) => void;
@@ -42,8 +42,8 @@ const WinbackFilters: React.FC<WinbackFiltersProps> = ({
   onZonaChange,
   onIncluirActivosChange,
 }) => {
-  const segmentoValue = !segmento || segmento === "ALL" ? ALL_SEGMENTOS : segmento;
-  const zonaValue = !zona || zona === "ALL" ? ALL_ZONAS : zona;
+  const segmentoValue = segmento === undefined ? ALL_SEGMENTOS : segmento;
+  const zonaValue = zona === undefined ? ALL_ZONAS : zona;
 
   function handleSegmentoChange(v: string) {
     onSegmentoChange(v === ALL_SEGMENTOS ? undefined : (v as SegmentoValue));

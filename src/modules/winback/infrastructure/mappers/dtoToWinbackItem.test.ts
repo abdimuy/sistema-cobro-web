@@ -38,7 +38,8 @@ describe("dtoToWinbackItem", () => {
     expect(item.telefono).toBe("5551234567");
 
     expect(item.fechaUltimaCompra).toBeInstanceOf(Date);
-    expect(item.fechaUltimaCompra.getTime()).toBe(
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    expect(item.fechaUltimaCompra!.getTime()).toBe(
       new Date("2025-03-15T10:00:00Z").getTime(),
     );
 
@@ -56,13 +57,21 @@ describe("dtoToWinbackItem", () => {
     expect(item.estadoPago.value).toBe("AL_CORRIENTE");
 
     expect(item.fechaUltimoPago).toBeInstanceOf(Date);
-    expect(item.fechaUltimoPago.getTime()).toBe(
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    expect(item.fechaUltimoPago!.getTime()).toBe(
       new Date("2025-03-01T08:30:00Z").getTime(),
     );
 
     expect(item.etiqueta).toBe("Recuperable");
     expect(item.resumen).toBe("Cliente de alto valor, llevan 90 días sin comprar");
     expect(item.tier.value).toBe("B");
+  });
+
+  it("maps empty fecha_ultima_compra and fecha_ultimo_pago to null", () => {
+    const dto = buildValidDTO({ fecha_ultima_compra: "", fecha_ultimo_pago: "" });
+    const item = dtoToWinbackItem(dto);
+    expect(item.fechaUltimaCompra).toBeNull();
+    expect(item.fechaUltimoPago).toBeNull();
   });
 
   it("throws DomainError with code fecha_ultima_compra_invalida on invalid fecha_ultima_compra", () => {

@@ -12,7 +12,8 @@ export type WinbackItem = {
   readonly nombre: string;
   readonly zona: string;
   readonly telefono: string;
-  readonly fechaUltimaCompra: Date;
+  /** Null when the client has no purchase history. */
+  readonly fechaUltimaCompra: Date | null;
   readonly recenciaDias: number;
   readonly frecuencia: number;
   // Decimal as string — do not parse to number; use Intl for display.
@@ -24,7 +25,8 @@ export type WinbackItem = {
   readonly score: number;
   readonly enControl: boolean;
   readonly estadoPago: EstadoPago;
-  readonly fechaUltimoPago: Date;
+  /** Null when the client has no payment history. */
+  readonly fechaUltimoPago: Date | null;
   readonly etiqueta: string;
   readonly resumen: string;
   readonly tier: Tier;
