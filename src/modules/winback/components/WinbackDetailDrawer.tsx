@@ -4,6 +4,7 @@ import {
   Sheet,
   SheetContent,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import type { WinbackItem } from "../domain/entities";
@@ -60,6 +61,10 @@ const DrawerBody: React.FC<BodyProps> = ({ item }) => {
         <SheetTitle className="font-serif text-[28px] sm:text-[32px] font-normal leading-[1.1] tracking-tight text-foreground">
           {item.nombre}
         </SheetTitle>
+
+        <SheetDescription className="sr-only">
+          Detalle del cliente para winback
+        </SheetDescription>
 
         {/* Badges row */}
         <div className="flex flex-wrap items-center gap-2">
