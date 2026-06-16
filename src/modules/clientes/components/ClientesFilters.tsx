@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Filter, X, Tag, MapPin, BarChart3, Wallet, Users } from "lucide-react";
+import { Filter, X, Tag, MapPin, BarChart3, Wallet, Users, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,6 +25,7 @@ import type { DirectorioFacets } from "../application/dto";
 export interface FilterState {
   segmento?: string;
   estadoPago?: string;
+  tierRiesgo?: string;
   conSaldo?: boolean;
   scoreMin?: number;
   zonaInput?: string;    // Phase 1: free-text, no catalog yet
@@ -54,6 +55,14 @@ const ESTADO_PAGO_LABELS: Record<EstadoPagoValue, string> = {
   SIN_CREDITO: "Sin crédito",
 };
 
+const TIER_RIESGO_LABELS: Record<string, string> = {
+  AL_DIA: "Al día",
+  VIGILANCIA: "Vigilancia",
+  EN_RIESGO: "En riesgo",
+  CRITICO: "Crítico",
+};
+const TIER_ORDER = ["AL_DIA", "VIGILANCIA", "EN_RIESGO", "CRITICO"] as const;
+
 const SCORE_OPTIONS: { value: number | undefined; label: string }[] = [
   { value: undefined, label: "Cualquiera" },
   { value: 30, label: "30+" },
@@ -67,6 +76,7 @@ function countActiveFilters(state: Omit<ClientesFiltersProps, "onChange" | "clas
   let count = 0;
   if (state.segmento) count++;
   if (state.estadoPago) count++;
+  if (state.tierRiesgo) count++;
   if (state.conSaldo) count++;
   if (state.scoreMin !== undefined) count++;
   if (state.zonaInput) count++;
@@ -77,6 +87,7 @@ function countActiveFilters(state: Omit<ClientesFiltersProps, "onChange" | "clas
 export function ClientesFilters({
   segmento,
   estadoPago,
+  tierRiesgo,
   conSaldo,
   scoreMin,
   zonaInput,
@@ -90,6 +101,7 @@ export function ClientesFilters({
   const activeCount = countActiveFilters({
     segmento,
     estadoPago,
+    tierRiesgo,
     conSaldo,
     scoreMin,
     zonaInput,
@@ -100,6 +112,7 @@ export function ClientesFilters({
     onChange({
       segmento: undefined,
       estadoPago: undefined,
+      tierRiesgo: undefined,
       conSaldo: undefined,
       scoreMin: undefined,
       zonaInput: undefined,
@@ -208,6 +221,40 @@ export function ClientesFilters({
                 return (
                   <SelectItem key={val} value={val}>
                     <span>{label}</span>
+                    {count !== undefined && (
+                      <span className="ml-1 text-[10px] text-muted-foreground tabular-nums">
+                        ({count.toLocaleString("es-MX")})
+                      </span>
+                    )}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Riesgo */}
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <AlertTriangle className="h-3 w-3" />
+            Riesgo
+          </Label>
+          <Select
+            value={tierRiesgo ?? ALL_VALUE}
+            onValueChange={(v) =>
+              onChange({ tierRiesgo: v === ALL_VALUE ? undefined : v })
+            }
+          >
+            <SelectTrigger className="h-8 text-xs border-border/60">
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_VALUE}>Todos</SelectItem>
+              {TIER_ORDER.map((val) => {
+                const count = facets?.["tier_riesgo"]?.[val];
+                return (
+                  <SelectItem key={val} value={val}>
+                    <span>{TIER_RIESGO_LABELS[val]}</span>
                     {count !== undefined && (
                       <span className="ml-1 text-[10px] text-muted-foreground tabular-nums">
                         ({count.toLocaleString("es-MX")})

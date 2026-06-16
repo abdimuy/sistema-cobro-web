@@ -20,6 +20,7 @@ export type ColumnId =
   | "telefono"
   | "estadoPago"
   | "segmento"
+  | "tierRiesgo"
   | "saldo"
   | "recencia"
   | "direccion"
@@ -94,6 +95,15 @@ export const COLUMNS: ColumnDef[] = [
     sortKey: "segmento",
     align: "left",
     width: "w-[170px]",
+    group: "Pulso",
+  },
+  {
+    id: "tierRiesgo",
+    label: "Riesgo",
+    defaultVisible: false,
+    sortable: false,
+    align: "left",
+    width: "w-[130px]",
     group: "Pulso",
   },
   {
@@ -184,6 +194,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ColumnId, number> = {
   telefono: 120,
   estadoPago: 140,
   segmento: 170,
+  tierRiesgo: 130,
   saldo: 110,
   recencia: 100,
   direccion: 200,

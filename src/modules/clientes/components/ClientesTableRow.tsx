@@ -6,6 +6,7 @@ import ScoreBadge from "./badges/ScoreBadge";
 import SegmentoBadge from "./badges/SegmentoBadge";
 import EstadoPagoBadge from "./badges/EstadoPagoBadge";
 import RecenciaBadge from "./badges/RecenciaBadge";
+import TierRiesgoBadge from "./badges/TierRiesgoBadge";
 import { formatMoney } from "../../winback/components/lib/format";
 
 interface ClientesTableRowProps {
@@ -57,6 +58,13 @@ function renderCell(cliente: Cliente, columnId: ColumnId): React.ReactNode {
     case "segmento":
       return c.segmento !== null ? (
         <SegmentoBadge value={c.segmento} />
+      ) : (
+        "—"
+      );
+
+    case "tierRiesgo":
+      return c.tierRiesgo != null ? (
+        <TierRiesgoBadge value={c.tierRiesgo} />
       ) : (
         "—"
       );

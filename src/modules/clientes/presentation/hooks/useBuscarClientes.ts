@@ -37,6 +37,7 @@ export function useBuscarClientes(
     conSaldo,
     segmento,
     estadoPago,
+    tier,
     scoreMin,
     sortBy,
     sortOrder,
@@ -66,6 +67,7 @@ export function useBuscarClientes(
       ...(conSaldo !== undefined && { conSaldo }),
       ...(segmento !== undefined && { segmento: segmento as SegmentoValue }),
       ...(estadoPago !== undefined && { estadoPago: estadoPago as EstadoPagoValue }),
+      ...(tier !== undefined && { tier }),
       ...(scoreMin !== undefined && { scoreMin }),
       ...(sortBy !== undefined && { sortBy }),
       ...(sortOrder !== undefined && { sortOrder }),
@@ -104,7 +106,7 @@ export function useBuscarClientes(
 
     return () => ctrl.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [port, q, zona, cobrador, conSaldo, segmento, estadoPago, scoreMin, sortBy, sortOrder, limit, tick]);
+  }, [port, q, zona, cobrador, conSaldo, segmento, estadoPago, tier, scoreMin, sortBy, sortOrder, limit, tick]);
 
   const loadMore = useCallback(() => {
     // Guard: only load more when there are more pages and no concurrent request.
@@ -138,7 +140,7 @@ export function useBuscarClientes(
       return currentCursor; // Don't mutate cursor until we get the new one back.
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [port, q, zona, cobrador, conSaldo, segmento, estadoPago, scoreMin, sortBy, sortOrder, limit]);
+  }, [port, q, zona, cobrador, conSaldo, segmento, estadoPago, tier, scoreMin, sortBy, sortOrder, limit]);
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 

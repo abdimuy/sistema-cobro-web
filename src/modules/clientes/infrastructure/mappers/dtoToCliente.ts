@@ -34,5 +34,8 @@ export function dtoToCliente(dto: ClienteListItemDTO): Cliente {
     tienePulso: dto.tiene_pulso,
     recenciaDias: dto.recencia_dias,
     saldo: dto.saldo,
+    tierRiesgo: dto.tiene_pulso && dto.tier_riesgo ? dto.tier_riesgo : undefined,
+    pctPagosATiempo: dto.tiene_pulso && dto.pct_pagos_a_tiempo ? dto.pct_pagos_a_tiempo : undefined,
+    fechaProxPago: dto.tiene_pulso && dto.fecha_prox_pago ? dto.fecha_prox_pago : undefined,
   };
 }

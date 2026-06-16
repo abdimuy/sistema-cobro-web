@@ -16,6 +16,9 @@ function buildValidDTO(overrides: Partial<ClienteListItemDTO> = {}): ClienteList
     tiene_pulso: true,
     recencia_dias: 14,
     saldo: "4500.00",
+    tier_riesgo: "AL_DIA",
+    pct_pagos_a_tiempo: "94.68",
+    fecha_prox_pago: "2026-07-01T00:00:00Z",
     ...overrides,
   };
 }
@@ -114,5 +117,25 @@ describe("dtoToCliente", () => {
     const dto = buildValidDTO({ tiene_pulso: false, segmento: "", estado_pago: "" });
     const result = dtoToCliente(dto);
     expect(result).not.toBeInstanceOf(DomainError);
+  });
+
+  it("maps tier_riesgo when tiene_pulso is true", () => {
+    const dto = buildValidDTO({ tier_riesgo: "EN_RIESGO" });
+    const cliente = dtoToCliente(dto);
+    expect(cliente.tierRiesgo).toBe("EN_RIESGO");
+    expect(cliente.pctPagosATiempo).toBe("94.68");
+    expect(cliente.fechaProxPago).toBe("2026-07-01T00:00:00Z");
+  });
+
+  it("sets tierRiesgo to undefined when tiene_pulso is false", () => {
+    const dto = buildValidDTO({ tiene_pulso: false, segmento: "", estado_pago: "" });
+    const cliente = dtoToCliente(dto);
+    expect(cliente.tierRiesgo).toBeUndefined();
+  });
+
+  it("sets pctPagosATiempo to undefined when tiene_pulso is false", () => {
+    const dto = buildValidDTO({ tiene_pulso: false, segmento: "", estado_pago: "" });
+    const cliente = dtoToCliente(dto);
+    expect(cliente.pctPagosATiempo).toBeUndefined();
   });
 });

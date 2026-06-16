@@ -34,6 +34,9 @@ export type ClienteListItemDTO = {
   tiene_pulso: boolean;
   recencia_dias: number;
   saldo: string; // decimal as string
+  tier_riesgo: string;       // AL_DIA | VIGILANCIA | EN_RIESGO | CRITICO; empty when no pulse
+  pct_pagos_a_tiempo: string; // decimal string, empty when no pulse
+  fecha_prox_pago: string;    // RFC3339, empty when no pulse
 };
 
 // ─── GET /clientes/{id} ──────────────────────────────────────────────────────

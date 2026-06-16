@@ -19,4 +19,7 @@ export type Cliente = {
   readonly recenciaDias: number;
   // Decimal as string — do not parse to number; use Intl for display.
   readonly saldo: string;
+  readonly tierRiesgo?: string;       // undefined when tienePulso is false
+  readonly pctPagosATiempo?: string;  // undefined when tienePulso is false
+  readonly fechaProxPago?: string;    // undefined when tienePulso is false
 };

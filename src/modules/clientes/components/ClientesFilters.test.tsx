@@ -8,7 +8,7 @@ function noop() {
 }
 
 // Helper: open the Filtros popover, then open the nth combobox (0-based).
-// In the popover: [0] = Segmento, [1] = Estado pago, [2] = Score mínimo.
+// In the popover: [0] = Segmento, [1] = Estado pago, [2] = Riesgo, [3] = Score mínimo.
 async function openFilterSelect(
   user: ReturnType<typeof userEvent.setup>,
   index: number,
@@ -81,5 +81,60 @@ describe("ClientesFilters facet counts", () => {
 
     // None of the options should have a count parenthetical
     expect(screen.queryByText(/\(\d/)).not.toBeInTheDocument();
+  });
+
+  it("shows tier_riesgo facet counts in Riesgo select", async () => {
+    const user = userEvent.setup();
+    render(
+      <ClientesFilters
+        onChange={noop}
+        facets={{
+          tier_riesgo: { AL_DIA: 320, CRITICO: 45 },
+        }}
+      />,
+    );
+
+    await openFilterSelect(user, 2); // Riesgo select (index 2)
+
+    expect(await screen.findByText("(320)")).toBeInTheDocument();
+    expect(screen.getByText("(45)")).toBeInTheDocument();
+  });
+
+  it("tier filter with no facet entry shows label without count", async () => {
+    const user = userEvent.setup();
+    render(
+      <ClientesFilters
+        onChange={noop}
+        facets={{
+          tier_riesgo: { AL_DIA: 320 },
+        }}
+      />,
+    );
+
+    await openFilterSelect(user, 2); // Riesgo select
+
+    // VIGILANCIA has no facet count — should appear without parenthetical
+    expect(await screen.findByText("Vigilancia")).toBeInTheDocument();
+    // Only AL_DIA has a count
+    expect(screen.getByText("(320)")).toBeInTheDocument();
+    expect(screen.queryByText("(0)")).not.toBeInTheDocument();
+  });
+
+  it("tierRiesgo filter changes are reported", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <ClientesFilters
+        onChange={onChange}
+        facets={{ tier_riesgo: { EN_RIESGO: 12 } }}
+      />,
+    );
+
+    await openFilterSelect(user, 2); // Riesgo select
+
+    const option = await screen.findByText("En riesgo");
+    await user.click(option);
+
+    expect(onChange).toHaveBeenCalledWith({ tierRiesgo: "EN_RIESGO" });
   });
 });

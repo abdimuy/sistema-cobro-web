@@ -8,6 +8,7 @@ export type BuscarClientesInput = {
   readonly segmento?: SegmentoValue;
   readonly estadoPago?: EstadoPagoValue;
   readonly scoreMin?: number;
+  readonly tier?: string; // filter by tier_riesgo
   readonly sortBy?: string;
   readonly sortOrder?: "asc" | "desc";
   readonly cursor?: string;
