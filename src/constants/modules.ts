@@ -1,6 +1,6 @@
 import { ModuleConfig } from '../types/auth';
 import { ROLES } from './roles';
-import { Home, BarChart3, ShoppingCart, Shield, Truck, Package, Users, AlertTriangle, Sparkles } from 'lucide-react';
+import { Home, BarChart3, ShoppingCart, Shield, Truck, Package, Users, AlertTriangle, Sparkles, Contact } from 'lucide-react';
 
 export const DESKTOP_MODULES: ModuleConfig[] = [
   {
@@ -67,6 +67,13 @@ export const DESKTOP_MODULES: ModuleConfig[] = [
     path: '/winback',
     icon: Sparkles,
     color: 'blue'
+  },
+  {
+    key: 'CLIENTES',
+    label: 'Clientes',
+    path: '/clientes',
+    icon: Contact,
+    color: 'blue'
   }
 ];
 
@@ -83,11 +90,12 @@ export const ROUTE_TO_MODULE: Record<string, string> = {
   '/settings': 'USUARIOS',
   '/create-user': 'USUARIOS',
   '/failed-intents': 'FAILED_INTENTS',
-  '/winback': 'WINBACK_ANALYTICS'
+  '/winback': 'WINBACK_ANALYTICS',
+  '/clientes': 'CLIENTES'
 };
 
 // Módulos que requieren permisos especiales
-export const PROTECTED_MODULES = ['USUARIOS', 'FAILED_INTENTS', 'WINBACK_ANALYTICS'];
+export const PROTECTED_MODULES = ['USUARIOS', 'FAILED_INTENTS', 'WINBACK_ANALYTICS', 'CLIENTES'];
 
 // Módulos siempre accesibles (para usuarios autenticados)
 export const PUBLIC_MODULES = ['HOME'];
