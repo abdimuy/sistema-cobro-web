@@ -9,7 +9,7 @@ import { DomainError } from "../../domain/errors";
 describe("buscarClientes", () => {
   it("forwards all input fields to the port verbatim", async () => {
     const port = new FakeClientesPort();
-    port.buscarResponse = { items: [makeFakeCliente()], nextCursor: "" };
+    port.buscarResponse = { items: [makeFakeCliente()], nextCursor: "", facets: {} };
 
     const out = await buscarClientes(port, {
       q: "hernandez",
@@ -45,7 +45,7 @@ describe("buscarClientes", () => {
   it("returns the port response unchanged", async () => {
     const port = new FakeClientesPort();
     const cliente = makeFakeCliente({ clienteId: 9999 });
-    port.buscarResponse = { items: [cliente], nextCursor: "cursor-next" };
+    port.buscarResponse = { items: [cliente], nextCursor: "cursor-next", facets: {} };
 
     const out = await buscarClientes(port, {});
     expect(out.items[0].clienteId).toBe(9999);

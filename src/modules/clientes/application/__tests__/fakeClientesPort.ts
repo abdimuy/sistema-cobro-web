@@ -34,6 +34,7 @@ export class FakeClientesPort implements ClientesPort {
   buscarResponse: BuscarClientesOutput | (() => BuscarClientesOutput) = {
     items: [],
     nextCursor: "",
+    facets: {},
   };
   fichaResponse: FichaCliente | (() => FichaCliente) = makeFakeFichaCliente();
   listarVentasResponse:

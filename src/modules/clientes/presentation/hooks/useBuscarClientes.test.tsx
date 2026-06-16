@@ -20,6 +20,7 @@ describe("useBuscarClientes", () => {
     port.buscarResponse = {
       items: [makeFakeCliente({ clienteId: 1 }), makeFakeCliente({ clienteId: 2 })],
       nextCursor: "",
+      facets: {},
     };
     const { result } = renderHook(() => useBuscarClientes(), {
       wrapper: wrapWith(port),
@@ -33,7 +34,7 @@ describe("useBuscarClientes", () => {
 
   it("hasMore is false when nextCursor is empty", async () => {
     const port = new FakeClientesPort();
-    port.buscarResponse = { items: [], nextCursor: "" };
+    port.buscarResponse = { items: [], nextCursor: "", facets: {} };
     const { result } = renderHook(() => useBuscarClientes(), {
       wrapper: wrapWith(port),
     });
@@ -47,6 +48,7 @@ describe("useBuscarClientes", () => {
     port.buscarResponse = {
       items: [makeFakeCliente()],
       nextCursor: "cursor_abc",
+      facets: {},
     };
     const { result } = renderHook(() => useBuscarClientes(), {
       wrapper: wrapWith(port),
@@ -62,6 +64,7 @@ describe("useBuscarClientes", () => {
     port.buscarResponse = {
       items: [makeFakeCliente({ clienteId: 1 })],
       nextCursor: "cursor_page2",
+      facets: {},
     };
 
     const { result } = renderHook(() => useBuscarClientes(), {
@@ -74,6 +77,7 @@ describe("useBuscarClientes", () => {
     port.buscarResponse = {
       items: [makeFakeCliente({ clienteId: 2 })],
       nextCursor: "",
+      facets: {},
     };
 
     act(() => result.current.loadMore());
@@ -90,6 +94,7 @@ describe("useBuscarClientes", () => {
     port.buscarResponse = {
       items: [makeFakeCliente({ clienteId: 1 })],
       nextCursor: "",
+      facets: {},
     };
 
     const { rerender, result } = renderHook(
@@ -102,6 +107,7 @@ describe("useBuscarClientes", () => {
     port.buscarResponse = {
       items: [makeFakeCliente({ clienteId: 99 })],
       nextCursor: "",
+      facets: {},
     };
 
     rerender({ zona: 2 });
@@ -114,7 +120,7 @@ describe("useBuscarClientes", () => {
 
   it("passes all filter primitives through to the use case", async () => {
     const port = new FakeClientesPort();
-    port.buscarResponse = { items: [], nextCursor: "" };
+    port.buscarResponse = { items: [], nextCursor: "", facets: {} };
     const { result } = renderHook(
       () =>
         useBuscarClientes({
@@ -159,7 +165,7 @@ describe("useBuscarClientes", () => {
 
   it("refresh re-fetches with the same filters", async () => {
     const port = new FakeClientesPort();
-    port.buscarResponse = { items: [], nextCursor: "" };
+    port.buscarResponse = { items: [], nextCursor: "", facets: {} };
     const { result } = renderHook(
       () => useBuscarClientes({ zona: 3 }),
       { wrapper: wrapWith(port) },
@@ -169,5 +175,26 @@ describe("useBuscarClientes", () => {
     act(() => result.current.refresh());
     await waitFor(() => expect(port.buscarCalls.length).toBeGreaterThanOrEqual(2));
     expect(port.buscarCalls[1].input.zona).toBe(3);
+  });
+
+  it("exposes facets from the first-page response", async () => {
+    const port = new FakeClientesPort();
+    port.buscarResponse = {
+      items: [],
+      nextCursor: "",
+      facets: {
+        segmento: { ACTIVO: 9000, MOROSO: 1240 },
+        estado_pago: { AL_CORRIENTE: 8000, ATRASADO: 900 },
+      },
+    };
+    const { result } = renderHook(() => useBuscarClientes(), {
+      wrapper: wrapWith(port),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.facets).toEqual({
+      segmento: { ACTIVO: 9000, MOROSO: 1240 },
+      estado_pago: { AL_CORRIENTE: 8000, ATRASADO: 900 },
+    });
   });
 });

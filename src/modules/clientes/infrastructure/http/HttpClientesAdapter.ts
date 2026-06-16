@@ -17,7 +17,7 @@ import { dtoToVentaDetalle } from "../mappers/dtoToVentaDetalle";
 import { apperrorToDomainError } from "../mappers/errorMapper";
 import type {
   ListResponseDTO,
-  ClienteListItemDTO,
+  BuscarClientesResponseDTO,
   FichaDTO,
   VentaListItemDTO,
   VentaDetalleDTO,
@@ -51,7 +51,7 @@ export class HttpClientesAdapter implements ClientesPort {
       if (input.cursor !== undefined) params.cursor = input.cursor;
       if (input.limit !== undefined) params.limit = input.limit;
 
-      const { data } = await this.client.get<ListResponseDTO<ClienteListItemDTO>>(
+      const { data } = await this.client.get<BuscarClientesResponseDTO>(
         CLIENTES_BASE,
         { params, signal },
       );
@@ -59,6 +59,7 @@ export class HttpClientesAdapter implements ClientesPort {
       return {
         items: data.items.map(dtoToCliente),
         nextCursor: data.next_cursor,
+        facets: data.facets ?? {},
       };
     } catch (e) {
       throw apperrorToDomainError(e);

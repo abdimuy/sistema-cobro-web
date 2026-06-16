@@ -14,6 +14,14 @@ export type ListResponseDTO<T> = {
 
 // ─── GET /clientes ───────────────────────────────────────────────────────────
 
+// DirectorioFacetsDTO mirrors the backend facets payload: { facetKey: { facetValue: count } }.
+export type DirectorioFacetsDTO = Record<string, Record<string, number>>;
+
+// BuscarClientesResponseDTO extends the generic list envelope with optional facets.
+export type BuscarClientesResponseDTO = ListResponseDTO<ClienteListItemDTO> & {
+  facets?: DirectorioFacetsDTO;
+};
+
 export type ClienteListItemDTO = {
   cliente_id: number;
   nombre: string;

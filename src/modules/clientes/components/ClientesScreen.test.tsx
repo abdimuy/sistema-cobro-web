@@ -27,6 +27,7 @@ describe("ClientesScreen", () => {
     port.buscarResponse = {
       items: [makeFakeCliente()],
       nextCursor: "",
+      facets: {},
     };
   });
 
@@ -44,6 +45,7 @@ describe("ClientesScreen", () => {
     port.buscarResponse = {
       items: [makeFakeCliente({ nombre: "MUEBLES HERNÁNDEZ S.A." })],
       nextCursor: "",
+      facets: {},
     };
     renderScreen(port);
     await waitFor(() =>
@@ -54,7 +56,7 @@ describe("ClientesScreen", () => {
   });
 
   it("shows empty state when no items", async () => {
-    port.buscarResponse = { items: [], nextCursor: "" };
+    port.buscarResponse = { items: [], nextCursor: "", facets: {} };
     renderScreen(port);
     await waitFor(() =>
       expect(screen.getByText("No hay clientes")).toBeInTheDocument(),
@@ -73,6 +75,7 @@ describe("ClientesScreen", () => {
     port.buscarResponse = {
       items: [makeFakeCliente({ tienePulso: false, score: 0 })],
       nextCursor: "",
+      facets: {},
     };
     renderScreen(port);
     await waitFor(() => {
@@ -85,6 +88,7 @@ describe("ClientesScreen", () => {
     port.buscarResponse = {
       items: [makeFakeCliente({ saldo: "8500.00" })],
       nextCursor: "",
+      facets: {},
     };
     renderScreen(port);
     // es-MX Intl formatter: $8,500 (0 fraction digits)
@@ -103,6 +107,7 @@ describe("ClientesScreen", () => {
     port.buscarResponse = {
       items: [makeFakeCliente({ nombre: "MUEBLES HERNÁNDEZ S.A." })],
       nextCursor: "",
+      facets: {},
     };
     renderScreen(port);
     await waitFor(() =>
@@ -136,6 +141,7 @@ describe("ClientesScreen", () => {
         makeFakeCliente({ clienteId: 3, nombre: "MUEBLES MENDOZA", saldo: "500.00" }),
       ],
       nextCursor: "",
+      facets: {},
     };
     renderScreen(port);
     await waitFor(() =>

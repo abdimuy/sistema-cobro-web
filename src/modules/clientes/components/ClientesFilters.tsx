@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { SegmentoValue, EstadoPagoValue } from "../domain/values";
+import type { DirectorioFacets } from "../application/dto";
 
 export interface FilterState {
   segmento?: string;
@@ -32,6 +33,7 @@ export interface FilterState {
 
 interface ClientesFiltersProps extends FilterState {
   onChange: (changes: Partial<FilterState>) => void;
+  facets?: DirectorioFacets;
   className?: string;
 }
 
@@ -80,6 +82,7 @@ export function ClientesFilters({
   zonaInput,
   cobradorInput,
   onChange,
+  facets,
   className,
 }: ClientesFiltersProps) {
   const [open, setOpen] = useState(false);
@@ -163,11 +166,19 @@ export function ClientesFilters({
             <SelectContent>
               <SelectItem value={ALL_VALUE}>Todos</SelectItem>
               {(Object.entries(SEGMENTO_LABELS) as [SegmentoValue, string][]).map(
-                ([val, label]) => (
-                  <SelectItem key={val} value={val}>
-                    {label}
-                  </SelectItem>
-                )
+                ([val, label]) => {
+                  const count = facets?.["segmento"]?.[val];
+                  return (
+                    <SelectItem key={val} value={val}>
+                      <span>{label}</span>
+                      {count !== undefined && (
+                        <span className="ml-1 text-[10px] text-muted-foreground tabular-nums">
+                          ({count.toLocaleString("es-MX")})
+                        </span>
+                      )}
+                    </SelectItem>
+                  );
+                }
               )}
             </SelectContent>
           </Select>
@@ -192,11 +203,19 @@ export function ClientesFilters({
               <SelectItem value={ALL_VALUE}>Todos</SelectItem>
               {(
                 Object.entries(ESTADO_PAGO_LABELS) as [EstadoPagoValue, string][]
-              ).map(([val, label]) => (
-                <SelectItem key={val} value={val}>
-                  {label}
-                </SelectItem>
-              ))}
+              ).map(([val, label]) => {
+                const count = facets?.["estado_pago"]?.[val];
+                return (
+                  <SelectItem key={val} value={val}>
+                    <span>{label}</span>
+                    {count !== undefined && (
+                      <span className="ml-1 text-[10px] text-muted-foreground tabular-nums">
+                        ({count.toLocaleString("es-MX")})
+                      </span>
+                    )}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>

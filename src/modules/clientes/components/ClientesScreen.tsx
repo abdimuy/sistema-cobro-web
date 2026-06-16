@@ -71,7 +71,7 @@ export function ClientesScreen() {
 
   // ── Data hook ─────────────────────────────────────────────────────────────
   // zona/cobrador are Phase 1 free-text inputs; parse to number for the backend.
-  const { items, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } =
+  const { items, facets, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } =
     useBuscarClientes({
       q: q || undefined,
       segmento: segmento as SegmentoValue | undefined,
@@ -217,6 +217,7 @@ export function ClientesScreen() {
           zonaInput={zonaInput}
           cobradorInput={cobradorInput}
           onChange={handleFiltersChange}
+          facets={facets}
         />
         <div className="flex items-center gap-1.5 ml-auto">
           <ClientesDensityToggle density={density} onChange={handleDensityChange} />

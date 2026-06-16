@@ -3,13 +3,14 @@ import type { Cliente } from "../../domain/entities";
 import { DomainError } from "../../domain/errors";
 import { useClientesPort } from "../context/ClientesContext";
 import { buscarClientes } from "../../application/usecases/buscarClientes";
-import type { BuscarClientesInput } from "../../application/dto";
+import type { BuscarClientesInput, DirectorioFacets } from "../../application/dto";
 import type { SegmentoValue, EstadoPagoValue } from "../../domain/values";
 import { toDomainError } from "./lib/toDomainError";
 
 export type UseBuscarClientesReturn = {
   items: ReadonlyArray<Cliente>;
   nextCursor: string;
+  facets: DirectorioFacets;
   isLoading: boolean;
   isLoadingMore: boolean;
   error: DomainError | null;
@@ -44,6 +45,9 @@ export function useBuscarClientes(
 
   const [items, setItems] = useState<ReadonlyArray<Cliente>>([]);
   const [nextCursor, setNextCursor] = useState("");
+  // facets are captured from the first-page response and reset on filter change.
+  // loadMore does not update facets — the first page facets describe the whole set.
+  const [facets, setFacets] = useState<DirectorioFacets>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<DomainError | null>(null);
@@ -78,6 +82,7 @@ export function useBuscarClientes(
 
     setItems([]);
     setNextCursor("");
+    setFacets({});
     setIsLoading(true);
     setError(null);
     loadingMoreRef.current = false;
@@ -87,6 +92,7 @@ export function useBuscarClientes(
         if (ctrl.signal.aborted) return;
         setItems(out.items);
         setNextCursor(out.nextCursor);
+        setFacets(out.facets);
       })
       .catch((e: unknown) => {
         if (ctrl.signal.aborted) return;
@@ -139,6 +145,7 @@ export function useBuscarClientes(
   return {
     items,
     nextCursor,
+    facets,
     isLoading,
     isLoadingMore,
     error,
