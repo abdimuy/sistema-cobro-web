@@ -18,6 +18,8 @@ import Traspasos from "./modules/traspasos/Traspasos";
 import InventarioDetalle from "./modules/traspasos/InventarioDetalle";
 import FailedIntents from "./modules/failedIntents/FailedIntents";
 import Winback from "./modules/winback/Winback";
+import { Clientes } from "./modules/clientes/Clientes";
+import ClienteFichaPage from "./modules/clientes/ClienteFichaPage";
 
 // Auth Components
 import LoginPage from "./components/auth/LoginPage";
@@ -112,6 +114,14 @@ function App() {
 
               <Route path="/winback" element={
                 <ProtectedRoute requiredModule="WINBACK_ANALYTICS"><Winback /></ProtectedRoute>
+              } />
+
+              <Route path="/clientes" element={
+                <ProtectedRoute requiredModule="CLIENTES"><Clientes /></ProtectedRoute>
+              } />
+
+              <Route path="/clientes/:id" element={
+                <ProtectedRoute requiredModule="CLIENTES"><ClienteFichaPage /></ProtectedRoute>
               } />
 
               <Route path="/settings" element={
