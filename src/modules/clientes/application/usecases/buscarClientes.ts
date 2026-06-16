@@ -6,6 +6,18 @@ import { DomainError } from "../../domain/errors";
 // we refuse to round-trip it.
 const MAX_LIMIT = 200;
 
+// ALLOWED_SORT_BY mirrors the backend sort_by enum. Empty/undefined means the
+// backend applies its default ordering.
+const ALLOWED_SORT_BY = [
+  "nombre",
+  "saldo",
+  "zona",
+  "score",
+  "segmento",
+  "estado_pago",
+  "recencia",
+] as const;
+
 export async function buscarClientes(
   port: ClientesPort,
   input: BuscarClientesInput,
@@ -34,6 +46,22 @@ export async function buscarClientes(
       throw new DomainError(
         "score_min_invalido",
         "scoreMin debe ser un entero entre 0 y 100",
+      );
+    }
+  }
+  if (input.sortBy !== undefined) {
+    if (!ALLOWED_SORT_BY.includes(input.sortBy as (typeof ALLOWED_SORT_BY)[number])) {
+      throw new DomainError(
+        "sort_by_invalido",
+        "sortBy no es una columna ordenable válida",
+      );
+    }
+  }
+  if (input.sortOrder !== undefined) {
+    if (input.sortOrder !== "asc" && input.sortOrder !== "desc") {
+      throw new DomainError(
+        "sort_order_invalido",
+        "sortOrder debe ser asc o desc",
       );
     }
   }

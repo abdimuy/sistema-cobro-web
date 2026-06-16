@@ -14,7 +14,7 @@ import { ColumnId, COLUMNS, ColumnWidths, Density } from "./columns";
 import { ClientesTableRow } from "./ClientesTableRow";
 
 interface ClientesTableProps {
-  clientes: Cliente[];
+  clientes: ReadonlyArray<Cliente>;
   visibleColumns: ColumnId[];
   pinnedColumns?: ColumnId[];
   columnWidths: ColumnWidths;

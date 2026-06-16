@@ -19,6 +19,8 @@ describe("buscarClientes", () => {
       segmento: "DORMIDO_VALIOSO",
       estadoPago: "AL_CORRIENTE",
       scoreMin: 50,
+      sortBy: "saldo",
+      sortOrder: "desc",
       cursor: "abc",
       limit: 20,
     });
@@ -32,6 +34,8 @@ describe("buscarClientes", () => {
       segmento: "DORMIDO_VALIOSO",
       estadoPago: "AL_CORRIENTE",
       scoreMin: 50,
+      sortBy: "saldo",
+      sortOrder: "desc",
       cursor: "abc",
       limit: 20,
     });
@@ -101,6 +105,49 @@ describe("buscarClientes", () => {
     const port = new FakeClientesPort();
     await expect(buscarClientes(port, { scoreMin: 0 })).resolves.toBeDefined();
     await expect(buscarClientes(port, { scoreMin: 100 })).resolves.toBeDefined();
+  });
+
+  it("accepts each allowed sort_by column", async () => {
+    const port = new FakeClientesPort();
+    const allowed = [
+      "nombre",
+      "saldo",
+      "zona",
+      "score",
+      "segmento",
+      "estado_pago",
+      "recencia",
+    ];
+    for (const sortBy of allowed) {
+      await expect(buscarClientes(port, { sortBy })).resolves.toBeDefined();
+    }
+  });
+
+  it("rejects an invalid sortBy with code sort_by_invalido", async () => {
+    const port = new FakeClientesPort();
+    const err = buscarClientes(port, { sortBy: "telefono" });
+    await expect(err).rejects.toBeInstanceOf(DomainError);
+    await expect(err).rejects.toMatchObject({ code: "sort_by_invalido" });
+  });
+
+  it("rejects an invalid sortOrder with code sort_order_invalido", async () => {
+    const port = new FakeClientesPort();
+    const err = buscarClientes(port, {
+      sortBy: "saldo",
+      sortOrder: "ascending" as unknown as "asc",
+    });
+    await expect(err).rejects.toBeInstanceOf(DomainError);
+    await expect(err).rejects.toMatchObject({ code: "sort_order_invalido" });
+  });
+
+  it("allows asc and desc sortOrder", async () => {
+    const port = new FakeClientesPort();
+    await expect(
+      buscarClientes(port, { sortBy: "saldo", sortOrder: "asc" }),
+    ).resolves.toBeDefined();
+    await expect(
+      buscarClientes(port, { sortBy: "saldo", sortOrder: "desc" }),
+    ).resolves.toBeDefined();
   });
 
   it("propagates port errors without wrapping them", async () => {

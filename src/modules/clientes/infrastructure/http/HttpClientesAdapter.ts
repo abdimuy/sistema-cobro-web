@@ -46,6 +46,8 @@ export class HttpClientesAdapter implements ClientesPort {
       if (input.segmento !== undefined) params.segmento = input.segmento;
       if (input.estadoPago !== undefined) params.estado_pago = input.estadoPago;
       if (input.scoreMin !== undefined) params.score_min = input.scoreMin;
+      if (input.sortBy !== undefined) params.sort_by = input.sortBy;
+      if (input.sortOrder !== undefined) params.sort_order = input.sortOrder;
       if (input.cursor !== undefined) params.cursor = input.cursor;
       if (input.limit !== undefined) params.limit = input.limit;
 

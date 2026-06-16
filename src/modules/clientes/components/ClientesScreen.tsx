@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,9 @@ export function ClientesScreen() {
   const [density, setDensity] = useState<Density>(loadDensity);
   const [pinnedColumns, setPinnedColumns] = useState<ColumnId[]>(loadPinnedColumns);
 
-  // ── Sort state (client-side) ───────────────────────────────────────────────
+  // ── Sort state (server-side) ───────────────────────────────────────────────
+  // sortKey holds the API sort_by enum value (columns.ts sortKeys map 1:1 to it).
+  // Changing it feeds the data hook, which refetches the server-sorted page.
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
@@ -78,44 +80,11 @@ export function ClientesScreen() {
       scoreMin,
       zona: zonaInput ? parseInt(zonaInput, 10) || undefined : undefined,
       cobrador: cobradorInput ? parseInt(cobradorInput, 10) || undefined : undefined,
+      // Sort is server-side: the API sorts the whole matching set and returns the
+      // already-sorted page. items below are rendered in the order received.
+      sortBy: sortKey ?? undefined,
+      sortOrder,
     });
-
-  // ── Client-side sort over accumulated items ────────────────────────────────
-  // Backend orders by nombre/FTS relevance and does NOT accept arbitrary sortBy params.
-  const sortedItems = useMemo(() => {
-    if (!sortKey) return [...items];
-    return [...items].sort((a, b) => {
-      let va: number | string;
-      let vb: number | string;
-      switch (sortKey) {
-        case "score":
-          if (!a.tienePulso) return 1;
-          if (!b.tienePulso) return -1;
-          va = a.score;
-          vb = b.score;
-          break;
-        case "nombre":
-          va = a.nombre;
-          vb = b.nombre;
-          break;
-        case "saldo":
-          va = Number(a.saldo);
-          vb = Number(b.saldo);
-          break;
-        case "recenciaDias":
-          va = a.recenciaDias;
-          vb = b.recenciaDias;
-          break;
-        default:
-          return 0;
-      }
-      const cmp =
-        typeof va === "string"
-          ? va.localeCompare(vb as string, "es")
-          : (va as number) - (vb as number);
-      return sortOrder === "asc" ? cmp : -cmp;
-    });
-  }, [items, sortKey, sortOrder]);
 
   // ── Derived state ─────────────────────────────────────────────────────────
   const hasFilters = !!(
@@ -266,14 +235,14 @@ export function ClientesScreen() {
           <ClientesErrorState message={error.message} onRetry={refresh} />
         ) : isLoading ? (
           <ClientesLoadingSkeleton rows={10} />
-        ) : sortedItems.length === 0 ? (
+        ) : items.length === 0 ? (
           <ClientesEmptyState
             hasFilters={hasFilters}
             onClearFilters={handleClearFilters}
           />
         ) : (
           <ClientesTable
-            clientes={sortedItems}
+            clientes={items}
             visibleColumns={visibleColumns}
             pinnedColumns={pinnedColumns}
             columnWidths={columnWidths}
