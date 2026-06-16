@@ -1,0 +1,310 @@
+import { useRef, useCallback, useEffect, useMemo } from "react";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Cliente } from "../domain/entities";
+import { ColumnId, COLUMNS, ColumnWidths, Density } from "./columns";
+import { ClientesTableRow } from "./ClientesTableRow";
+
+interface ClientesTableProps {
+  clientes: Cliente[];
+  visibleColumns: ColumnId[];
+  pinnedColumns?: ColumnId[];
+  columnWidths: ColumnWidths;
+  onColumnResize: (columnId: ColumnId, width: number) => void;
+  sortKey: string | null;
+  sortOrder: "asc" | "desc";
+  onSort: (key: string) => void;
+  onRowClick: (clienteId: number) => void;
+  density?: Density;
+  infiniteScroll?: {
+    hasMore: boolean;
+    isLoading: boolean;
+    onLoadMore: () => void;
+  };
+}
+
+interface SortableHeaderProps {
+  label: string;
+  sortKey: string;
+  currentSort: string | null;
+  currentOrder: "asc" | "desc";
+  onSort: (key: string) => void;
+  align?: "left" | "right" | "center";
+}
+
+function SortableHeader({
+  label,
+  sortKey,
+  currentSort,
+  currentOrder,
+  onSort,
+  align,
+}: SortableHeaderProps) {
+  const isActive = currentSort === sortKey;
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className={cn(
+        "-ml-3 h-8 min-w-0 max-w-full text-xs font-medium text-muted-foreground hover:text-foreground",
+        isActive && "text-foreground",
+        align === "right" && "ml-auto -mr-3"
+      )}
+      onClick={() => onSort(sortKey)}
+    >
+      <span className="truncate">{label}</span>
+      {isActive ? (
+        currentOrder === "asc" ? (
+          <ArrowUp className="ml-1.5 h-3 w-3 flex-shrink-0" />
+        ) : (
+          <ArrowDown className="ml-1.5 h-3 w-3 flex-shrink-0" />
+        )
+      ) : (
+        <ArrowUpDown className="ml-1.5 h-3 w-3 flex-shrink-0 opacity-50" />
+      )}
+    </Button>
+  );
+}
+
+interface ResizeHandleProps {
+  columnId: ColumnId;
+  onResize: (columnId: ColumnId, width: number) => void;
+}
+
+function ResizeHandle({ columnId, onResize }: ResizeHandleProps) {
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(0);
+  const thRef = useRef<HTMLElement | null>(null);
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const th = (e.target as HTMLElement).closest("th");
+      if (!th) return;
+
+      thRef.current = th;
+      startXRef.current = e.clientX;
+      startWidthRef.current = th.offsetWidth;
+
+      const handleMouseMove = (ev: MouseEvent) => {
+        const diff = ev.clientX - startXRef.current;
+        const newWidth = Math.max(60, startWidthRef.current + diff);
+        onResize(columnId, newWidth);
+      };
+
+      const handleMouseUp = () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    },
+    [columnId, onResize]
+  );
+
+  return (
+    <div
+      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary"
+      onMouseDown={handleMouseDown}
+    />
+  );
+}
+
+export function ClientesTable({
+  clientes,
+  visibleColumns,
+  pinnedColumns = [],
+  columnWidths,
+  onColumnResize,
+  sortKey,
+  sortOrder,
+  onSort,
+  onRowClick,
+  density = "normal",
+  infiniteScroll,
+}: ClientesTableProps) {
+  const scrollContainerRef = useRef<HTMLTableElement>(null);
+  const loadMoreRef = useRef<HTMLTableRowElement>(null);
+
+  // Ordered columns: pinned first, then the rest in user order
+  const orderedColumns = useMemo(
+    () => [
+      ...pinnedColumns.filter((id) => visibleColumns.includes(id)),
+      ...visibleColumns.filter((id) => !pinnedColumns.includes(id)),
+    ],
+    [pinnedColumns, visibleColumns]
+  );
+
+  // Cumulative left offsets for sticky pinned columns
+  const pinnedOffsets = useMemo(() => {
+    const offsets: Partial<Record<ColumnId, number>> = {};
+    let acc = 0;
+    for (const id of pinnedColumns) {
+      offsets[id] = acc;
+      acc += columnWidths[id] ?? 0;
+    }
+    return offsets;
+  }, [pinnedColumns, columnWidths]);
+
+  // Infinite scroll observer inside the table container
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      if (
+        entries[0].isIntersecting &&
+        infiniteScroll?.hasMore &&
+        !infiniteScroll?.isLoading
+      ) {
+        infiniteScroll.onLoadMore();
+      }
+    },
+    [infiniteScroll]
+  );
+
+  // Set up intersection observer
+  useEffect(() => {
+    const loadMoreElement = loadMoreRef.current;
+    const scrollContainer = scrollContainerRef.current;
+
+    if (!loadMoreElement || !infiniteScroll) return;
+
+    const observer = new IntersectionObserver(handleObserver, {
+      root: scrollContainer,
+      threshold: 0.1,
+      rootMargin: "100px",
+    });
+
+    observer.observe(loadMoreElement);
+
+    return () => observer.disconnect();
+  }, [handleObserver, infiniteScroll]);
+
+  const renderHeader = (columnId: ColumnId) => {
+    const colDef = COLUMNS.find((c) => c.id === columnId);
+    if (!colDef) return null;
+
+    const label = colDef.label;
+    const width = columnWidths[columnId];
+    const isPinned = pinnedColumns.includes(columnId);
+    const isLastPinned =
+      pinnedColumns.length > 0 &&
+      pinnedColumns[pinnedColumns.length - 1] === columnId;
+
+    const stickyStyle: React.CSSProperties = isPinned
+      ? {
+          width: `${width}px`,
+          minWidth: `${width}px`,
+          position: "sticky",
+          left: pinnedOffsets[columnId] ?? 0,
+          zIndex: 11,
+          background: "var(--card)",
+        }
+      : { width: `${width}px`, minWidth: `${width}px` };
+
+    const extraClass = cn(
+      "relative",
+      colDef.align === "right" && !colDef.sortable && "text-right",
+      isPinned && "shadow-[1px_0_0_0_var(--border)]",
+      isLastPinned && "shadow-[6px_0_8px_-4px_rgba(0,0,0,0.08)]"
+    );
+
+    if (colDef.sortable && colDef.sortKey) {
+      return (
+        <TableHead
+          key={columnId}
+          className={extraClass}
+          style={stickyStyle}
+          title={label}
+        >
+          <SortableHeader
+            label={label}
+            sortKey={colDef.sortKey}
+            currentSort={sortKey}
+            currentOrder={sortOrder}
+            onSort={onSort}
+            align={colDef.align}
+          />
+          <ResizeHandle columnId={columnId} onResize={onColumnResize} />
+        </TableHead>
+      );
+    }
+
+    return (
+      <TableHead
+        key={columnId}
+        className={cn(extraClass, colDef.align === "right" && "text-right")}
+        style={stickyStyle}
+        title={label}
+      >
+        <span className="block truncate text-xs font-medium text-muted-foreground">
+          {label}
+        </span>
+        <ResizeHandle columnId={columnId} onResize={onColumnResize} />
+      </TableHead>
+    );
+  };
+
+  return (
+    <Table
+      ref={scrollContainerRef}
+      className="bg-card block overflow-auto h-[calc(100vh-170px)] [&_th]:border-r [&_th]:border-border [&_th:last-child]:border-r-0 [&_th]:py-1.5 [&_td]:border-r [&_td]:border-border [&_td:last-child]:border-r-0 [&_td]:py-0.5 [&_tbody_tr:nth-child(even)]:bg-muted"
+      style={{ tableLayout: "fixed" }}
+    >
+      <TableHeader className="sticky top-0 z-10 bg-card">
+        <TableRow className="hover:bg-transparent border-b border-border/50">
+          {orderedColumns.map(renderHeader)}
+        </TableRow>
+      </TableHeader>
+      <TableBody
+        className={cn(
+          density === "compact" && "[&_tr]:h-8 [&_td]:py-0",
+          density === "normal" && "[&_tr]:h-10 [&_td]:py-1",
+          density === "comfortable" && "[&_tr]:h-[52px] [&_td]:py-2"
+        )}
+      >
+        {clientes.map((cliente) => (
+          <ClientesTableRow
+            key={cliente.clienteId}
+            cliente={cliente}
+            visibleColumns={orderedColumns}
+            pinnedColumns={pinnedColumns}
+            pinnedOffsets={pinnedOffsets}
+            columnWidths={columnWidths}
+            onRowClick={() => onRowClick(cliente.clienteId)}
+          />
+        ))}
+        {/* Infinite scroll trigger inside table */}
+        {infiniteScroll && (
+          <tr ref={loadMoreRef}>
+            <td
+              colSpan={orderedColumns.length}
+              className="h-10 text-center"
+            >
+              {infiniteScroll.isLoading && (
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  Cargando más...
+                </div>
+              )}
+            </td>
+          </tr>
+        )}
+      </TableBody>
+    </Table>
+  );
+}

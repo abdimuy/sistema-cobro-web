@@ -31,6 +31,14 @@ if (typeof window !== "undefined") {
 
   Element.prototype.scrollIntoView = Element.prototype.scrollIntoView ?? (() => {});
 
+  class IntersectionObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  window.IntersectionObserver =
+    window.IntersectionObserver ?? (IntersectionObserverStub as any);
+
   // Radix Popper / Pointer events rely on these in JSDOM.
   Element.prototype.hasPointerCapture =
     Element.prototype.hasPointerCapture ?? (() => false);
