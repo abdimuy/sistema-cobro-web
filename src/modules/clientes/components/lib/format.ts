@@ -29,9 +29,13 @@ export function formatMoneyShort(raw: string): string {
   return MXN_FORMAT_SHORT.format(n);
 }
 
-/** Convert a decimal pct string (e.g. "0.93") to a display string ("93%"). */
+/**
+ * Format a percentage string ALREADY in the 0–100 range (e.g. "93.45" → "93%").
+ * The API sends every percentage as 0–100 (pct_liquidado = abonado/comprado*100,
+ * por_liquidar_pct as NUMERIC(5,2) 0–100), so this must NOT multiply by 100.
+ */
 export function formatPct(raw: string): string {
   const n = Number(raw);
   if (!Number.isFinite(n)) return raw;
-  return `${(n * 100).toFixed(0)}%`;
+  return `${n.toFixed(0)}%`;
 }

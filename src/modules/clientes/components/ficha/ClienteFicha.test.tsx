@@ -87,7 +87,7 @@ describe("ClienteFicha", () => {
 
   it("renders pct liquidado", async () => {
     renderFicha(port);
-    // pctLiquidado "0.93" → "93%"
+    // pctLiquidado "92.92" (0–100 del API) → "93%"
     await waitFor(() =>
       expect(screen.getByText("93%")).toBeInTheDocument(),
     );
