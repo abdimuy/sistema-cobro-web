@@ -1,0 +1,182 @@
+import { describe, it, expect } from "vitest";
+import { dtoToFichaCliente } from "./dtoToFichaCliente";
+import type { FichaDTO } from "../http/dtos";
+
+function buildValidDTO(overrides: Partial<FichaDTO> = {}): FichaDTO {
+  return {
+    cliente_id: 3001,
+    nombre: "Roberto Cervantes Gutiérrez",
+    direccion: {
+      calle: "Av. Insurgentes Sur 1234",
+      colonia: "Del Valle",
+      poblacion: "Ciudad de México",
+      estado: "CDMX",
+    },
+    telefono: "5598765432",
+    limite_credito: "15000.00",
+    notas: "Comprador frecuente desde 2019",
+    zona: "ZONA SUR",
+    cobrador: "Carlos Mendoza",
+    estatus: "A",
+    resumen: {
+      total_comprado: "85000.00",
+      total_abonado: "72000.00",
+      saldo: "13000.00",
+      pct_liquidado: "84.70",
+      ticket_promedio: "7083.33",
+      num_ventas: 12,
+      num_pagos: 48,
+    },
+    series: {
+      abonos_por_mes: [
+        { anio: 2025, mes: 1, monto: "2500.00" },
+        { anio: 2025, mes: 2, monto: "3000.00" },
+      ],
+      comprado_vs_abonado: [
+        { anio: 2025, mes: 1, comprado: "7000.00", abonado: "2500.00" },
+        { anio: 2025, mes: 2, comprado: "0.00", abonado: "3000.00" },
+      ],
+    },
+    pulso: {
+      score: 75,
+      segmento: "LEAL_POR_LIQUIDAR",
+      estado_pago: "ATRASADO",
+      recencia_dias: 30,
+      frecuencia: 12,
+      monetary: "85000.00",
+      saldo: "13000.00",
+      por_liquidar_pct: "15.29",
+      fecha_ultima_compra: "2025-02-15T09:00:00Z",
+      fecha_ultimo_pago: "2025-03-01T14:30:00Z",
+      next_best_product: "Comedor 6 personas",
+    },
+    ...overrides,
+  };
+}
+
+describe("dtoToFichaCliente", () => {
+  it("happy path: maps all identity fields correctly", () => {
+    const dto = buildValidDTO();
+    const ficha = dtoToFichaCliente(dto);
+
+    expect(ficha.clienteId).toBe(3001);
+    expect(ficha.nombre).toBe("Roberto Cervantes Gutiérrez");
+    expect(ficha.telefono).toBe("5598765432");
+    expect(ficha.limiteCredito).toBe("15000.00");
+    expect(ficha.notas).toBe("Comprador frecuente desde 2019");
+    expect(ficha.zona).toBe("ZONA SUR");
+    expect(ficha.cobrador).toBe("Carlos Mendoza");
+    expect(ficha.estatus).toBe("A");
+  });
+
+  it("maps direccion components correctly", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    expect(ficha.direccion.calle).toBe("Av. Insurgentes Sur 1234");
+    expect(ficha.direccion.colonia).toBe("Del Valle");
+    expect(ficha.direccion.poblacion).toBe("Ciudad de México");
+    expect(ficha.direccion.estado).toBe("CDMX");
+  });
+
+  it("maps resumen financial KPIs correctly, all as strings", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    expect(ficha.resumen.totalComprado).toBe("85000.00");
+    expect(ficha.resumen.totalAbonado).toBe("72000.00");
+    expect(ficha.resumen.saldo).toBe("13000.00");
+    expect(ficha.resumen.pctLiquidado).toBe("84.70");
+    expect(ficha.resumen.ticketPromedio).toBe("7083.33");
+    expect(ficha.resumen.numVentas).toBe(12);
+    expect(ficha.resumen.numPagos).toBe(48);
+  });
+
+  it("fans out abonos_por_mes series correctly", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    expect(ficha.resumen.abonosPorMes).toHaveLength(2);
+    expect(ficha.resumen.abonosPorMes[0]).toEqual({ anio: 2025, mes: 1, monto: "2500.00" });
+    expect(ficha.resumen.abonosPorMes[1]).toEqual({ anio: 2025, mes: 2, monto: "3000.00" });
+  });
+
+  it("fans out comprado_vs_abonado series correctly", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    expect(ficha.resumen.compradoVsAbonado).toHaveLength(2);
+    expect(ficha.resumen.compradoVsAbonado[0]).toEqual({
+      anio: 2025,
+      mes: 1,
+      comprado: "7000.00",
+      abonado: "2500.00",
+    });
+  });
+
+  it("maps pulso correctly when present", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    expect(ficha.pulso).not.toBeNull();
+    const pulso = ficha.pulso!;
+    expect(pulso.score).toBe(75);
+    expect(pulso.segmento).toBe("LEAL_POR_LIQUIDAR");
+    expect(pulso.estadoPago).toBe("ATRASADO");
+    expect(pulso.recenciaDias).toBe(30);
+    expect(pulso.frecuencia).toBe(12);
+    expect(pulso.monetary).toBe("85000.00");
+    expect(pulso.saldo).toBe("13000.00");
+    expect(pulso.porLiquidarPct).toBe("15.29");
+    expect(pulso.nextBestProduct).toBe("Comedor 6 personas");
+  });
+
+  it("maps pulso dates as Date instances", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    const pulso = ficha.pulso!;
+    expect(pulso.fechaUltimaCompra).toBeInstanceOf(Date);
+    expect(pulso.fechaUltimaCompra!.getTime()).toBe(
+      new Date("2025-02-15T09:00:00Z").getTime(),
+    );
+    expect(pulso.fechaUltimoPago).toBeInstanceOf(Date);
+    expect(pulso.fechaUltimoPago!.getTime()).toBe(
+      new Date("2025-03-01T14:30:00Z").getTime(),
+    );
+  });
+
+  it("maps empty pulso dates to null", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.fecha_ultima_compra = "";
+    dto.pulso!.fecha_ultimo_pago = "";
+    const ficha = dtoToFichaCliente(dto);
+    expect(ficha.pulso!.fechaUltimaCompra).toBeNull();
+    expect(ficha.pulso!.fechaUltimoPago).toBeNull();
+  });
+
+  it("sets pulso to null when backend sends null", () => {
+    const dto = buildValidDTO({ pulso: null });
+    const ficha = dtoToFichaCliente(dto);
+    expect(ficha.pulso).toBeNull();
+  });
+
+  it("throws DomainError on invalid pulso segmento", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.segmento = "SEGMENTO_FICTICIO";
+    expect(() => dtoToFichaCliente(dto)).toThrowError(
+      expect.objectContaining({ code: "segmento_invalido" }),
+    );
+  });
+
+  it("throws DomainError on invalid pulso estado_pago", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.estado_pago = "RARO";
+    expect(() => dtoToFichaCliente(dto)).toThrowError(
+      expect.objectContaining({ code: "estado_pago_invalido" }),
+    );
+  });
+
+  it("throws DomainError on invalid pulso fecha_ultima_compra", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.fecha_ultima_compra = "no-es-fecha";
+    expect(() => dtoToFichaCliente(dto)).toThrowError(
+      expect.objectContaining({ code: "fecha_ultima_compra_invalida" }),
+    );
+  });
+
+  it("decimal values in pulso are kept as strings", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    expect(typeof ficha.pulso!.monetary).toBe("string");
+    expect(typeof ficha.pulso!.saldo).toBe("string");
+    expect(typeof ficha.pulso!.porLiquidarPct).toBe("string");
+  });
+});
