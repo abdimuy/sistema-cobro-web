@@ -36,9 +36,12 @@ export function dtoToVentaDetalle(dto: VentaDetalleDTO): VentaDetalle {
     pctjeDscto: p.pctje_dscto,
   }));
 
-  // Map contrato (null for cash sales)
+  // Map contrato. Cash sales (and old sales without a credit contract) have NO
+  // contrato — the API omits the field (omitempty) so it arrives as `undefined`,
+  // not `null`. Use `!= null` to catch BOTH undefined and null; otherwise
+  // `dto.contrato.parcialidad` throws on contado/legacy ventas.
   const contrato: ContratoCredito | null =
-    dto.contrato !== null
+    dto.contrato != null
       ? {
           parcialidad: dto.contrato.parcialidad,
           enganche: dto.contrato.enganche,

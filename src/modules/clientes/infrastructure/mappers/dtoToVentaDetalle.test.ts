@@ -105,6 +105,14 @@ describe("dtoToVentaDetalle", () => {
     expect(detalle.contrato).toBeNull();
   });
 
+  it("sets contrato to null when the API OMITS the field (undefined) — contado/legacy ventas", () => {
+    // The API uses omitempty, so cash/old sales arrive with contrato === undefined,
+    // not null. The mapper must not throw reading parcialidad off undefined.
+    const dto = buildValidDTO({ contrato: undefined });
+    expect(() => dtoToVentaDetalle(dto)).not.toThrow();
+    expect(dtoToVentaDetalle(dto).contrato).toBeNull();
+  });
+
   it("maps pagos array correctly, with dates as Date instances", () => {
     const detalle = dtoToVentaDetalle(buildValidDTO());
     expect(detalle.pagos).toHaveLength(2);

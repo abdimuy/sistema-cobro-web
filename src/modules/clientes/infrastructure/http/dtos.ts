@@ -173,7 +173,7 @@ export type PagoDTO = {
 export type VentaDetalleDTO = {
   venta: VentaHeaderDTO;
   productos: ProductoVentaDTO[];
-  contrato: ContratoDTO | null; // null for cash sales
+  contrato?: ContratoDTO | null; // omitted (undefined) for cash/legacy sales; may also be null
   pagos: PagoDTO[];
 };
 
