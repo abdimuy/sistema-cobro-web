@@ -39,6 +39,12 @@ function mapPulso(dto: PulsoDTO): Pulso {
     "fecha_ultimo_pago no es un timestamp válido",
   );
 
+  const fechaProxPago = parseDate(
+    dto.fecha_prox_pago,
+    "fecha_prox_pago_invalida",
+    "fecha_prox_pago no es un timestamp válido",
+  );
+
   return {
     score: dto.score,
     segmento: segmento.value,
@@ -51,6 +57,13 @@ function mapPulso(dto: PulsoDTO): Pulso {
     fechaUltimaCompra,
     fechaUltimoPago,
     nextBestProduct: dto.next_best_product,
+    numPagos: dto.num_pagos,
+    cadenciaDias: dto.cadencia_dias,
+    diasAtrasoProm: dto.dias_atraso_prom,
+    pctPagosATiempo: dto.pct_pagos_a_tiempo,
+    fechaProxPago,
+    montoProxPago: dto.monto_prox_pago,
+    tierRiesgo: dto.tier_riesgo,
   };
 }
 

@@ -88,6 +88,14 @@ export type PulsoDTO = {
   fecha_ultima_compra: string; // RFC3339; empty when no purchase history
   fecha_ultimo_pago: string; // RFC3339; empty when no payment history
   next_best_product: string;
+  // Cobranza intelligence fields
+  num_pagos: number;
+  cadencia_dias: number; // avg days between payments
+  dias_atraso_prom: number; // avg lateness in days
+  pct_pagos_a_tiempo: string; // decimal string, e.g. "94.68"
+  fecha_prox_pago: string; // RFC3339; empty when cadence cannot be projected
+  monto_prox_pago: string; // decimal as string
+  tier_riesgo: string; // AL_DIA | VIGILANCIA | EN_RIESGO | CRITICO
 };
 
 export type FichaDTO = {

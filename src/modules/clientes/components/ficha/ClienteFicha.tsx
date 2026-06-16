@@ -8,6 +8,7 @@ import { FichaHero } from "./FichaHero";
 import { FichaKpis } from "./FichaKpis";
 import { FichaCharts } from "./FichaCharts";
 import { FichaPulsoCard } from "./FichaPulsoCard";
+import { FichaCobranzaCards } from "./FichaCobranzaCards";
 import { FichaVentasList } from "./FichaVentasList";
 
 interface Props {
@@ -74,6 +75,7 @@ export function ClienteFicha({ clienteId }: Props) {
         compradoVsAbonado={ficha.resumen.compradoVsAbonado}
       />
       <FichaPulsoCard pulso={ficha.pulso} />
+      <FichaCobranzaCards pulso={ficha.pulso} />
       <FichaVentasList
         ventas={ventasState.ventas}
         isLoading={ventasState.isLoading}

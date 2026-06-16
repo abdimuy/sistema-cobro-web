@@ -49,6 +49,13 @@ function buildValidDTO(overrides: Partial<FichaDTO> = {}): FichaDTO {
       fecha_ultima_compra: "2025-02-15T09:00:00Z",
       fecha_ultimo_pago: "2025-03-01T14:30:00Z",
       next_best_product: "Comedor 6 personas",
+      num_pagos: 48,
+      cadencia_dias: 30,
+      dias_atraso_prom: 2,
+      pct_pagos_a_tiempo: "94.68",
+      fecha_prox_pago: "2025-04-01T00:00:00Z",
+      monto_prox_pago: "4000.00",
+      tier_riesgo: "AL_DIA",
     },
     ...overrides,
   };
@@ -179,4 +186,70 @@ describe("dtoToFichaCliente", () => {
     expect(typeof ficha.pulso!.saldo).toBe("string");
     expect(typeof ficha.pulso!.porLiquidarPct).toBe("string");
   });
+
+  // ── Cobranza intelligence fields ────────────────────────────────────────────
+
+  it("maps cobranza numeric fields correctly", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    const pulso = ficha.pulso!;
+    expect(pulso.numPagos).toBe(48);
+    expect(pulso.cadenciaDias).toBe(30);
+    expect(pulso.diasAtrasoProm).toBe(2);
+  });
+
+  it("maps pctPagosATiempo and tierRiesgo as strings", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    const pulso = ficha.pulso!;
+    expect(pulso.pctPagosATiempo).toBe("94.68");
+    expect(typeof pulso.pctPagosATiempo).toBe("string");
+    expect(pulso.tierRiesgo).toBe("AL_DIA");
+    expect(typeof pulso.tierRiesgo).toBe("string");
+  });
+
+  it("maps montoProxPago as string", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    expect(pulso(ficha).montoProxPago).toBe("4000.00");
+    expect(typeof pulso(ficha).montoProxPago).toBe("string");
+  });
+
+  it("maps fecha_prox_pago as Date instance", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    expect(pulso(ficha).fechaProxPago).toBeInstanceOf(Date);
+    expect(pulso(ficha).fechaProxPago!.getTime()).toBe(
+      new Date("2025-04-01T00:00:00Z").getTime(),
+    );
+  });
+
+  it("maps empty fecha_prox_pago to null", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.fecha_prox_pago = "";
+    const ficha = dtoToFichaCliente(dto);
+    expect(ficha.pulso!.fechaProxPago).toBeNull();
+  });
+
+  it("maps zero cobranza values when client has no payments", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.num_pagos = 0;
+    dto.pulso!.cadencia_dias = 0;
+    dto.pulso!.dias_atraso_prom = 0;
+    dto.pulso!.pct_pagos_a_tiempo = "";
+    dto.pulso!.fecha_prox_pago = "";
+    dto.pulso!.monto_prox_pago = "0.00";
+    dto.pulso!.tier_riesgo = "";
+    const ficha = dtoToFichaCliente(dto);
+    const p = ficha.pulso!;
+    expect(p.numPagos).toBe(0);
+    expect(p.cadenciaDias).toBe(0);
+    expect(p.diasAtrasoProm).toBe(0);
+    expect(p.pctPagosATiempo).toBe("");
+    expect(p.fechaProxPago).toBeNull();
+    expect(p.montoProxPago).toBe("0.00");
+    expect(p.tierRiesgo).toBe("");
+  });
 });
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function pulso(ficha: ReturnType<typeof dtoToFichaCliente>) {
+  return ficha.pulso!;
+}

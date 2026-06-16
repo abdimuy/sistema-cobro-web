@@ -178,6 +178,13 @@ export function makeFakeFichaCliente(
       fechaUltimaCompra: new Date("2025-11-01T00:00:00.000Z"),
       fechaUltimoPago: new Date("2025-12-15T00:00:00.000Z"),
       nextBestProduct: "COMEDOR",
+      numPagos: 24,
+      cadenciaDias: 30,
+      diasAtrasoProm: 3,
+      pctPagosATiempo: "87.50",
+      fechaProxPago: new Date("2026-01-15T00:00:00.000Z"),
+      montoProxPago: "3500.00",
+      tierRiesgo: "VIGILANCIA",
     },
   };
   return { ...base, ...overrides };

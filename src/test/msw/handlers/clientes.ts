@@ -102,6 +102,13 @@ const DEFAULT_FICHA: FichaDTO = {
     fecha_ultima_compra: "2025-11-01T00:00:00Z",
     fecha_ultimo_pago: "2025-12-15T00:00:00Z",
     next_best_product: "COMEDOR",
+    num_pagos: 24,
+    cadencia_dias: 30,
+    dias_atraso_prom: 3,
+    pct_pagos_a_tiempo: "87.50",
+    fecha_prox_pago: "2026-01-15T12:00:00Z",
+    monto_prox_pago: "3500.00",
+    tier_riesgo: "VIGILANCIA",
   },
 };
 

@@ -33,7 +33,7 @@ export type ResumenFicha = {
 // Pulso holds the analytics signal for a client. Only present when the client
 // has materialised analytics data (FichaCliente.pulso !== null).
 //
-// Money fields (monetary, saldo, porLiquidarPct) are decimal strings.
+// Money fields (monetary, saldo, porLiquidarPct, montoProxPago) are decimal strings.
 // Dates are null when there is no purchase or payment history.
 export type Pulso = {
   readonly score: number;
@@ -48,6 +48,16 @@ export type Pulso = {
   readonly fechaUltimaCompra: Date | null;
   readonly fechaUltimoPago: Date | null;
   readonly nextBestProduct: string;
+  // Cobranza intelligence
+  readonly numPagos: number;
+  readonly cadenciaDias: number;
+  readonly diasAtrasoProm: number;
+  // Decimal as string — do not parse to number; use Intl for display.
+  readonly pctPagosATiempo: string;
+  readonly fechaProxPago: Date | null;
+  // Decimal as string — do not parse to number; use Intl for display.
+  readonly montoProxPago: string;
+  readonly tierRiesgo: string;
 };
 
 // DireccionCliente holds the address components for a client.
