@@ -29,7 +29,7 @@ describe("obtenerFichaCliente", () => {
   it("propagates the abort signal to the port", async () => {
     const port = new FakeClientesPort();
     const ctrl = new AbortController();
-    await obtenerFichaCliente(port, 1042, ctrl.signal);
+    await obtenerFichaCliente(port, 1042, undefined, ctrl.signal);
     expect(port.fichaCalls[0].signal).toBe(ctrl.signal);
   });
 

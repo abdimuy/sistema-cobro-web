@@ -28,9 +28,10 @@ function KpiCell({ label, value, mono = false }: KpiCellProps) {
 
 interface Props {
   resumen: ResumenFicha;
+  isLoading?: boolean;
 }
 
-export function FichaKpis({ resumen }: Props) {
+export function FichaKpis({ resumen, isLoading = false }: Props) {
   const kpis: KpiCellProps[] = [
     { label: "Total comprado", value: formatMoney(resumen.totalComprado) },
     { label: "Total abonado", value: formatMoney(resumen.totalAbonado) },
@@ -45,7 +46,7 @@ export function FichaKpis({ resumen }: Props) {
   ];
 
   return (
-    <div className="border-b border-border/60 px-8">
+    <div className={cn("border-b border-border/60 px-8", isLoading && "opacity-50 transition-opacity")}>
       <div className="flex flex-wrap">
         {kpis.map((kpi, i) => (
           <div

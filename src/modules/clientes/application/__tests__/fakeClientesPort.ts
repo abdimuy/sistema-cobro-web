@@ -6,7 +6,7 @@ import type {
   ProductoVenta,
   Pago,
 } from "../../domain/entities";
-import type { ClientesPort } from "../ports/ClientesPort";
+import type { ClientesPort, FichaDateRange } from "../ports/ClientesPort";
 import type {
   BuscarClientesInput,
   BuscarClientesOutput,
@@ -22,7 +22,7 @@ import type {
 // adapter.
 export class FakeClientesPort implements ClientesPort {
   buscarCalls: Array<{ input: BuscarClientesInput; signal?: AbortSignal }> = [];
-  fichaCalls: Array<{ clienteId: number; signal?: AbortSignal }> = [];
+  fichaCalls: Array<{ clienteId: number; range?: FichaDateRange; signal?: AbortSignal }> = [];
   listarVentasCalls: Array<{ input: ListarVentasInput; signal?: AbortSignal }> =
     [];
   obtenerDetalleCalls: Array<{
@@ -67,9 +67,10 @@ export class FakeClientesPort implements ClientesPort {
 
   async obtenerFicha(
     clienteId: number,
+    range?: FichaDateRange,
     signal?: AbortSignal,
   ): Promise<FichaCliente> {
-    this.fichaCalls.push({ clienteId, signal });
+    this.fichaCalls.push({ clienteId, range, signal });
     const e = this.takeThrow("obtenerFicha");
     if (e) throw e;
     return resolve(this.fichaResponse);
@@ -185,6 +186,11 @@ export function makeFakeFichaCliente(
       fechaProxPago: new Date("2026-01-15T00:00:00.000Z"),
       montoProxPago: "3500.00",
       tierRiesgo: "VIGILANCIA",
+    },
+    ubicacion: {
+      lat: 19.4326,
+      lng: -99.1332,
+      disponible: true,
     },
   };
   return { ...base, ...overrides };

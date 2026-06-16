@@ -68,6 +68,14 @@ export type DireccionCliente = {
   readonly estado: string;
 };
 
+// UbicacionCliente holds the GPS coordinates for a client.
+// disponible is false when the client has no GPS data (~68% of clients).
+export type UbicacionCliente = {
+  readonly lat: number;
+  readonly lng: number;
+  readonly disponible: boolean;
+};
+
 // FichaCliente is the full 360-degree view of a client, combining Microsip
 // master data, aggregated financial KPIs, time-series data, and analytics
 // pulse. pulso is null when the client has no materialised analytics data.
@@ -83,4 +91,5 @@ export type FichaCliente = {
   readonly estatus: string;
   readonly resumen: ResumenFicha;
   readonly pulso: Pulso | null;
+  readonly ubicacion: UbicacionCliente;
 };

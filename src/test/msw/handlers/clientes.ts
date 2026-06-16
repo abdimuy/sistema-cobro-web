@@ -110,6 +110,11 @@ const DEFAULT_FICHA: FichaDTO = {
     monto_prox_pago: "3500.00",
     tier_riesgo: "VIGILANCIA",
   },
+  ubicacion: {
+    lat: 19.4326,
+    lng: -99.1332,
+    disponible: true,
+  },
 };
 
 const DEFAULT_VENTAS: ListResponseDTO<VentaListItemDTO> = {

@@ -1,10 +1,11 @@
-import type { ClientesPort } from "../ports/ClientesPort";
+import type { ClientesPort, FichaDateRange } from "../ports/ClientesPort";
 import type { FichaCliente } from "../../domain/entities";
 import { DomainError } from "../../domain/errors";
 
 export async function obtenerFichaCliente(
   port: ClientesPort,
   clienteId: number,
+  range?: FichaDateRange,
   signal?: AbortSignal,
 ): Promise<FichaCliente> {
   if (!Number.isInteger(clienteId) || clienteId <= 0) {
@@ -13,5 +14,5 @@ export async function obtenerFichaCliente(
       "clienteId debe ser un entero positivo",
     );
   }
-  return port.obtenerFicha(clienteId, signal);
+  return port.obtenerFicha(clienteId, range, signal);
 }

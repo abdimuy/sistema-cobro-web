@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFichaCliente } from "../../presentation/hooks/useFichaCliente";
 import { useVentasCliente } from "../../presentation/hooks/useVentasCliente";
+import type { FichaDateRange } from "../../application/ports/ClientesPort";
 import { VentaModal } from "../detalle/VentaModal";
 import { FichaHeader } from "./FichaHeader";
 import { FichaHero } from "./FichaHero";
 import { FichaKpis } from "./FichaKpis";
 import { FichaCharts } from "./FichaCharts";
+import { FichaRangeFilter } from "./FichaRangeFilter";
+import { FichaUbicacion } from "./FichaUbicacion";
 import { FichaPulsoCard } from "./FichaPulsoCard";
 import { FichaCobranzaCards } from "./FichaCobranzaCards";
 import { FichaVentasList } from "./FichaVentasList";
@@ -16,7 +19,8 @@ interface Props {
 }
 
 export function ClienteFicha({ clienteId }: Props) {
-  const { ficha, isLoading, error } = useFichaCliente(clienteId);
+  const [range, setRange] = useState<FichaDateRange>({});
+  const { ficha, isLoading, error } = useFichaCliente(clienteId, range);
   const ventasState = useVentasCliente(clienteId);
   const [selectedDoctoPvId, setSelectedDoctoPvId] = useState<number | null>(
     null,
@@ -69,13 +73,25 @@ export function ClienteFicha({ clienteId }: Props) {
     <div className="min-h-screen bg-background">
       <FichaHeader ficha={ficha} />
       <FichaHero ficha={ficha} />
-      <FichaKpis resumen={ficha.resumen} />
+      {/* B3 — date-range filter row, above KPIs */}
+      <div className="border-b border-border/60 px-8 py-3">
+        <FichaRangeFilter
+          range={range}
+          isLoading={isLoading}
+          onChange={setRange}
+          onClear={() => setRange({})}
+        />
+      </div>
+      <FichaKpis resumen={ficha.resumen} isLoading={isLoading} />
       <FichaCharts
         abonosPorMes={ficha.resumen.abonosPorMes}
         compradoVsAbonado={ficha.resumen.compradoVsAbonado}
+        isLoading={isLoading}
       />
       <FichaPulsoCard pulso={ficha.pulso} />
       <FichaCobranzaCards pulso={ficha.pulso} />
+      {/* B4 — Ubicación map */}
+      <FichaUbicacion ubicacion={ficha.ubicacion} />
       <FichaVentasList
         ventas={ventasState.ventas}
         isLoading={ventasState.isLoading}

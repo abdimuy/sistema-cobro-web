@@ -4,6 +4,7 @@ export type {
   Pulso,
   ResumenFicha,
   DireccionCliente,
+  UbicacionCliente,
   PuntoMensual,
   PuntoCompradoAbonado,
 } from "./FichaCliente";

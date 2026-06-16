@@ -57,6 +57,11 @@ function buildValidDTO(overrides: Partial<FichaDTO> = {}): FichaDTO {
       monto_prox_pago: "4000.00",
       tier_riesgo: "AL_DIA",
     },
+    ubicacion: {
+      lat: 19.4326,
+      lng: -99.1332,
+      disponible: true,
+    },
     ...overrides,
   };
 }
@@ -225,6 +230,23 @@ describe("dtoToFichaCliente", () => {
     dto.pulso!.fecha_prox_pago = "";
     const ficha = dtoToFichaCliente(dto);
     expect(ficha.pulso!.fechaProxPago).toBeNull();
+  });
+
+  // ── Ubicación ────────────────────────────────────────────────────────────────
+
+  it("maps ubicacion when disponible=true", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    expect(ficha.ubicacion.disponible).toBe(true);
+    expect(ficha.ubicacion.lat).toBe(19.4326);
+    expect(ficha.ubicacion.lng).toBe(-99.1332);
+  });
+
+  it("maps ubicacion when disponible=false", () => {
+    const dto = buildValidDTO({ ubicacion: { lat: 0, lng: 0, disponible: false } });
+    const ficha = dtoToFichaCliente(dto);
+    expect(ficha.ubicacion.disponible).toBe(false);
+    expect(ficha.ubicacion.lat).toBe(0);
+    expect(ficha.ubicacion.lng).toBe(0);
   });
 
   it("maps zero cobranza values when client has no payments", () => {

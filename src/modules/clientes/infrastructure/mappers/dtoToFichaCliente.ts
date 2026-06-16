@@ -3,6 +3,7 @@ import type {
   Pulso,
   ResumenFicha,
   DireccionCliente,
+  UbicacionCliente,
   PuntoMensual,
   PuntoCompradoAbonado,
 } from "../../domain/entities";
@@ -103,6 +104,12 @@ export function dtoToFichaCliente(dto: FichaDTO): FichaCliente {
 
   const pulso: Pulso | null = dto.pulso !== null ? mapPulso(dto.pulso) : null;
 
+  const ubicacion: UbicacionCliente = {
+    lat: dto.ubicacion.lat,
+    lng: dto.ubicacion.lng,
+    disponible: dto.ubicacion.disponible,
+  };
+
   return {
     clienteId: dto.cliente_id,
     nombre: dto.nombre,
@@ -115,5 +122,6 @@ export function dtoToFichaCliente(dto: FichaDTO): FichaCliente {
     estatus: dto.estatus,
     resumen,
     pulso,
+    ubicacion,
   };
 }

@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 import type { FichaCliente, VentaDetalle } from "../../domain/entities";
-import type { ClientesPort } from "../../application/ports/ClientesPort";
+import type { ClientesPort, FichaDateRange } from "../../application/ports/ClientesPort";
 import type {
   BuscarClientesInput,
   BuscarClientesOutput,
@@ -69,12 +69,17 @@ export class HttpClientesAdapter implements ClientesPort {
 
   async obtenerFicha(
     clienteId: number,
+    range?: FichaDateRange,
     signal?: AbortSignal,
   ): Promise<FichaCliente> {
     try {
+      const params: Record<string, string> = {};
+      if (range?.desde) params.desde = range.desde;
+      if (range?.hasta) params.hasta = range.hasta;
+
       const { data } = await this.client.get<FichaDTO>(
         `${CLIENTES_BASE}/${clienteId}`,
-        { signal },
+        { params: Object.keys(params).length > 0 ? params : undefined, signal },
       );
 
       return dtoToFichaCliente(data);

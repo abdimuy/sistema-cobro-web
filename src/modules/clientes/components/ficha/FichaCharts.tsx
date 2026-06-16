@@ -251,12 +251,13 @@ function ChartSection({ title, caption, children }: ChartSectionProps) {
 interface Props {
   abonosPorMes: PuntoMensual[];
   compradoVsAbonado: PuntoCompradoAbonado[];
+  isLoading?: boolean;
 }
 
-export function FichaCharts({ abonosPorMes, compradoVsAbonado }: Props) {
+export function FichaCharts({ abonosPorMes, compradoVsAbonado, isLoading = false }: Props) {
   return (
     <section
-      className="border-b border-border/60 px-8 py-8"
+      className={`border-b border-border/60 px-8 py-8${isLoading ? " opacity-50 transition-opacity" : ""}`}
       aria-label="Gráficas de actividad"
     >
       <div className="flex flex-col gap-10 lg:flex-row lg:gap-12">

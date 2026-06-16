@@ -98,6 +98,12 @@ export type PulsoDTO = {
   tier_riesgo: string; // AL_DIA | VIGILANCIA | EN_RIESGO | CRITICO
 };
 
+export type UbicacionDTO = {
+  lat: number;
+  lng: number;
+  disponible: boolean;
+};
+
 export type FichaDTO = {
   cliente_id: number;
   nombre: string;
@@ -111,6 +117,7 @@ export type FichaDTO = {
   resumen: ResumenDTO;
   series: SeriesDTO;
   pulso: PulsoDTO | null; // null when no materialised analytics data
+  ubicacion: UbicacionDTO;
 };
 
 // ─── GET /clientes/{id}/ventas ───────────────────────────────────────────────
