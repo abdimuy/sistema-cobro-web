@@ -37,6 +37,8 @@ export type ClienteListItemDTO = {
   tier_riesgo: string;       // AL_DIA | VIGILANCIA | EN_RIESGO | CRITICO; empty when no pulse
   pct_pagos_a_tiempo: string; // decimal string, empty when no pulse
   fecha_prox_pago: string;    // RFC3339, empty when no pulse
+  banda_credito: string;      // BAJO | MEDIO | ALTO | CRITICO; "" when no aplica (contado/sin crédito)
+  score_credito: number;      // 0–100, higher = lower risk; 0 when no aplica
 };
 
 // ─── GET /clientes/{id} ──────────────────────────────────────────────────────
@@ -96,6 +98,10 @@ export type PulsoDTO = {
   fecha_prox_pago: string; // RFC3339; empty when cadence cannot be projected
   monto_prox_pago: string; // decimal as string
   tier_riesgo: string; // AL_DIA | VIGILANCIA | EN_RIESGO | CRITICO
+  // Credit risk intelligence (only present when client has active credit)
+  banda_credito: string;      // BAJO | MEDIO | ALTO | CRITICO; "" when no aplica
+  score_credito: number;      // 0–100, higher = lower risk; 0 when no aplica
+  credito_drivers: string[];  // up to 3 Spanish risk reason strings; [] when no aplica
 };
 
 export type UbicacionDTO = {

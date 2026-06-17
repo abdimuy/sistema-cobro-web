@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Filter, X, Tag, MapPin, BarChart3, Wallet, Users, AlertTriangle } from "lucide-react";
+import { Filter, X, Tag, MapPin, BarChart3, Wallet, Users, AlertTriangle, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,6 +26,7 @@ export interface FilterState {
   segmento?: string;
   estadoPago?: string;
   tierRiesgo?: string;
+  bandaCredito?: string;
   conSaldo?: boolean;
   scoreMin?: number;
   zonaInput?: string;    // Phase 1: free-text, no catalog yet
@@ -63,6 +64,14 @@ const TIER_RIESGO_LABELS: Record<string, string> = {
 };
 const TIER_ORDER = ["AL_DIA", "VIGILANCIA", "EN_RIESGO", "CRITICO"] as const;
 
+const BANDA_CREDITO_LABELS: Record<string, string> = {
+  BAJO: "Riesgo bajo",
+  MEDIO: "Riesgo medio",
+  ALTO: "Riesgo alto",
+  CRITICO: "Riesgo crítico",
+};
+const BANDA_CREDITO_ORDER = ["BAJO", "MEDIO", "ALTO", "CRITICO"] as const;
+
 const SCORE_OPTIONS: { value: number | undefined; label: string }[] = [
   { value: undefined, label: "Cualquiera" },
   { value: 30, label: "30+" },
@@ -77,6 +86,7 @@ function countActiveFilters(state: Omit<ClientesFiltersProps, "onChange" | "clas
   if (state.segmento) count++;
   if (state.estadoPago) count++;
   if (state.tierRiesgo) count++;
+  if (state.bandaCredito) count++;
   if (state.conSaldo) count++;
   if (state.scoreMin !== undefined) count++;
   if (state.zonaInput) count++;
@@ -88,6 +98,7 @@ export function ClientesFilters({
   segmento,
   estadoPago,
   tierRiesgo,
+  bandaCredito,
   conSaldo,
   scoreMin,
   zonaInput,
@@ -102,6 +113,7 @@ export function ClientesFilters({
     segmento,
     estadoPago,
     tierRiesgo,
+    bandaCredito,
     conSaldo,
     scoreMin,
     zonaInput,
@@ -113,6 +125,7 @@ export function ClientesFilters({
       segmento: undefined,
       estadoPago: undefined,
       tierRiesgo: undefined,
+      bandaCredito: undefined,
       conSaldo: undefined,
       scoreMin: undefined,
       zonaInput: undefined,
@@ -255,6 +268,40 @@ export function ClientesFilters({
                 return (
                   <SelectItem key={val} value={val}>
                     <span>{TIER_RIESGO_LABELS[val]}</span>
+                    {count !== undefined && (
+                      <span className="ml-1 text-[10px] text-muted-foreground tabular-nums">
+                        ({count.toLocaleString("es-MX")})
+                      </span>
+                    )}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Riesgo crédito */}
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <CreditCard className="h-3 w-3" />
+            Riesgo crédito
+          </Label>
+          <Select
+            value={bandaCredito ?? ALL_VALUE}
+            onValueChange={(v) =>
+              onChange({ bandaCredito: v === ALL_VALUE ? undefined : v })
+            }
+          >
+            <SelectTrigger className="h-8 text-xs border-border/60">
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_VALUE}>Todos</SelectItem>
+              {BANDA_CREDITO_ORDER.map((val) => {
+                const count = facets?.["banda_credito"]?.[val];
+                return (
+                  <SelectItem key={val} value={val}>
+                    <span>{BANDA_CREDITO_LABELS[val]}</span>
                     {count !== undefined && (
                       <span className="ml-1 text-[10px] text-muted-foreground tabular-nums">
                         ({count.toLocaleString("es-MX")})

@@ -57,6 +57,8 @@ const DEFAULT_LIST: ListResponseDTO<ClienteListItemDTO> = {
       tier_riesgo: "AL_DIA",
       pct_pagos_a_tiempo: "92.00",
       fecha_prox_pago: "2026-07-01T00:00:00Z",
+      banda_credito: "BAJO",
+      score_credito: 82,
     },
   ],
   next_cursor: "",
@@ -109,6 +111,9 @@ const DEFAULT_FICHA: FichaDTO = {
     fecha_prox_pago: "2026-01-15T12:00:00Z",
     monto_prox_pago: "3500.00",
     tier_riesgo: "VIGILANCIA",
+    banda_credito: "MEDIO",
+    score_credito: 55,
+    credito_drivers: ["Algunos retrasos recientes"],
   },
   ubicacion: {
     lat: 19.4326,

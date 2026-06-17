@@ -19,6 +19,8 @@ function buildValidDTO(overrides: Partial<ClienteListItemDTO> = {}): ClienteList
     tier_riesgo: "AL_DIA",
     pct_pagos_a_tiempo: "94.68",
     fecha_prox_pago: "2026-07-01T00:00:00Z",
+    banda_credito: "BAJO",
+    score_credito: 85,
     ...overrides,
   };
 }
@@ -137,5 +139,26 @@ describe("dtoToCliente", () => {
     const dto = buildValidDTO({ tiene_pulso: false, segmento: "", estado_pago: "" });
     const cliente = dtoToCliente(dto);
     expect(cliente.pctPagosATiempo).toBeUndefined();
+  });
+
+  it("maps banda_credito and score_credito when tiene_pulso is true and banda_credito is set", () => {
+    const dto = buildValidDTO({ banda_credito: "MEDIO", score_credito: 55 });
+    const cliente = dtoToCliente(dto);
+    expect(cliente.bandaCredito).toBe("MEDIO");
+    expect(cliente.scoreCredito).toBe(55);
+  });
+
+  it("sets bandaCredito and scoreCredito to undefined when banda_credito is empty (no aplica)", () => {
+    const dto = buildValidDTO({ banda_credito: "", score_credito: 0 });
+    const cliente = dtoToCliente(dto);
+    expect(cliente.bandaCredito).toBeUndefined();
+    expect(cliente.scoreCredito).toBeUndefined();
+  });
+
+  it("sets bandaCredito and scoreCredito to undefined when tiene_pulso is false", () => {
+    const dto = buildValidDTO({ tiene_pulso: false, segmento: "", estado_pago: "" });
+    const cliente = dtoToCliente(dto);
+    expect(cliente.bandaCredito).toBeUndefined();
+    expect(cliente.scoreCredito).toBeUndefined();
   });
 });

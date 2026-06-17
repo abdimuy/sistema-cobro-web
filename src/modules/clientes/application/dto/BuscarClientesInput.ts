@@ -9,6 +9,7 @@ export type BuscarClientesInput = {
   readonly estadoPago?: EstadoPagoValue;
   readonly scoreMin?: number;
   readonly tier?: string; // filter by tier_riesgo
+  readonly bandaCredito?: string; // filter by banda_credito
   readonly sortBy?: string;
   readonly sortOrder?: "asc" | "desc";
   readonly cursor?: string;

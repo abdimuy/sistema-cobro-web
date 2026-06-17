@@ -65,6 +65,10 @@ function mapPulso(dto: PulsoDTO): Pulso {
     fechaProxPago,
     montoProxPago: dto.monto_prox_pago,
     tierRiesgo: dto.tier_riesgo,
+    // Credit risk — only present when banda_credito is non-empty
+    bandaCredito: dto.banda_credito || undefined,
+    scoreCredito: dto.banda_credito ? dto.score_credito : undefined,
+    creditoDrivers: dto.banda_credito ? (dto.credito_drivers ?? []) : undefined,
   };
 }
 

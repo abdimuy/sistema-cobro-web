@@ -58,6 +58,10 @@ export type Pulso = {
   // Decimal as string — do not parse to number; use Intl for display.
   readonly montoProxPago: string;
   readonly tierRiesgo: string;
+  // Credit risk intelligence — undefined when no aplica (contado or no active credit)
+  readonly bandaCredito?: string;           // BAJO | MEDIO | ALTO | CRITICO
+  readonly scoreCredito?: number;           // 0–100, higher = lower risk
+  readonly creditoDrivers?: readonly string[]; // up to 3 Spanish risk reasons
 };
 
 // DireccionCliente holds the address components for a client.

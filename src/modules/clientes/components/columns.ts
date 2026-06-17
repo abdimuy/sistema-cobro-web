@@ -21,6 +21,7 @@ export type ColumnId =
   | "estadoPago"
   | "segmento"
   | "tierRiesgo"
+  | "bandaCredito"
   | "saldo"
   | "recencia"
   | "direccion"
@@ -104,6 +105,16 @@ export const COLUMNS: ColumnDef[] = [
     sortable: false,
     align: "left",
     width: "w-[130px]",
+    group: "Pulso",
+  },
+  {
+    id: "bandaCredito",
+    label: "Riesgo crédito",
+    defaultVisible: false,
+    sortable: true,
+    sortKey: "score_credito",
+    align: "left",
+    width: "w-[160px]",
     group: "Pulso",
   },
   {
@@ -195,6 +206,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ColumnId, number> = {
   estadoPago: 140,
   segmento: 170,
   tierRiesgo: 130,
+  bandaCredito: 160,
   saldo: 110,
   recencia: 100,
   direccion: 200,

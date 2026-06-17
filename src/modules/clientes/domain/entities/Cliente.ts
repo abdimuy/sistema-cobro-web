@@ -22,4 +22,7 @@ export type Cliente = {
   readonly tierRiesgo?: string;       // undefined when tienePulso is false
   readonly pctPagosATiempo?: string;  // undefined when tienePulso is false
   readonly fechaProxPago?: string;    // undefined when tienePulso is false
+  // Credit risk — undefined when no aplica (contado or no active credit)
+  readonly bandaCredito?: string;     // BAJO | MEDIO | ALTO | CRITICO
+  readonly scoreCredito?: number;     // 0–100, higher = lower risk
 };

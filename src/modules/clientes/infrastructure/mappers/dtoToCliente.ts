@@ -37,5 +37,8 @@ export function dtoToCliente(dto: ClienteListItemDTO): Cliente {
     tierRiesgo: dto.tiene_pulso && dto.tier_riesgo ? dto.tier_riesgo : undefined,
     pctPagosATiempo: dto.tiene_pulso && dto.pct_pagos_a_tiempo ? dto.pct_pagos_a_tiempo : undefined,
     fechaProxPago: dto.tiene_pulso && dto.fecha_prox_pago ? dto.fecha_prox_pago : undefined,
+    // Gate on banda_credito non-empty: contado/no-aplica → undefined
+    bandaCredito: dto.tiene_pulso && dto.banda_credito ? dto.banda_credito : undefined,
+    scoreCredito: dto.tiene_pulso && dto.banda_credito ? dto.score_credito : undefined,
   };
 }

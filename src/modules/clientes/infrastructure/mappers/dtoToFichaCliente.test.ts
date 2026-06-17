@@ -56,6 +56,9 @@ function buildValidDTO(overrides: Partial<FichaDTO> = {}): FichaDTO {
       fecha_prox_pago: "2025-04-01T00:00:00Z",
       monto_prox_pago: "4000.00",
       tier_riesgo: "AL_DIA",
+      banda_credito: "BAJO",
+      score_credito: 85,
+      credito_drivers: ["Historial limpio de pagos"],
     },
     ubicacion: {
       lat: 19.4326,
@@ -267,6 +270,26 @@ describe("dtoToFichaCliente", () => {
     expect(p.fechaProxPago).toBeNull();
     expect(p.montoProxPago).toBe("0.00");
     expect(p.tierRiesgo).toBe("");
+  });
+
+  it("maps banda_credito, score_credito, and credito_drivers from pulso DTO", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    const p = ficha.pulso!;
+    expect(p.bandaCredito).toBe("BAJO");
+    expect(p.scoreCredito).toBe(85);
+    expect(p.creditoDrivers).toEqual(["Historial limpio de pagos"]);
+  });
+
+  it("maps bandaCredito to undefined when banda_credito is empty (no aplica)", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.banda_credito = "";
+    dto.pulso!.score_credito = 0;
+    dto.pulso!.credito_drivers = [];
+    const ficha = dtoToFichaCliente(dto);
+    const p = ficha.pulso!;
+    expect(p.bandaCredito).toBeUndefined();
+    expect(p.scoreCredito).toBeUndefined();
+    expect(p.creditoDrivers).toBeUndefined();
   });
 });
 
