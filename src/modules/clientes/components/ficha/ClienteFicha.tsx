@@ -78,6 +78,7 @@ export function ClienteFicha({ clienteId }: Props) {
 
   return (
     <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-[1400px]">
       <FichaHeader ficha={ficha} />
       <FichaHero ficha={ficha} />
       <FichaNextBestAction pulso={ficha.pulso} telefono={ficha.telefono} />
@@ -119,6 +120,7 @@ export function ClienteFicha({ clienteId }: Props) {
         open={selectedDoctoPvId !== null}
         onClose={() => setSelectedDoctoPvId(null)}
       />
+      </div>
     </div>
   );
 }
