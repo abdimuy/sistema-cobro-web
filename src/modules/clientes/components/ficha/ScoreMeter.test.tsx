@@ -28,7 +28,7 @@ describe("scaleToPercent", () => {
 });
 
 describe("ScoreMeter", () => {
-  it("renders the value label, zone labels and boundary ticks", () => {
+  it("renders with correct aria-label", () => {
     render(
       <ScoreMeter
         value={32}
@@ -36,34 +36,41 @@ describe("ScoreMeter", () => {
         max={100}
         bands={RECOMPRA_BANDS}
         activeBand="MEDIA"
-        valueLabel="32"
-        tickFormat={(n) => String(n)}
       />,
     );
-    expect(screen.getByText("32")).toBeInTheDocument(); // floating value
-    expect(screen.getByText("MEDIA")).toBeInTheDocument(); // active zone label
-    expect(screen.getByText("22")).toBeInTheDocument(); // boundary tick
-    expect(screen.getByText("53")).toBeInTheDocument();
-    expect(screen.getByText("100")).toBeInTheDocument();
+    expect(screen.getByLabelText("Medidor MEDIA")).toBeInTheDocument();
   });
 
-  it("hides a boundary tick when tickFormat returns an empty string", () => {
+  it("renders one segment per band", () => {
     render(
       <ScoreMeter
-        value={300}
+        value={32}
         min={0}
-        max={3000}
-        bands={[
-          { label: "BAJO", min: 0, color: "gray" },
-          { label: "ALTO", min: 1226, color: "green" },
-        ]}
-        activeBand="BAJO"
-        valueLabel="$300"
-        tickFormat={(n) => (n === 0 ? "" : `$${n}`)}
+        max={100}
+        bands={RECOMPRA_BANDS}
+        activeBand="MEDIA"
       />,
     );
-    expect(screen.queryByText("$0")).not.toBeInTheDocument();
-    expect(screen.getByText("$1226")).toBeInTheDocument();
-    expect(screen.getByText("$3000")).toBeInTheDocument();
+    // The outer aria-label div is the meter; it renders without text (no labels/ticks)
+    expect(screen.getByLabelText("Medidor MEDIA")).toBeInTheDocument();
+    // No text nodes from old labels/ticks
+    expect(screen.queryByText("MEDIA")).not.toBeInTheDocument();
+    expect(screen.queryByText("22")).not.toBeInTheDocument();
+  });
+
+  it("does not render band labels or tick values", () => {
+    render(
+      <ScoreMeter
+        value={32}
+        min={0}
+        max={100}
+        bands={RECOMPRA_BANDS}
+        activeBand="MEDIA"
+      />,
+    );
+    expect(screen.queryByText("BAJA")).not.toBeInTheDocument();
+    expect(screen.queryByText("ALTA")).not.toBeInTheDocument();
+    expect(screen.queryByText("0")).not.toBeInTheDocument();
+    expect(screen.queryByText("100")).not.toBeInTheDocument();
   });
 });
