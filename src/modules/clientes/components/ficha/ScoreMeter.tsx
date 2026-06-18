@@ -25,41 +25,44 @@ export interface ScoreMeterProps {
   delayMs?: number; // stagger the entrance animation
 }
 
+// Idle zones are deliberately legible (~/35) so the whole scale reads as a band
+// of colors, not just the active segment; the active zone goes near-solid (/70)
+// and adds a top accent + the marker so it still clearly dominates.
 const COLOR: Record<
   BandColor,
   { idle: string; active: string; accent: string; text: string; marker: string }
 > = {
   green: {
-    idle: "bg-green-500/10",
-    active: "bg-green-500/25",
+    idle: "bg-green-500/35",
+    active: "bg-green-500/70",
     accent: "bg-green-500",
     text: "text-green-500",
     marker: "bg-green-500",
   },
   amber: {
-    idle: "bg-amber-500/10",
-    active: "bg-amber-500/25",
+    idle: "bg-amber-500/35",
+    active: "bg-amber-500/70",
     accent: "bg-amber-500",
     text: "text-amber-500",
     marker: "bg-amber-500",
   },
   orange: {
-    idle: "bg-orange-500/10",
-    active: "bg-orange-500/25",
+    idle: "bg-orange-500/35",
+    active: "bg-orange-500/70",
     accent: "bg-orange-500",
     text: "text-orange-500",
     marker: "bg-orange-500",
   },
   red: {
-    idle: "bg-red-500/10",
-    active: "bg-red-500/25",
+    idle: "bg-red-500/35",
+    active: "bg-red-500/70",
     accent: "bg-red-500",
     text: "text-red-500",
     marker: "bg-red-500",
   },
   gray: {
-    idle: "bg-gray-500/10",
-    active: "bg-gray-500/20",
+    idle: "bg-gray-500/30",
+    active: "bg-gray-400/55",
     accent: "bg-gray-400",
     text: "text-gray-400",
     marker: "bg-gray-400",
@@ -117,7 +120,7 @@ export function ScoreMeter({
       </div>
 
       {/* Track */}
-      <div className="relative flex h-[7px] w-full overflow-hidden rounded-full bg-muted/30">
+      <div className="relative flex h-[9px] w-full overflow-hidden rounded-full bg-muted/30">
         {zones.map((z) => {
           const c = COLOR[z.color];
           return (
