@@ -62,7 +62,9 @@ export class HttpClientesAdapter implements ClientesPort {
 
       return {
         items: data.items.map(dtoToCliente),
-        nextCursor: data.next_cursor,
+        // El backend omite next_cursor en la última página (json omitempty),
+        // así que un campo ausente significa "no hay más" → "".
+        nextCursor: data.next_cursor ?? "",
         facets: data.facets ?? {},
       };
     } catch (e) {
@@ -107,7 +109,8 @@ export class HttpClientesAdapter implements ClientesPort {
 
       return {
         items: data.items.map(dtoToVentaCliente),
-        nextCursor: data.next_cursor,
+        // Campo ausente (omitempty en la última página) ⇒ no hay más ⇒ "".
+        nextCursor: data.next_cursor ?? "",
       };
     } catch (e) {
       throw apperrorToDomainError(e);

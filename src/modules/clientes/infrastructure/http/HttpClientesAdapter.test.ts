@@ -205,3 +205,28 @@ describe("HttpClientesAdapter.buscarClientes facets", () => {
     expect(result.facets).toEqual({});
   });
 });
+
+// Regression: the backend omits next_cursor on the last page (json omitempty).
+// A missing field must map to "" (no more) — not undefined, which would make
+// `hasMore = nextCursor !== ""` wrongly true and show "Cargar más" forever.
+describe("HttpClientesAdapter cursor: omitted next_cursor → empty string", () => {
+  function clientReturning(data: unknown): AxiosInstance {
+    return { get: vi.fn().mockResolvedValue({ data }) } as unknown as AxiosInstance;
+  }
+
+  it("listarVentas maps absent next_cursor to ''", async () => {
+    const adapter = new HttpClientesAdapter(clientReturning({ items: [] }));
+
+    const result = await adapter.listarVentas({ clienteId: 1 });
+
+    expect(result.nextCursor).toBe("");
+  });
+
+  it("buscarClientes maps absent next_cursor to ''", async () => {
+    const adapter = new HttpClientesAdapter(clientReturning({ items: [] }));
+
+    const result = await adapter.buscarClientes({});
+
+    expect(result.nextCursor).toBe("");
+  });
+});

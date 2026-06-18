@@ -9,7 +9,8 @@
 
 export type ListResponseDTO<T> = {
   items: T[];
-  next_cursor: string;
+  // Ausente en la última página (el backend usa json omitempty).
+  next_cursor?: string;
 };
 
 // ─── GET /clientes ───────────────────────────────────────────────────────────
