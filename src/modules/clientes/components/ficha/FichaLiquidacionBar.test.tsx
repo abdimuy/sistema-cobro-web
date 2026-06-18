@@ -186,3 +186,21 @@ describe("FichaLiquidacionBar — edge percentages", () => {
     expect(screen.getByText("100%")).toBeInTheDocument();
   });
 });
+
+// ─── Editorial styling ────────────────────────────────────────────────────────
+
+describe("FichaLiquidacionBar — editorial styling", () => {
+  it("renders the percentage in a serif element", () => {
+    render(
+      <FichaLiquidacionBar resumen={makeResumen({ pctLiquidado: "70.00" })} />,
+    );
+    const pctEl = screen.getByText("70%");
+    expect(pctEl).toHaveClass("font-serif");
+  });
+
+  it("bar track has class h-3 (thicker bar)", () => {
+    render(<FichaLiquidacionBar resumen={makeResumen()} />);
+    const track = screen.getByRole("progressbar");
+    expect(track).toHaveClass("h-3");
+  });
+});

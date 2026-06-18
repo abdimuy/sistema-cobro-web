@@ -24,40 +24,43 @@ export function FichaLiquidacionBar({ resumen }: Props) {
 
   return (
     <section className="border-b border-border/60 px-8 py-8">
-    <div className="flex flex-col gap-2 max-w-lg" aria-label="Liquidación de la cuenta">
-      {/* Header: label + percentage */}
-      <div className="flex items-baseline justify-between">
+      <div
+        className="flex flex-col gap-3 max-w-[520px]"
+        aria-label="Liquidación de la cuenta"
+      >
+        {/* Label */}
         <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-muted-foreground">
           Liquidación de la cuenta
         </span>
-        <span className="font-mono text-xs tabular-nums text-foreground">
+
+        {/* Big percentage number */}
+        <span className="font-serif text-[28px] leading-none tabular-nums text-foreground">
           {pctLabel}
         </span>
-      </div>
 
-      {/* Track + fill */}
-      <div
-        role="progressbar"
-        aria-valuenow={pct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`Liquidación: ${pctLabel}`}
-        className="h-2 w-full overflow-hidden rounded-full bg-muted"
-      >
+        {/* Track + fill */}
         <div
-          className="h-full rounded-full bg-green-600 dark:bg-green-500 transition-[width] duration-500 ease-out"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+          role="progressbar"
+          aria-valuenow={pct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`Liquidación: ${pctLabel}`}
+          className="h-3 w-full overflow-hidden rounded-full bg-muted"
+        >
+          <div
+            className="h-full rounded-full bg-green-600 dark:bg-green-500 transition-[width] duration-500 ease-out"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
 
-      {/* Footer: paid / balance / total */}
-      <div className="flex justify-between font-mono text-[10px] tracking-[0.06em] text-muted-foreground">
-        <span>pagado {formatMoney(totalAbonado)}</span>
-        <span>
-          saldo {formatMoney(saldo)} de {formatMoney(totalComprado)}
-        </span>
+        {/* Footer: paid / balance / total */}
+        <div className="flex justify-between font-mono text-[10px] tracking-[0.06em] text-muted-foreground/70">
+          <span>pagado {formatMoney(totalAbonado)}</span>
+          <span>
+            saldo {formatMoney(saldo)} de {formatMoney(totalComprado)}
+          </span>
+        </div>
       </div>
-    </div>
     </section>
   );
 }
