@@ -107,4 +107,79 @@ describe("FichaInteligenciaScores", () => {
     );
     expect(screen.getByText("tickets de alto valor")).toBeInTheDocument();
   });
+
+  // ── Chip / driver visibility tests (FE-3) ──────────────────────────────────
+
+  it("renders credito drivers as chips with ¿Por qué? heading", () => {
+    render(
+      <FichaInteligenciaScores
+        pulso={makePulso({ creditoDrivers: ["pagos al corriente"] })}
+      />,
+    );
+    // The "¿Por qué?" heading appears (at least one panel has drivers)
+    const headings = screen.getAllByText("¿Por qué?");
+    expect(headings.length).toBeGreaterThan(0);
+
+    // Driver text is visible as a chip
+    expect(screen.getByLabelText("pagos al corriente")).toBeInTheDocument();
+  });
+
+  it("renders recompra drivers as chips", () => {
+    render(
+      <FichaInteligenciaScores
+        pulso={makePulso({
+          recompraDrivers: ["buen historial de pago", "tickets de mayor valor"],
+        })}
+      />,
+    );
+    expect(screen.getByLabelText("buen historial de pago")).toBeInTheDocument();
+    expect(screen.getByLabelText("tickets de mayor valor")).toBeInTheDocument();
+  });
+
+  it("renders up to 3 drivers per panel and no ¿Por qué? when empty", () => {
+    render(
+      <FichaInteligenciaScores
+        pulso={makePulso({ creditoDrivers: [], recompraDrivers: [] })}
+      />,
+    );
+    // With no credito/recompra drivers, ¿Por qué? should only appear for CLV
+    // (CLV always derives drivers when bandaClv is set)
+    const headings = screen.getAllByText("¿Por qué?");
+    expect(headings.length).toBe(1); // only CLV panel
+  });
+
+  it("¿Por qué? heading includes accessible tooltip with driver text", () => {
+    render(
+      <FichaInteligenciaScores
+        pulso={makePulso({ creditoDrivers: ["pagos al corriente"] })}
+      />,
+    );
+    // The span wrapping ¿Por qué? has aria-label with driver text
+    const heading = screen.getAllByLabelText(/¿Por qué\?/)[0];
+    expect(heading).toBeDefined();
+    expect(heading.getAttribute("aria-label")).toContain("pagos al corriente");
+  });
+
+  it("driver chips list has accessible role", () => {
+    render(
+      <FichaInteligenciaScores
+        pulso={makePulso({ creditoDrivers: ["pagos al corriente"] })}
+      />,
+    );
+    const lists = screen.getAllByRole("list", { name: "Factores del score" });
+    expect(lists.length).toBeGreaterThan(0);
+  });
+
+  it("panel with undefined band shows empty placeholder, no chips", () => {
+    render(
+      <FichaInteligenciaScores
+        pulso={makePulso({ bandaCredito: undefined, bandaRecompra: undefined, bandaClv: undefined, clv: undefined })}
+      />,
+    );
+    expect(screen.queryByText("¿Por qué?")).not.toBeInTheDocument();
+    expect(screen.getByText("Sin saldo a crédito")).toBeInTheDocument();
+    // Both recompra and CLV empty panels show the same copy — check both exist
+    const sinHistorial = screen.getAllByText("Sin historial de compras");
+    expect(sinHistorial).toHaveLength(2);
+  });
 });

@@ -1,3 +1,4 @@
+import { Info } from "lucide-react";
 import { ScoreMeter, type MeterBand } from "./ScoreMeter";
 import { clvDrivers } from "./clvDrivers";
 import { formatMoney, formatMoneyShort } from "../lib/format";
@@ -70,23 +71,71 @@ const CLV_STMT: Record<string, Statement> = {
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
-function PorQue({ drivers }: { drivers: readonly string[] }) {
-  if (drivers.length === 0) return null;
+// Accent dot color per score dimension — purely decorative, not load-bearing.
+type AccentColor = "red" | "orange" | "amber" | "green" | "gray";
+
+const ACCENT_DOT: Record<AccentColor, string> = {
+  green: "bg-green-500",
+  amber: "bg-amber-500",
+  orange: "bg-orange-500",
+  red: "bg-red-500",
+  gray: "bg-gray-400",
+};
+
+function DriverChip({
+  label,
+  accent,
+}: {
+  label: string;
+  accent: AccentColor;
+}) {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-        Por qué
+    <span
+      className="inline-flex items-center gap-1.5 rounded-sm border border-border/50 bg-muted/40 px-2 py-0.5 font-mono text-[10px] text-muted-foreground"
+      aria-label={label}
+    >
+      <span
+        className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${ACCENT_DOT[accent]}`}
+        aria-hidden="true"
+      />
+      {label}
+    </span>
+  );
+}
+
+function PorQue({
+  drivers,
+  accent,
+}: {
+  drivers: readonly string[];
+  accent: AccentColor;
+}) {
+  if (drivers.length === 0) return null;
+  const tooltip = drivers.join("; ");
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span
+        className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+        aria-label={`¿Por qué? ${tooltip}`}
+      >
+        <Info
+          size={10}
+          aria-hidden="true"
+          className="shrink-0 text-muted-foreground/60"
+        />
+        ¿Por qué?
       </span>
-      <ul className="space-y-0.5 pl-3">
+      <div
+        className="flex flex-wrap gap-1"
+        role="list"
+        aria-label="Factores del score"
+      >
         {drivers.map((driver, i) => (
-          <li
-            key={i}
-            className="font-mono text-[11px] text-muted-foreground before:mr-1.5 before:text-muted-foreground/50 before:content-['·']"
-          >
-            {driver}
-          </li>
+          <div key={i} role="listitem">
+            <DriverChip label={driver} accent={accent} />
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
@@ -186,7 +235,18 @@ export function FichaInteligenciaScores({ pulso }: Props) {
               tickFormat={scoreTick}
               delayMs={0}
             />
-            <PorQue drivers={pulso.creditoDrivers ?? []} />
+            <PorQue
+              drivers={pulso.creditoDrivers ?? []}
+              accent={
+                pulso.bandaCredito === "BAJO"
+                  ? "green"
+                  : pulso.bandaCredito === "MEDIO"
+                    ? "amber"
+                    : pulso.bandaCredito === "ALTO"
+                      ? "orange"
+                      : "red"
+              }
+            />
           </Panel>
         ) : (
           <EmptyPanel
@@ -213,7 +273,16 @@ export function FichaInteligenciaScores({ pulso }: Props) {
               tickFormat={scoreTick}
               delayMs={120}
             />
-            <PorQue drivers={pulso.recompraDrivers ?? []} />
+            <PorQue
+              drivers={pulso.recompraDrivers ?? []}
+              accent={
+                pulso.bandaRecompra === "ALTA"
+                  ? "green"
+                  : pulso.bandaRecompra === "MEDIA"
+                    ? "amber"
+                    : "gray"
+              }
+            />
           </Panel>
         ) : (
           <EmptyPanel
@@ -240,7 +309,16 @@ export function FichaInteligenciaScores({ pulso }: Props) {
               tickFormat={clvTick}
               delayMs={240}
             />
-            <PorQue drivers={clvDrivers(pulso)} />
+            <PorQue
+              drivers={clvDrivers(pulso)}
+              accent={
+                pulso.bandaClv === "ALTO"
+                  ? "green"
+                  : pulso.bandaClv === "MEDIO"
+                    ? "amber"
+                    : "gray"
+              }
+            />
           </Panel>
         ) : (
           <EmptyPanel
