@@ -120,7 +120,7 @@ export function ScoreMeter({
       </div>
 
       {/* Track */}
-      <div className="relative flex h-[9px] w-full overflow-hidden rounded-full bg-muted/30">
+      <div className="relative flex h-[7px] w-full overflow-hidden rounded-full bg-muted/30">
         {zones.map((z) => {
           const c = COLOR[z.color];
           return (
