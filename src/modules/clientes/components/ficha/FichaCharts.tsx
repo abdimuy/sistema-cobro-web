@@ -44,6 +44,25 @@ const AXIS_STYLE = {
   fill: "hsl(var(--muted-foreground))",
 };
 
+// Series colors. Green = money in (abonos), consistent with the app's green
+// semantics; readable on both light and dark themes (green-600 ≥ 3:1 on each).
+// "Comprado" uses the neutral muted token so the accent stays reserved for abonos.
+const COLOR_ABONADO = "#16a34a";
+const COLOR_COMPRADO = "hsl(var(--muted-foreground))";
+
+// LegendDot is a single colored-dot + label entry for an inline chart legend.
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
+      <span
+        className="h-2 w-2 shrink-0 rounded-full"
+        style={{ backgroundColor: color }}
+      />
+      {label}
+    </span>
+  );
+}
+
 interface TooltipPayloadEntry {
   name?: string | number;
   value?: number;
@@ -134,7 +153,7 @@ function AbonosChart({ data }: AbonosChartProps) {
         <Bar
           dataKey="monto"
           name="Abonado"
-          fill="hsl(var(--primary))"
+          fill={COLOR_ABONADO}
           radius={[3, 3, 0, 0]}
           maxBarSize={40}
         />
@@ -202,14 +221,14 @@ function CompradoAbonadoChart({ data }: CompradoAbonadoChartProps) {
         <Bar
           dataKey="comprado"
           name="Comprado"
-          fill="hsl(var(--primary))"
+          fill={COLOR_COMPRADO}
           radius={[3, 3, 0, 0]}
           maxBarSize={24}
         />
         <Bar
           dataKey="abonado"
           name="Abonado"
-          fill="hsl(var(--muted-foreground) / 0.4)"
+          fill={COLOR_ABONADO}
           radius={[3, 3, 0, 0]}
           maxBarSize={24}
         />
@@ -225,19 +244,27 @@ function CompradoAbonadoChart({ data }: CompradoAbonadoChartProps) {
 interface ChartSectionProps {
   title: string;
   caption: string;
+  legend?: React.ReactNode;
   children: React.ReactNode;
 }
 
-function ChartSection({ title, caption, children }: ChartSectionProps) {
+function ChartSection({ title, caption, legend, children }: ChartSectionProps) {
   return (
     <div className="min-w-0 flex-1">
-      <div className="mb-4">
-        <h3 className="font-serif text-base font-normal text-foreground">
-          {title}
-        </h3>
-        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
-          {caption}
-        </p>
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h3 className="font-serif text-base font-normal text-foreground">
+            {title}
+          </h3>
+          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
+            {caption}
+          </p>
+        </div>
+        {legend && (
+          <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 pt-1">
+            {legend}
+          </div>
+        )}
       </div>
       {children}
     </div>
@@ -261,12 +288,22 @@ export function FichaCharts({ abonosPorMes, compradoVsAbonado, isLoading = false
       aria-label="Gráficas de actividad"
     >
       <div className="flex flex-col gap-10 lg:flex-row lg:gap-12">
-        <ChartSection title="Abonos por mes" caption="historial de pagos">
+        <ChartSection
+          title="Abonos por mes"
+          caption="historial de pagos"
+          legend={<LegendDot color={COLOR_ABONADO} label="Abonado" />}
+        >
           <AbonosChart data={abonosPorMes} />
         </ChartSection>
         <ChartSection
           title="Comprado vs abonado"
           caption="comparativa mensual"
+          legend={
+            <>
+              <LegendDot color={COLOR_COMPRADO} label="Comprado" />
+              <LegendDot color={COLOR_ABONADO} label="Abonado" />
+            </>
+          }
         >
           <CompradoAbonadoChart data={compradoVsAbonado} />
         </ChartSection>

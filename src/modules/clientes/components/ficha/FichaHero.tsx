@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import ScoreBadge from "../badges/ScoreBadge";
 import SegmentoBadge from "../badges/SegmentoBadge";
@@ -8,88 +9,112 @@ interface Props {
   ficha: FichaCliente;
 }
 
+// Notes longer than this collapse to a few lines with a "ver más" toggle.
+const NOTA_MAX = 160;
+
+// NotaBlock renders the free-form client note as readable prose (sans-serif,
+// relaxed leading) inside a labelled block — NOT the uppercase-mono label
+// treatment, which made long notes unreadable. The original casing is kept
+// verbatim (Microsip stores codes/names uppercase; transforming would mangle them).
+function NotaBlock({ nota }: { nota: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = nota.length > NOTA_MAX;
+  const shown = !isLong || expanded ? nota : `${nota.slice(0, NOTA_MAX).trimEnd()}…`;
+
+  return (
+    <div className="max-w-2xl border-l-2 border-border pl-3">
+      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+        Nota
+      </p>
+      <p className="mt-1 font-sans text-[13px] leading-relaxed text-foreground/75">
+        {shown}
+        {isLong && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="ml-1.5 align-baseline font-mono text-[11px] uppercase tracking-wide text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
+          >
+            {expanded ? "ver menos" : "ver más"}
+          </button>
+        )}
+      </p>
+    </div>
+  );
+}
+
 export function FichaHero({ ficha }: Props) {
   const { pulso } = ficha;
+  const tieneSaldo = Number(ficha.resumen.saldo) > 0;
+  const direccion = [
+    ficha.direccion.calle,
+    ficha.direccion.colonia,
+    ficha.direccion.poblacion,
+    ficha.direccion.estado,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <section className="border-b border-border/60 px-8 py-10">
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
         {/* Left: identity */}
-        <div className="min-w-0 flex-1 space-y-3">
-          <h1
-            className={cn(
-              "font-serif text-[36px] font-normal leading-[1.1] tracking-tight text-foreground",
-            )}
-          >
-            {ficha.nombre}
-          </h1>
+        <div className="min-w-0 flex-1 space-y-4">
+          <div className="space-y-2">
+            <h1 className="font-serif text-[36px] font-normal leading-[1.1] tracking-tight text-foreground">
+              {ficha.nombre}
+            </h1>
 
-          {/* Mono metadata line */}
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-            Zona {ficha.zona}
-            {ficha.cobrador && ` · ${ficha.cobrador}`}
-            {` · #${ficha.clienteId}`}
-            {` · ${ficha.estatus}`}
-          </p>
+            {/* Structured metadata — estatus omitted (shown as a pill in the header) */}
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+              Zona {ficha.zona}
+              {ficha.cobrador && ` · ${ficha.cobrador}`}
+              {` · #${ficha.clienteId}`}
+            </p>
 
-          {/* Address */}
-          <p className="font-mono text-[11px] text-muted-foreground/70">
-            {[
-              ficha.direccion.calle,
-              ficha.direccion.colonia,
-              ficha.direccion.poblacion,
-              ficha.direccion.estado,
-            ]
-              .filter(Boolean)
-              .join(", ")}
-          </p>
-
-          {/* Límite + notas */}
-          <div className="flex flex-wrap gap-x-6 gap-y-1">
-            {ficha.limiteCredito && Number(ficha.limiteCredito) > 0 && (
-              <p className="font-mono text-[11px] text-muted-foreground/60">
-                Límite crédito{" "}
-                <span className="tabular-nums text-foreground/70">
-                  {formatMoney(ficha.limiteCredito)}
-                </span>
-              </p>
-            )}
-            {ficha.notas && (
-              <p className="font-mono text-[11px] text-muted-foreground/60 italic">
-                {ficha.notas}
+            {direccion && (
+              <p className="font-mono text-[11px] text-muted-foreground/70">
+                {direccion}
               </p>
             )}
           </div>
+
+          {ficha.limiteCredito && Number(ficha.limiteCredito) > 0 && (
+            <p className="font-mono text-[11px] text-muted-foreground/60">
+              Límite crédito{" "}
+              <span className="tabular-nums text-foreground/70">
+                {formatMoney(ficha.limiteCredito)}
+              </span>
+            </p>
+          )}
+
+          {ficha.notas && <NotaBlock nota={ficha.notas} />}
         </div>
 
-        {/* Right: Saldo + Score */}
+        {/* Right: Saldo + Reactivación */}
         <div className="flex shrink-0 flex-col gap-6 lg:items-end">
-          {/* Saldo big number */}
+          {/* Saldo — de-emphasised when zero (a liquidated client's $0 is not the headline) */}
           <div className="lg:text-right">
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
               SALDO
             </p>
             <p
               className={cn(
-                "tabular-nums font-serif text-[44px] font-normal leading-none",
-                Number(ficha.resumen.saldo) > 0
-                  ? "text-foreground"
-                  : "text-muted-foreground/50",
+                "tabular-nums font-serif font-normal leading-none",
+                tieneSaldo
+                  ? "text-[44px] text-foreground"
+                  : "text-2xl text-muted-foreground/50",
               )}
             >
               {formatMoney(ficha.resumen.saldo)}
             </p>
           </div>
 
-          {/* Score + Segmento */}
+          {/* Reactivación score + segmento (the actionable signals for this client) */}
           {pulso ? (
             <div className="flex flex-col items-start gap-2 lg:items-end">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                  Score
-                </span>
-                <span className="tabular-nums font-serif text-2xl font-normal text-foreground">
-                  {pulso.score}
+                  Reactivación
                 </span>
                 <ScoreBadge score={pulso.score} tienePulso />
               </div>
