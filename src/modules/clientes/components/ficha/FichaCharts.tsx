@@ -9,7 +9,6 @@ import {
 } from "recharts";
 import { formatMoney } from "../lib/format";
 import type {
-  PuntoMensual,
   PuntoCompradoAbonado,
 } from "../../domain/entities/FichaCliente";
 
@@ -92,73 +91,6 @@ function CustomTooltipMXN({ active, payload, label }: CustomTooltipProps) {
         </p>
       ))}
     </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Abonos por mes chart
-// ---------------------------------------------------------------------------
-
-interface AbonosChartProps {
-  data: PuntoMensual[];
-}
-
-function AbonosChart({ data }: AbonosChartProps) {
-  const chartData = data.map((d) => ({
-    label: monthLabel(d.anio, d.mes),
-    monto: Number(d.monto),
-  }));
-
-  if (chartData.length < 2) {
-    return (
-      <div className="flex h-[240px] items-center justify-center">
-        <p className="font-mono text-[11px] text-muted-foreground/60">
-          Sin datos suficientes
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-      <BarChart
-        data={chartData}
-        margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-      >
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="hsl(var(--border))"
-          opacity={0.5}
-          vertical={false}
-        />
-        <XAxis
-          dataKey="label"
-          tick={AXIS_STYLE}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          tick={AXIS_STYLE}
-          axisLine={false}
-          tickLine={false}
-          width={56}
-          tickFormatter={(v: number) =>
-            new Intl.NumberFormat("es-MX", {
-              notation: "compact",
-              maximumFractionDigits: 0,
-            }).format(v)
-          }
-        />
-        <Tooltip content={<CustomTooltipMXN />} cursor={{ opacity: 0.08 }} />
-        <Bar
-          dataKey="monto"
-          name="Abonado"
-          fill={COLOR_ABONADO}
-          radius={[3, 3, 0, 0]}
-          maxBarSize={40}
-        />
-      </BarChart>
-    </ResponsiveContainer>
   );
 }
 
@@ -276,38 +208,28 @@ function ChartSection({ title, caption, legend, children }: ChartSectionProps) {
 // ---------------------------------------------------------------------------
 
 interface Props {
-  abonosPorMes: PuntoMensual[];
   compradoVsAbonado: PuntoCompradoAbonado[];
   isLoading?: boolean;
 }
 
-export function FichaCharts({ abonosPorMes, compradoVsAbonado, isLoading = false }: Props) {
+export function FichaCharts({ compradoVsAbonado, isLoading = false }: Props) {
   return (
     <section
       className={`border-b border-border/60 px-8 py-8${isLoading ? " opacity-50 transition-opacity" : ""}`}
       aria-label="Gráficas de actividad"
     >
-      <div className="flex flex-col gap-10 lg:flex-row lg:gap-12">
-        <ChartSection
-          title="Abonos por mes"
-          caption="historial de pagos"
-          legend={<LegendDot color={COLOR_ABONADO} label="Abonado" />}
-        >
-          <AbonosChart data={abonosPorMes} />
-        </ChartSection>
-        <ChartSection
-          title="Comprado vs abonado"
-          caption="comparativa mensual"
-          legend={
-            <>
-              <LegendDot color={COLOR_COMPRADO} label="Comprado" />
-              <LegendDot color={COLOR_ABONADO} label="Abonado" />
-            </>
-          }
-        >
-          <CompradoAbonadoChart data={compradoVsAbonado} />
-        </ChartSection>
-      </div>
+      <ChartSection
+        title="Comprado vs abonado"
+        caption="comparativa mensual"
+        legend={
+          <>
+            <LegendDot color={COLOR_COMPRADO} label="Comprado" />
+            <LegendDot color={COLOR_ABONADO} label="Abonado" />
+          </>
+        }
+      >
+        <CompradoAbonadoChart data={compradoVsAbonado} />
+      </ChartSection>
     </section>
   );
 }

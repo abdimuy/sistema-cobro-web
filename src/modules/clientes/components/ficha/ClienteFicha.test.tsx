@@ -123,14 +123,12 @@ describe("ClienteFicha", () => {
     );
   });
 
-  it("renders chart section titles", async () => {
+  it("renders chart section title", async () => {
     renderFicha(port);
     await waitFor(() =>
-      expect(screen.getByText("Abonos por mes")).toBeInTheDocument(),
+      expect(screen.getByText("Comprado vs abonado")).toBeInTheDocument(),
     );
-    expect(
-      screen.getByText("Comprado vs abonado"),
-    ).toBeInTheDocument();
+    expect(screen.queryByText("Abonos por mes")).not.toBeInTheDocument();
   });
 
   it("renders pulso card with segmento and NBP when pulso present", async () => {

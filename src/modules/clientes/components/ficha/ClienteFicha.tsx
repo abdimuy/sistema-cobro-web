@@ -93,7 +93,6 @@ export function ClienteFicha({ clienteId }: Props) {
       <FichaKpis resumen={ficha.resumen} isLoading={isLoading} />
       <FichaLiquidacionBar resumen={ficha.resumen} />
       <FichaCharts
-        abonosPorMes={ficha.resumen.abonosPorMes}
         compradoVsAbonado={ficha.resumen.compradoVsAbonado}
         isLoading={isLoading}
       />
