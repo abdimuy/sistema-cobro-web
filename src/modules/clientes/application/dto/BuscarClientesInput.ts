@@ -10,6 +10,8 @@ export type BuscarClientesInput = {
   readonly scoreMin?: number;
   readonly tier?: string; // filter by tier_riesgo
   readonly bandaCredito?: string; // filter by banda_credito
+  readonly bandaRecompra?: string; // filter by banda_recompra
+  readonly bandaClv?: string; // filter by banda_clv
   readonly sortBy?: string;
   readonly sortOrder?: "asc" | "desc";
   readonly cursor?: string;

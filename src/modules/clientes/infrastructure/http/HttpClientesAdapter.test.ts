@@ -44,6 +44,68 @@ describe("HttpClientesAdapter.buscarClientes query params", () => {
     expect("sort_by" in config.params).toBe(false);
     expect("sort_order" in config.params).toBe(false);
   });
+
+  it("sends sort_by=score_recompra when sorting by recompra", async () => {
+    const { client, get } = makeStubClient();
+    const adapter = new HttpClientesAdapter(client);
+
+    await adapter.buscarClientes({ sortBy: "score_recompra", sortOrder: "desc" });
+
+    const [, config] = get.mock.calls[0];
+    expect(config.params.sort_by).toBe("score_recompra");
+    expect(config.params.sort_order).toBe("desc");
+  });
+
+  it("sends sort_by=clv when sorting by CLV", async () => {
+    const { client, get } = makeStubClient();
+    const adapter = new HttpClientesAdapter(client);
+
+    await adapter.buscarClientes({ sortBy: "clv", sortOrder: "asc" });
+
+    const [, config] = get.mock.calls[0];
+    expect(config.params.sort_by).toBe("clv");
+    expect(config.params.sort_order).toBe("asc");
+  });
+
+  it("sends banda_recompra when provided", async () => {
+    const { client, get } = makeStubClient();
+    const adapter = new HttpClientesAdapter(client);
+
+    await adapter.buscarClientes({ bandaRecompra: "ALTA" });
+
+    const [, config] = get.mock.calls[0];
+    expect(config.params.banda_recompra).toBe("ALTA");
+  });
+
+  it("omits banda_recompra when not provided", async () => {
+    const { client, get } = makeStubClient();
+    const adapter = new HttpClientesAdapter(client);
+
+    await adapter.buscarClientes({ q: "garcia" });
+
+    const [, config] = get.mock.calls[0];
+    expect("banda_recompra" in config.params).toBe(false);
+  });
+
+  it("sends banda_clv when provided", async () => {
+    const { client, get } = makeStubClient();
+    const adapter = new HttpClientesAdapter(client);
+
+    await adapter.buscarClientes({ bandaClv: "ALTO" });
+
+    const [, config] = get.mock.calls[0];
+    expect(config.params.banda_clv).toBe("ALTO");
+  });
+
+  it("omits banda_clv when not provided", async () => {
+    const { client, get } = makeStubClient();
+    const adapter = new HttpClientesAdapter(client);
+
+    await adapter.buscarClientes({ q: "garcia" });
+
+    const [, config] = get.mock.calls[0];
+    expect("banda_clv" in config.params).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -8,6 +8,8 @@ import EstadoPagoBadge from "./badges/EstadoPagoBadge";
 import RecenciaBadge from "./badges/RecenciaBadge";
 import TierRiesgoBadge from "./badges/TierRiesgoBadge";
 import BandaCreditoBadge from "./badges/BandaCreditoBadge";
+import BandaRecompraBadge from "./badges/BandaRecompraBadge";
+import BandaClvBadge from "./badges/BandaClvBadge";
 import { formatMoney } from "../../winback/components/lib/format";
 
 interface ClientesTableRowProps {
@@ -73,6 +75,20 @@ function renderCell(cliente: Cliente, columnId: ColumnId): React.ReactNode {
     case "bandaCredito":
       return c.bandaCredito ? (
         <BandaCreditoBadge value={c.bandaCredito} />
+      ) : (
+        "—"
+      );
+
+    case "bandaRecompra":
+      return c.bandaRecompra ? (
+        <BandaRecompraBadge value={c.bandaRecompra} />
+      ) : (
+        "—"
+      );
+
+    case "bandaClv":
+      return c.bandaClv ? (
+        <BandaClvBadge banda={c.bandaClv} clv={c.clv} />
       ) : (
         "—"
       );

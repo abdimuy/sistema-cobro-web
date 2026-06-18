@@ -22,6 +22,8 @@ export type ColumnId =
   | "segmento"
   | "tierRiesgo"
   | "bandaCredito"
+  | "bandaRecompra"
+  | "bandaClv"
   | "saldo"
   | "recencia"
   | "direccion"
@@ -42,7 +44,7 @@ export interface ColumnDef {
 export const COLUMNS: ColumnDef[] = [
   {
     id: "score",
-    label: "Score",
+    label: "Reactivación",
     defaultVisible: true,
     sortable: true,
     sortKey: "score",
@@ -115,6 +117,26 @@ export const COLUMNS: ColumnDef[] = [
     sortKey: "score_credito",
     align: "left",
     width: "w-[160px]",
+    group: "Pulso",
+  },
+  {
+    id: "bandaRecompra",
+    label: "Recompra",
+    defaultVisible: false,
+    sortable: true,
+    sortKey: "score_recompra",
+    align: "left",
+    width: "w-[160px]",
+    group: "Pulso",
+  },
+  {
+    id: "bandaClv",
+    label: "CLV",
+    defaultVisible: false,
+    sortable: true,
+    sortKey: "clv",
+    align: "left",
+    width: "w-[170px]",
     group: "Pulso",
   },
   {
@@ -207,6 +229,8 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ColumnId, number> = {
   segmento: 170,
   tierRiesgo: 130,
   bandaCredito: 160,
+  bandaRecompra: 160,
+  bandaClv: 170,
   saldo: 110,
   recencia: 100,
   direccion: 200,

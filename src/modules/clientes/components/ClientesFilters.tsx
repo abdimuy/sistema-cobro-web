@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Filter, X, Tag, MapPin, BarChart3, Wallet, Users, AlertTriangle, CreditCard } from "lucide-react";
+import { Filter, X, Tag, MapPin, BarChart3, Wallet, Users, AlertTriangle, CreditCard, RefreshCw, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,6 +27,8 @@ export interface FilterState {
   estadoPago?: string;
   tierRiesgo?: string;
   bandaCredito?: string;
+  bandaRecompra?: string;
+  bandaClv?: string;
   conSaldo?: boolean;
   scoreMin?: number;
   zonaInput?: string;    // Phase 1: free-text, no catalog yet
@@ -72,6 +74,20 @@ const BANDA_CREDITO_LABELS: Record<string, string> = {
 };
 const BANDA_CREDITO_ORDER = ["BAJO", "MEDIO", "ALTO", "CRITICO"] as const;
 
+const BANDA_RECOMPRA_LABELS: Record<string, string> = {
+  ALTA: "Recompra alta",
+  MEDIA: "Recompra media",
+  BAJA: "Recompra baja",
+};
+const BANDA_RECOMPRA_ORDER = ["ALTA", "MEDIA", "BAJA"] as const;
+
+const BANDA_CLV_LABELS: Record<string, string> = {
+  ALTO: "CLV alto",
+  MEDIO: "CLV medio",
+  BAJO: "CLV bajo",
+};
+const BANDA_CLV_ORDER = ["ALTO", "MEDIO", "BAJO"] as const;
+
 const SCORE_OPTIONS: { value: number | undefined; label: string }[] = [
   { value: undefined, label: "Cualquiera" },
   { value: 30, label: "30+" },
@@ -87,6 +103,8 @@ function countActiveFilters(state: Omit<ClientesFiltersProps, "onChange" | "clas
   if (state.estadoPago) count++;
   if (state.tierRiesgo) count++;
   if (state.bandaCredito) count++;
+  if (state.bandaRecompra) count++;
+  if (state.bandaClv) count++;
   if (state.conSaldo) count++;
   if (state.scoreMin !== undefined) count++;
   if (state.zonaInput) count++;
@@ -99,6 +117,8 @@ export function ClientesFilters({
   estadoPago,
   tierRiesgo,
   bandaCredito,
+  bandaRecompra,
+  bandaClv,
   conSaldo,
   scoreMin,
   zonaInput,
@@ -114,6 +134,8 @@ export function ClientesFilters({
     estadoPago,
     tierRiesgo,
     bandaCredito,
+    bandaRecompra,
+    bandaClv,
     conSaldo,
     scoreMin,
     zonaInput,
@@ -126,6 +148,8 @@ export function ClientesFilters({
       estadoPago: undefined,
       tierRiesgo: undefined,
       bandaCredito: undefined,
+      bandaRecompra: undefined,
+      bandaClv: undefined,
       conSaldo: undefined,
       scoreMin: undefined,
       zonaInput: undefined,
@@ -302,6 +326,74 @@ export function ClientesFilters({
                 return (
                   <SelectItem key={val} value={val}>
                     <span>{BANDA_CREDITO_LABELS[val]}</span>
+                    {count !== undefined && (
+                      <span className="ml-1 text-[10px] text-muted-foreground tabular-nums">
+                        ({count.toLocaleString("es-MX")})
+                      </span>
+                    )}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Recompra */}
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <RefreshCw className="h-3 w-3" />
+            Recompra
+          </Label>
+          <Select
+            value={bandaRecompra ?? ALL_VALUE}
+            onValueChange={(v) =>
+              onChange({ bandaRecompra: v === ALL_VALUE ? undefined : v })
+            }
+          >
+            <SelectTrigger className="h-8 text-xs border-border/60">
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_VALUE}>Todos</SelectItem>
+              {BANDA_RECOMPRA_ORDER.map((val) => {
+                const count = facets?.["banda_recompra"]?.[val];
+                return (
+                  <SelectItem key={val} value={val}>
+                    <span>{BANDA_RECOMPRA_LABELS[val]}</span>
+                    {count !== undefined && (
+                      <span className="ml-1 text-[10px] text-muted-foreground tabular-nums">
+                        ({count.toLocaleString("es-MX")})
+                      </span>
+                    )}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* CLV */}
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <TrendingUp className="h-3 w-3" />
+            CLV
+          </Label>
+          <Select
+            value={bandaClv ?? ALL_VALUE}
+            onValueChange={(v) =>
+              onChange({ bandaClv: v === ALL_VALUE ? undefined : v })
+            }
+          >
+            <SelectTrigger className="h-8 text-xs border-border/60">
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_VALUE}>Todos</SelectItem>
+              {BANDA_CLV_ORDER.map((val) => {
+                const count = facets?.["banda_clv"]?.[val];
+                return (
+                  <SelectItem key={val} value={val}>
+                    <span>{BANDA_CLV_LABELS[val]}</span>
                     {count !== undefined && (
                       <span className="ml-1 text-[10px] text-muted-foreground tabular-nums">
                         ({count.toLocaleString("es-MX")})

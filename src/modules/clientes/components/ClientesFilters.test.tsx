@@ -8,7 +8,8 @@ function noop() {
 }
 
 // Helper: open the Filtros popover, then open the nth combobox (0-based).
-// In the popover: [0] = Segmento, [1] = Estado pago, [2] = Riesgo, [3] = Score mínimo.
+// In the popover: [0] = Segmento, [1] = Estado pago, [2] = Riesgo, [3] = Riesgo crédito,
+// [4] = Recompra, [5] = CLV, [6] = Score mínimo.
 async function openFilterSelect(
   user: ReturnType<typeof userEvent.setup>,
   index: number,
@@ -136,5 +137,75 @@ describe("ClientesFilters facet counts", () => {
     await user.click(option);
 
     expect(onChange).toHaveBeenCalledWith({ tierRiesgo: "EN_RIESGO" });
+  });
+
+  it("shows banda_recompra facet counts in Recompra select", async () => {
+    const user = userEvent.setup();
+    render(
+      <ClientesFilters
+        onChange={noop}
+        facets={{
+          banda_recompra: { ALTA: 120, BAJA: 45 },
+        }}
+      />,
+    );
+
+    await openFilterSelect(user, 4); // Recompra select (index 4)
+
+    expect(await screen.findByText("(120)")).toBeInTheDocument();
+    expect(screen.getByText("(45)")).toBeInTheDocument();
+  });
+
+  it("bandaRecompra filter change is reported", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <ClientesFilters
+        onChange={onChange}
+        facets={{ banda_recompra: { MEDIA: 80 } }}
+      />,
+    );
+
+    await openFilterSelect(user, 4); // Recompra select
+
+    const option = await screen.findByText("Recompra media");
+    await user.click(option);
+
+    expect(onChange).toHaveBeenCalledWith({ bandaRecompra: "MEDIA" });
+  });
+
+  it("shows banda_clv facet counts in CLV select", async () => {
+    const user = userEvent.setup();
+    render(
+      <ClientesFilters
+        onChange={noop}
+        facets={{
+          banda_clv: { ALTO: 210, BAJO: 33 },
+        }}
+      />,
+    );
+
+    await openFilterSelect(user, 5); // CLV select (index 5)
+
+    expect(await screen.findByText("(210)")).toBeInTheDocument();
+    expect(screen.getByText("(33)")).toBeInTheDocument();
+  });
+
+  it("bandaClv filter change is reported", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <ClientesFilters
+        onChange={onChange}
+        facets={{ banda_clv: { MEDIO: 95 } }}
+      />,
+    );
+
+    await openFilterSelect(user, 5); // CLV select
+
+    const option = await screen.findByText("CLV medio");
+    await user.click(option);
+
+    expect(onChange).toHaveBeenCalledWith({ bandaClv: "MEDIO" });
   });
 });

@@ -43,6 +43,8 @@ export function ClientesScreen() {
   const [estadoPago, setEstadoPago] = useState<string | undefined>(undefined);
   const [tierRiesgo, setTierRiesgo] = useState<string | undefined>(undefined);
   const [bandaCredito, setBandaCredito] = useState<string | undefined>(undefined);
+  const [bandaRecompra, setBandaRecompra] = useState<string | undefined>(undefined);
+  const [bandaClv, setBandaClv] = useState<string | undefined>(undefined);
   const [conSaldo, setConSaldo] = useState<boolean | undefined>(undefined);
   const [scoreMin, setScoreMin] = useState<number | undefined>(undefined);
   const [zonaInput, setZonaInput] = useState<string | undefined>(undefined);
@@ -80,6 +82,8 @@ export function ClientesScreen() {
       estadoPago: estadoPago as EstadoPagoValue | undefined,
       tier: tierRiesgo,
       bandaCredito,
+      bandaRecompra,
+      bandaClv,
       conSaldo,
       scoreMin,
       zona: zonaInput ? parseInt(zonaInput, 10) || undefined : undefined,
@@ -97,6 +101,8 @@ export function ClientesScreen() {
     estadoPago ||
     tierRiesgo ||
     bandaCredito ||
+    bandaRecompra ||
+    bandaClv ||
     conSaldo ||
     scoreMin !== undefined ||
     zonaInput ||
@@ -110,6 +116,8 @@ export function ClientesScreen() {
     setEstadoPago(undefined);
     setTierRiesgo(undefined);
     setBandaCredito(undefined);
+    setBandaRecompra(undefined);
+    setBandaClv(undefined);
     setConSaldo(undefined);
     setScoreMin(undefined);
     setZonaInput(undefined);
@@ -122,6 +130,8 @@ export function ClientesScreen() {
     if ("estadoPago" in changes) setEstadoPago(changes.estadoPago);
     if ("tierRiesgo" in changes) setTierRiesgo(changes.tierRiesgo);
     if ("bandaCredito" in changes) setBandaCredito(changes.bandaCredito);
+    if ("bandaRecompra" in changes) setBandaRecompra(changes.bandaRecompra);
+    if ("bandaClv" in changes) setBandaClv(changes.bandaClv);
     if ("conSaldo" in changes) setConSaldo(changes.conSaldo);
     if ("scoreMin" in changes) setScoreMin(changes.scoreMin);
     if ("zonaInput" in changes) setZonaInput(changes.zonaInput);
@@ -224,6 +234,8 @@ export function ClientesScreen() {
           estadoPago={estadoPago}
           tierRiesgo={tierRiesgo}
           bandaCredito={bandaCredito}
+          bandaRecompra={bandaRecompra}
+          bandaClv={bandaClv}
           conSaldo={conSaldo}
           scoreMin={scoreMin}
           zonaInput={zonaInput}

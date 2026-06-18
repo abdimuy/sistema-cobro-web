@@ -48,6 +48,8 @@ export class HttpClientesAdapter implements ClientesPort {
       if (input.scoreMin !== undefined) params.score_min = input.scoreMin;
       if (input.tier !== undefined) params.tier = input.tier;
       if (input.bandaCredito !== undefined) params.banda_credito = input.bandaCredito;
+      if (input.bandaRecompra !== undefined) params.banda_recompra = input.bandaRecompra;
+      if (input.bandaClv !== undefined) params.banda_clv = input.bandaClv;
       if (input.sortBy !== undefined) params.sort_by = input.sortBy;
       if (input.sortOrder !== undefined) params.sort_order = input.sortOrder;
       if (input.cursor !== undefined) params.cursor = input.cursor;
