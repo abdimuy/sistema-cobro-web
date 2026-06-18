@@ -23,6 +23,7 @@ export function FichaLiquidacionBar({ resumen }: Props) {
   const pctLabel = formatPct(String(pct));
 
   return (
+    <section className="border-b border-border/60 px-8 py-8">
     <div className="flex flex-col gap-2 max-w-lg" aria-label="Liquidación de la cuenta">
       {/* Header: label + percentage */}
       <div className="flex items-baseline justify-between">
@@ -57,5 +58,6 @@ export function FichaLiquidacionBar({ resumen }: Props) {
         </span>
       </div>
     </div>
+    </section>
   );
 }

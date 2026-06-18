@@ -121,7 +121,7 @@ describe("FichaInteligenciaScores", () => {
     expect(headings.length).toBeGreaterThan(0);
 
     // Driver text is visible as a chip
-    expect(screen.getByLabelText("pagos al corriente")).toBeInTheDocument();
+    expect(screen.getByText("pagos al corriente")).toBeInTheDocument();
   });
 
   it("renders recompra drivers as chips", () => {
@@ -132,8 +132,8 @@ describe("FichaInteligenciaScores", () => {
         })}
       />,
     );
-    expect(screen.getByLabelText("buen historial de pago")).toBeInTheDocument();
-    expect(screen.getByLabelText("tickets de mayor valor")).toBeInTheDocument();
+    expect(screen.getByText("buen historial de pago")).toBeInTheDocument();
+    expect(screen.getByText("tickets de mayor valor")).toBeInTheDocument();
   });
 
   it("renders up to 3 drivers per panel and no ¿Por qué? when empty", () => {

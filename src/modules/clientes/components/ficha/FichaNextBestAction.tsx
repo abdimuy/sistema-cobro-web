@@ -116,7 +116,7 @@ export function FichaNextBestAction({ pulso, telefono }: Props) {
         {/* Right: action buttons */}
         <div className="flex flex-shrink-0 flex-wrap gap-2">
           {hasTelefono && (
-            <ActionButton href={`tel:${telefono}`}>
+            <ActionButton href={`tel:${telefono.replace(/[^\d+]/g, "")}`}>
               <Phone size={13} aria-hidden="true" />
               Llamar
             </ActionButton>

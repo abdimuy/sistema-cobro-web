@@ -91,9 +91,7 @@ export function ClienteFicha({ clienteId }: Props) {
         />
       </div>
       <FichaKpis resumen={ficha.resumen} isLoading={isLoading} />
-      <div className="border-b border-border/60 px-8 py-8">
-        <FichaLiquidacionBar resumen={ficha.resumen} />
-      </div>
+      <FichaLiquidacionBar resumen={ficha.resumen} />
       <FichaCharts
         abonosPorMes={ficha.resumen.abonosPorMes}
         compradoVsAbonado={ficha.resumen.compradoVsAbonado}

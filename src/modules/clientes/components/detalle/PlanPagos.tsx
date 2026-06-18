@@ -31,7 +31,7 @@ export function PlanPagos({ detalle }: Props) {
         <SummaryKpi label="total" value={formatMoney(resumen.total)} />
         <SummaryKpi label="enganche" value={formatMoney(resumen.enganche)} />
         <SummaryKpi label="parcialidad" value={formatMoney(resumen.parcialidad)} />
-        <SummaryKpi label="plazo" value={`≈${resumen.numCuotas} sem`} />
+        <SummaryKpi label="plazo" value={`≈${resumen.numCuotas} ${resumen.cadenciaLabel}`} />
         <SummaryKpi label="pagado" value={formatMoney(resumen.pagado)} />
         <SummaryKpi label="saldo" value={formatMoney(resumen.saldo)} />
         <div>

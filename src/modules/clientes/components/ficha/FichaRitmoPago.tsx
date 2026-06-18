@@ -218,8 +218,7 @@ function HorizontalHeatmap({
   const groups = groupByMonth(semanas);
 
   return (
-    <div className="overflow-x-auto">
-      <div className="inline-flex flex-col gap-1 min-w-max">
+    <div className="inline-flex flex-col gap-1 min-w-max">
         {/* Event lane */}
         <div className="flex items-end gap-[2px]">
           {groups.map((g, gi) => (
@@ -314,7 +313,6 @@ function HorizontalHeatmap({
           ))}
         </div>
       </div>
-    </div>
   );
 }
 
@@ -403,8 +401,8 @@ function Leyenda() {
       </div>
       {[
         { cls: "[background:hsl(140,45%,78%)]", label: "< $600" },
-        { cls: "[background:hsl(143,50%,57%)]", label: "$600–900" },
-        { cls: "[background:hsl(146,62%,38%)]", label: "$901–1,500" },
+        { cls: "[background:hsl(143,50%,57%)]", label: "$600–899" },
+        { cls: "[background:hsl(146,62%,38%)]", label: "$900–1,500" },
         { cls: "[background:hsl(150,78%,24%)]", label: "> $1,500" },
       ].map(({ cls, label }) => (
         <div key={label} className="flex items-center gap-1">
@@ -560,19 +558,21 @@ export function FichaRitmoPago({ ritmo, isLoading }: Props) {
           Sin semanas en este período
         </p>
       ) : isHorizontal ? (
-        <div className="flex flex-col gap-1">
-          <HorizontalHeatmap
-            semanas={visibleSemanas}
-            eventos={ritmo.eventos}
-            cellSize={cellSize}
-            onHover={handleCellHover}
-            onLeave={handleCellLeave}
-          />
-          <SaldoSvg
-            semanas={visibleSemanas}
-            cellSize={cellSize}
-            monthGroups={monthGroups}
-          />
+        <div className="overflow-x-auto">
+          <div className="inline-flex flex-col gap-1 min-w-max">
+            <HorizontalHeatmap
+              semanas={visibleSemanas}
+              eventos={ritmo.eventos}
+              cellSize={cellSize}
+              onHover={handleCellHover}
+              onLeave={handleCellLeave}
+            />
+            <SaldoSvg
+              semanas={visibleSemanas}
+              cellSize={cellSize}
+              monthGroups={monthGroups}
+            />
+          </div>
         </div>
       ) : (
         <VerticalHeatmap

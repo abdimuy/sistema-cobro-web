@@ -18,6 +18,7 @@ export type ResumenPlan = {
   pagado: string;
   saldo: string;
   atrasado: boolean;
+  cadenciaLabel: string;
 };
 
 export type PlanPagos = {
@@ -29,6 +30,14 @@ const toCents = (s: string): number => Math.round(parseFloat(s) * 100);
 const fromCents = (c: number): string => (c / 100).toFixed(2);
 const addDays = (d: Date, days: number): Date =>
   new Date(d.getTime() + days * 86_400_000);
+
+/** Derives the day-step and display label from formaDePago (case-insensitive). */
+function cadenciaFromFormaDePago(formaDePago: string): { dayStep: number; label: string } {
+  const f = formaDePago.toLowerCase();
+  if (f.includes("quincen")) return { dayStep: 14, label: "quincenas" };
+  if (f.includes("mensual") || f.includes("mes")) return { dayStep: 30, label: "meses" };
+  return { dayStep: 7, label: "sem" };
+}
 
 /** Returns null for contado sales or when contrato data is missing/invalid. */
 export function calcularPlanPagos(
@@ -55,6 +64,8 @@ export function calcularPlanPagos(
     0,
   );
 
+  const { dayStep, label: cadenciaLabel } = cadenciaFromFormaDePago(contrato.formaDePago);
+
   // Build raw filas (without estado yet)
   const rawFilas: Array<{ indice: number; label: string; fechaEstimada: Date; montoCents: number }> = [
     {
@@ -74,7 +85,7 @@ export function calcularPlanPagos(
     rawFilas.push({
       indice: i,
       label: `Cuota ${i}`,
-      fechaEstimada: addDays(venta.fecha, i * 7),
+      fechaEstimada: addDays(venta.fecha, i * dayStep),
       montoCents,
     });
   }
@@ -118,6 +129,7 @@ export function calcularPlanPagos(
       pagado: fromCents(pagadoCents),
       saldo: venta.saldoVenta,
       atrasado,
+      cadenciaLabel,
     },
   };
 }

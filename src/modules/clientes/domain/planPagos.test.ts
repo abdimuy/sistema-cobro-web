@@ -3,7 +3,7 @@ import { calcularPlanPagos } from "./planPagos";
 import type { VentaDetalle } from "./entities";
 
 // Fixture: CREDITO venta, total=18500, enganche=3700, parcialidad=3200
-// restante = 14800, numCuotas = ceil(14800/3200) = 5, última = 14800-4*3200 = 1600
+// restante = 14800, numCuotas = ceil(14800/3200) = 5, última = 14800-4*3200 = 2000
 const BASE_FECHA = new Date("2025-11-01T00:00:00.000Z");
 
 function makeDetalle(overrides: Partial<VentaDetalle> = {}): VentaDetalle {
@@ -70,11 +70,59 @@ describe("calcularPlanPagos", () => {
     expect(plan.filas[5].label).toBe("Cuota 5");
   });
 
-  it("dates: row 0 = venta.fecha, row 1 = venta.fecha+7d", () => {
+  it("dates: row 0 = venta.fecha, row 1 = venta.fecha+7d (SEMANAL)", () => {
     const plan = calcularPlanPagos(makeDetalle())!;
     expect(plan.filas[0].fechaEstimada.getTime()).toBe(BASE_FECHA.getTime());
     const expected7d = new Date(BASE_FECHA.getTime() + 7 * 86_400_000);
     expect(plan.filas[1].fechaEstimada.getTime()).toBe(expected7d.getTime());
+    expect(plan.resumen.cadenciaLabel).toBe("sem");
+  });
+
+  it("cadencia QUINCENAL: cuota 1 = fecha+14d, cuota 2 = fecha+28d, no falso atrasado", () => {
+    const d = makeDetalle({
+      contrato: {
+        parcialidad: "3200.00",
+        enganche: "3700.00",
+        precioDeContado: "15000.00",
+        plazoMeses: 6,
+        formaDePago: "QUINCENAL",
+        vendedores: [],
+      },
+    });
+    // hoy = one day before venta.fecha so no cuota is overdue
+    const pastHoy = new Date(BASE_FECHA.getTime() - 86_400_000);
+    const plan = calcularPlanPagos(d, pastHoy)!;
+    expect(plan.resumen.cadenciaLabel).toBe("quincenas");
+    const expected14d = new Date(BASE_FECHA.getTime() + 14 * 86_400_000);
+    expect(plan.filas[1].fechaEstimada.getTime()).toBe(expected14d.getTime());
+    const expected28d = new Date(BASE_FECHA.getTime() + 28 * 86_400_000);
+    expect(plan.filas[2].fechaEstimada.getTime()).toBe(expected28d.getTime());
+    expect(plan.resumen.atrasado).toBe(false);
+  });
+
+  it("cadencia MENSUAL: cuota 1 = fecha+30d, no falso atrasado; distingue de SEMANAL", () => {
+    const d = makeDetalle({
+      contrato: {
+        parcialidad: "3200.00",
+        enganche: "3700.00",
+        precioDeContado: "15000.00",
+        plazoMeses: 6,
+        formaDePago: "MENSUAL",
+        vendedores: [],
+      },
+    });
+    // hoy = one day before venta.fecha so no cuota is overdue
+    const pastHoy = new Date(BASE_FECHA.getTime() - 86_400_000);
+    const plan = calcularPlanPagos(d, pastHoy)!;
+    expect(plan.resumen.cadenciaLabel).toBe("meses");
+    const expected30d = new Date(BASE_FECHA.getTime() + 30 * 86_400_000);
+    expect(plan.filas[1].fechaEstimada.getTime()).toBe(expected30d.getTime());
+    // cuota 1 at +30d is NOT past (hoy is before fecha), so atrasado=false
+    expect(plan.resumen.atrasado).toBe(false);
+    // Confirm cuota 1 would be WRONGLY marked overdue if weekly (7d) step were used:
+    // fecha+7d < fecha-1d is false anyway; more relevant: mensual step != semanal step
+    const wrong7d = new Date(BASE_FECHA.getTime() + 7 * 86_400_000);
+    expect(plan.filas[1].fechaEstimada.getTime()).not.toBe(wrong7d.getTime());
   });
 
   it("sin pagos → Enganche=actual, rest=pendiente", () => {

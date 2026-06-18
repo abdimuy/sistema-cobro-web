@@ -182,7 +182,7 @@ describe("FichaNextBestAction — nextBestProduct", () => {
 // ─── Llamar button ────────────────────────────────────────────────────────────
 
 describe("FichaNextBestAction — botón Llamar", () => {
-  it("renders Llamar link with tel: href", () => {
+  it("renders Llamar link with tel: href (digits only)", () => {
     render(
       <FichaNextBestAction
         pulso={makePulso()}
@@ -190,7 +190,7 @@ describe("FichaNextBestAction — botón Llamar", () => {
       />,
     );
     const link = screen.getByRole("link", { name: /llamar/i });
-    expect(link).toHaveAttribute("href", "tel:477 123 4567");
+    expect(link).toHaveAttribute("href", "tel:4771234567");
   });
 
   it("does not render Llamar when telefono is empty", () => {

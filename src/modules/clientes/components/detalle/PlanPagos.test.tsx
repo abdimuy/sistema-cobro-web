@@ -75,12 +75,13 @@ describe("PlanPagos", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("shows plazo in summary as ≈N sem", () => {
+  it("shows plazo in summary as ≈N <cadencia-unit> derived from formaDePago", () => {
+    // makeFakeVentaDetalle uses formaDePago="QUINCENAL" → label "quincenas"
     const detalle = makeFakeVentaDetalle();
     render(<PlanPagos detalle={detalle} />);
 
     // numCuotas for fixture = 5
-    expect(screen.getByText("≈5 sem")).toBeInTheDocument();
+    expect(screen.getByText("≈5 quincenas")).toBeInTheDocument();
   });
 
   it("shows 'Al corriente' when all overdue filas are pagadas", () => {
