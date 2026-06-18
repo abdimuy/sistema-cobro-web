@@ -7,21 +7,6 @@ import type { Pulso } from "../../domain/entities/FichaCliente";
 
 dayjs.locale("es");
 
-interface RowProps {
-  label: string;
-  children: React.ReactNode;
-}
-
-function Row({ label, children }: RowProps) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-border/40 py-2.5 last:border-b-0">
-      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-        {label}
-      </span>
-      <span className="text-right">{children}</span>
-    </div>
-  );
-}
 
 interface Props {
   pulso: Pulso | null;
@@ -68,62 +53,68 @@ export function FichaPulsoCard({ pulso }: Props) {
         </p>
       </div>
 
-      <div className="max-w-lg">
-        <Row label="Segmento">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-6">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">Segmento</span>
           <SegmentoBadge value={pulso.segmento} />
-        </Row>
+        </div>
 
-        <Row label="Estado de pago">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">Estado de pago</span>
           <EstadoPagoBadge value={pulso.estadoPago} />
-        </Row>
+        </div>
 
-        <Row label="Recencia">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">Recencia</span>
           <span className="font-mono text-xs tabular-nums text-foreground">
-            {pulso.recenciaDias === 0
-              ? "Hoy"
-              : `Última compra hace ${pulso.recenciaDias} días`}
+            {pulso.recenciaDias === 0 ? "Hoy" : `hace ${pulso.recenciaDias} días`}
           </span>
-        </Row>
+        </div>
 
-        <Row label="Frecuencia">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">Frecuencia</span>
           <span className="font-mono text-xs tabular-nums text-foreground">
             {pulso.frecuencia} compras
           </span>
-        </Row>
+        </div>
 
-        <Row label="Monetario">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">Monetario</span>
           <span className="font-mono text-xs tabular-nums text-foreground">
             {formatMoney(pulso.monetary)}
           </span>
-        </Row>
+        </div>
 
-        <Row label="Por liquidar">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">Por liquidar</span>
           <span className="font-mono text-xs tabular-nums text-foreground">
             {formatPct(pulso.porLiquidarPct)}
           </span>
-        </Row>
+        </div>
 
-        <Row label="Última compra">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">Última compra</span>
           <span className="font-mono text-xs tabular-nums text-foreground">
             {fmtDate(pulso.fechaUltimaCompra)}
           </span>
-        </Row>
+        </div>
 
-        <Row label="Último pago">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">Último pago</span>
           <span className="font-mono text-xs tabular-nums text-foreground">
             {fmtDate(pulso.fechaUltimoPago)}
           </span>
-        </Row>
-
-        {/* NBP — the "vender con IA" hook, highlighted */}
-        <div className="mt-4 rounded-md border border-primary/20 bg-primary/5 px-4 py-3">
-          <p className="mb-0.5 font-mono text-[9px] uppercase tracking-[0.16em] text-primary/70">
-            Próximo mejor producto
-          </p>
-          <p className="font-serif text-xl font-normal text-foreground">
-            {pulso.nextBestProduct || "—"}
-          </p>
         </div>
+      </div>
+
+      {/* NBP — the "vender con IA" hook, highlighted */}
+      <div className="mt-6 rounded-md border border-primary/20 bg-primary/5 px-4 py-3">
+        <p className="mb-0.5 font-mono text-[9px] uppercase tracking-[0.16em] text-primary/70">
+          Próximo mejor producto
+        </p>
+        <p className="font-serif text-xl font-normal text-foreground">
+          {pulso.nextBestProduct || "—"}
+        </p>
       </div>
     </section>
   );
