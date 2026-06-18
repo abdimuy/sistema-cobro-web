@@ -13,6 +13,7 @@ import { VentaModalHero } from "./VentaModalHero";
 import { VentaProductosTable } from "./VentaProductosTable";
 import { VentaContratoCard } from "./VentaContratoCard";
 import { VentaPagosList } from "./VentaPagosList";
+import { PlanPagos } from "./PlanPagos";
 
 interface Props {
   clienteId: number;
@@ -126,6 +127,13 @@ export function VentaModal({ clienteId, doctoPvId, open, onClose }: Props) {
               <hr className="border-border/60" />
 
               <VentaPagosList pagos={detalle.pagos} />
+
+              {detalle.contrato !== null && (
+                <>
+                  <hr className="border-border/60" />
+                  <PlanPagos detalle={detalle} />
+                </>
+              )}
             </div>
           )}
         </div>
