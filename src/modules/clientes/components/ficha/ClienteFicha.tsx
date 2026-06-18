@@ -13,6 +13,8 @@ import { FichaUbicacion } from "./FichaUbicacion";
 import { FichaPulsoCard } from "./FichaPulsoCard";
 import { FichaCobranzaCards } from "./FichaCobranzaCards";
 import { FichaCreditoCard } from "./FichaCreditoCard";
+import { FichaRecompraCard } from "./FichaRecompraCard";
+import { FichaClvCard } from "./FichaClvCard";
 import { FichaVentasList } from "./FichaVentasList";
 
 interface Props {
@@ -92,6 +94,8 @@ export function ClienteFicha({ clienteId }: Props) {
       <FichaPulsoCard pulso={ficha.pulso} />
       <FichaCobranzaCards pulso={ficha.pulso} />
       <FichaCreditoCard pulso={ficha.pulso} />
+      <FichaRecompraCard pulso={ficha.pulso} />
+      <FichaClvCard pulso={ficha.pulso} />
       {/* B4 — Ubicación map */}
       <FichaUbicacion ubicacion={ficha.ubicacion} />
       <FichaVentasList
