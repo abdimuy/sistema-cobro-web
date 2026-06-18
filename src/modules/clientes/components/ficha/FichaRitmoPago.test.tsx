@@ -16,14 +16,29 @@ describe("FichaRitmoPago", () => {
     expect(screen.getByText(/últimos 12 meses/i)).toBeInTheDocument();
   });
 
-  it("window is anchored to last activity, not Date.now()", () => {
-    // All 4 semanas are in May 2026 (well in the past from today's current date).
-    // The window should still show them because it anchors to the last active week.
-    const ritmo = makeFakeRitmoPago();
+  it("window ends at today — includes trailing unpaid weeks for delinquent client", () => {
+    // Fixture: May paid weeks followed by 3 unpaid weeks (Jun 1, Jun 8, Jun 15 2026).
+    // Backend generates through current week, so the tail IS today's end.
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        { semanaInicio: new Date("2026-05-04T00:00:00.000Z"), montoAbonado: "1200.00", saldo: "8300.00", numPagos: 1 },
+        { semanaInicio: new Date("2026-05-11T00:00:00.000Z"), montoAbonado: "850.00",  saldo: "7450.00", numPagos: 1 },
+        { semanaInicio: new Date("2026-05-25T00:00:00.000Z"), montoAbonado: "1500.00", saldo: "5950.00", numPagos: 1 },
+        { semanaInicio: new Date("2026-06-01T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0 },
+        { semanaInicio: new Date("2026-06-08T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0 },
+        { semanaInicio: new Date("2026-06-15T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0 },
+      ],
+    });
     render(<FichaRitmoPago ritmo={ritmo} />);
-    // With window anchored to last activity, all 4 weeks should be visible.
-    // constancia = 75% (3/4) → expect to find that in the summary
-    expect(screen.getByText("75%")).toBeInTheDocument();
+    // Trailing gray cells: 3 weeks without payment → RACHA ACTUAL = 0
+    const rachaEl = screen.getByText("RACHA ACTUAL", { exact: false });
+    expect(rachaEl).toBeInTheDocument();
+    // racha = 0 because last 3 weeks have montoAbonado=0
+    // The "0" value appears in the summary strip
+    expect(screen.getByText("0")).toBeInTheDocument();
+    // Trailing gray cells are rendered for Jun 1, Jun 8, Jun 15 (Sin pago)
+    const grayCells = document.querySelectorAll('[aria-label*="Sin pago"]');
+    expect(grayCells.length).toBeGreaterThanOrEqual(3);
   });
 
   it("summary is calculated from the visible window (relative)", () => {

@@ -56,30 +56,9 @@ function computeMaxMonto(semanas: SemanaRitmo[]): number {
   return max;
 }
 
-/**
- * Returns the 52-week window anchored to the last active week.
- * "Active" = montoAbonado > 0 OR has any event within that week range.
- */
-function computeAnchorWindow(semanas: SemanaRitmo[], eventos: EventoRitmo[]): SemanaRitmo[] {
-  if (semanas.length === 0) return [];
-
-  // Find the last semana with monto > 0 or with an event
-  let anchorIdx = -1;
-  for (let i = semanas.length - 1; i >= 0; i--) {
-    const s = semanas[i];
-    if (Number(s.montoAbonado) > 0) { anchorIdx = i; break; }
-    const evts = eventsForWeek(eventos, s);
-    if (evts.length > 0) { anchorIdx = i; break; }
-  }
-
-  if (anchorIdx === -1) {
-    // No activity at all — use last 52 weeks of the array
-    return semanas.slice(-WEEKS_DEFAULT);
-  }
-
-  // Show 52 weeks ending at anchorIdx
-  const start = Math.max(0, anchorIdx - WEEKS_DEFAULT + 1);
-  return semanas.slice(start, anchorIdx + 1);
+/** Returns the last 52 weeks ending at today (i.e. the tail of the backend array). */
+function defaultWindow(semanas: SemanaRitmo[]): SemanaRitmo[] {
+  return semanas.slice(-WEEKS_DEFAULT);
 }
 
 /** Format a number as compact money: $X.Xk */
@@ -686,8 +665,8 @@ export function FichaRitmoPago({ ritmo, isLoading }: Props) {
   // maxMonto computed from ALL semanas (stable, independent of window)
   const maxMonto = computeMaxMonto(ritmo.semanas);
 
-  // Anchor window: 52 weeks ending at last active week
-  const visibleSemanas = computeAnchorWindow(ritmo.semanas, ritmo.eventos);
+  // Default window: last 52 weeks ending at today (backend generates through current week)
+  const visibleSemanas = defaultWindow(ritmo.semanas);
 
   const isHorizontal = containerWidth >= BREAKPOINT;
 
