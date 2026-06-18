@@ -15,6 +15,7 @@ import { FichaCobranzaCards } from "./FichaCobranzaCards";
 import { FichaCreditoCard } from "./FichaCreditoCard";
 import { FichaRecompraCard } from "./FichaRecompraCard";
 import { FichaClvCard } from "./FichaClvCard";
+import { MatrizRiesgoPropension } from "./MatrizRiesgoPropension";
 import { FichaVentasList } from "./FichaVentasList";
 
 interface Props {
@@ -96,6 +97,7 @@ export function ClienteFicha({ clienteId }: Props) {
       <FichaCreditoCard pulso={ficha.pulso} />
       <FichaRecompraCard pulso={ficha.pulso} />
       <FichaClvCard pulso={ficha.pulso} />
+      <MatrizRiesgoPropension pulso={ficha.pulso} />
       {/* B4 — Ubicación map */}
       <FichaUbicacion ubicacion={ficha.ubicacion} />
       <FichaVentasList
