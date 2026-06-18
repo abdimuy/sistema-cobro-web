@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFichaCliente } from "../../presentation/hooks/useFichaCliente";
 import { useVentasCliente } from "../../presentation/hooks/useVentasCliente";
+import { useRitmoPago } from "../../presentation/hooks/useRitmoPago";
 import type { FichaDateRange } from "../../application/ports/ClientesPort";
 import { VentaModal } from "../detalle/VentaModal";
 import { FichaHeader } from "./FichaHeader";
@@ -15,6 +16,9 @@ import { FichaCobranzaCards } from "./FichaCobranzaCards";
 import { FichaInteligenciaScores } from "./FichaInteligenciaScores";
 import { MatrizRiesgoPropension } from "./MatrizRiesgoPropension";
 import { FichaVentasList } from "./FichaVentasList";
+import { FichaNextBestAction } from "./FichaNextBestAction";
+import { FichaLiquidacionBar } from "./FichaLiquidacionBar";
+import { FichaRitmoPago } from "./FichaRitmoPago";
 
 interface Props {
   clienteId: number;
@@ -24,6 +28,7 @@ export function ClienteFicha({ clienteId }: Props) {
   const [range, setRange] = useState<FichaDateRange>({});
   const { ficha, isLoading, error } = useFichaCliente(clienteId, range);
   const ventasState = useVentasCliente(clienteId);
+  const ritmoState = useRitmoPago(clienteId);
   const [selectedDoctoPvId, setSelectedDoctoPvId] = useState<number | null>(
     null,
   );
@@ -75,6 +80,7 @@ export function ClienteFicha({ clienteId }: Props) {
     <div className="min-h-screen bg-background">
       <FichaHeader ficha={ficha} />
       <FichaHero ficha={ficha} />
+      <FichaNextBestAction pulso={ficha.pulso} telefono={ficha.telefono} />
       {/* B3 — date-range filter row, above KPIs */}
       <div className="border-b border-border/60 px-8 py-3">
         <FichaRangeFilter
@@ -85,11 +91,15 @@ export function ClienteFicha({ clienteId }: Props) {
         />
       </div>
       <FichaKpis resumen={ficha.resumen} isLoading={isLoading} />
+      <div className="border-b border-border/60 px-8 py-8">
+        <FichaLiquidacionBar resumen={ficha.resumen} />
+      </div>
       <FichaCharts
         abonosPorMes={ficha.resumen.abonosPorMes}
         compradoVsAbonado={ficha.resumen.compradoVsAbonado}
         isLoading={isLoading}
       />
+      <FichaRitmoPago ritmo={ritmoState.ritmo} isLoading={ritmoState.isLoading} />
       <FichaPulsoCard pulso={ficha.pulso} />
       <FichaCobranzaCards pulso={ficha.pulso} />
       <FichaInteligenciaScores pulso={ficha.pulso} />

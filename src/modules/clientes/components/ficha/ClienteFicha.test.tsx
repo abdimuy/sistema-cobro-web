@@ -8,6 +8,7 @@ import {
   makeFakeFichaCliente,
   makeFakeVentaCliente,
   makeFakeVentaDetalle,
+  makeFakeRitmoPago,
 } from "../../application/__tests__/fakeClientesPort";
 import { ClienteFicha } from "./ClienteFicha";
 
@@ -53,12 +54,40 @@ describe("ClienteFicha", () => {
 
   beforeEach(() => {
     port = new FakeClientesPort();
-    port.fichaResponse = makeFakeFichaCliente();
+    port.fichaResponse = makeFakeFichaCliente({
+      pulso: {
+        score: 68,
+        segmento: "DORMIDO_VALIOSO",
+        estadoPago: "AL_CORRIENTE",
+        recenciaDias: 120,
+        frecuencia: 7,
+        monetary: "120000.00",
+        saldo: "8500.00",
+        porLiquidarPct: "7.08",
+        fechaUltimaCompra: new Date("2025-11-01T00:00:00.000Z"),
+        fechaUltimoPago: new Date("2025-12-15T00:00:00.000Z"),
+        nextBestProduct: "COMEDOR",
+        numPagos: 24,
+        cadenciaDias: 30,
+        diasAtrasoProm: 3,
+        pctPagosATiempo: "87.50",
+        fechaProxPago: new Date("2026-01-15T00:00:00.000Z"),
+        montoProxPago: "3500.00",
+        tierRiesgo: "VIGILANCIA",
+        bandaCredito: "BAJO",
+        scoreCredito: 85,
+        bandaRecompra: "ALTA",
+        scoreRecompra: 72,
+        clv: "180000.00",
+        bandaClv: "ALTO",
+      },
+    });
     port.listarVentasResponse = {
       items: [makeFakeVentaCliente()],
       nextCursor: "",
     };
     port.obtenerDetalleResponse = makeFakeVentaDetalle();
+    port.ritmoResponse = makeFakeRitmoPago();
   });
 
   it("renders nombre in serif heading", async () => {
@@ -88,8 +117,9 @@ describe("ClienteFicha", () => {
   it("renders pct liquidado", async () => {
     renderFicha(port);
     // pctLiquidado "92.92" (0–100 del API) → "93%"
+    // Appears in FichaKpis and FichaLiquidacionBar
     await waitFor(() =>
-      expect(screen.getByText("93%")).toBeInTheDocument(),
+      expect(screen.getAllByText("93%").length).toBeGreaterThan(0),
     );
   });
 
@@ -110,8 +140,8 @@ describe("ClienteFicha", () => {
     );
     // Segmento badge label (appears in both hero and pulso card)
     expect(screen.getAllByText("Dormido valioso").length).toBeGreaterThan(0);
-    // Next best product
-    expect(screen.getByText("COMEDOR")).toBeInTheDocument();
+    // Next best product (appears in both FichaNextBestAction and FichaPulsoCard)
+    expect(screen.getAllByText("COMEDOR").length).toBeGreaterThan(0);
   });
 
   it("shows muted note when pulso is null", async () => {
@@ -180,6 +210,28 @@ describe("ClienteFicha", () => {
       expect(
         screen.getByText("Sin ventas registradas"),
       ).toBeInTheDocument(),
+    );
+  });
+
+  it("renders FichaNextBestAction with 'Acción recomendada' heading when pulso has bands", async () => {
+    renderFicha(port);
+    // "Acción recomendada" appears as section aria-label and as heading text
+    await waitFor(() =>
+      expect(screen.getAllByText("Acción recomendada").length).toBeGreaterThan(0),
+    );
+  });
+
+  it("renders FichaLiquidacionBar progressbar", async () => {
+    renderFicha(port);
+    await waitFor(() =>
+      expect(screen.getByRole("progressbar")).toBeInTheDocument(),
+    );
+  });
+
+  it("renders FichaRitmoPago with 'Ritmo de pago' heading", async () => {
+    renderFicha(port);
+    await waitFor(() =>
+      expect(screen.getByText("Ritmo de pago")).toBeInTheDocument(),
     );
   });
 });
