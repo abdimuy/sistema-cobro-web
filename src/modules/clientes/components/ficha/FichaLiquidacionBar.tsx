@@ -25,18 +25,18 @@ export function FichaLiquidacionBar({ resumen }: Props) {
   return (
     <section className="border-b border-border/60 px-8 py-8">
       <div
-        className="flex flex-col gap-3 max-w-[520px]"
+        className="flex flex-col gap-3"
         aria-label="Liquidación de la cuenta"
       >
-        {/* Label */}
-        <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-muted-foreground">
-          Liquidación de la cuenta
-        </span>
-
-        {/* Big percentage number */}
-        <span className="font-serif text-[28px] leading-none tabular-nums text-foreground">
-          {pctLabel}
-        </span>
+        {/* Label + big percentage on one row, full width */}
+        <div className="flex items-end justify-between gap-4">
+          <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-muted-foreground">
+            Liquidación de la cuenta
+          </span>
+          <span className="font-serif text-[28px] leading-none tabular-nums text-foreground">
+            {pctLabel}
+          </span>
+        </div>
 
         {/* Track + fill */}
         <div
