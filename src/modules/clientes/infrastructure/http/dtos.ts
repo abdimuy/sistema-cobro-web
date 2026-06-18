@@ -201,3 +201,37 @@ export type RefrescarBusquedaResponseDTO = {
   reindexado: boolean;
   documentos: number;
 };
+
+// ─── GET /clientes/{id}/ritmo-pago ──────────────────────────────────────────
+
+export type SemanaRitmoDTO = {
+  semana_inicio: string; // RFC3339 UTC
+  monto_abonado: string; // decimal 2 dec
+  saldo: string;         // decimal 2 dec
+  num_pagos: number;
+};
+
+export type EventoRitmoDTO = {
+  fecha: string;         // RFC3339 UTC
+  tipo: string;          // "venta_credito" | "venta_contado" | "liquidacion"
+  monto: string;         // decimal 2 dec
+  docto_pv_id: number;
+  folio: string;
+  plazo_meses: number;
+};
+
+export type ResumenRitmoDTO = {
+  total_abonado: string;    // decimal 2 dec
+  semanas_con_pago: number;
+  semanas_activas: number;
+  racha_actual_sem: number;
+  constancia_pct: string;   // decimal 2 dec
+  saldo_actual: string;     // decimal 2 dec
+};
+
+export type RitmoPagoDTO = {
+  ancla_dia_ruta: string;
+  semanas: SemanaRitmoDTO[];
+  eventos: EventoRitmoDTO[];
+  resumen: ResumenRitmoDTO;
+};

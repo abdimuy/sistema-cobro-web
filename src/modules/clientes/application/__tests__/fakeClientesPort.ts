@@ -5,6 +5,7 @@ import type {
   VentaDetalle,
   ProductoVenta,
   Pago,
+  RitmoPago,
 } from "../../domain/entities";
 import type { ClientesPort, FichaDateRange } from "../ports/ClientesPort";
 import type {
@@ -30,6 +31,7 @@ export class FakeClientesPort implements ClientesPort {
     signal?: AbortSignal;
   }> = [];
   refrescarCalls: Array<Record<string, never>> = [];
+  ritmoCalls: Array<{ clienteId: number; range?: FichaDateRange; signal?: AbortSignal }> = [];
 
   buscarResponse: BuscarClientesOutput | (() => BuscarClientesOutput) = {
     items: [],
@@ -51,6 +53,7 @@ export class FakeClientesPort implements ClientesPort {
     reindexado: true,
     documentos: 0,
   };
+  ritmoResponse: RitmoPago | (() => RitmoPago) = makeFakeRitmoPago();
 
   // When set, the next call to the matching method throws this error.
   throwOnNext: Partial<Record<keyof ClientesPort, Error>> = {};
@@ -101,6 +104,17 @@ export class FakeClientesPort implements ClientesPort {
     const e = this.takeThrow("refrescarBusqueda");
     if (e) throw e;
     return resolve(this.refrescarResponse);
+  }
+
+  async obtenerRitmoPago(
+    clienteId: number,
+    range?: FichaDateRange,
+    signal?: AbortSignal,
+  ): Promise<RitmoPago> {
+    this.ritmoCalls.push({ clienteId, range, signal });
+    const e = this.takeThrow("obtenerRitmoPago");
+    if (e) throw e;
+    return resolve(this.ritmoResponse);
   }
 
   private takeThrow(method: keyof ClientesPort): Error | undefined {
@@ -250,6 +264,73 @@ export function makeFakeVentaDetalle(
       vendedores: ["María Concepción Ramírez Torres"],
     },
     pagos: [makeFakePago()],
+  };
+  return { ...base, ...overrides };
+}
+
+export function makeFakeRitmoPago(overrides: Partial<RitmoPago> = {}): RitmoPago {
+  const base: RitmoPago = {
+    anclaDiaRuta: "lunes",
+    semanas: [
+      {
+        semanaInicio: new Date("2026-05-04T00:00:00.000Z"),
+        montoAbonado: "1200.00",
+        saldo: "8300.00",
+        numPagos: 1,
+      },
+      {
+        semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+        montoAbonado: "850.00",
+        saldo: "7450.00",
+        numPagos: 1,
+      },
+      {
+        semanaInicio: new Date("2026-05-18T00:00:00.000Z"),
+        montoAbonado: "0.00",
+        saldo: "7450.00",
+        numPagos: 0,
+      },
+      {
+        semanaInicio: new Date("2026-05-25T00:00:00.000Z"),
+        montoAbonado: "1500.00",
+        saldo: "5950.00",
+        numPagos: 2,
+      },
+    ],
+    eventos: [
+      {
+        fecha: new Date("2026-03-10T00:00:00.000Z"),
+        tipo: "venta_credito",
+        monto: "9500.00",
+        doctoPvId: 30021,
+        folio: "CV-00589",
+        plazoMeses: 6,
+      },
+      {
+        fecha: new Date("2026-04-22T00:00:00.000Z"),
+        tipo: "venta_contado",
+        monto: "2800.00",
+        doctoPvId: 30038,
+        folio: "C-00614",
+        plazoMeses: 0,
+      },
+      {
+        fecha: new Date("2026-05-15T00:00:00.000Z"),
+        tipo: "liquidacion",
+        monto: "0.00",
+        doctoPvId: 30021,
+        folio: "CV-00589",
+        plazoMeses: 0,
+      },
+    ],
+    resumen: {
+      totalAbonado: "3550.00",
+      semanasConPago: 3,
+      semanasActivas: 4,
+      rachaActualSem: 1,
+      constanciaPct: "75.00",
+      saldoActual: "5950.00",
+    },
   };
   return { ...base, ...overrides };
 }

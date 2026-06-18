@@ -1,5 +1,5 @@
 import type { AxiosInstance } from "axios";
-import type { FichaCliente, VentaDetalle } from "../../domain/entities";
+import type { FichaCliente, VentaDetalle, RitmoPago } from "../../domain/entities";
 import type { ClientesPort, FichaDateRange } from "../../application/ports/ClientesPort";
 import type {
   BuscarClientesInput,
@@ -14,6 +14,7 @@ import { dtoToCliente } from "../mappers/dtoToCliente";
 import { dtoToFichaCliente } from "../mappers/dtoToFichaCliente";
 import { dtoToVentaCliente } from "../mappers/dtoToVentaCliente";
 import { dtoToVentaDetalle } from "../mappers/dtoToVentaDetalle";
+import { dtoToRitmoPago } from "../mappers/dtoToRitmoPago";
 import { apperrorToDomainError } from "../mappers/errorMapper";
 import type {
   ListResponseDTO,
@@ -22,6 +23,7 @@ import type {
   VentaListItemDTO,
   VentaDetalleDTO,
   RefrescarBusquedaResponseDTO,
+  RitmoPagoDTO,
 } from "./dtos";
 
 const CLIENTES_BASE = "/clientes";
@@ -143,6 +145,27 @@ export class HttpClientesAdapter implements ClientesPort {
         reindexado: data.reindexado,
         documentos: data.documentos,
       };
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async obtenerRitmoPago(
+    clienteId: number,
+    range?: FichaDateRange,
+    signal?: AbortSignal,
+  ): Promise<RitmoPago> {
+    try {
+      const params: Record<string, string> = {};
+      if (range?.desde) params.desde = range.desde;
+      if (range?.hasta) params.hasta = range.hasta;
+
+      const { data } = await this.client.get<RitmoPagoDTO>(
+        `${CLIENTES_BASE}/${clienteId}/ritmo-pago`,
+        { params: Object.keys(params).length > 0 ? params : undefined, signal },
+      );
+
+      return dtoToRitmoPago(data);
     } catch (e) {
       throw apperrorToDomainError(e);
     }

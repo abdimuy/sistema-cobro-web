@@ -1,4 +1,4 @@
-import type { FichaCliente, VentaDetalle } from "../../domain/entities";
+import type { FichaCliente, VentaDetalle, RitmoPago } from "../../domain/entities";
 import type {
   BuscarClientesInput,
   BuscarClientesOutput,
@@ -37,4 +37,9 @@ export interface ClientesPort {
     signal?: AbortSignal,
   ): Promise<VentaDetalle>;
   refrescarBusqueda(): Promise<RefrescarBusquedaOutput>;
+  obtenerRitmoPago(
+    clienteId: number,
+    range?: FichaDateRange,
+    signal?: AbortSignal,
+  ): Promise<RitmoPago>;
 }
