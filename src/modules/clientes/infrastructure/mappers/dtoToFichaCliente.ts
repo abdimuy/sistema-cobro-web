@@ -69,6 +69,13 @@ function mapPulso(dto: PulsoDTO): Pulso {
     bandaCredito: dto.banda_credito || undefined,
     scoreCredito: dto.banda_credito ? dto.score_credito : undefined,
     creditoDrivers: dto.banda_credito ? (dto.credito_drivers ?? []) : undefined,
+    // Repurchase propensity — only present when banda_recompra is non-empty
+    bandaRecompra: dto.banda_recompra || undefined,
+    scoreRecompra: dto.banda_recompra ? dto.score_recompra : undefined,
+    recompraDrivers: dto.banda_recompra ? (dto.recompra_drivers ?? []) : undefined,
+    // CLV — only present when clv is non-empty
+    clv: dto.clv || undefined,
+    bandaClv: dto.banda_clv || undefined,
   };
 }
 

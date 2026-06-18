@@ -40,5 +40,11 @@ export function dtoToCliente(dto: ClienteListItemDTO): Cliente {
     // Gate on banda_credito non-empty: contado/no-aplica → undefined
     bandaCredito: dto.tiene_pulso && dto.banda_credito ? dto.banda_credito : undefined,
     scoreCredito: dto.tiene_pulso && dto.banda_credito ? dto.score_credito : undefined,
+    // Repurchase propensity — gate on banda_recompra non-empty
+    bandaRecompra: dto.tiene_pulso && dto.banda_recompra ? dto.banda_recompra : undefined,
+    scoreRecompra: dto.tiene_pulso && dto.banda_recompra ? dto.score_recompra : undefined,
+    // CLV — gate on clv non-empty
+    clv: dto.tiene_pulso && dto.clv ? dto.clv : undefined,
+    bandaClv: dto.tiene_pulso && dto.banda_clv ? dto.banda_clv : undefined,
   };
 }

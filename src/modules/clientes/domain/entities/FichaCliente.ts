@@ -62,6 +62,13 @@ export type Pulso = {
   readonly bandaCredito?: string;           // BAJO | MEDIO | ALTO | CRITICO
   readonly scoreCredito?: number;           // 0–100, higher = lower risk
   readonly creditoDrivers?: readonly string[]; // up to 3 Spanish risk reasons
+  // Repurchase propensity — undefined when no aplica
+  readonly bandaRecompra?: string;          // ALTA | MEDIA | BAJA
+  readonly scoreRecompra?: number;          // 0–100, higher = more likely
+  readonly recompraDrivers?: readonly string[]; // up to 3 Spanish propensity reasons
+  // Customer Lifetime Value — undefined when no aplica; decimal as string
+  readonly clv?: string;
+  readonly bandaClv?: string;               // ALTO | MEDIO | BAJO
 };
 
 // DireccionCliente holds the address components for a client.

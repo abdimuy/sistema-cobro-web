@@ -25,4 +25,10 @@ export type Cliente = {
   // Credit risk — undefined when no aplica (contado or no active credit)
   readonly bandaCredito?: string;     // BAJO | MEDIO | ALTO | CRITICO
   readonly scoreCredito?: number;     // 0–100, higher = lower risk
+  // Repurchase propensity — undefined when no aplica
+  readonly bandaRecompra?: string;    // ALTA | MEDIA | BAJA
+  readonly scoreRecompra?: number;    // 0–100, higher = more likely
+  // Customer Lifetime Value — undefined when no aplica; decimal as string
+  readonly clv?: string;
+  readonly bandaClv?: string;         // ALTO | MEDIO | BAJO
 };

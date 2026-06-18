@@ -21,6 +21,10 @@ function buildValidDTO(overrides: Partial<ClienteListItemDTO> = {}): ClienteList
     fecha_prox_pago: "2026-07-01T00:00:00Z",
     banda_credito: "BAJO",
     score_credito: 85,
+    banda_recompra: "ALTA",
+    score_recompra: 78,
+    clv: "8204.83",
+    banda_clv: "ALTO",
     ...overrides,
   };
 }
@@ -160,5 +164,51 @@ describe("dtoToCliente", () => {
     const cliente = dtoToCliente(dto);
     expect(cliente.bandaCredito).toBeUndefined();
     expect(cliente.scoreCredito).toBeUndefined();
+  });
+
+  // ── Recompra propensity ─────────────────────────────────────────────────────
+
+  it("maps banda_recompra and score_recompra when tiene_pulso is true and banda_recompra is set", () => {
+    const dto = buildValidDTO({ banda_recompra: "MEDIA", score_recompra: 52 });
+    const cliente = dtoToCliente(dto);
+    expect(cliente.bandaRecompra).toBe("MEDIA");
+    expect(cliente.scoreRecompra).toBe(52);
+  });
+
+  it("sets bandaRecompra and scoreRecompra to undefined when banda_recompra is empty (no aplica)", () => {
+    const dto = buildValidDTO({ banda_recompra: "", score_recompra: 0 });
+    const cliente = dtoToCliente(dto);
+    expect(cliente.bandaRecompra).toBeUndefined();
+    expect(cliente.scoreRecompra).toBeUndefined();
+  });
+
+  it("sets bandaRecompra and scoreRecompra to undefined when tiene_pulso is false", () => {
+    const dto = buildValidDTO({ tiene_pulso: false, segmento: "", estado_pago: "" });
+    const cliente = dtoToCliente(dto);
+    expect(cliente.bandaRecompra).toBeUndefined();
+    expect(cliente.scoreRecompra).toBeUndefined();
+  });
+
+  // ── CLV ────────────────────────────────────────────────────────────────────
+
+  it("maps clv and banda_clv when tiene_pulso is true and clv is non-empty", () => {
+    const dto = buildValidDTO({ clv: "8204.83", banda_clv: "ALTO" });
+    const cliente = dtoToCliente(dto);
+    expect(cliente.clv).toBe("8204.83");
+    expect(cliente.bandaClv).toBe("ALTO");
+  });
+
+  it("sets clv and bandaClv to undefined when clv is empty (no aplica)", () => {
+    const dto = buildValidDTO({ clv: "", banda_clv: "" });
+    const cliente = dtoToCliente(dto);
+    expect(cliente.clv).toBeUndefined();
+    expect(cliente.bandaClv).toBeUndefined();
+  });
+
+  it("sets clv and bandaClv to undefined when tiene_pulso is false", () => {
+    const dto = buildValidDTO({ tiene_pulso: false, segmento: "", estado_pago: "" });
+    const cliente = dtoToCliente(dto);
+    expect(cliente.clv).toBeUndefined();
+    expect(cliente.bandaClv).toBeUndefined();
   });
 });

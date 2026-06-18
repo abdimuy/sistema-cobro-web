@@ -39,6 +39,10 @@ export type ClienteListItemDTO = {
   fecha_prox_pago: string;    // RFC3339, empty when no pulse
   banda_credito: string;      // BAJO | MEDIO | ALTO | CRITICO; "" when no aplica (contado/sin crédito)
   score_credito: number;      // 0–100, higher = lower risk; 0 when no aplica
+  banda_recompra: string;     // ALTA | MEDIA | BAJA; "" when no aplica
+  score_recompra: number;     // 0–100, higher = more likely; 0 when no aplica
+  clv: string;                // decimal as string; "" when no aplica
+  banda_clv: string;          // ALTO | MEDIO | BAJO; "" when no aplica
 };
 
 // ─── GET /clientes/{id} ──────────────────────────────────────────────────────
@@ -102,6 +106,13 @@ export type PulsoDTO = {
   banda_credito: string;      // BAJO | MEDIO | ALTO | CRITICO; "" when no aplica
   score_credito: number;      // 0–100, higher = lower risk; 0 when no aplica
   credito_drivers: string[];  // up to 3 Spanish risk reason strings; [] when no aplica
+  // Repurchase propensity (only present when client has analytics data)
+  banda_recompra: string;     // ALTA | MEDIA | BAJA; "" when no aplica
+  score_recompra: number;     // 0–100, higher = more likely; 0 when no aplica
+  recompra_drivers: string[]; // up to 3 Spanish propensity reason strings; [] when no aplica
+  // Customer Lifetime Value
+  clv: string;                // decimal as string; "" when no aplica
+  banda_clv: string;          // ALTO | MEDIO | BAJO; "" when no aplica
 };
 
 export type UbicacionDTO = {

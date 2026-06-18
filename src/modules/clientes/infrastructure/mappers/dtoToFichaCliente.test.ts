@@ -59,6 +59,11 @@ function buildValidDTO(overrides: Partial<FichaDTO> = {}): FichaDTO {
       banda_credito: "BAJO",
       score_credito: 85,
       credito_drivers: ["Historial limpio de pagos"],
+      banda_recompra: "ALTA",
+      score_recompra: 78,
+      recompra_drivers: ["Alta frecuencia de compra"],
+      clv: "8204.83",
+      banda_clv: "ALTO",
     },
     ubicacion: {
       lat: 19.4326,
@@ -290,6 +295,47 @@ describe("dtoToFichaCliente", () => {
     expect(p.bandaCredito).toBeUndefined();
     expect(p.scoreCredito).toBeUndefined();
     expect(p.creditoDrivers).toBeUndefined();
+  });
+
+  // ── Recompra propensity ─────────────────────────────────────────────────────
+
+  it("maps banda_recompra, score_recompra, and recompra_drivers from pulso DTO", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    const p = ficha.pulso!;
+    expect(p.bandaRecompra).toBe("ALTA");
+    expect(p.scoreRecompra).toBe(78);
+    expect(p.recompraDrivers).toEqual(["Alta frecuencia de compra"]);
+  });
+
+  it("maps bandaRecompra to undefined when banda_recompra is empty (no aplica)", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.banda_recompra = "";
+    dto.pulso!.score_recompra = 0;
+    dto.pulso!.recompra_drivers = [];
+    const ficha = dtoToFichaCliente(dto);
+    const p = ficha.pulso!;
+    expect(p.bandaRecompra).toBeUndefined();
+    expect(p.scoreRecompra).toBeUndefined();
+    expect(p.recompraDrivers).toBeUndefined();
+  });
+
+  // ── CLV ─────────────────────────────────────────────────────────────────────
+
+  it("maps clv and banda_clv from pulso DTO", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    const p = ficha.pulso!;
+    expect(p.clv).toBe("8204.83");
+    expect(p.bandaClv).toBe("ALTO");
+  });
+
+  it("maps clv to undefined when clv is empty (no aplica)", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.clv = "";
+    dto.pulso!.banda_clv = "";
+    const ficha = dtoToFichaCliente(dto);
+    const p = ficha.pulso!;
+    expect(p.clv).toBeUndefined();
+    expect(p.bandaClv).toBeUndefined();
   });
 });
 
