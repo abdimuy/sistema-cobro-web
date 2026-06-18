@@ -232,4 +232,43 @@ describe("ClienteFicha", () => {
       expect(screen.getByText("Ritmo de pago")).toBeInTheDocument(),
     );
   });
+
+  it("clicking a ritmo pago icon opens VentaModal for that venta", async () => {
+    // Use a ritmo with an evento in the current visible window (week of Jun 9, 2026).
+    port.ritmoResponse = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-06-09T00:00:00.000Z"),
+          montoAbonado: "500.00",
+          saldo: "3000.00",
+          numPagos: 1,
+        },
+      ],
+      eventos: [
+        {
+          fecha: new Date("2026-06-10T00:00:00.000Z"),
+          tipo: "venta_credito",
+          monto: "9500.00",
+          doctoPvId: 30099,
+          folio: "CV-00999",
+          plazoMeses: 6,
+        },
+      ],
+    });
+    // Set up venta detalle response for doctoPvId 30099
+    port.obtenerDetalleResponse = makeFakeVentaDetalle({
+      venta: makeFakeVentaCliente({ doctoPvId: 30099, folio: "CV-00999" }),
+    });
+
+    renderFicha(port);
+
+    // Wait for ritmo to load and icon button to appear
+    const iconBtn = await screen.findByRole("button", { name: "Ver venta CV-00999" });
+    await userEvent.click(iconBtn);
+
+    // VentaModal should open and show the folio
+    await waitFor(() =>
+      expect(screen.getAllByText("CV-00999").length).toBeGreaterThan(1),
+    );
+  });
 });

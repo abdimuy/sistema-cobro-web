@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { FichaRitmoPago } from "./FichaRitmoPago";
 import { makeFakeRitmoPago } from "../../application/__tests__/fakeClientesPort";
 
@@ -104,5 +105,49 @@ describe("FichaRitmoPago", () => {
   it("renders isLoading with no ritmo as null", () => {
     const { container } = render(<FichaRitmoPago ritmo={null} isLoading />);
     expect(container.firstChild).toBeNull();
+  });
+});
+
+describe("FichaRitmoPago — onVentaClick", () => {
+  it("icon button with doctoPvId>0 calls onVentaClick when clicked", async () => {
+    // The liquidacion event (May 15) falls in the week starting May 11,
+    // which is in the visible window. folio=CV-00589, doctoPvId=30021.
+    const onVentaClick = vi.fn();
+    const ritmo = makeFakeRitmoPago();
+    render(<FichaRitmoPago ritmo={ritmo} onVentaClick={onVentaClick} />);
+
+    // Find any "Ver venta" button — liquidacion (CV-00589) is in visible window (May 11 week)
+    const btn = await screen.findByRole("button", { name: /Ver venta CV-00589/i });
+    await userEvent.click(btn);
+
+    expect(onVentaClick).toHaveBeenCalledWith(30021);
+  });
+
+  it("event with doctoPvId=0 does not render a button", () => {
+    const onVentaClick = vi.fn();
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "850.00",
+          saldo: "7450.00",
+          numPagos: 1,
+        },
+      ],
+      eventos: [
+        {
+          fecha: new Date("2026-05-12T00:00:00.000Z"),
+          tipo: "liquidacion",
+          monto: "0.00",
+          doctoPvId: 0,
+          folio: "",
+          plazoMeses: 0,
+        },
+      ],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} onVentaClick={onVentaClick} />);
+
+    // No "Ver venta" button should be rendered for doctoPvId=0
+    expect(screen.queryByRole("button", { name: /Ver venta/i })).toBeNull();
   });
 });

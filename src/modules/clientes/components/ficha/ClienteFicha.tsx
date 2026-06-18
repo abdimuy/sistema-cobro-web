@@ -97,7 +97,7 @@ export function ClienteFicha({ clienteId }: Props) {
         compradoVsAbonado={ficha.resumen.compradoVsAbonado}
         isLoading={isLoading}
       />
-      <FichaRitmoPago ritmo={ritmoState.ritmo} isLoading={ritmoState.isLoading} />
+      <FichaRitmoPago ritmo={ritmoState.ritmo} isLoading={ritmoState.isLoading} onVentaClick={setSelectedDoctoPvId} />
       <FichaPulsoCard pulso={ficha.pulso} />
       <FichaCobranzaCards pulso={ficha.pulso} />
       <FichaInteligenciaScores pulso={ficha.pulso} />

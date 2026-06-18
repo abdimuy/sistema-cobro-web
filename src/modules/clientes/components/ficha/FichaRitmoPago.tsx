@@ -232,6 +232,7 @@ function HorizontalHeatmap({
   maxMonto,
   onHover,
   onLeave,
+  onVentaClick,
 }: {
   semanas: SemanaRitmo[];
   eventos: EventoRitmo[];
@@ -239,6 +240,7 @@ function HorizontalHeatmap({
   maxMonto: number;
   onHover: (e: React.MouseEvent, semana: SemanaRitmo) => void;
   onLeave: () => void;
+  onVentaClick?: (doctoPvId: number) => void;
 }) {
   const groups = groupByMonth(semanas);
 
@@ -276,13 +278,23 @@ function HorizontalHeatmap({
                       className="flex gap-0.5"
                     >
                       {evts.map((ev, i) => {
-                        const { Icon, cls, label } = EVENT_META[ev.tipo];
-                        return (
+                        const { Icon, cls } = EVENT_META[ev.tipo];
+                        return ev.doctoPvId > 0 ? (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => onVentaClick?.(ev.doctoPvId)}
+                            aria-label={`Ver venta ${ev.folio}`}
+                            className="cursor-pointer focus:outline-none"
+                          >
+                            <Icon size={10} className={cls} />
+                          </button>
+                        ) : (
                           <Icon
                             key={i}
                             size={10}
                             className={cls}
-                            aria-label={label}
+                            aria-label={EVENT_META[ev.tipo].label}
                           />
                         );
                       })}
@@ -347,10 +359,12 @@ function FullHistoryPanel({
   semanas,
   eventos,
   maxMonto,
+  onVentaClick,
 }: {
   semanas: SemanaRitmo[];
   eventos: EventoRitmo[];
   maxMonto: number;
+  onVentaClick?: (doctoPvId: number) => void;
 }) {
   // Group all semanas by year, then by month within each year
   const byYear = new Map<number, SemanaRitmo[]>();
@@ -390,13 +404,23 @@ function FullHistoryPanel({
                           {evts.length > 0 && (
                             <div className="flex">
                               {evts.map((ev, i) => {
-                                const { Icon, cls, label } = EVENT_META[ev.tipo];
-                                return (
+                                const { Icon, cls } = EVENT_META[ev.tipo];
+                                return ev.doctoPvId > 0 ? (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => onVentaClick?.(ev.doctoPvId)}
+                                    aria-label={`Ver venta ${ev.folio}`}
+                                    className="cursor-pointer focus:outline-none"
+                                  >
+                                    <Icon size={7} className={cls} />
+                                  </button>
+                                ) : (
                                   <Icon
                                     key={i}
                                     size={7}
                                     className={cls}
-                                    aria-label={label}
+                                    aria-label={EVENT_META[ev.tipo].label}
                                   />
                                 );
                               })}
@@ -441,12 +465,14 @@ function VerticalHeatmap({
   maxMonto,
   onHover,
   onLeave,
+  onVentaClick,
 }: {
   semanas: SemanaRitmo[];
   eventos: EventoRitmo[];
   maxMonto: number;
   onHover: (e: React.MouseEvent, semana: SemanaRitmo) => void;
   onLeave: () => void;
+  onVentaClick?: (doctoPvId: number) => void;
 }) {
   const groups = groupByMonth(semanas);
   const cellSize = 14;
@@ -483,17 +509,27 @@ function VerticalHeatmap({
                   />
                   {evts.length > 0 && (
                     <div
-                      className="pointer-events-none absolute -right-0.5 -top-0.5 flex gap-px"
+                      className="absolute -right-0.5 -top-0.5 flex gap-px"
                       aria-label={evts.map(ev => EVENT_META[ev.tipo].label).join(", ")}
                     >
                       {evts.map((ev, i) => {
-                        const { Icon, cls, label } = EVENT_META[ev.tipo];
-                        return (
+                        const { Icon, cls } = EVENT_META[ev.tipo];
+                        return ev.doctoPvId > 0 ? (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => onVentaClick?.(ev.doctoPvId)}
+                            aria-label={`Ver venta ${ev.folio}`}
+                            className="cursor-pointer focus:outline-none"
+                          >
+                            <Icon size={7} className={cls} />
+                          </button>
+                        ) : (
                           <Icon
                             key={i}
                             size={7}
                             className={cls}
-                            aria-label={label}
+                            aria-label={EVENT_META[ev.tipo].label}
                           />
                         );
                       })}
@@ -639,9 +675,10 @@ function Tooltip({ tooltip }: { tooltip: TooltipState }) {
 interface Props {
   ritmo: RitmoPago | null;
   isLoading?: boolean;
+  onVentaClick?: (doctoPvId: number) => void;
 }
 
-export function FichaRitmoPago({ ritmo, isLoading }: Props) {
+export function FichaRitmoPago({ ritmo, isLoading, onVentaClick }: Props) {
   const [showHistory, setShowHistory] = useState(false);
   const [containerWidth, setContainerWidth] = useState<number>(800);
   const [tooltip, setTooltip] = useState<TooltipState>(null);
@@ -730,6 +767,7 @@ export function FichaRitmoPago({ ritmo, isLoading }: Props) {
               maxMonto={maxMonto}
               onHover={handleCellHover}
               onLeave={handleCellLeave}
+              onVentaClick={onVentaClick}
             />
             <SaldoSvg
               semanas={visibleSemanas}
@@ -745,6 +783,7 @@ export function FichaRitmoPago({ ritmo, isLoading }: Props) {
           maxMonto={maxMonto}
           onHover={handleCellHover}
           onLeave={handleCellLeave}
+          onVentaClick={onVentaClick}
         />
       )}
 
@@ -753,6 +792,7 @@ export function FichaRitmoPago({ ritmo, isLoading }: Props) {
           semanas={ritmo.semanas}
           eventos={ritmo.eventos}
           maxMonto={maxMonto}
+          onVentaClick={onVentaClick}
         />
       )}
 
