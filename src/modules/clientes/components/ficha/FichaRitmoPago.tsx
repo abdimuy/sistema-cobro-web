@@ -590,22 +590,25 @@ function ResumenStrip({ semanas }: { semanas: SemanaRitmo[] }) {
   // ABONADO 12M: sum of visible montoAbonado
   const totalAbonado = semanas.reduce((acc, s) => acc + Number(s.montoAbonado), 0);
 
-  // ABONÓ EN: semanasConPago / total
-  const semanasConPago = semanas.filter(s => Number(s.montoAbonado) > 0).length;
-  const total = semanas.length;
+  // Semanas ACTIVAS = semanas en que el cliente tenía saldo por pagar (o pagó).
+  // Esto excluye los periodos sin deuda (ya liquidado / antes de su compra), para
+  // no castigar la constancia por semanas en las que no tenía obligación de pagar.
+  const semanasActivas = semanas.filter(
+    s => Number(s.saldo) > 0 || Number(s.montoAbonado) > 0,
+  ).length;
 
-  // RACHA ACTUAL: consecutive paid weeks from the END of the array
+  // ABONÓ EN / CONSTANCIA se miden sobre las semanas activas (mismo denominador).
+  const semanasConPago = semanas.filter(s => Number(s.montoAbonado) > 0).length;
+
+  // RACHA ACTUAL: semanas consecutivas con pago desde el FINAL de la ventana.
   let racha = 0;
   for (let i = semanas.length - 1; i >= 0; i--) {
     if (Number(semanas[i].montoAbonado) > 0) racha++;
     else break;
   }
 
-  // CONSTANCIA: conPago / activas * 100
-  // activas = weeks from first paid week onward
-  const firstPaidIdx = semanas.findIndex(s => Number(s.montoAbonado) > 0);
-  const activas = firstPaidIdx >= 0 ? semanas.length - firstPaidIdx : 0;
-  const constancia = activas > 0 ? Math.round((semanasConPago / activas) * 100) : 0;
+  const constancia =
+    semanasActivas > 0 ? Math.round((semanasConPago / semanasActivas) * 100) : 0;
 
   const stats: { label: string; value: string; unit?: string }[] = [
     {
@@ -615,7 +618,7 @@ function ResumenStrip({ semanas }: { semanas: SemanaRitmo[] }) {
     {
       label: "ABONÓ EN",
       value: String(semanasConPago),
-      unit: `/${total} sem`,
+      unit: `/${semanasActivas} sem`,
     },
     {
       label: "RACHA ACTUAL",
