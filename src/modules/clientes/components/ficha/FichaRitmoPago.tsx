@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Banknote, CircleCheck, CreditCard } from "lucide-react";
 import type { EventoRitmo, EventoTipo, RitmoPago, SemanaRitmo } from "../../domain/entities/RitmoPago";
+import type { Pulso } from "../../domain/entities/FichaCliente";
 import { formatMoney, formatMoneyShort } from "../lib/format";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -586,7 +587,7 @@ function Leyenda({ maxMonto }: { maxMonto: number }) {
 
 // ─── Resumen strip ────────────────────────────────────────────────────────────
 
-function ResumenStrip({ semanas }: { semanas: SemanaRitmo[] }) {
+function ResumenStrip({ semanas, pulso }: { semanas: SemanaRitmo[]; pulso?: Pulso | null }) {
   // ABONADO 12M: sum of visible montoAbonado
   const totalAbonado = semanas.reduce((acc, s) => acc + Number(s.montoAbonado), 0);
 
@@ -630,6 +631,12 @@ function ResumenStrip({ semanas }: { semanas: SemanaRitmo[] }) {
       value: `${constancia}%`,
     },
   ];
+  if (pulso) {
+    stats.push(
+      { label: "CADENCIA", value: String(pulso.cadenciaDias), unit: " días" },
+      { label: "ATRASO PROM", value: String(pulso.diasAtrasoProm), unit: " días" },
+    );
+  }
 
   return (
     <div className="flex flex-wrap gap-x-6 gap-y-2">
@@ -679,9 +686,10 @@ interface Props {
   ritmo: RitmoPago | null;
   isLoading?: boolean;
   onVentaClick?: (doctoPvId: number) => void;
+  pulso?: Pulso | null;
 }
 
-export function FichaRitmoPago({ ritmo, isLoading, onVentaClick }: Props) {
+export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, pulso }: Props) {
   const [showHistory, setShowHistory] = useState(false);
   const [containerWidth, setContainerWidth] = useState<number>(800);
   const [tooltip, setTooltip] = useState<TooltipState>(null);
@@ -753,7 +761,7 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick }: Props) {
       </div>
 
       <div className="mb-4">
-        <ResumenStrip semanas={visibleSemanas} />
+        <ResumenStrip semanas={visibleSemanas} pulso={pulso} />
       </div>
 
       {visibleSemanas.length === 0 ? (

@@ -1,7 +1,12 @@
+import dayjs from "dayjs";
+import "dayjs/locale/es";
 import { ScoreMeter, type MeterBand } from "./ScoreMeter";
 import { clvDrivers } from "./clvDrivers";
 import { formatMoney } from "../lib/format";
+import SegmentoBadge from "../badges/SegmentoBadge";
 import type { Pulso } from "../../domain/entities/FichaCliente";
+
+dayjs.locale("es");
 
 // FichaInteligenciaScores — the three customer-intelligence scores (credit risk,
 // repurchase propensity, lifetime value) shown side by side, each as a band
@@ -269,6 +274,55 @@ export function FichaInteligenciaScores({ pulso }: Props) {
             text="Sin historial de compras"
           />
         )}
+      </div>
+
+      {/* ── Contexto RFM ── */}
+      <div className="mt-6">
+        <p className="mb-3 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">
+          Contexto
+        </p>
+        <div className="flex flex-wrap gap-x-8 gap-y-3">
+          <div className="flex flex-col gap-0.5">
+            <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">
+              Segmento
+            </span>
+            <SegmentoBadge value={pulso.segmento} />
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">
+              Recencia
+            </span>
+            <span className="font-mono text-xs tabular-nums text-foreground">
+              {pulso.recenciaDias === 0 ? "Hoy" : `hace ${pulso.recenciaDias} días`}
+            </span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">
+              Frecuencia
+            </span>
+            <span className="font-mono text-xs tabular-nums text-foreground">
+              {pulso.frecuencia} compras
+            </span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">
+              Monetario
+            </span>
+            <span className="font-mono text-xs tabular-nums text-foreground">
+              {formatMoney(pulso.monetary)}
+            </span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">
+              Última compra
+            </span>
+            <span className="font-mono text-xs tabular-nums text-foreground">
+              {pulso.fechaUltimaCompra
+                ? dayjs(pulso.fechaUltimaCompra).format("DD MMM YYYY")
+                : "—"}
+            </span>
+          </div>
+        </div>
       </div>
     </section>
   );

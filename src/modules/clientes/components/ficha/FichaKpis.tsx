@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { formatMoney, formatPct } from "../lib/format";
+import { formatMoney } from "../lib/format";
 import type { ResumenFicha } from "../../domain/entities/FichaCliente";
 
 interface KpiCellProps {
@@ -35,11 +35,6 @@ export function FichaKpis({ resumen, isLoading = false }: Props) {
   const kpis: KpiCellProps[] = [
     { label: "Total comprado", value: formatMoney(resumen.totalComprado) },
     { label: "Total abonado", value: formatMoney(resumen.totalAbonado) },
-    {
-      label: "% liquidado",
-      value: formatPct(resumen.pctLiquidado),
-      mono: true,
-    },
     { label: "# ventas", value: String(resumen.numVentas), mono: true },
     { label: "# pagos", value: String(resumen.numPagos), mono: true },
     { label: "Ticket promedio", value: formatMoney(resumen.ticketPromedio) },
