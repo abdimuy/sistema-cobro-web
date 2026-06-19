@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mockup — Ritmo de pago · Ficha del cliente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=JetBrains+Mono:wght@400;500&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --background: 0 0% 100%; --foreground: 0 0% 3.9%;
+    --muted: 0 0% 96.1%; --muted-foreground: 0 0% 45.1%; --border: 0 0% 89.8%;
+    --green: 142 71% 40%; --credito: 217 91% 55%; --contado: 262 60% 58%; --liq: 142 64% 38%;
+  }
+  .dark {
+    --background: 0 0% 3.9%; --foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%; --muted-foreground: 0 0% 63.9%; --border: 0 0% 14.9%;
+    --green: 142 69% 48%; --credito: 217 91% 64%; --contado: 262 75% 70%; --liq: 142 64% 50%;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: hsl(var(--background)); color: hsl(var(--foreground));
+    font-family: "Inter Tight", system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+    transition: background .3s ease, color .3s ease; padding: 0 0 90px;
+  }
+  .serif { font-family: "Fraunces", Georgia, serif; font-weight: 400; }
+  .mono  { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  .tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+  .page { max-width: 1080px; margin: 0 auto; }
+
+  header.bar {
+    position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between;
+    height: 56px; padding: 0 32px; border-bottom: 1px solid hsl(var(--border) / .6);
+    background: hsl(var(--background) / .8); backdrop-filter: blur(8px);
+  }
+  .crumb { font-family:"JetBrains Mono",monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: hsl(var(--muted-foreground)); }
+  .toggle {
+    font-family:"JetBrains Mono",monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .12em;
+    padding: 6px 12px; border-radius: 6px; cursor: pointer; border: 1px solid hsl(var(--border));
+    background: transparent; color: hsl(var(--foreground)); transition: background .2s;
+  }
+  .toggle:hover { background: hsl(var(--muted)); }
+
+  .hero { padding: 36px 32px 28px; border-bottom: 1px solid hsl(var(--border) / .6); }
+  .hero h1 { font-size: 34px; letter-spacing: -.02em; margin: 0 0 8px; }
+  .hero .sub { font-family:"JetBrains Mono",monospace; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: hsl(var(--muted-foreground)); }
+
+  section.block { padding: 34px 32px; border-bottom: 1px solid hsl(var(--border) / .6); }
+  .blockhead { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .blockhead h3 { font-size: 17px; margin: 0; }
+  .blockhead .cap { font-family:"JetBrains Mono",monospace; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: hsl(var(--muted-foreground) / .7); margin-top: 3px; }
+
+  .summary { display:flex; flex-wrap:wrap; gap:34px; margin:24px 0 30px; }
+  .summary .cell .k { font-family:"JetBrains Mono",monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:hsl(var(--muted-foreground)); }
+  .summary .cell .v { font-family:"Fraunces",serif; font-size:27px; line-height:1.1; margin-top:5px; }
+  .summary .cell .v small { font-family:"JetBrains Mono",monospace; font-size:12px; color:hsl(var(--muted-foreground)); }
+
+  /* ── Heatmap 12 meses ─────────────────────────────────────────────── */
+  .ritmo { position: relative; overflow: visible; padding-bottom:4px; }
+  .blocks { display:flex; gap:14px; align-items:flex-end; }
+  .mblock { display:flex; flex-direction:column; }
+  .mlabel { font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:hsl(var(--muted-foreground) / .8); margin-bottom:6px; height:12px; }
+  .mlabel .yr { color:hsl(var(--foreground) / .55); }
+  .evtlane { display:grid; gap:4px; height:18px; margin-bottom:5px; }
+  .cells   { display:grid; gap:4px; }
+  .msub { font-family:"JetBrains Mono",monospace; font-size:9.5px; color:hsl(var(--muted-foreground)); margin-top:7px; letter-spacing:.02em; }
+  .msub.zero { color:hsl(var(--muted-foreground) / .4); }
+
+  .cell-sq { border-radius:4px; cursor:pointer; transition: transform .12s ease, outline .12s ease; outline:0 solid transparent; }
+  .cell-sq:hover { transform: scale(1.3); outline: 2px solid hsl(var(--foreground) / .25); }
+  /* rampa de verdes explícita — pasos bien separados (light) */
+  .g0 { background: hsl(var(--muted)); }
+  .g1 { background: hsl(140 45% 78%); }
+  .g2 { background: hsl(143 50% 57%); }
+  .g3 { background: hsl(146 62% 38%); }
+  .g4 { background: hsl(150 78% 24%); }
+  /* rampa para dark (de verde apagado a verde brillante) */
+  .dark .g1 { background: hsl(143 28% 24%); }
+  .dark .g2 { background: hsl(144 42% 35%); }
+  .dark .g3 { background: hsl(145 58% 47%); }
+  .dark .g4 { background: hsl(145 72% 62%); }
+  .today { outline: 2px solid hsl(var(--foreground) / .6); outline-offset: 1px; }
+
+  .evt { width:100%; height:18px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition: transform .12s ease; }
+  .evt:hover { transform: scale(1.25); }
+  .evt svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; overflow:visible; }
+  .e-credito { color:hsl(var(--credito)); }
+  .e-contado { color:hsl(var(--contado)); }
+  .e-liq     { color:hsl(var(--liq)); }
+
+  /* línea de saldo */
+  .saldorow { margin-top:14px; position:relative; }
+  .saldocap { font-family:"JetBrains Mono",monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:hsl(var(--muted-foreground) / .7); margin-bottom:4px; }
+  .saldo-end { font-family:"JetBrains Mono",monospace; font-size:10px; }
+
+  /* layout vertical (pantalla angosta) */
+  .vstack { display:flex; flex-direction:column; }
+  .vsaldo { margin: 2px 0 22px; }
+  .vsaldo .saldocap { margin-bottom:6px; }
+  .vrows { display:flex; flex-direction:column; gap:7px; }
+  .vrow { display:flex; align-items:center; gap:12px; }
+  .vrow .vlbl { width:58px; flex-shrink:0; font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:hsl(var(--muted-foreground) / .85); }
+  .vrow .vcells { display:flex; gap:5px; flex:1; }
+  .vcell { width:20px; height:20px; border-radius:4px; position:relative; cursor:pointer; }
+  .vbadge { position:absolute; top:-7px; right:-7px; width:15px; height:15px; border-radius:50%; background:hsl(var(--background)); display:flex; align-items:center; justify-content:center; }
+  .vbadge svg { width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2.4; }
+  .vrow .vsub { width:48px; flex-shrink:0; text-align:right; font-family:"JetBrains Mono",monospace; font-size:9.5px; color:hsl(var(--muted-foreground)); }
+  .vrow .vsub.zero { color:hsl(var(--muted-foreground) / .4); }
+
+  /* leyenda */
+  .legend { display:flex; flex-wrap:wrap; gap:24px; margin-top:24px; align-items:center; }
+  .scaleramp { display:flex; align-items:center; gap:5px; font-family:"JetBrains Mono",monospace; font-size:10px; color:hsl(var(--muted-foreground)); }
+  .scaleramp .swatch { width:14px; height:14px; border-radius:4px; }
+  .legend .item { display:flex; align-items:center; gap:7px; font-family:"JetBrains Mono",monospace; font-size:10px; color:hsl(var(--muted-foreground)); }
+  .legend .item svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .legdiv { width:1px; height:16px; background:hsl(var(--border)); }
+
+  .note { font-size:12.5px; line-height:1.65; color:hsl(var(--muted-foreground)); max-width:740px; }
+  .note b { color:hsl(var(--foreground)); font-weight:500; }
+
+  /* historial completo colapsable */
+  .expbtn { margin-top:26px; }
+  #fullpanel { display:none; margin-top:26px; padding-top:24px; border-top:1px dashed hsl(var(--border)); }
+  #fullpanel.open { display:block; }
+  .fhead { display:flex; gap:10px; margin-left:46px; margin-bottom:6px; }
+  .fhead .mlbl { font-family:"JetBrains Mono",monospace; font-size:8.5px; text-transform:uppercase; color:hsl(var(--muted-foreground)/.7); }
+  .fyearrow { display:flex; align-items:flex-start; gap:14px; margin-bottom:5px; }
+  .fyearlbl { width:32px; padding-top:15px; font-family:"JetBrains Mono",monospace; font-size:10px; color:hsl(var(--muted-foreground)); text-align:right; flex-shrink:0; }
+  .fblocks { display:flex; gap:10px; }
+  .fblock { display:flex; flex-direction:column; }
+  .fevt { display:grid; gap:2px; height:12px; margin-bottom:3px; }
+  .fcells { display:grid; gap:2px; }
+  .fcell { width:11px; height:11px; border-radius:2.5px; cursor:pointer; }
+  .fevtm { width:11px; height:12px; display:flex; align-items:center; justify-content:center; }
+  .fevtm svg { width:11px; height:11px; fill:none; stroke:currentColor; stroke-width:2.4; }
+
+  /* next-best-action (#1) */
+  .nbatag { font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; padding:4px 11px; border-radius:999px; color:hsl(146 62% 45%); border:1px solid hsl(146 60% 45% / .5); }
+  .nbacard { display:flex; gap:24px; justify-content:space-between; align-items:center; flex-wrap:wrap;
+    border:1px solid hsl(146 50% 45% / .4); background:hsl(146 50% 45% / .06); border-radius:12px; padding:20px 22px; margin-top:18px; }
+  .nbaheadline { font-size:22px; }
+  .nbawhy { font-family:"JetBrains Mono",monospace; font-size:10.5px; letter-spacing:.04em; color:hsl(var(--muted-foreground)); margin-top:7px; text-transform:uppercase; }
+  .nbaprod { font-size:13px; margin-top:11px; color:hsl(var(--foreground)); }
+  .nbaprod b { font-family:"Fraunces",serif; font-weight:400; }
+  .nbaactions { display:flex; gap:10px; flex-shrink:0; flex-wrap:wrap; }
+  .nbaactions button { font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.06em; padding:9px 16px; border-radius:7px; cursor:pointer;
+    border:1px solid hsl(var(--border)); background:hsl(var(--foreground)); color:hsl(var(--background)); transition:opacity .15s; }
+  .nbaactions button.ghost { background:transparent; color:hsl(var(--foreground)); }
+  .nbaactions button:hover { opacity:.82; }
+
+  /* barra de liquidación (#2) */
+  .liqbar { margin-top:24px; max-width:520px; }
+  .liqhead, .liqfoot { display:flex; justify-content:space-between; font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.06em; color:hsl(var(--muted-foreground)); }
+  .liqhead { text-transform:uppercase; margin-bottom:7px; }
+  .liqhead b { color:hsl(var(--foreground)); }
+  .liqfoot { margin-top:7px; }
+  .track { height:9px; border-radius:6px; background:hsl(var(--muted)); overflow:hidden; }
+  .track .fill { height:100%; border-radius:6px; background:hsl(146 60% 42%); transition:width .6s ease; }
+
+  /* scores + drivers (#3) */
+  .scores { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:20px; }
+  @media (max-width:760px){ .scores{ grid-template-columns:1fr; } }
+  .scorecard { border:1px solid hsl(var(--border) / .6); border-radius:12px; padding:18px; }
+  .sc-title { font-family:"Fraunces",serif; font-size:15px; }
+  .sc-cap { font-family:"JetBrains Mono",monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:hsl(var(--muted-foreground)/.7); margin-top:3px; }
+  .sc-val { font-family:"JetBrains Mono",monospace; font-size:12px; margin-top:14px; display:flex; justify-content:space-between; }
+  .sc-val .band { font-weight:500; }
+  .meter { margin-top:9px; position:relative; height:10px; border-radius:6px; overflow:visible; display:flex; }
+  .meter span { height:100%; }
+  .meter span:first-child{ border-top-left-radius:6px; border-bottom-left-radius:6px; }
+  .meter span:last-of-type{ border-top-right-radius:6px; border-bottom-right-radius:6px; }
+  .meter .mk { position:absolute; top:-4px; width:2px; height:18px; background:hsl(var(--foreground)); border-radius:2px; }
+  .drivers { margin-top:16px; display:flex; flex-direction:column; gap:7px; }
+  .driver { font-size:12px; color:hsl(var(--muted-foreground)); display:flex; gap:8px; align-items:flex-start; line-height:1.4; }
+  .driver::before { content:""; width:5px; height:5px; border-radius:50%; background:hsl(146 55% 45%); margin-top:6px; flex-shrink:0; }
+
+  /* plan de pagos (#5) */
+  .plansum { display:flex; flex-wrap:wrap; gap:26px; margin:20px 0 22px; }
+  .plansum .k { font-family:"JetBrains Mono",monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:hsl(var(--muted-foreground)); }
+  .plansum .v { font-family:"Fraunces",serif; font-size:20px; margin-top:5px; }
+  .plantable { display:flex; flex-direction:column; max-width:560px; }
+  .prow { display:grid; grid-template-columns:24px 84px 1fr auto; gap:14px; align-items:center; padding:9px 4px; border-bottom:1px solid hsl(var(--border) / .4); font-family:"JetBrains Mono",monospace; font-size:12px; }
+  .prow.nowrow { background:hsl(var(--foreground) / .04); border-radius:6px; }
+  .prow .st { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; }
+  .prow .pd { color:hsl(var(--muted-foreground)); }
+  .prow .pa { text-align:right; }
+  .st.paid { background:hsl(146 55% 42% / .18); color:hsl(146 62% 46%); }
+  .st.now  { background:hsl(var(--foreground)); color:hsl(var(--background)); }
+  .st.due  { border:1.5px solid hsl(var(--border)); }
+
+  #tip {
+    position:fixed; pointer-events:none; z-index:50; opacity:0; transform:translateY(4px);
+    transition:opacity .12s ease, transform .12s ease; background:hsl(var(--foreground)); color:hsl(var(--background));
+    border-radius:6px; padding:8px 11px; font-family:"JetBrains Mono",monospace; font-size:11px;
+    box-shadow:0 8px 24px hsl(0 0% 0% / .25); white-space:nowrap; line-height:1.5;
+  }
+  #tip.show { opacity:1; transform:translateY(0); }
+  #tip .t-h { font-weight:500; display:flex; align-items:center; gap:6px; }
+  #tip .t-h svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2.2; }
+</style>
+</head>
+<body class="dark">
+  <div class="page">
+    <header class="bar">
+      <span class="crumb">Clientes / María González Hernández</span>
+      <button class="toggle" id="themeBtn">◐ Tema: oscuro</button>
+    </header>
+
+    <div class="hero">
+      <h1 class="serif">María González Hernández</h1>
+      <div class="sub">Zona Norte · Cobrador Juan Pérez · #4821</div>
+    </div>
+
+    <section class="block">
+      <div class="blockhead">
+        <div>
+          <h3 class="serif">Acción recomendada</h3>
+          <div class="cap">matriz riesgo × propensión · datos ya disponibles</div>
+        </div>
+        <span class="nbatag">Vender</span>
+      </div>
+      <div class="nbacard">
+        <div class="nbamain">
+          <div class="nbaheadline serif">Vender más · subir línea de crédito</div>
+          <div class="nbawhy">bajo riesgo (90) · alta propensión a recompra (82) · clv alto</div>
+          <div class="nbaprod">Próximo mejor producto: <b>Comedor 6 sillas</b></div>
+        </div>
+        <div class="nbaactions">
+          <button>Llamar</button>
+          <button class="ghost">WhatsApp</button>
+          <button class="ghost">Agendar</button>
+        </div>
+      </div>
+      <div class="liqbar">
+        <div class="liqhead"><span>Liquidación de la cuenta</span><span><b>91%</b></span></div>
+        <div class="track"><div class="fill" style="width:91%"></div></div>
+        <div class="liqfoot"><span>pagado $11,700</span><span>saldo $700 de $12,400</span></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="blockhead">
+        <div>
+          <h3 class="serif">Ritmo de pago</h3>
+          <div class="cap">abonos semanales · últimos 12 meses</div>
+        </div>
+      </div>
+
+      <div class="summary" id="summary"></div>
+
+      <div class="ritmo">
+        <div class="blocks" id="grid"></div>
+        <div class="saldorow">
+          <div class="saldocap">saldo de la cuenta</div>
+          <div id="saldowrap" style="position:relative"></div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="scaleramp">
+          menos <span class="swatch g0"></span><span class="swatch g1"></span>
+          <span class="swatch g2"></span><span class="swatch g3"></span><span class="swatch g4"></span> más
+        </span>
+        <span class="legdiv"></span>
+        <span class="item e-credito" id="lg-cred"></span>
+        <span class="item e-contado" id="lg-cont"></span>
+        <span class="item e-liq" id="lg-liq"></span>
+      </div>
+
+      <p class="note" style="margin-top:24px">
+        Cada recuadro es <b>una semana</b>; el verde se oscurece con el <b>monto abonado</b> (gris = no pagó).
+        Debajo de cada mes, el <b>total abonado</b> del mes; al pie, la <b>línea de saldo</b> en el mismo eje
+        muestra cómo baja la deuda. Los <b>íconos</b> marcan las ventas (tarjeta = crédito, billete = contado) y
+        la <b>liquidación</b> (check).
+      </p>
+
+      <button class="toggle expbtn" id="expBtn">▾ Ver historial completo</button>
+      <div id="fullpanel">
+        <div class="cap" style="margin-bottom:14px">toda la relación · 2024–2026</div>
+        <div class="fhead" id="fhead"></div>
+        <div id="fullgrid"></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="blockhead"><div>
+        <h3 class="serif">Inteligencia del cliente</h3>
+        <div class="cap">scores · explica el porqué</div>
+      </div></div>
+      <div class="scores">
+        <div class="scorecard">
+          <div class="sc-title">Riesgo de crédito</div>
+          <div class="sc-cap">probabilidad de impago</div>
+          <div class="sc-val"><span class="band" style="color:hsl(146 62% 46%)">BAJO riesgo</span><span>90 / 100</span></div>
+          <div class="meter">
+            <span style="width:18%;background:hsl(0 84% 60%)"></span>
+            <span style="width:58%;background:hsl(25 90% 55%)"></span>
+            <span style="width:11%;background:hsl(40 90% 52%)"></span>
+            <span style="width:13%;background:hsl(146 60% 42%)"></span>
+            <span class="mk" style="left:90%"></span>
+          </div>
+          <div class="drivers">
+            <div class="driver">Paga puntual 12 de los últimos 13 meses</div>
+            <div class="driver">Sin atrasos mayores a 7 días</div>
+            <div class="driver">Liquidó su crédito anterior a tiempo</div>
+          </div>
+        </div>
+        <div class="scorecard">
+          <div class="sc-title">Propensión a recompra</div>
+          <div class="sc-cap">próxima compra (12m)</div>
+          <div class="sc-val"><span class="band" style="color:hsl(146 62% 46%)">ALTA recompra</span><span>82 / 100</span></div>
+          <div class="meter">
+            <span style="width:22%;background:hsl(var(--muted-foreground) / .4)"></span>
+            <span style="width:31%;background:hsl(40 90% 52%)"></span>
+            <span style="width:47%;background:hsl(146 60% 42%)"></span>
+            <span class="mk" style="left:82%"></span>
+          </div>
+          <div class="drivers">
+            <div class="driver">Compró hace 3 meses (recencia alta)</div>
+            <div class="driver">4 compras en la relación</div>
+            <div class="driver">Buen comportamiento de pago</div>
+          </div>
+        </div>
+        <div class="scorecard">
+          <div class="sc-title">Valor del cliente</div>
+          <div class="sc-cap">valor estimado (24m)</div>
+          <div class="sc-val"><span class="band" style="color:hsl(146 62% 46%)">CLV alto</span><span>$2,100</span></div>
+          <div class="meter">
+            <span style="width:7%;background:hsl(var(--muted-foreground) / .4)"></span>
+            <span style="width:34%;background:hsl(40 90% 52%)"></span>
+            <span style="width:59%;background:hsl(146 60% 42%)"></span>
+            <span class="mk" style="left:70%"></span>
+          </div>
+          <div class="drivers">
+            <div class="driver">Compras recurrentes a crédito</div>
+            <div class="driver">Margen estimado sobre el promedio</div>
+            <div class="driver">Bajo riesgo de impago</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="blockhead"><div>
+        <h3 class="serif">Plan de pagos</h3>
+        <div class="cap">folio A-7733 · reconstruido del contrato · estimado</div>
+      </div></div>
+      <div class="plansum">
+        <div><div class="k">total</div><div class="v tabular">$12,400</div></div>
+        <div><div class="k">enganche</div><div class="v tabular">$1,500</div></div>
+        <div><div class="k">parcialidad</div><div class="v tabular">$850</div></div>
+        <div><div class="k">plazo</div><div class="v tabular">≈13 sem</div></div>
+        <div><div class="k">pagado</div><div class="v tabular">$11,700</div></div>
+        <div><div class="k">saldo</div><div class="v tabular">$700</div></div>
+        <div><div class="k">estado</div><div class="v" style="color:hsl(146 62% 46%);font-size:16px">Al corriente</div></div>
+      </div>
+      <div class="plantable" id="plangrid"></div>
+    </section>
+  </div>
+
+  <div id="tip"></div>
+
+<script>
+  const ICON = {
+    credito: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
+    contado: '<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>',
+    liq:     '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+  };
+  const EVT_ES = { credito:"Compra a crédito", contado:"Compra de contado", liq:"Venta liquidada" };
+
+  const PARCIALIDAD = 850;
+  const MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+  const WPM = [5,4,4,5,4,4,5,4,4,5,4,5];
+  const OFF = (()=>{ const o=[0]; for(let i=0;i<12;i++) o.push(o[i]+WPM[i]); return o; })();
+  const TOTAL_W = 53;
+  const YEARS = [2024, 2025, 2026];
+  const TODAY = { year: 2026, w: 23 };
+
+  function monthOf(w){ for(let m=11;m>=0;m--) if(w>=OFF[m]) return m; return 0; }
+  function amountFor(year, w) {
+    if (year === 2024) { if (w<8) return 0; if (w===8) return 2000; if (w===20||w===41) return 1700; return 850; }
+    if (year === 2025) { if (w>=30 && w<=32) return 0; if (w===33||w===34) return 1700; if (w>=48) return 0; return 850; }
+    if (year === 2026) { if (w<5) return 0; if (w===5) return 1500; if (w>23) return 0; if (w===14) return 1700; return 850; }
+    return 0;
+  }
+  function grade(a){ if(a<=0)return"g0"; if(a<600)return"g1"; if(a<=900)return"g2"; if(a<=1500)return"g3"; return"g4"; }
+  const EVENTS = {
+    "2024-8":  { type:"credito", total:18500, detail:"$18,500 · 18 sem" },
+    "2025-15": { type:"contado", total:0,     detail:"$3,200" },
+    "2025-47": { type:"liq",     total:0,     detail:"saldo $0" },
+    "2026-5":  { type:"credito", total:12400, detail:"$12,400 · 16 sem · reactivación" },
+  };
+  function weekDate(year, w){ const d=new Date(Date.UTC(year,0,1+w*7)); return d.getUTCDate()+" "+MONTHS[d.getUTCMonth()]+" "+year; }
+  function bw(n){ return n*11 + (n-1)*2; }
+
+  // ── flat global + ventana 12m ─────────────────────────────────────────
+  const ALL=[]; (function(){ let idx=0; YEARS.forEach(y=>{ for(let w=0;w<TOTAL_W;w++){ ALL.push({year:y,w,month:monthOf(w),amount:amountFor(y,w),idx:idx++}); } }); })();
+  const TODAY_IDX = ALL.findIndex(x=>x.year===TODAY.year && x.w===TODAY.w);
+  const WINDOW = ALL.slice(Math.max(0,TODAY_IDX-51), TODAY_IDX+1);
+
+  function groupByMonth(weeks){ const g=[]; let cur=null; weeks.forEach(x=>{ if(!cur||cur.year!==x.year||cur.month!==x.month){ cur={year:x.year,month:x.month,weeks:[]}; g.push(cur);} cur.weeks.push(x); }); return g; }
+
+  // ── Layout / medidas ──────────────────────────────────────────────────
+  let CELL=18; const GAP=2, MGAP=7, BREAKPOINT=700;
+  const GROUPS = groupByMonth(WINDOW);
+  function availWidth(){ return document.querySelector('.ritmo').clientWidth; }
+  function computeCell(avail){
+    const intra = WINDOW.length - GROUPS.length;     // huecos entre celdas (dentro de mes)
+    const mgaps = GROUPS.length - 1;                  // huecos entre meses
+    return Math.max(9, Math.min(22, Math.floor((avail - (intra*GAP + mgaps*MGAP)) / WINDOW.length)));
+  }
+  // serie de saldo (misma para ambos layouts)
+  function saldoSeries(){
+    let saldo = 19550; // saldo entrante (venta 2024 casi liquidada)
+    return WINDOW.map(x=>{ const ev=EVENTS[`${x.year}-${x.w}`];
+      if(ev && ev.type==="credito") saldo += ev.total; saldo -= x.amount; if(ev && ev.type==="liq") saldo = 0; if(saldo<0) saldo=0; return saldo; });
+  }
+  function evtSlot(cls, ev, year, w){ const s=document.createElement("div"); s.className=cls+" e-"+ev.type; s.innerHTML=ICON[ev.type];
+    attachTip(s, `<span class="t-h">${ICON[ev.type]} ${EVT_ES[ev.type]}</span>${ev.detail}<br>${weekDate(year,w)}`); return s; }
+  function cellTip(a, year, w){ return a>0 ? `<span class="t-h">Abonó $${a.toLocaleString("es-MX")}</span>Semana del ${weekDate(year,w)}` : `<span class="t-h">Sin pago</span>Semana del ${weekDate(year,w)}`; }
+
+  // ── Render principal: elige layout según ancho ────────────────────────
+  function render(){ if (availWidth() < BREAKPOINT) renderVertical(); else renderHorizontal(); }
+
+  // ── HORIZONTAL (tira por semana; gaps controlados desde JS = alineación exacta) ──
+  function renderHorizontal(){
+    CELL = computeCell(availWidth());
+    const cont=document.getElementById("grid"); cont.className="blocks"; cont.style.gap=MGAP+"px"; cont.innerHTML="";
+    const centers=[]; let cursor=0;
+    GROUPS.forEach((g,gi)=>{
+      if(gi>0) cursor+=MGAP;
+      const block=document.createElement("div"); block.className="mblock";
+      const lbl=document.createElement("div"); lbl.className="mlabel";
+      const showYr = gi===0 || g.month===0;
+      lbl.innerHTML = MONTHS[g.month] + (showYr ? ` <span class="yr">'${String(g.year).slice(2)}</span>` : "");
+      const lane=document.createElement("div"); lane.className="evtlane"; lane.style.gap=GAP+"px"; lane.style.gridTemplateColumns=`repeat(${g.weeks.length},${CELL}px)`;
+      const cells=document.createElement("div"); cells.className="cells"; cells.style.gap=GAP+"px"; cells.style.gridTemplateColumns=`repeat(${g.weeks.length},${CELL}px)`;
+      let msum=0;
+      g.weeks.forEach((x,j)=>{
+        centers.push(cursor + CELL/2); cursor += CELL; if(j<g.weeks.length-1) cursor+=GAP;
+        const ev=EVENTS[`${x.year}-${x.w}`];
+        lane.appendChild(ev ? evtSlot("evt", ev, x.year, x.w) : document.createElement("div"));
+        const sq=document.createElement("div"); sq.className="cell-sq "+grade(x.amount); sq.style.width=sq.style.height=CELL+"px";
+        if(x.year===TODAY.year && x.w===TODAY.w) sq.className+=" today";
+        msum+=x.amount; attachTip(sq, cellTip(x.amount, x.year, x.w)); cells.appendChild(sq);
+      });
+      const sub=document.createElement("div"); sub.className="msub"+(msum===0?" zero":""); sub.textContent = msum>0 ? `$${(msum/1000).toFixed(1)}k` : "—";
+      block.appendChild(lbl); block.appendChild(lane); block.appendChild(cells); block.appendChild(sub);
+      cont.appendChild(block);
+    });
+    // línea de saldo alineada (mismas X que las celdas)
+    const wrap=document.getElementById("saldowrap"); document.querySelector('.saldorow').style.display="";
+    const series=saldoSeries(), maxS=Math.max(...series,1), H=54, PAD=6;
+    const y=v=>PAD+(1-v/maxS)*(H-2*PAD);
+    const pts=series.map((v,i)=>`${centers[i].toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+    const area=`0,${H} `+pts+` ${cursor.toFixed(1)},${H}`;
+    wrap.style.width=cursor+"px"; wrap.style.marginBottom="18px";
+    wrap.innerHTML = `
+      <svg width="${cursor}" height="${H}" style="display:block; overflow:visible">
+        <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="hsl(var(--foreground))" stop-opacity="0.14"/><stop offset="100%" stop-color="hsl(var(--foreground))" stop-opacity="0"/></linearGradient></defs>
+        <polygon points="${area}" fill="url(#sg)"/>
+        <polyline points="${pts}" fill="none" stroke="hsl(var(--foreground) / .65)" stroke-width="1.5" stroke-linejoin="round"/>
+        <circle cx="${centers[centers.length-1].toFixed(1)}" cy="${y(series[series.length-1]).toFixed(1)}" r="3" fill="hsl(var(--foreground))"/>
+      </svg>
+      <span class="saldo-end" style="position:absolute; left:0; top:-2px; color:hsl(var(--muted-foreground))">$${series[0].toLocaleString("es-MX")}</span>
+      <span class="saldo-end" style="position:absolute; right:0; bottom:-16px; color:hsl(var(--foreground)); font-weight:500">saldo hoy $${series[series.length-1].toLocaleString("es-MX")}</span>`;
+  }
+
+  // ── VERTICAL (filas = mes; para pantalla angosta) ─────────────────────
+  function renderVertical(){
+    document.querySelector('.saldorow').style.display="none";   // el saldo va dentro del bloque, arriba
+    const cont=document.getElementById("grid"); cont.className="vstack"; cont.innerHTML="";
+    const W=Math.max(220, availWidth());
+    const series=saldoSeries(), maxS=Math.max(...series,1), H=46, PAD=5, n=series.length;
+    const y=v=>PAD+(1-v/maxS)*(H-2*PAD);
+    const pts=series.map((v,i)=>`${(n>1?(i/(n-1))*W:0).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+    const sbox=document.createElement("div"); sbox.className="vsaldo";
+    sbox.innerHTML = `<div class="saldocap">saldo · $${series[0].toLocaleString("es-MX")} → $${series[series.length-1].toLocaleString("es-MX")}</div>
+      <svg width="${W}" height="${H}" style="display:block">
+        <defs><linearGradient id="sg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="hsl(var(--foreground))" stop-opacity="0.14"/><stop offset="100%" stop-color="hsl(var(--foreground))" stop-opacity="0"/></linearGradient></defs>
+        <polygon points="0,${H} ${pts} ${W},${H}" fill="url(#sg2)"/>
+        <polyline points="${pts}" fill="none" stroke="hsl(var(--foreground) / .65)" stroke-width="1.5"/>
+      </svg>`;
+    cont.appendChild(sbox);
+    const rows=document.createElement("div"); rows.className="vrows";
+    GROUPS.forEach((g,gi)=>{
+      const row=document.createElement("div"); row.className="vrow";
+      const showYr = gi===0 || g.month===0;
+      const lbl=document.createElement("div"); lbl.className="vlbl"; lbl.textContent=MONTHS[g.month]+(showYr?` '${String(g.year).slice(2)}`:"");
+      const cells=document.createElement("div"); cells.className="vcells"; let msum=0;
+      g.weeks.forEach(x=>{ const ev=EVENTS[`${x.year}-${x.w}`];
+        const cw=document.createElement("div"); cw.className="vcell "+grade(x.amount);
+        if(x.year===TODAY.year && x.w===TODAY.w) cw.className+=" today";
+        if(ev){ const b=document.createElement("div"); b.className="vbadge e-"+ev.type; b.innerHTML=ICON[ev.type];
+          attachTip(b, `<span class="t-h">${ICON[ev.type]} ${EVT_ES[ev.type]}</span>${ev.detail}<br>${weekDate(x.year,x.w)}`); cw.appendChild(b); }
+        attachTip(cw, cellTip(x.amount,x.year,x.w)); msum+=x.amount; cells.appendChild(cw);
+      });
+      const sub=document.createElement("div"); sub.className="vsub"+(msum===0?" zero":""); sub.textContent = msum>0?`$${(msum/1000).toFixed(1)}k`:"—";
+      row.appendChild(lbl); row.appendChild(cells); row.appendChild(sub); rows.appendChild(row);
+    });
+    cont.appendChild(rows);
+  }
+
+  // ── Resumen 12m ───────────────────────────────────────────────────────
+  function renderSummary(){
+    let total=0, pagadas=0, activas=0;
+    const firstPaid = WINDOW.findIndex(x=>x.amount>0);
+    WINDOW.forEach((x,i)=>{ total+=x.amount; if(i>=firstPaid){ activas++; if(x.amount>0) pagadas++; } });
+    let streak=0; for(let i=WINDOW.length-1;i>=0;i--){ if(WINDOW[i].amount>0) streak++; else break; }
+    const cells=[
+      ["abonado 12m", `$${(total/1000).toFixed(1)}<small>k</small>`],
+      ["abonó en", `${pagadas}<small>/${activas} sem</small>`],
+      ["racha actual", `${streak}<small> sem</small>`],
+      ["constancia", `${Math.round(pagadas/activas*100)}<small>%</small>`],
+    ];
+    const c=document.getElementById("summary"); c.innerHTML="";
+    cells.forEach(([k,v])=>{ const d=document.createElement("div"); d.className="cell"; d.innerHTML=`<div class="k">${k}</div><div class="v serif tabular">${v}</div>`; c.appendChild(d); });
+  }
+
+  function renderLegend(){
+    document.getElementById("lg-cred").innerHTML = ICON.credito+" venta a crédito";
+    document.getElementById("lg-cont").innerHTML = ICON.contado+" venta de contado";
+    document.getElementById("lg-liq").innerHTML  = ICON.liq+" liquidación";
+  }
+
+  // ── Plan de pagos (#5) — reconstruido del contrato + pagos ────────────
+  function renderPlan(){
+    const cont=document.getElementById("plangrid"); if(!cont) return; cont.innerHTML="";
+    const start=Date.UTC(2026,1,7); const DAY=86400000;
+    const cuotas=13;
+    const rows=[{label:"Enganche", amount:1500, st:"paid"}];
+    for(let i=1;i<=cuotas;i++){ rows.push({label:"Cuota "+i, amount: i<cuotas?850:700, st: i<=12?"paid":(i===13?"now":"due")}); }
+    rows.forEach((row,i)=>{
+      const d=new Date(start + i*7*DAY);
+      const r=document.createElement("div"); r.className="prow"+(row.st==="now"?" nowrow":"");
+      const st=document.createElement("div"); st.className="st "+row.st; st.textContent = row.st==="paid"?"✓":(row.st==="now"?"●":"");
+      const lb=document.createElement("div"); lb.textContent=row.label;
+      const dt=document.createElement("div"); dt.className="pd"; dt.textContent=`${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+      const am=document.createElement("div"); am.className="pa"; am.textContent="$"+row.amount.toLocaleString("es-MX");
+      r.appendChild(st); r.appendChild(lb); r.appendChild(dt); r.appendChild(am); cont.appendChild(r);
+    });
+  }
+
+  // ── Historial completo (colapsable, fluido — sin scroll horizontal) ───
+  const FGAP=1, FMGAP=4, FLBL=32, FROWGAP=14;
+  function renderFull(){
+    const avail = availWidth();
+    const fcell = Math.max(5, Math.min(12, Math.floor((avail - FLBL - FROWGAP - ((TOTAL_W-12)*FGAP + 11*FMGAP)) / TOTAL_W)));
+    const fbw = n => n*fcell + (n-1)*FGAP;
+    const fh=document.getElementById("fhead"); fh.innerHTML=""; fh.style.gap=FMGAP+"px"; fh.style.marginLeft=(FLBL+FROWGAP)+"px";
+    for(let m=0;m<12;m++){ const s=document.createElement("div"); s.className="mlbl"; s.style.width=fbw(WPM[m])+"px"; s.textContent=MONTHS[m]; fh.appendChild(s); }
+    const cont=document.getElementById("fullgrid"); cont.innerHTML="";
+    YEARS.forEach(year=>{
+      const row=document.createElement("div"); row.className="fyearrow"; row.style.gap=FROWGAP+"px";
+      const lbl=document.createElement("div"); lbl.className="fyearlbl"; lbl.style.width=FLBL+"px"; lbl.textContent=year;
+      const blocks=document.createElement("div"); blocks.className="fblocks"; blocks.style.gap=FMGAP+"px";
+      for(let m=0;m<12;m++){ const n=WPM[m];
+        const b=document.createElement("div"); b.className="fblock";
+        const lane=document.createElement("div"); lane.className="fevt"; lane.style.gap=FGAP+"px"; lane.style.gridTemplateColumns=`repeat(${n},${fcell}px)`;
+        const cells=document.createElement("div"); cells.className="fcells"; cells.style.gap=FGAP+"px"; cells.style.gridTemplateColumns=`repeat(${n},${fcell}px)`;
+        for(let k=0;k<n;k++){ const w=OFF[m]+k; const ev=EVENTS[`${year}-${w}`];
+          const slot=document.createElement("div"); if(ev){ slot.className="fevtm e-"+ev.type; slot.innerHTML=ICON[ev.type];
+            attachTip(slot, `<span class="t-h">${ICON[ev.type]} ${EVT_ES[ev.type]}</span>${ev.detail}<br>${weekDate(year,w)}`);} lane.appendChild(slot);
+          const a=amountFor(year,w); const sq=document.createElement("div"); sq.className="fcell "+grade(a); sq.style.width=sq.style.height=fcell+"px";
+          attachTip(sq, a>0?`<span class="t-h">Abonó $${a.toLocaleString("es-MX")}</span>Semana del ${weekDate(year,w)}`:`<span class="t-h">Sin pago</span>Semana del ${weekDate(year,w)}`);
+          cells.appendChild(sq);
+        }
+        b.appendChild(lane); b.appendChild(cells); blocks.appendChild(b);
+      }
+      row.appendChild(lbl); row.appendChild(blocks); cont.appendChild(row);
+    });
+  }
+
+  // ── Tooltip / tema / toggle ───────────────────────────────────────────
+  const tip=document.getElementById("tip");
+  function attachTip(el, html){ el.addEventListener("mousemove", e=>{ tip.innerHTML=html; tip.classList.add("show");
+    tip.style.left=Math.min(e.clientX+14, window.innerWidth-250)+"px"; tip.style.top=(e.clientY+14)+"px"; });
+    el.addEventListener("mouseleave", ()=>tip.classList.remove("show")); }
+  document.getElementById("themeBtn").addEventListener("click", function(){ const dark=document.body.classList.toggle("dark"); this.textContent = dark ? "◐ Tema: oscuro" : "◑ Tema: claro"; });
+  document.getElementById("expBtn").addEventListener("click", function(){ const p=document.getElementById("fullpanel"); const open=p.classList.toggle("open"); this.textContent = open ? "▴ Ocultar historial" : "▾ Ver historial completo"; });
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  function renderAll(){ render(); renderFull(); }
+  renderAll(); renderSummary(); renderLegend(); renderPlan();
+  let _rt; window.addEventListener('resize', ()=>{ clearTimeout(_rt); _rt=setTimeout(renderAll, 120); });
+</script>
+</body>
+</html>

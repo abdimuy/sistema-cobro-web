@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Suspense } from "react";
 import type { UbicacionCliente } from "../../domain/entities";
@@ -51,6 +51,15 @@ function renderUbicacion(ubicacion: UbicacionCliente) {
 }
 
 describe("FichaUbicacion", () => {
+  // A maps key must be present for the embed to mount (see component gate).
+  beforeEach(() => {
+    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "fake-key-123");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('renders section heading "Ubicación"', () => {
     renderUbicacion(WITH_LOCATION);
     expect(screen.getByText("Ubicación")).toBeInTheDocument();
@@ -82,6 +91,14 @@ describe("FichaUbicacion", () => {
 
   it('does not render map embed when disponible=false', () => {
     renderUbicacion(WITHOUT_LOCATION);
+    expect(screen.queryByTestId("ficha-map-embed")).not.toBeInTheDocument();
+  });
+
+  it('renders "Mapa no disponible" (no embed) when disponible=true but no API key', () => {
+    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "");
+    renderUbicacion(WITH_LOCATION);
+    expect(screen.getByTestId("mapa-no-disponible")).toBeInTheDocument();
+    expect(screen.getByText("Mapa no disponible")).toBeInTheDocument();
     expect(screen.queryByTestId("ficha-map-embed")).not.toBeInTheDocument();
   });
 

@@ -8,23 +8,19 @@ interface Props {
 }
 
 // FichaMapEmbed renders a Google Map centered on the client's GPS coordinates.
-// It is lazy-loaded from FichaUbicacion so the maps bundle is not included
-// for clients without GPS data.
-//
-// If VITE_GOOGLE_MAPS_API_KEY is absent or empty, we skip useLoadScript and
-// render a graceful fallback. The "Abrir en Google Maps" link in FichaUbicacion
-// still works regardless.
+// It is lazy-loaded from FichaUbicacion ONLY when a maps API key is present, so
+// the maps bundle (and useLoadScript's network request) never fires without a
+// key. The no-key fallback lives in FichaUbicacion; here we assume a key exists
+// and only handle runtime load failures.
 export function FichaMapEmbed({ lat, lng }: Props) {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
-  const hasKey = Boolean(apiKey);
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
 
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: hasKey ? (apiKey as string) : "__no_key__",
-    // Disable actual loading when no key — prevents a bad network request.
+    googleMapsApiKey: apiKey,
     preventGoogleFontsLoading: true,
   });
 
-  if (!hasKey || loadError) {
+  if (loadError) {
     return (
       <div
         className="flex h-[220px] items-center justify-center rounded-md border border-border/40 bg-muted/30"
