@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect } from "react";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { SegmentoValue } from "../domain/values/Segmento";
@@ -28,27 +28,66 @@ import {
   Density,
 } from "./columns";
 import { cn } from "@/lib/utils";
+import { setLastClientesUrl } from "../presentation/clientesViewCache";
 import type { FilterState } from "./ClientesFilters";
 
 // ClientesScreen is the orchestrator for the clientes directory module.
 // It owns all filter, column, and sort state. Data fetching is delegated to
 // hooks that read the port from context. Only ClientesContainer touches infra.
 export function ClientesScreen() {
-  // ── Filter state ───────────────────────────────────────────────────────────
-  const [searchInput, setSearchInput] = useState("");
-  // q is set on Enter/click — no debounce needed since the search bar fires
-  // onSearch only on commit, not on every keystroke.
-  const [q, setQ] = useState("");
-  const [segmento, setSegmento] = useState<string | undefined>(undefined);
-  const [estadoPago, setEstadoPago] = useState<string | undefined>(undefined);
-  const [tierRiesgo, setTierRiesgo] = useState<string | undefined>(undefined);
-  const [bandaCredito, setBandaCredito] = useState<string | undefined>(undefined);
-  const [bandaRecompra, setBandaRecompra] = useState<string | undefined>(undefined);
-  const [bandaClv, setBandaClv] = useState<string | undefined>(undefined);
-  const [conSaldo, setConSaldo] = useState<boolean | undefined>(undefined);
-  const [scoreMin, setScoreMin] = useState<number | undefined>(undefined);
-  const [zonaInput, setZonaInput] = useState<string | undefined>(undefined);
-  const [cobradorInput, setCobradorInput] = useState<string | undefined>(undefined);
+  // ── Filters live in the URL (single source of truth) ───────────────────────
+  // Makes filters shareable, reload-safe, and restored automatically when the
+  // user returns to the directory (browser back / the ficha "volver" link).
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const q = searchParams.get("q") ?? "";
+  const segmento = searchParams.get("segmento") ?? undefined;
+  const estadoPago = searchParams.get("estadoPago") ?? undefined;
+  const tierRiesgo = searchParams.get("tier") ?? undefined;
+  const bandaCredito = searchParams.get("bandaCredito") ?? undefined;
+  const bandaRecompra = searchParams.get("bandaRecompra") ?? undefined;
+  const bandaClv = searchParams.get("bandaClv") ?? undefined;
+  const conSaldo = searchParams.get("conSaldo") === "1" ? true : undefined;
+  const scoreMin = searchParams.has("scoreMin")
+    ? Number(searchParams.get("scoreMin"))
+    : undefined;
+  const zonaInput = searchParams.get("zona") ?? undefined;
+  const cobradorInput = searchParams.get("cobrador") ?? undefined;
+
+  // searchInput is the local draft for the text box; q (the committed query) is
+  // only updated on submit. Initialised from the URL so a back-navigation shows
+  // the active term.
+  const [searchInput, setSearchInput] = useState(q);
+
+  // cacheKey = the canonical filter signature, used by the data + scroll cache.
+  const cacheKey = searchParams.toString();
+
+  // Remember the current directory URL so the ficha "volver" link can return here
+  // with filters and scroll intact.
+  const location = useLocation();
+  useEffect(() => {
+    setLastClientesUrl(location.pathname + location.search);
+  }, [location.pathname, location.search]);
+
+  // updateParams writes a partial change to the URL query. replace: true keeps
+  // filter tweaks out of the history stack, so "back" from a ficha returns to the
+  // list in one step rather than undoing each filter change.
+  const updateParams = useCallback(
+    (changes: Record<string, string | undefined>) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          for (const [key, value] of Object.entries(changes)) {
+            if (value === undefined || value === "") next.delete(key);
+            else next.set(key, value);
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
 
   // ── Column / density state (load from localStorage) ───────────────────────
   const [visibleColumns, setVisibleColumns] = useState<ColumnId[]>(loadVisibleColumns);
@@ -56,26 +95,26 @@ export function ClientesScreen() {
   const [density, setDensity] = useState<Density>(loadDensity);
   const [pinnedColumns, setPinnedColumns] = useState<ColumnId[]>(loadPinnedColumns);
 
-  // ── Sort state (server-side) ───────────────────────────────────────────────
+  // ── Sort (server-side) lives in the URL too ────────────────────────────────
   // sortKey holds the API sort_by enum value (columns.ts sortKeys map 1:1 to it).
-  // Changing it feeds the data hook, which refetches the server-sorted page.
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const sortKey = searchParams.get("sort");
+  const sortOrder: "asc" | "desc" =
+    searchParams.get("order") === "desc" ? "desc" : "asc";
 
-  const handleSort = useCallback((key: string) => {
-    setSortKey((prev) => {
-      if (prev === key) {
-        setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
-        return prev;
+  const handleSort = useCallback(
+    (key: string) => {
+      if (sortKey === key) {
+        updateParams({ order: sortOrder === "asc" ? "desc" : "asc" });
+      } else {
+        updateParams({ sort: key, order: "asc" });
       }
-      setSortOrder("asc");
-      return key;
-    });
-  }, []);
+    },
+    [sortKey, sortOrder, updateParams],
+  );
 
   // ── Data hook ─────────────────────────────────────────────────────────────
   // zona/cobrador are Phase 1 free-text inputs; parse to number for the backend.
-  const { items, facets, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } =
+  const { items, facets, isLoading, isLoadingMore, isRevalidating, error, hasMore, loadMore, refresh } =
     useBuscarClientes({
       q: q || undefined,
       segmento: segmento as SegmentoValue | undefined,
@@ -92,7 +131,7 @@ export function ClientesScreen() {
       // already-sorted page. items below are rendered in the order received.
       sortBy: sortKey ?? undefined,
       sortOrder,
-    });
+    }, cacheKey);
 
   // ── Derived state ─────────────────────────────────────────────────────────
   const hasFilters = !!(
@@ -111,32 +150,42 @@ export function ClientesScreen() {
 
   const handleClearFilters = useCallback(() => {
     setSearchInput("");
-    setQ("");
-    setSegmento(undefined);
-    setEstadoPago(undefined);
-    setTierRiesgo(undefined);
-    setBandaCredito(undefined);
-    setBandaRecompra(undefined);
-    setBandaClv(undefined);
-    setConSaldo(undefined);
-    setScoreMin(undefined);
-    setZonaInput(undefined);
-    setCobradorInput(undefined);
-  }, []);
+    // Clears every filter param but keeps the active sort.
+    updateParams({
+      q: undefined,
+      segmento: undefined,
+      estadoPago: undefined,
+      tier: undefined,
+      bandaCredito: undefined,
+      bandaRecompra: undefined,
+      bandaClv: undefined,
+      conSaldo: undefined,
+      scoreMin: undefined,
+      zona: undefined,
+      cobrador: undefined,
+    });
+  }, [updateParams]);
 
   // ── Filter change dispatcher ───────────────────────────────────────────────
-  const handleFiltersChange = useCallback((changes: Partial<FilterState>) => {
-    if ("segmento" in changes) setSegmento(changes.segmento);
-    if ("estadoPago" in changes) setEstadoPago(changes.estadoPago);
-    if ("tierRiesgo" in changes) setTierRiesgo(changes.tierRiesgo);
-    if ("bandaCredito" in changes) setBandaCredito(changes.bandaCredito);
-    if ("bandaRecompra" in changes) setBandaRecompra(changes.bandaRecompra);
-    if ("bandaClv" in changes) setBandaClv(changes.bandaClv);
-    if ("conSaldo" in changes) setConSaldo(changes.conSaldo);
-    if ("scoreMin" in changes) setScoreMin(changes.scoreMin);
-    if ("zonaInput" in changes) setZonaInput(changes.zonaInput);
-    if ("cobradorInput" in changes) setCobradorInput(changes.cobradorInput);
-  }, []);
+  const handleFiltersChange = useCallback(
+    (changes: Partial<FilterState>) => {
+      const p: Record<string, string | undefined> = {};
+      if ("segmento" in changes) p.segmento = changes.segmento;
+      if ("estadoPago" in changes) p.estadoPago = changes.estadoPago;
+      if ("tierRiesgo" in changes) p.tier = changes.tierRiesgo;
+      if ("bandaCredito" in changes) p.bandaCredito = changes.bandaCredito;
+      if ("bandaRecompra" in changes) p.bandaRecompra = changes.bandaRecompra;
+      if ("bandaClv" in changes) p.bandaClv = changes.bandaClv;
+      if ("conSaldo" in changes) p.conSaldo = changes.conSaldo ? "1" : undefined;
+      if ("scoreMin" in changes)
+        p.scoreMin =
+          changes.scoreMin !== undefined ? String(changes.scoreMin) : undefined;
+      if ("zonaInput" in changes) p.zona = changes.zonaInput;
+      if ("cobradorInput" in changes) p.cobrador = changes.cobradorInput;
+      updateParams(p);
+    },
+    [updateParams],
+  );
 
   // ── Column handlers ───────────────────────────────────────────────────────
   const handleColumnResize = useCallback((id: ColumnId, width: number) => {
@@ -200,20 +249,32 @@ export function ClientesScreen() {
               Clientes
             </h1>
           </div>
-          {/* Reindexar — subtle admin action */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => void handleRefrescar()}
-            disabled={isRefreshing}
-            className="text-muted-foreground hover:text-foreground h-8 gap-1.5 text-xs mt-1"
-            data-testid="reindexar-button"
-          >
-            <RefreshCw
-              className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")}
-            />
-            <span className="hidden sm:inline">Reindexar</span>
-          </Button>
+          <div className="mt-1 flex items-center gap-3">
+            {/* Subtle background-refresh indicator (stale-while-revalidate) */}
+            {isRevalidating && (
+              <span
+                className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70"
+                data-testid="revalidando-indicator"
+              >
+                <RefreshCw className="h-3 w-3 animate-spin" />
+                Actualizando
+              </span>
+            )}
+            {/* Reindexar — subtle admin action */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void handleRefrescar()}
+              disabled={isRefreshing}
+              className="text-muted-foreground hover:text-foreground h-8 gap-1.5 text-xs"
+              data-testid="reindexar-button"
+            >
+              <RefreshCw
+                className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")}
+              />
+              <span className="hidden sm:inline">Reindexar</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -224,7 +285,7 @@ export function ClientesScreen() {
             value={searchInput}
             onSearch={(v) => {
               setSearchInput(v);
-              setQ(v);
+              updateParams({ q: v || undefined });
             }}
             placeholder="Buscar cliente, teléfono, zona..."
           />
@@ -268,6 +329,7 @@ export function ClientesScreen() {
         ) : (
           <ClientesTable
             clientes={items}
+            cacheKey={cacheKey}
             visibleColumns={visibleColumns}
             pinnedColumns={pinnedColumns}
             columnWidths={columnWidths}

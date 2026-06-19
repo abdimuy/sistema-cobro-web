@@ -8,6 +8,7 @@ import {
   FakeClientesPort,
   makeFakeCliente,
 } from "../application/__tests__/fakeClientesPort";
+import { resetClientesViewCache } from "../presentation/clientesViewCache";
 
 function renderScreen(port: FakeClientesPort) {
   return render(
@@ -23,6 +24,9 @@ describe("ClientesScreen", () => {
   let port: FakeClientesPort;
 
   beforeEach(() => {
+    // The view-cache is a module singleton — clear it so entries don't leak
+    // between tests (e.g. a cache hit masking the error-state test).
+    resetClientesViewCache();
     port = new FakeClientesPort();
     port.buscarResponse = {
       items: [makeFakeCliente()],

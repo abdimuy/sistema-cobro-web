@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useMemo } from "react";
+import { useRef, useCallback, useEffect, useLayoutEffect, useMemo } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   TableBody,
@@ -11,9 +11,13 @@ import { cn } from "@/lib/utils";
 import { Cliente } from "../domain/entities";
 import { ColumnId, COLUMNS, ColumnWidths, Density } from "./columns";
 import { ClientesTableRow } from "./ClientesTableRow";
+import { getView, patchView } from "../presentation/clientesViewCache";
 
 interface ClientesTableProps {
   clientes: ReadonlyArray<Cliente>;
+  // cacheKey (the filter signature) keys the saved scroll position so it is
+  // restored when returning to the directory with the same filters.
+  cacheKey?: string;
   visibleColumns: ColumnId[];
   pinnedColumns?: ColumnId[];
   columnWidths: ColumnWidths;
@@ -127,6 +131,7 @@ function ResizeHandle({ columnId, onResize }: ResizeHandleProps) {
 
 export function ClientesTable({
   clientes,
+  cacheKey,
   visibleColumns,
   pinnedColumns = [],
   columnWidths,
@@ -140,6 +145,10 @@ export function ClientesTable({
 }: ClientesTableProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLTableRowElement>(null);
+  const scrollRafRef = useRef<number | null>(null);
+  // True while a programmatic scroll restore is in progress — suppresses the
+  // onScroll persist so a clamped/intermediate value can't overwrite the saved one.
+  const restoringRef = useRef(false);
 
   // Ordered columns: pinned first, then the rest in user order
   const orderedColumns = useMemo(
@@ -192,6 +201,64 @@ export function ClientesTable({
 
     return () => observer.disconnect();
   }, [handleObserver, infiniteScroll]);
+
+  // Restore the saved scroll position for this filter signature. The target may
+  // be deeper than the content is tall on the first frame (layout still settling
+  // / rows still painting), so we wait — across animation frames — until the
+  // container can actually reach the offset before applying it, instead of
+  // letting the browser clamp it to a shorter (wrong) value. On a new filter
+  // (no saved entry) this resets to the top.
+  useLayoutEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el || cacheKey === undefined) return;
+    const target = getView(cacheKey)?.scrollTop ?? 0;
+    if (target <= 0) {
+      el.scrollTop = 0;
+      return;
+    }
+    restoringRef.current = true;
+    let raf = 0;
+    let frames = 0;
+    const tryRestore = () => {
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      // Apply once the content can hold the offset, or after a bounded wait.
+      if (maxScroll >= target || frames >= 30) {
+        el.scrollTop = target;
+        restoringRef.current = false;
+        return;
+      }
+      frames += 1;
+      raf = requestAnimationFrame(tryRestore);
+    };
+    tryRestore();
+    return () => {
+      cancelAnimationFrame(raf);
+      restoringRef.current = false;
+    };
+  }, [cacheKey]);
+
+  // Persist scroll position (throttled to one write per frame) so it survives a
+  // round-trip to a ficha and back. Skipped while restoring (see restoringRef).
+  const handleScroll = useCallback(() => {
+    if (
+      cacheKey === undefined ||
+      restoringRef.current ||
+      scrollRafRef.current !== null
+    )
+      return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      const el = scrollContainerRef.current;
+      if (el) patchView(cacheKey, { scrollTop: el.scrollTop });
+    });
+  }, [cacheKey]);
+
+  useEffect(
+    () => () => {
+      if (scrollRafRef.current !== null) cancelAnimationFrame(scrollRafRef.current);
+    },
+    [],
+  );
 
   const renderHeader = (columnId: ColumnId) => {
     const colDef = COLUMNS.find((c) => c.id === columnId);
@@ -261,6 +328,7 @@ export function ClientesTable({
   return (
     <div
       ref={scrollContainerRef}
+      onScroll={handleScroll}
       className="relative w-full flex-1 min-h-0 overflow-auto bg-card"
     >
       <table

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import EstadoPagoBadge from "../badges/EstadoPagoBadge";
+import { getLastClientesUrl } from "../../presentation/clientesViewCache";
 import type { FichaCliente } from "../../domain/entities/FichaCliente";
 
 interface Props {
@@ -10,6 +11,9 @@ interface Props {
 }
 
 export function FichaHeader({ ficha }: Props) {
+  // Return to the directory with its last filters + scroll intact (falls back to
+  // the bare route if the user landed here directly).
+  const volverUrl = getLastClientesUrl() ?? "/clientes";
   return (
     <header
       className={cn(
@@ -21,7 +25,7 @@ export function FichaHeader({ ficha }: Props) {
       {/* Left: breadcrumb */}
       <div className="flex items-center gap-2.5 font-mono text-xs">
         <Link
-          to="/clientes"
+          to={volverUrl}
           className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-3 w-3" />
