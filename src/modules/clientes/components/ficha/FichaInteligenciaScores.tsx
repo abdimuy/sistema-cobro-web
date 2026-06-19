@@ -322,6 +322,16 @@ export function FichaInteligenciaScores({ pulso }: Props) {
                 : "—"}
             </span>
           </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">
+              Último pago
+            </span>
+            <span className="font-mono text-xs tabular-nums text-foreground">
+              {pulso.fechaUltimoPago
+                ? dayjs(pulso.fechaUltimoPago).format("DD MMM YYYY")
+                : "—"}
+            </span>
+          </div>
         </div>
       </div>
     </section>

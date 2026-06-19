@@ -196,7 +196,30 @@ describe("FichaInteligenciaScores", () => {
 
     it("renders '—' when fechaUltimaCompra is null", () => {
       render(<FichaInteligenciaScores pulso={makePulso({ fechaUltimaCompra: null })} />);
+      // fechaUltimoPago is non-null in base mock, so only one "—" for fechaUltimaCompra
       expect(screen.getByText("—")).toBeInTheDocument();
+    });
+
+    it("renders último pago label and formatted date", () => {
+      render(
+        <FichaInteligenciaScores
+          pulso={makePulso({ fechaUltimoPago: new Date("2025-03-01T14:30:00Z") })}
+        />,
+      );
+      expect(screen.getByText("Último pago")).toBeInTheDocument();
+      // dayjs DD MMM YYYY with es locale → "01 mar 2025"
+      expect(screen.getByText(/01\s+mar\s+2025/i)).toBeInTheDocument();
+    });
+
+    it("renders '—' for último pago when fechaUltimoPago is null", () => {
+      render(
+        <FichaInteligenciaScores
+          pulso={makePulso({ fechaUltimaCompra: null, fechaUltimoPago: null })}
+        />,
+      );
+      // Both dates null → two "—" rendered
+      const dashes = screen.getAllByText("—");
+      expect(dashes).toHaveLength(2);
     });
   });
 });
