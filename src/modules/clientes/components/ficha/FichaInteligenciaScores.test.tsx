@@ -159,9 +159,8 @@ describe("FichaInteligenciaScores", () => {
 
     it("renders segmento badge", () => {
       render(<FichaInteligenciaScores pulso={makePulso({ segmento: "LEAL_POR_LIQUIDAR" })} />);
-      // SegmentoBadge renders a visible label for the segmento value
-      expect(screen.getByText("Contexto")).toBeInTheDocument();
-      // The Segmento label itself
+      // SegmentoBadge maps LEAL_POR_LIQUIDAR → "Leal por liquidar" via its labels map
+      expect(screen.getByText("Leal por liquidar")).toBeInTheDocument();
       expect(screen.getByText("Segmento")).toBeInTheDocument();
     });
 
