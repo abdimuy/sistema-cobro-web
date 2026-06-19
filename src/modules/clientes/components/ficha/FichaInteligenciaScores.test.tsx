@@ -150,4 +150,76 @@ describe("FichaInteligenciaScores", () => {
     const sinHistorial = screen.getAllByText("Sin historial de compras");
     expect(sinHistorial).toHaveLength(2);
   });
+
+  describe("Contexto block", () => {
+    it("renders the Contexto sub-heading", () => {
+      render(<FichaInteligenciaScores pulso={makePulso()} />);
+      expect(screen.getByText("Contexto")).toBeInTheDocument();
+    });
+
+    it("renders segmento badge", () => {
+      render(<FichaInteligenciaScores pulso={makePulso({ segmento: "LEAL_POR_LIQUIDAR" })} />);
+      // SegmentoBadge maps LEAL_POR_LIQUIDAR → "Leal por liquidar" via its labels map
+      expect(screen.getByText("Leal por liquidar")).toBeInTheDocument();
+      expect(screen.getByText("Segmento")).toBeInTheDocument();
+    });
+
+    it("renders recencia as 'hace N días' when recenciaDias > 0", () => {
+      render(<FichaInteligenciaScores pulso={makePulso({ recenciaDias: 30 })} />);
+      expect(screen.getByText("hace 30 días")).toBeInTheDocument();
+    });
+
+    it("renders recencia as 'Hoy' when recenciaDias === 0", () => {
+      render(<FichaInteligenciaScores pulso={makePulso({ recenciaDias: 0 })} />);
+      expect(screen.getByText("Hoy")).toBeInTheDocument();
+    });
+
+    it("renders frecuencia as 'N compras'", () => {
+      render(<FichaInteligenciaScores pulso={makePulso({ frecuencia: 12 })} />);
+      expect(screen.getByText("12 compras")).toBeInTheDocument();
+    });
+
+    it("renders monetario formatted as money", () => {
+      render(<FichaInteligenciaScores pulso={makePulso({ monetary: "85000.00" })} />);
+      expect(screen.getByText(/\$85[.,]?000/i)).toBeInTheDocument();
+    });
+
+    it("renders última compra formatted as date", () => {
+      render(
+        <FichaInteligenciaScores
+          pulso={makePulso({ fechaUltimaCompra: new Date("2025-02-15T09:00:00Z") })}
+        />,
+      );
+      // dayjs DD MMM YYYY with es locale → "15 feb 2025"
+      expect(screen.getByText(/15\s+feb\s+2025/i)).toBeInTheDocument();
+    });
+
+    it("renders '—' when fechaUltimaCompra is null", () => {
+      render(<FichaInteligenciaScores pulso={makePulso({ fechaUltimaCompra: null })} />);
+      // fechaUltimoPago is non-null in base mock, so only one "—" for fechaUltimaCompra
+      expect(screen.getByText("—")).toBeInTheDocument();
+    });
+
+    it("renders último pago label and formatted date", () => {
+      render(
+        <FichaInteligenciaScores
+          pulso={makePulso({ fechaUltimoPago: new Date("2025-03-01T14:30:00Z") })}
+        />,
+      );
+      expect(screen.getByText("Último pago")).toBeInTheDocument();
+      // dayjs DD MMM YYYY with es locale → "01 mar 2025"
+      expect(screen.getByText(/01\s+mar\s+2025/i)).toBeInTheDocument();
+    });
+
+    it("renders '—' for último pago when fechaUltimoPago is null", () => {
+      render(
+        <FichaInteligenciaScores
+          pulso={makePulso({ fechaUltimaCompra: null, fechaUltimoPago: null })}
+        />,
+      );
+      // Both dates null → two "—" rendered
+      const dashes = screen.getAllByText("—");
+      expect(dashes).toHaveLength(2);
+    });
+  });
 });

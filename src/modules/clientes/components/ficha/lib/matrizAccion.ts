@@ -1,6 +1,5 @@
-// matrizAccion.ts — pure helper shared between MatrizRiesgoPropension and
-// FichaNextBestAction. Encapsulates the riesgo × propensión quadrant logic so
-// it lives in exactly one place.
+// matrizAccion.ts — pure helper used by FichaNextBestAction. Encapsulates the
+// riesgo × propensión quadrant logic so it lives in exactly one place.
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 

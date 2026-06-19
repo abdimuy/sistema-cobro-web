@@ -3,6 +3,37 @@ import { describe, it, expect, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { FichaRitmoPago } from "./FichaRitmoPago";
 import { makeFakeRitmoPago } from "../../application/__tests__/fakeClientesPort";
+import type { Pulso } from "../../domain/entities/FichaCliente";
+
+function makeFakePulso(overrides: Partial<Pulso> = {}): Pulso {
+  const base: Pulso = {
+    score: 75,
+    segmento: "LEAL_POR_LIQUIDAR",
+    estadoPago: "AL_CORRIENTE",
+    recenciaDias: 30,
+    frecuencia: 12,
+    monetary: "85000.00",
+    saldo: "13000.00",
+    porLiquidarPct: "15.29",
+    fechaUltimaCompra: new Date("2025-02-15T09:00:00Z"),
+    fechaUltimoPago: new Date("2025-03-01T14:30:00Z"),
+    nextBestProduct: "Comedor 6 personas",
+    numPagos: 48,
+    cadenciaDias: 14,
+    diasAtrasoProm: 5,
+    pctPagosATiempo: "94.68",
+    fechaProxPago: new Date("2026-01-12T12:00:00Z"),
+    montoProxPago: "4000.00",
+    tierRiesgo: "AL_DIA",
+    bandaCredito: "BAJO",
+    scoreCredito: 91,
+    bandaRecompra: "MEDIA",
+    scoreRecompra: 32,
+    clv: "302.17",
+    bandaClv: "MEDIO",
+  };
+  return { ...base, ...overrides };
+}
 
 describe("FichaRitmoPago", () => {
   it("renders nothing when ritmo is null", () => {
@@ -105,6 +136,31 @@ describe("FichaRitmoPago", () => {
   it("renders isLoading with no ritmo as null", () => {
     const { container } = render(<FichaRitmoPago ritmo={null} isLoading />);
     expect(container.firstChild).toBeNull();
+  });
+
+  it("shows CADENCIA and ATRASO PROM when pulso is provided", () => {
+    const ritmo = makeFakeRitmoPago();
+    const pulso = makeFakePulso({ cadenciaDias: 14, diasAtrasoProm: 5 });
+    render(<FichaRitmoPago ritmo={ritmo} pulso={pulso} />);
+    expect(screen.getByText("CADENCIA")).toBeInTheDocument();
+    expect(screen.getByText("ATRASO PROM")).toBeInTheDocument();
+    // Values + units appear inline
+    expect(screen.getAllByText(/14/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/5/).length).toBeGreaterThan(0);
+  });
+
+  it("does not show CADENCIA or ATRASO PROM when pulso is absent", () => {
+    const ritmo = makeFakeRitmoPago();
+    render(<FichaRitmoPago ritmo={ritmo} />);
+    expect(screen.queryByText("CADENCIA")).not.toBeInTheDocument();
+    expect(screen.queryByText("ATRASO PROM")).not.toBeInTheDocument();
+  });
+
+  it("does not show CADENCIA or ATRASO PROM when pulso is null", () => {
+    const ritmo = makeFakeRitmoPago();
+    render(<FichaRitmoPago ritmo={ritmo} pulso={null} />);
+    expect(screen.queryByText("CADENCIA")).not.toBeInTheDocument();
+    expect(screen.queryByText("ATRASO PROM")).not.toBeInTheDocument();
   });
 });
 

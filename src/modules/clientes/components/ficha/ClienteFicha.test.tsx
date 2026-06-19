@@ -117,7 +117,7 @@ describe("ClienteFicha", () => {
   it("renders pct liquidado", async () => {
     renderFicha(port);
     // pctLiquidado "92.92" (0–100 del API) → "93%"
-    // Appears in FichaKpis and FichaLiquidacionBar
+    // Rendered by FichaSaludStrip (% LIQUIDADO strip item)
     await waitFor(() =>
       expect(screen.getAllByText("93%").length).toBeGreaterThan(0),
     );
@@ -131,27 +131,26 @@ describe("ClienteFicha", () => {
     expect(screen.queryByText("Abonos por mes")).not.toBeInTheDocument();
   });
 
-  it("renders pulso card with segmento and NBP when pulso present", async () => {
+  it("renders inteligencia scores section with segmento and NBP when pulso present", async () => {
     renderFicha(port);
     await waitFor(() =>
-      expect(screen.getByText("Pulso analítico")).toBeInTheDocument(),
+      expect(screen.getByText("Inteligencia del cliente")).toBeInTheDocument(),
     );
-    // Segmento badge label (appears in both hero and pulso card)
+    // Segmento badge label (appears in hero and inteligencia Contexto RFM row)
     expect(screen.getAllByText("Dormido valioso").length).toBeGreaterThan(0);
-    // Next best product (appears in both FichaNextBestAction and FichaPulsoCard)
+    // Next best product (rendered by FichaNextBestAction)
     expect(screen.getAllByText("COMEDOR").length).toBeGreaterThan(0);
   });
 
-  it("shows muted note when pulso is null", async () => {
+  it("hides inteligencia scores section when pulso is null", async () => {
     port.fichaResponse = makeFakeFichaCliente({ pulso: null });
     renderFicha(port);
+    // FichaInteligenciaScores returns null when pulso is null
+    // Wait for ficha to load by checking the KPI heading
     await waitFor(() =>
-      expect(
-        screen.getByText(
-          /Este cliente aún no tiene pulso analítico/i,
-        ),
-      ).toBeInTheDocument(),
+      expect(screen.getByText("Total comprado")).toBeInTheDocument(),
     );
+    expect(screen.queryByText("Inteligencia del cliente")).not.toBeInTheDocument();
   });
 
   it("renders ventas list rows", async () => {
@@ -219,7 +218,7 @@ describe("ClienteFicha", () => {
     );
   });
 
-  it("renders FichaLiquidacionBar progressbar", async () => {
+  it("renders FichaSaludStrip progressbar", async () => {
     renderFicha(port);
     await waitFor(() =>
       expect(screen.getByRole("progressbar")).toBeInTheDocument(),
