@@ -43,12 +43,8 @@ describe("FichaMapEmbed", () => {
     expect(screen.getByTestId("map-marker")).toBeInTheDocument();
   });
 
-  it("renders graceful fallback when API key is missing", () => {
-    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "");
-    render(<FichaMapEmbed lat={19.4326} lng={-99.1332} />);
-    expect(screen.getByTestId("mapa-no-disponible")).toBeInTheDocument();
-    expect(screen.getByText("Mapa no disponible")).toBeInTheDocument();
-  });
+  // Note: the no-key fallback now lives in FichaUbicacion (which gates whether
+  // FichaMapEmbed mounts at all). See FichaUbicacion.test.tsx.
 
   it("renders graceful fallback when loadError is set", () => {
     vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "fake-key-123");
