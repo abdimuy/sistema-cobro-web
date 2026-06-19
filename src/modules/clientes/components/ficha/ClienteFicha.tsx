@@ -11,14 +11,11 @@ import { FichaKpis } from "./FichaKpis";
 import { FichaCharts } from "./FichaCharts";
 import { FichaRangeFilter } from "./FichaRangeFilter";
 import { FichaUbicacion } from "./FichaUbicacion";
-import { FichaPulsoCard } from "./FichaPulsoCard";
-import { FichaCobranzaCards } from "./FichaCobranzaCards";
 import { FichaInteligenciaScores } from "./FichaInteligenciaScores";
-import { MatrizRiesgoPropension } from "./MatrizRiesgoPropension";
 import { FichaVentasList } from "./FichaVentasList";
 import { FichaNextBestAction } from "./FichaNextBestAction";
-import { FichaLiquidacionBar } from "./FichaLiquidacionBar";
 import { FichaRitmoPago } from "./FichaRitmoPago";
+import { FichaSaludStrip } from "./FichaSaludStrip";
 
 interface Props {
   clienteId: number;
@@ -49,7 +46,7 @@ export function ClienteFicha({ clienteId }: Props) {
         </div>
         {/* KPIs skeleton */}
         <div className="flex gap-0 px-8 py-5">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex-1 px-6 space-y-2">
               <Skeleton className="h-2.5 w-16" />
               <Skeleton className="h-7 w-24" />
@@ -79,10 +76,12 @@ export function ClienteFicha({ clienteId }: Props) {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-[1400px]">
+      {/* ── Zona 1 — Identidad y acción ── */}
       <FichaHeader ficha={ficha} />
       <FichaHero ficha={ficha} />
+      <FichaSaludStrip resumen={ficha.resumen} pulso={ficha.pulso} />
       <FichaNextBestAction pulso={ficha.pulso} telefono={ficha.telefono} />
-      {/* B3 — date-range filter row, above KPIs */}
+      {/* Date-range filter row, above KPIs */}
       <div className="border-b border-border/60 px-8 py-3">
         <FichaRangeFilter
           range={range}
@@ -92,17 +91,16 @@ export function ClienteFicha({ clienteId }: Props) {
         />
       </div>
       <FichaKpis resumen={ficha.resumen} isLoading={isLoading} />
-      <FichaLiquidacionBar resumen={ficha.resumen} />
+
+      {/* ── Zona 2 — Inteligencia ── */}
+      <FichaRitmoPago ritmo={ritmoState.ritmo} isLoading={ritmoState.isLoading} onVentaClick={setSelectedDoctoPvId} pulso={ficha.pulso} />
+      <FichaInteligenciaScores pulso={ficha.pulso} />
+
+      {/* ── Zona 3 — Detalle ── */}
       <FichaCharts
         compradoVsAbonado={ficha.resumen.compradoVsAbonado}
         isLoading={isLoading}
       />
-      <FichaRitmoPago ritmo={ritmoState.ritmo} isLoading={ritmoState.isLoading} onVentaClick={setSelectedDoctoPvId} />
-      <FichaPulsoCard pulso={ficha.pulso} />
-      <FichaCobranzaCards pulso={ficha.pulso} />
-      <FichaInteligenciaScores pulso={ficha.pulso} />
-      <MatrizRiesgoPropension pulso={ficha.pulso} />
-      {/* B4 — Ubicación map */}
       <FichaUbicacion ubicacion={ficha.ubicacion} />
       <FichaVentasList
         ventas={ventasState.ventas}
