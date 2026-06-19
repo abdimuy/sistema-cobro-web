@@ -1,7 +1,6 @@
 import { useRef, useCallback, useEffect, useMemo } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
-  Table,
   TableBody,
   TableHead,
   TableHeader,
@@ -139,7 +138,7 @@ export function ClientesTable({
   density = "normal",
   infiniteScroll,
 }: ClientesTableProps) {
-  const scrollContainerRef = useRef<HTMLTableElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLTableRowElement>(null);
 
   // Ordered columns: pinned first, then the rest in user order
@@ -260,11 +259,14 @@ export function ClientesTable({
   };
 
   return (
-    <Table
+    <div
       ref={scrollContainerRef}
-      className="bg-card block overflow-auto h-[calc(100vh-170px)] [&_th]:border-r [&_th]:border-border [&_th:last-child]:border-r-0 [&_th]:py-1.5 [&_td]:border-r [&_td]:border-border [&_td:last-child]:border-r-0 [&_td]:py-0.5 [&_tbody_tr:nth-child(even)]:bg-muted"
-      style={{ tableLayout: "fixed" }}
+      className="relative w-full flex-1 min-h-0 overflow-auto bg-card"
     >
+      <table
+        className="w-full caption-bottom text-sm [&_th]:border-r [&_th]:border-border [&_th:last-child]:border-r-0 [&_th]:py-1.5 [&_td]:border-r [&_td]:border-border [&_td:last-child]:border-r-0 [&_td]:py-0.5 [&_tbody_tr:nth-child(even)]:bg-muted"
+        style={{ tableLayout: "fixed" }}
+      >
       <TableHeader className="sticky top-0 z-10 bg-card">
         <TableRow className="hover:bg-transparent border-b border-border/50">
           {orderedColumns.map(renderHeader)}
@@ -305,6 +307,7 @@ export function ClientesTable({
           </tr>
         )}
       </TableBody>
-    </Table>
+      </table>
+    </div>
   );
 }

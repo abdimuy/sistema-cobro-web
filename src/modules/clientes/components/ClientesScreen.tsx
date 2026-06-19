@@ -255,7 +255,7 @@ export function ClientesScreen() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 px-6 py-4">
+      <div className="flex-1 min-h-0 flex flex-col px-6 py-4">
         {error ? (
           <ClientesErrorState message={error.message} onRetry={refresh} />
         ) : isLoading ? (
