@@ -47,6 +47,13 @@ describe("categoriaMeta", () => {
       expect(categoriaMeta(cat).accentClass).not.toBe("");
     }
   });
+
+  it("all categories have a non-empty color token", () => {
+    const categorias = ["pago", "enganche", "condonacion", "perdida", "otro"] as const;
+    for (const cat of categorias) {
+      expect(categoriaMeta(cat).color).toBeTruthy();
+    }
+  });
 });
 
 describe("toCategoriaPago", () => {

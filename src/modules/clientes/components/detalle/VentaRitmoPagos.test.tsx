@@ -107,15 +107,63 @@ describe("VentaRitmoPagos", () => {
   });
 
   it("synthesizes enganche cell when contrato.enganche > 0 and no enganche pago exists", () => {
-    // pagos has no enganche categoria → synthesis should occur
-    expect(allPagos.every((p) => p.categoria !== "enganche")).toBe(true);
+    // Use no real pagos so the synthetic enganche is the only movement in its week
+    const ventaSolaEnDeuda = makeFakeVentaCliente({
+      fecha: VENTA_FECHA,
+      total: "18500.00",
+      saldoVenta: "16500.00",
+    });
     render(
-      <VentaRitmoPagos venta={baseVenta} pagos={allPagos} contrato={baseContrato} />,
+      <VentaRitmoPagos
+        venta={ventaSolaEnDeuda}
+        pagos={[]}
+        contrato={baseContrato}
+      />,
     );
-    // Enganche is synthetic (no doctoCcId) and lands in week 0 with pago1
-    // The week 0 cell should be styled (active) since it has monto > 0
-    // We verify the component renders without error
-    expect(screen.getByText("Cadencia de pagos")).toBeInTheDocument();
+    // The synthetic enganche lands in week 0 as sole movement → dominant = "enganche"
+    const engancheCells = screen
+      .getAllByRole("button")
+      .filter((b) => b.getAttribute("aria-label")?.includes("(enganche)"));
+    expect(engancheCells.length).toBeGreaterThan(0);
+  });
+
+  it("does not add extra synthetic enganche when a real enganche pago is present", () => {
+    const enganchePago = makeFakePago({
+      doctoCcId: 200,
+      fecha: new Date("2025-11-04T10:00:00.000Z"),
+      importe: "2000.00",
+      categoria: "enganche",
+      concepto: "ENGANCHE",
+    });
+    // With a real enganche pago, synthesis must NOT fire (no duplicate)
+    const { unmount } = render(
+      <VentaRitmoPagos
+        venta={baseVenta}
+        pagos={[enganchePago]}
+        contrato={baseContrato}
+        onPagoClick={vi.fn()}
+      />,
+    );
+    const engancheCellsWithReal = screen
+      .getAllByRole("button")
+      .filter((b) => b.getAttribute("aria-label")?.includes("(enganche)"));
+    // Exactly 1 enganche cell (the real pago's week), not 2
+    expect(engancheCellsWithReal.length).toBe(1);
+    unmount();
+
+    // Without a real enganche pago, synthesis fires → still exactly 1 enganche cell
+    render(
+      <VentaRitmoPagos
+        venta={baseVenta}
+        pagos={[]}
+        contrato={baseContrato}
+        onPagoClick={vi.fn()}
+      />,
+    );
+    const engancheCellsWithSynth = screen
+      .getAllByRole("button")
+      .filter((b) => b.getAttribute("aria-label")?.includes("(enganche)"));
+    expect(engancheCellsWithSynth.length).toBe(1);
   });
 
   it("does not render enganche synthesis when contrato is null", () => {
@@ -134,16 +182,9 @@ describe("VentaRitmoPagos", () => {
         onPagoClick={onPagoClick}
       />,
     );
-    // pago2 is the only pago (single-pago week) — find its cell
-    // Cell for pago2 has a backgroundColor set (active) and doctoCcIds=[102]
-    const buttons = screen.getAllByRole("button");
-    // Click each enabled button until we hit one that calls onPagoClick
-    for (const btn of buttons) {
-      if (!(btn as HTMLButtonElement).disabled) {
-        await userEvent.click(btn);
-        if (onPagoClick.mock.calls.length > 0) break;
-      }
-    }
+    // pago2 (doctoCcId=102) is the only pago — its cell has data-testid="cell-pago-102"
+    const cell = screen.getByTestId("cell-pago-102");
+    await userEvent.click(cell);
     expect(onPagoClick).toHaveBeenCalledWith(102);
   });
 
@@ -200,6 +241,38 @@ describe("VentaRitmoPagos", () => {
     expect(opened).toBe(true);
     // Press Escape
     await userEvent.keyboard("{Escape}");
+    expect(document.querySelector('[role="listbox"]')).not.toBeInTheDocument();
+  });
+
+  it("picker closes when clicking outside it", async () => {
+    const user = userEvent.setup();
+    render(
+      <div>
+        <VentaRitmoPagos
+          venta={baseVenta}
+          pagos={[pago3, pago4]}
+          contrato={null}
+          onPagoClick={vi.fn()}
+        />
+        <button type="button" data-testid="outside-btn">
+          fuera
+        </button>
+      </div>,
+    );
+    // Open picker by clicking the multi-pago cell (data-testid="cell-pago-103" or pago-104 won't exist since week has 2 pagos)
+    const buttons = screen.getAllByRole("button");
+    let opened = false;
+    for (const btn of buttons) {
+      if ((btn as HTMLButtonElement).disabled) continue;
+      await user.click(btn);
+      if (document.querySelector('[role="listbox"]')) {
+        opened = true;
+        break;
+      }
+    }
+    expect(opened).toBe(true);
+    // Click outside the picker
+    await user.click(screen.getByTestId("outside-btn"));
     expect(document.querySelector('[role="listbox"]')).not.toBeInTheDocument();
   });
 

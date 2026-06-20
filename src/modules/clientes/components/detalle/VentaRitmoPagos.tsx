@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import type { VentaCliente } from "../../domain/entities/VentaCliente";
 import type { ContratoCredito } from "../../domain/entities/VentaDetalle";
 import type { Pago } from "../../domain/entities/Pago";
@@ -40,14 +40,6 @@ type VentaSemana = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CELL_SIZE = 14;
-
-const CATEGORY_COLORS: Record<CategoriaPago, string> = {
-  pago: "hsl(142, 71%, 45%)",
-  enganche: "hsl(217, 91%, 60%)",
-  condonacion: "hsl(263, 70%, 60%)",
-  perdida: "hsl(0, 72%, 64%)",
-  otro: "hsl(0, 0%, 60%)",
-};
 
 const LEGEND_CATS: CategoriaPago[] = ["pago", "enganche", "condonacion", "perdida"];
 
@@ -209,6 +201,7 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
     x: number;
     y: number;
   } | null>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   const ventaSemanas = useMemo(
     () => buildVentaSemanas(venta, pagos, contrato),
@@ -230,6 +223,18 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, [pickerAnchor]);
+
+  // Close picker on outside click
+  useEffect(() => {
+    if (!pickerAnchor) return;
+    function onMouseDown(e: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerAnchor(null);
+      }
+    }
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
   }, [pickerAnchor]);
 
   if (ventaSemanas.length === 0) return null;
@@ -335,7 +340,7 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
 
                   const cellStyle: React.CSSProperties = isActive
                     ? {
-                        backgroundColor: CATEGORY_COLORS[dominantCat],
+                        backgroundColor: categoriaMeta(dominantCat).color,
                         opacity: 0.15 + 0.85 * Math.min(1, monto / maxMonto),
                       }
                     : {};
@@ -354,10 +359,15 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
                       key={vs.semanaInicio.getTime()}
                       type="button"
                       disabled={!isClickable}
+                      data-testid={
+                        vs.doctoCcIds.length === 1
+                          ? `cell-pago-${vs.doctoCcIds[0]}`
+                          : undefined
+                      }
                       style={{ width: CELL_SIZE, height: CELL_SIZE, ...cellStyle }}
                       className={[
                         "rounded-[2px] transition-transform",
-                        isActive ? "opacity-100" : "bg-muted/50",
+                        isActive ? "" : "bg-muted/50",
                         isClickable
                           ? "cursor-pointer hover:scale-125"
                           : "cursor-default",
@@ -414,6 +424,7 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
       {/* Mini-picker */}
       {pickerAnchor && pickerPagos.length > 0 && (
         <div
+          ref={pickerRef}
           className="fixed z-50 rounded-md border border-border bg-background shadow-lg py-1 min-w-[160px]"
           style={{ left: pickerAnchor.x, top: pickerAnchor.y }}
           role="listbox"
