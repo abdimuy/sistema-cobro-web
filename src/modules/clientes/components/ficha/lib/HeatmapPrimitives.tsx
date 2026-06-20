@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import type { EventoTipo, SemanaRitmo } from "../../../domain/entities/RitmoPago";
 import { formatMoney } from "../../lib/format";
 import { EVENT_META, GAP, MONTH_SEP, formatMoneyCompact, type TooltipState } from "./heatmapHelpers";
@@ -95,14 +96,20 @@ export function Tooltip({ tooltip }: { tooltip: TooltipState }) {
     year: "numeric",
   });
 
-  return (
+  // Rendered through a portal to <body> so `position: fixed` resolves against
+  // the viewport. Inside a modal/Dialog (whose animation applies a CSS
+  // transform), a non-portaled fixed element would be positioned relative to
+  // that transformed ancestor instead, pushing the tooltip far off (e.g. to
+  // the right edge). The portal keeps cursor coords (clientX/clientY) correct.
+  return createPortal(
     <div
-      className="pointer-events-none fixed z-50 rounded-md border border-border bg-background px-2 py-1.5 shadow-md"
+      className="pointer-events-none fixed z-[100] rounded-md border border-border bg-background px-2 py-1.5 shadow-md"
       style={{ left: tooltip.x + 12, top: tooltip.y - 8 }}
     >
       <p className="font-mono text-[10px] text-muted-foreground">{dateStr}</p>
       <p className="font-mono text-xs tabular-nums text-foreground">{label}</p>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

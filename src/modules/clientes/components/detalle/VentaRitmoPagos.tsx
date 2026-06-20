@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { VentaCliente } from "../../domain/entities/VentaCliente";
 import type { ContratoCredito } from "../../domain/entities/VentaDetalle";
 import type { Pago } from "../../domain/entities/Pago";
@@ -447,11 +448,14 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
       {/* Tooltip */}
       <Tooltip tooltip={tooltip} />
 
-      {/* Mini-picker */}
-      {pickerAnchor && pickerPagos.length > 0 && (
+      {/* Mini-picker — portaled to <body> so `position: fixed` is viewport-
+          relative (the modal's transform would otherwise offset it). */}
+      {pickerAnchor &&
+        pickerPagos.length > 0 &&
+        createPortal(
         <div
           ref={pickerRef}
-          className="fixed z-50 rounded-md border border-border bg-background shadow-lg py-1 min-w-[160px]"
+          className="fixed z-[100] rounded-md border border-border bg-background shadow-lg py-1 min-w-[160px]"
           style={{ left: pickerAnchor.x, top: pickerAnchor.y }}
           role="listbox"
           aria-label="Seleccionar pago"
@@ -480,8 +484,9 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
               </button>
             );
           })}
-        </div>
-      )}
+        </div>,
+          document.body,
+        )}
     </section>
   );
 }
