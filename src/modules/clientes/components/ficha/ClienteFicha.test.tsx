@@ -131,15 +131,13 @@ describe("ClienteFicha", () => {
     expect(screen.queryByText("Abonos por mes")).not.toBeInTheDocument();
   });
 
-  it("renders inteligencia scores section with segmento and NBP when pulso present", async () => {
+  it("renders inteligencia scores section with segmento when pulso present", async () => {
     renderFicha(port);
     await waitFor(() =>
       expect(screen.getByText("Inteligencia del cliente")).toBeInTheDocument(),
     );
     // Segmento badge label (appears in hero and inteligencia Contexto RFM row)
     expect(screen.getAllByText("Dormido valioso").length).toBeGreaterThan(0);
-    // Next best product (rendered by FichaNextBestAction)
-    expect(screen.getAllByText("COMEDOR").length).toBeGreaterThan(0);
   });
 
   it("hides inteligencia scores section when pulso is null", async () => {
@@ -210,12 +208,12 @@ describe("ClienteFicha", () => {
     );
   });
 
-  it("renders FichaNextBestAction with 'Acción recomendada' heading when pulso has bands", async () => {
+  it("does not render the 'Acción recomendada' section (hidden for now)", async () => {
     renderFicha(port);
-    // "Acción recomendada" appears as section aria-label and as heading text
     await waitFor(() =>
-      expect(screen.getAllByText("Acción recomendada").length).toBeGreaterThan(0),
+      expect(screen.getByText("Inteligencia del cliente")).toBeInTheDocument(),
     );
+    expect(screen.queryByText("Acción recomendada")).not.toBeInTheDocument();
   });
 
   it("renders FichaSaludStrip progressbar", async () => {

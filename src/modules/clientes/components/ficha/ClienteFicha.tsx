@@ -3,18 +3,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useFichaCliente } from "../../presentation/hooks/useFichaCliente";
 import { useVentasCliente } from "../../presentation/hooks/useVentasCliente";
 import { useRitmoPago } from "../../presentation/hooks/useRitmoPago";
-import type { FichaDateRange } from "../../application/ports/ClientesPort";
 import { VentaModal } from "../detalle/VentaModal";
 import { PagoModal } from "../detalle/PagoModal";
 import { FichaHeader } from "./FichaHeader";
 import { FichaHero } from "./FichaHero";
 import { FichaKpis } from "./FichaKpis";
 import { FichaCharts } from "./FichaCharts";
-import { FichaRangeFilter } from "./FichaRangeFilter";
 import { FichaUbicacion } from "./FichaUbicacion";
 import { FichaInteligenciaScores } from "./FichaInteligenciaScores";
 import { FichaVentasList } from "./FichaVentasList";
-import { FichaNextBestAction } from "./FichaNextBestAction";
 import { FichaRitmoPago } from "./FichaRitmoPago";
 import { FichaSaludStrip } from "./FichaSaludStrip";
 import { ReporteModal } from "./ReporteModal";
@@ -24,8 +21,7 @@ interface Props {
 }
 
 export function ClienteFicha({ clienteId }: Props) {
-  const [range, setRange] = useState<FichaDateRange>({});
-  const { ficha, isLoading, error } = useFichaCliente(clienteId, range);
+  const { ficha, isLoading, error } = useFichaCliente(clienteId);
   const ventasState = useVentasCliente(clienteId);
   const ritmoState = useRitmoPago(clienteId);
   const [selectedDoctoPvId, setSelectedDoctoPvId] = useState<number | null>(
@@ -84,16 +80,9 @@ export function ClienteFicha({ clienteId }: Props) {
       <FichaHeader ficha={ficha} onReporteClick={() => setReporteOpen(true)} />
       <FichaHero ficha={ficha} />
       <FichaSaludStrip resumen={ficha.resumen} pulso={ficha.pulso} />
-      <FichaNextBestAction pulso={ficha.pulso} telefono={ficha.telefono} />
-      {/* Date-range filter row, above KPIs */}
-      <div className="border-b border-border/60 px-8 py-3">
-        <FichaRangeFilter
-          range={range}
-          isLoading={isLoading}
-          onChange={setRange}
-          onClear={() => setRange({})}
-        />
-      </div>
+      {/* Ocultos por ahora (siguen en el repo para reactivarlos):
+          - Acción recomendada (FichaNextBestAction): el motor aún no está listo.
+          - Filtro de rango de fechas (FichaRangeFilter): a pedido del usuario. */}
       <FichaKpis resumen={ficha.resumen} isLoading={isLoading} />
 
       {/* ── Zona 2 — Inteligencia ── */}
