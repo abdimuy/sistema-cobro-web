@@ -33,8 +33,26 @@ function buildValidDTO(overrides: Partial<FichaDTO> = {}): FichaDTO {
         { anio: 2025, mes: 2, monto: "3000.00" },
       ],
       comprado_vs_abonado: [
-        { anio: 2025, mes: 1, comprado: "7000.00", abonado: "2500.00" },
-        { anio: 2025, mes: 2, comprado: "0.00", abonado: "3000.00" },
+        {
+          anio: 2025,
+          mes: 1,
+          comprado: "7000.00",
+          cobranza: "1500.00",
+          enganche: "1000.00",
+          condonacion: "0.00",
+          perdida: "0.00",
+          otro: "0.00",
+        },
+        {
+          anio: 2025,
+          mes: 2,
+          comprado: "0.00",
+          cobranza: "2000.00",
+          enganche: "0.00",
+          condonacion: "500.00",
+          perdida: "500.00",
+          otro: "0.00",
+        },
       ],
     },
     pulso: {
@@ -122,7 +140,11 @@ describe("dtoToFichaCliente", () => {
       anio: 2025,
       mes: 1,
       comprado: "7000.00",
-      abonado: "2500.00",
+      cobranza: "1500.00",
+      enganche: "1000.00",
+      condonacion: "0.00",
+      perdida: "0.00",
+      otro: "0.00",
     });
   });
 

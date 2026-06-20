@@ -8,13 +8,19 @@ export type PuntoMensual = {
   readonly monto: string;
 };
 
-// PuntoCompradoAbonado is a dual-series (year, month) data point for charts.
+// PuntoCompradoAbonado is a (year, month) data point: the gross purchased amount
+// plus the paid amount broken down by category (matches the backend buckets).
+// All monetary fields are decimal strings — do not parse to number; use Intl for
+// display. The sum of the five category buckets is the month's total abonado.
 export type PuntoCompradoAbonado = {
   readonly anio: number;
   readonly mes: number;
-  // Decimal as string — do not parse to number; use Intl for display.
   readonly comprado: string;
-  readonly abonado: string;
+  readonly cobranza: string;
+  readonly enganche: string;
+  readonly condonacion: string;
+  readonly perdida: string;
+  readonly otro: string;
 };
 
 // ResumenFicha holds the aggregated financial KPIs shown in the ficha header.

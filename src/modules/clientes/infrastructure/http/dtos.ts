@@ -75,7 +75,11 @@ export type PuntoCompradoAbonadoDTO = {
   anio: number;
   mes: number;
   comprado: string; // decimal as string
-  abonado: string; // decimal as string
+  cobranza: string; // decimal as string
+  enganche: string; // decimal as string
+  condonacion: string; // decimal as string
+  perdida: string; // decimal as string
+  otro: string; // decimal as string
 };
 
 export type SeriesDTO = {

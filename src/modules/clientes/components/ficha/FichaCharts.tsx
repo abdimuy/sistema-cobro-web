@@ -6,35 +6,20 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  ReferenceLine,
 } from "recharts";
 import { formatMoney } from "../lib/format";
-import type {
-  PuntoCompradoAbonado,
-} from "../../domain/entities/FichaCliente";
+import { categoriaMeta } from "../lib/pagoConcepto";
+import type { CategoriaPago } from "../../domain/values/CategoriaPago";
+import type { PuntoCompradoAbonado } from "../../domain/entities/FichaCliente";
+import {
+  buildCompradoAbonadoSpine,
+  type SpinePoint,
+} from "./lib/compradoAbonadoSpine";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const MONTH_NAMES = [
-  "ene",
-  "feb",
-  "mar",
-  "abr",
-  "may",
-  "jun",
-  "jul",
-  "ago",
-  "sep",
-  "oct",
-  "nov",
-  "dic",
-];
-
-function monthLabel(anio: number, mes: number): string {
-  const name = MONTH_NAMES[(mes - 1) % 12] ?? String(mes);
-  return `${name} ${String(anio).slice(-2)}`;
-}
 
 const CHART_HEIGHT = 240;
 const AXIS_STYLE = {
@@ -43,11 +28,36 @@ const AXIS_STYLE = {
   fill: "hsl(var(--muted-foreground))",
 };
 
-// Series colors. Green = money in (abonos), consistent with the app's green
-// semantics; readable on both light and dark themes (green-600 ≥ 3:1 on each).
-// "Comprado" uses the neutral muted token so the accent stays reserved for abonos.
-const COLOR_ABONADO = "#16a34a";
+// "Comprado" is no longer a bar — it is a marker drawn above its month so the
+// large, sporadic purchase amounts never crush the small, steady abonos. The
+// marker uses the neutral muted token; the abono stack carries all the color.
 const COLOR_COMPRADO = "hsl(var(--muted-foreground))";
+
+// Compact MXN for the purchase marker label (e.g. "$1.2 M"), kept short so the
+// ▲ tags stay legible above the bars.
+const COMPACT_MXN = new Intl.NumberFormat("es-MX", {
+  style: "currency",
+  currency: "MXN",
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
+// The abono stack, bottom-to-top. Each segment maps to a CategoriaPago so it
+// reuses the exact heatmap color via categoriaMeta. Income (cobranza, enganche)
+// sits at the bottom; non-income (condonación, pérdida) on top.
+type StackSegment = {
+  key: "cobranza" | "enganche" | "otro" | "condonacion" | "perdida";
+  cat: CategoriaPago;
+  label: string;
+};
+
+const STACK: StackSegment[] = [
+  { key: "cobranza", cat: "pago", label: "Cobranza" },
+  { key: "enganche", cat: "enganche", label: "Enganche" },
+  { key: "otro", cat: "otro", label: "Otro" },
+  { key: "condonacion", cat: "condonacion", label: "Condonación" },
+  { key: "perdida", cat: "perdida", label: "Mal cliente/fuga" },
+];
 
 // LegendDot is a single colored-dot + label entry for an inline chart legend.
 function LegendDot({ color, label }: { color: string; label: string }) {
@@ -62,34 +72,54 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   );
 }
 
-interface TooltipPayloadEntry {
-  name?: string | number;
-  value?: number;
-  color?: string;
+// LegendMarker is the legend entry for the purchase marker (▲ above the month).
+function LegendMarker({ label }: { label: string }) {
+  return (
+    <span className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
+      <span className="shrink-0 text-[10px]" style={{ color: COLOR_COMPRADO }}>
+        ▲
+      </span>
+      {label}
+    </span>
+  );
 }
 
 interface CustomTooltipProps {
   active?: boolean;
-  payload?: TooltipPayloadEntry[];
-  label?: string;
+  payload?: { payload?: SpinePoint }[];
 }
 
-function CustomTooltipMXN({ active, payload, label }: CustomTooltipProps) {
-  if (!active || !payload?.length) return null;
+function ChartTooltip({ active, payload }: CustomTooltipProps) {
+  const point = payload?.[0]?.payload;
+  if (!active || !point) return null;
+  const rows = STACK.map((s) => ({ ...s, value: point[s.key] })).filter(
+    (r) => r.value > 0,
+  );
   return (
     <div className="rounded-md border border-border/60 bg-background px-3 py-2 shadow-lg">
       <p className="mb-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-        {label}
+        {point.label}
       </p>
-      {payload.map((entry, i) => (
+      {point.comprado > 0 && (
         <p
-          key={i}
           className="font-mono text-xs tabular-nums"
-          style={{ color: entry.color }}
+          style={{ color: COLOR_COMPRADO }}
         >
-          {entry.name}: {formatMoney(String(entry.value ?? 0))}
+          Compra: {formatMoney(String(point.comprado))}
+        </p>
+      )}
+      {rows.map((r) => (
+        <p
+          key={r.key}
+          className="font-mono text-xs tabular-nums"
+          style={{ color: categoriaMeta(r.cat).color }}
+        >
+          {r.label}: {formatMoney(String(r.value))}
         </p>
       ))}
+      <p className="mt-1 border-t border-border/40 pt-1 font-mono text-xs tabular-nums text-foreground">
+        Abonado: {formatMoney(String(point.abonadoTotal))}
+      </p>
     </div>
   );
 }
@@ -103,13 +133,12 @@ interface CompradoAbonadoChartProps {
 }
 
 function CompradoAbonadoChart({ data }: CompradoAbonadoChartProps) {
-  const chartData = data.map((d) => ({
-    label: monthLabel(d.anio, d.mes),
-    comprado: Number(d.comprado),
-    abonado: Number(d.abonado),
-  }));
+  const spine = buildCompradoAbonadoSpine(data, new Date());
 
-  if (chartData.length < 2) {
+  const allZero = spine.every(
+    (p) => p.comprado === 0 && p.abonadoTotal === 0,
+  );
+  if (allZero) {
     return (
       <div className="flex h-[240px] items-center justify-center">
         <p className="font-mono text-[11px] text-muted-foreground/60">
@@ -119,12 +148,11 @@ function CompradoAbonadoChart({ data }: CompradoAbonadoChartProps) {
     );
   }
 
+  const compras = spine.filter((p) => p.comprado > 0);
+
   return (
     <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-      <BarChart
-        data={chartData}
-        margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-      >
+      <BarChart data={spine} margin={{ top: 16, right: 8, left: 0, bottom: 0 }}>
         <CartesianGrid
           strokeDasharray="3 3"
           stroke="hsl(var(--border))"
@@ -136,6 +164,8 @@ function CompradoAbonadoChart({ data }: CompradoAbonadoChartProps) {
           tick={AXIS_STYLE}
           axisLine={false}
           tickLine={false}
+          interval="preserveStartEnd"
+          minTickGap={12}
         />
         <YAxis
           tick={AXIS_STYLE}
@@ -149,21 +179,34 @@ function CompradoAbonadoChart({ data }: CompradoAbonadoChartProps) {
             }).format(v)
           }
         />
-        <Tooltip content={<CustomTooltipMXN />} cursor={{ opacity: 0.08 }} />
-        <Bar
-          dataKey="comprado"
-          name="Comprado"
-          fill={COLOR_COMPRADO}
-          radius={[3, 3, 0, 0]}
-          maxBarSize={24}
-        />
-        <Bar
-          dataKey="abonado"
-          name="Abonado"
-          fill={COLOR_ABONADO}
-          radius={[3, 3, 0, 0]}
-          maxBarSize={24}
-        />
+        <Tooltip content={<ChartTooltip />} cursor={{ opacity: 0.08 }} />
+        {STACK.map((s, i) => (
+          <Bar
+            key={s.key}
+            dataKey={s.key}
+            name={s.label}
+            stackId="ab"
+            fill={categoriaMeta(s.cat).color}
+            maxBarSize={22}
+            radius={i === STACK.length - 1 ? [3, 3, 0, 0] : undefined}
+          />
+        ))}
+        {compras.map((p) => (
+          <ReferenceLine
+            key={`compra-${p.anio}-${p.mes}`}
+            x={p.label}
+            stroke={COLOR_COMPRADO}
+            strokeDasharray="2 3"
+            strokeOpacity={0.35}
+            label={{
+              value: `▲ ${COMPACT_MXN.format(p.comprado)}`,
+              position: "top",
+              fill: COLOR_COMPRADO,
+              fontSize: 9,
+              fontFamily: "var(--font-mono, ui-monospace)",
+            }}
+          />
+        ))}
       </BarChart>
     </ResponsiveContainer>
   );
@@ -220,11 +263,17 @@ export function FichaCharts({ compradoVsAbonado, isLoading = false }: Props) {
     >
       <ChartSection
         title="Comprado vs abonado"
-        caption="comparativa mensual"
+        caption="abonos por concepto · 24 meses"
         legend={
           <>
-            <LegendDot color={COLOR_COMPRADO} label="Comprado" />
-            <LegendDot color={COLOR_ABONADO} label="Abonado" />
+            {STACK.map((s) => (
+              <LegendDot
+                key={s.key}
+                color={categoriaMeta(s.cat).color}
+                label={s.label}
+              />
+            ))}
+            <LegendMarker label="Compra" />
           </>
         }
       >

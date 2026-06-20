@@ -98,7 +98,11 @@ export function dtoToFichaCliente(dto: FichaDTO): FichaCliente {
       anio: p.anio,
       mes: p.mes,
       comprado: p.comprado,
-      abonado: p.abonado,
+      cobranza: p.cobranza,
+      enganche: p.enganche,
+      condonacion: p.condonacion,
+      perdida: p.perdida,
+      otro: p.otro,
     }));
 
   const resumen: ResumenFicha = {
