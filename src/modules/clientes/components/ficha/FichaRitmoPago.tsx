@@ -18,6 +18,12 @@ import {
   type TooltipState,
 } from "./lib/heatmapHelpers";
 import { CellBands, Leyenda, SaldoSvg, Tooltip } from "./lib/HeatmapPrimitives";
+import {
+  Tooltip as UITooltip,
+  TooltipContent as UITooltipContent,
+  TooltipProvider as UITooltipProvider,
+  TooltipTrigger as UITooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -27,6 +33,78 @@ const BREAKPOINT = 700;
 // a wide panel (its 22px cap) — the size users saw most of the time. Constant so
 // the heatmap never shrinks on a width-measurement glitch; it scrolls instead.
 const HEATMAP_CELL_SIZE = 22;
+
+// ─── Event icon + hover info card ─────────────────────────────────────────────
+
+// EventInfoCard is the content shown when hovering a heatmap event icon (venta a
+// crédito / contado / liquidación): explains the marker with its date, amount and
+// folio so the icon is no longer a mystery glyph.
+function EventInfoCard({ ev }: { ev: EventoRitmo }) {
+  const { label } = EVENT_META[ev.tipo];
+  const fecha = ev.fecha.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  return (
+    <div className="leading-tight">
+      <p className="font-mono text-[10px] uppercase tracking-wider">{label}</p>
+      <p className="font-mono text-[10px] tabular-nums text-primary-foreground/70">
+        {fecha}
+      </p>
+      {Number(ev.monto) > 0 && (
+        <p className="font-mono text-[10px] tabular-nums">
+          {formatMoney(ev.monto)}
+        </p>
+      )}
+      {ev.folio && (
+        <p className="font-mono text-[10px] text-primary-foreground/70">
+          Folio {ev.folio}
+        </p>
+      )}
+      {ev.tipo === "venta_credito" && ev.plazoMeses > 0 && (
+        <p className="font-mono text-[10px] text-primary-foreground/70">
+          {ev.plazoMeses} meses
+        </p>
+      )}
+    </div>
+  );
+}
+
+// EventIcon renders a single event marker wrapped in a hover info card. When the
+// event maps to a sale (doctoPvId > 0) it stays clickable to open the venta.
+function EventIcon({
+  ev,
+  size,
+  onVentaClick,
+}: {
+  ev: EventoRitmo;
+  size: number;
+  onVentaClick?: (doctoPvId: number) => void;
+}) {
+  const { Icon, cls, label } = EVENT_META[ev.tipo];
+  const trigger =
+    ev.doctoPvId > 0 ? (
+      <button
+        type="button"
+        onClick={() => onVentaClick?.(ev.doctoPvId)}
+        aria-label={`Ver venta ${ev.folio}`}
+        className="cursor-pointer focus:outline-none"
+      >
+        <Icon size={size} className={cls} />
+      </button>
+    ) : (
+      <Icon size={size} className={cls} aria-label={label} />
+    );
+  return (
+    <UITooltip>
+      <UITooltipTrigger asChild>{trigger}</UITooltipTrigger>
+      <UITooltipContent side="top">
+        <EventInfoCard ev={ev} />
+      </UITooltipContent>
+    </UITooltip>
+  );
+}
 
 // ─── Mini-picker popover ──────────────────────────────────────────────────────
 
@@ -366,27 +444,14 @@ function HorizontalHeatmap({
                       aria-label={evts.map(ev => EVENT_META[ev.tipo].label).join(", ")}
                       className="flex gap-0.5"
                     >
-                      {evts.map((ev, i) => {
-                        const { Icon, cls } = EVENT_META[ev.tipo];
-                        return ev.doctoPvId > 0 ? (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() => onVentaClick?.(ev.doctoPvId)}
-                            aria-label={`Ver venta ${ev.folio}`}
-                            className="cursor-pointer focus:outline-none"
-                          >
-                            <Icon size={10} className={cls} />
-                          </button>
-                        ) : (
-                          <Icon
-                            key={i}
-                            size={10}
-                            className={cls}
-                            aria-label={EVENT_META[ev.tipo].label}
-                          />
-                        );
-                      })}
+                      {evts.map((ev, i) => (
+                        <EventIcon
+                          key={i}
+                          ev={ev}
+                          size={10}
+                          onVentaClick={onVentaClick}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
@@ -501,28 +566,18 @@ function FullHistoryPanel({
                             className="flex items-center justify-center"
                           >
                             {evts.length > 0 && (
-                              <div className="flex gap-px">
-                                {evts.map((ev, i) => {
-                                  const { Icon, cls } = EVENT_META[ev.tipo];
-                                  return ev.doctoPvId > 0 ? (
-                                    <button
-                                      key={i}
-                                      type="button"
-                                      onClick={() => onVentaClick?.(ev.doctoPvId)}
-                                      aria-label={`Ver venta ${ev.folio}`}
-                                      className="cursor-pointer focus:outline-none"
-                                    >
-                                      <Icon size={10} className={cls} />
-                                    </button>
-                                  ) : (
-                                    <Icon
-                                      key={i}
-                                      size={10}
-                                      className={cls}
-                                      aria-label={EVENT_META[ev.tipo].label}
-                                    />
-                                  );
-                                })}
+                              <div
+                                className="flex gap-px"
+                                aria-label={evts.map(ev => EVENT_META[ev.tipo].label).join(", ")}
+                              >
+                                {evts.map((ev, i) => (
+                                  <EventIcon
+                                    key={i}
+                                    ev={ev}
+                                    size={10}
+                                    onVentaClick={onVentaClick}
+                                  />
+                                ))}
                               </div>
                             )}
                           </div>
@@ -610,27 +665,14 @@ function VerticalHeatmap({
                       className="absolute -right-0.5 -top-0.5 flex gap-px"
                       aria-label={evts.map(ev => EVENT_META[ev.tipo].label).join(", ")}
                     >
-                      {evts.map((ev, i) => {
-                        const { Icon, cls } = EVENT_META[ev.tipo];
-                        return ev.doctoPvId > 0 ? (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() => onVentaClick?.(ev.doctoPvId)}
-                            aria-label={`Ver venta ${ev.folio}`}
-                            className="cursor-pointer focus:outline-none"
-                          >
-                            <Icon size={7} className={cls} />
-                          </button>
-                        ) : (
-                          <Icon
-                            key={i}
-                            size={7}
-                            className={cls}
-                            aria-label={EVENT_META[ev.tipo].label}
-                          />
-                        );
-                      })}
+                      {evts.map((ev, i) => (
+                        <EventIcon
+                          key={i}
+                          ev={ev}
+                          size={7}
+                          onVentaClick={onVentaClick}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
@@ -802,6 +844,7 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, onPagoClick, pu
   }
 
   return (
+    <UITooltipProvider delayDuration={200}>
     <section
       className="border-b border-border/60 px-8 py-8"
       aria-label="Ritmo de pago"
@@ -894,5 +937,6 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, onPagoClick, pu
         />
       )}
     </section>
+    </UITooltipProvider>
   );
 }

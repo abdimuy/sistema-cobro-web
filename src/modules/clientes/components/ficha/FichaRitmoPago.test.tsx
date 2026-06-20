@@ -722,4 +722,18 @@ describe("FichaRitmoPago — onVentaClick", () => {
     // No "Ver venta" button should be rendered for doctoPvId=0
     expect(screen.queryByRole("button", { name: /Ver venta/i })).toBeNull();
   });
+
+  it("shows a hover info card on an event icon", async () => {
+    const user = userEvent.setup();
+    const ritmo = makeFakeRitmoPago();
+    render(<FichaRitmoPago ritmo={ritmo} onVentaClick={vi.fn()} />);
+
+    // Liquidación CV-00589 is the event rendered in the visible window.
+    const btn = await screen.findByRole("button", { name: /Ver venta CV-00589/i });
+    await user.hover(btn);
+
+    // The folio only appears inside the hover card (not in the legend).
+    expect(await screen.findAllByText("Folio CV-00589")).not.toHaveLength(0);
+    expect(await screen.findAllByText("Liquidación")).not.toHaveLength(0);
+  });
 });
