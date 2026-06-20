@@ -292,16 +292,18 @@ describe("VentaRitmoPagos", () => {
   });
 
   it("cell with 2 movements shows count digit; cell with 1 does not", () => {
-    // pago3 + pago4 land in the same week → 2 movements → count "2" visible
-    // pago1 is in a different week alone → no count
-    render(
+    // ≥2 case: allPagos has pago3+pago4 in week 2 → count span rendered
+    const { unmount } = render(
       <VentaRitmoPagos venta={baseVenta} pagos={allPagos} contrato={null} />,
     );
-    // The multi-pago week (week 2) renders the digit "2"
-    expect(screen.getByText("2")).toBeInTheDocument();
-    // Weeks with a single movement must not render a count span (aria via text)
-    // The count "1" should NOT appear anywhere
-    expect(screen.queryByText("1")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cell-count")).toHaveTextContent("2");
+    unmount();
+
+    // single-movement case: only pago1 (week 0 alone) → no count span at all
+    render(
+      <VentaRitmoPagos venta={baseVenta} pagos={[pago1]} contrato={null} />,
+    );
+    expect(screen.queryByTestId("cell-count")).toBeNull();
   });
 
   it("synthetic enganche cell is not clickable (no doctoCcId)", () => {

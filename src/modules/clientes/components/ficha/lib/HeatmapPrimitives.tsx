@@ -33,6 +33,8 @@ export function CellBands({
       ))}
       {movimientos.length >= 2 && (
         <span
+          data-testid="cell-count"
+          aria-hidden="true"
           className="pointer-events-none absolute inset-0 flex items-center justify-center font-bold leading-none text-white text-[9px]"
           style={{ textShadow: "0 0 2px rgba(0,0,0,0.95), 0 0 1px rgba(0,0,0,0.95)" }}
         >
