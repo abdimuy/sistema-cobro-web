@@ -89,4 +89,21 @@ describe("FichaHero", () => {
     render(<FichaHero ficha={makeFicha({ notas: "Nota corta." })} />);
     expect(screen.queryByRole("button", { name: "ver más" })).not.toBeInTheDocument();
   });
+
+  it("emphasises follow-up dates in the note", () => {
+    render(
+      <FichaHero ficha={makeFicha({ notas: "REPORTA 10-03-2025 que pagará" })} />,
+    );
+    const date = screen.getByText("10-03-2025");
+    expect(date.tagName).toBe("SPAN");
+    expect(date).toHaveClass("font-semibold");
+  });
+
+  it("strips the asterisks from ****EMPHASIS**** markers", () => {
+    render(
+      <FichaHero ficha={makeFicha({ notas: "antes ****AMONTONAMIENTO**** despues" })} />,
+    );
+    expect(screen.getByText("AMONTONAMIENTO")).toBeInTheDocument();
+    expect(screen.queryByText(/\*\*\*\*/)).not.toBeInTheDocument();
+  });
 });

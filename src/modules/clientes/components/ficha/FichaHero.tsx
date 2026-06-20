@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import ScoreBadge from "../badges/ScoreBadge";
 import SegmentoBadge from "../badges/SegmentoBadge";
@@ -11,6 +11,47 @@ interface Props {
 
 // Notes longer than this collapse to a few lines with a "ver más" toggle.
 const NOTA_MAX = 160;
+
+// Microsip notes are a free-form follow-up log: a description, *name account
+// markers, ****EMPHASIS**** flags, and a dated timeline (DD-MM-YYYY). This
+// regex tokenises those structural cues so they can be highlighted without
+// rewriting the text — robust to any note shape (non-matching text passes through).
+const NOTA_TOKEN_RE = /(\*{2,}\s*[^*]+?\s*\*{2,})|(\b\d{1,2}-\d{1,2}-\d{4}\b)|(\*)/g;
+
+// highlightNota turns the raw note into nodes with dates and markers emphasised.
+function highlightNota(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  let last = 0;
+  let key = 0;
+  let m: RegExpExecArray | null;
+  NOTA_TOKEN_RE.lastIndex = 0;
+  while ((m = NOTA_TOKEN_RE.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    if (m[1]) {
+      nodes.push(
+        <strong key={key++} className="font-semibold text-foreground">
+          {m[1].replace(/\*/g, "").trim()}
+        </strong>,
+      );
+    } else if (m[2]) {
+      nodes.push(
+        <span key={key++} className="font-semibold text-foreground">
+          {m[2]}
+        </span>,
+      );
+    } else {
+      // single "*" account marker → bullet
+      nodes.push(
+        <span key={key++} className="text-muted-foreground">
+          •{" "}
+        </span>,
+      );
+    }
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
 
 // NotaBlock renders the free-form client note as readable prose (sans-serif,
 // relaxed leading) inside a labelled block — NOT the uppercase-mono label
@@ -27,7 +68,7 @@ function NotaBlock({ nota }: { nota: string }) {
         Nota
       </p>
       <p className="mt-1 whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-foreground/75">
-        {shown}
+        {highlightNota(shown)}
         {isLong && (
           <button
             type="button"
