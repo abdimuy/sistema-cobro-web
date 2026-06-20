@@ -81,17 +81,17 @@ describe("VentaRitmoPagos", () => {
     expect(cells.length).toBeGreaterThan(0);
   });
 
-  it("income week and forgiveness week have different background colors", () => {
-    render(
+  it("income week and forgiveness week have different colors in bands", () => {
+    const { container } = render(
       <VentaRitmoPagos venta={baseVenta} pagos={allPagos} contrato={baseContrato} />,
     );
-    const buttons = screen.getAllByRole("button");
-    // Active cells have an inline backgroundColor style
-    const styledColors = buttons
-      .map((b) => (b as HTMLElement).style.backgroundColor)
+    // CellBands renders inner divs with backgroundColor set via inline style
+    const allDivs = container.querySelectorAll("div[style]");
+    const bandColors = Array.from(allDivs)
+      .map((d) => (d as HTMLElement).style.backgroundColor)
       .filter(Boolean);
-    // pago → hsl(142,...) and condonacion → hsl(263,...) must differ
-    const colorSet = new Set(styledColors);
+    // pago → green, condonacion → violet — at least 2 distinct colors
+    const colorSet = new Set(bandColors);
     expect(colorSet.size).toBeGreaterThanOrEqual(2);
   });
 

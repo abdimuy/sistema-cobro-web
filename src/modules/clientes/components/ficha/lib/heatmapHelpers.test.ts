@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { groupByMonth, computeMaxMonto, cellClass, weekMs, isCurrentWeek } from "./heatmapHelpers";
+import { groupByMonth, computeMaxMonto, esCategoriaIngreso, dominantCategoria, weekMs, isCurrentWeek } from "./heatmapHelpers";
 import type { SemanaRitmo } from "../../../domain/entities/RitmoPago";
+import type { CategoriaPago } from "../../../domain/values/CategoriaPago";
 
 function makeSemana(semanaInicio: Date, montoAbonado = "0.00", saldo = "0.00"): SemanaRitmo {
   return { semanaInicio, montoAbonado, saldo, numPagos: 0, pagos: [] };
@@ -122,32 +123,60 @@ describe("computeMaxMonto", () => {
   });
 });
 
-describe("cellClass", () => {
-  it("returns bg-muted when monto is 0", () => {
-    expect(cellClass(0, 1000)).toBe("bg-muted");
+describe("esCategoriaIngreso", () => {
+  it("returns true for pago", () => {
+    expect(esCategoriaIngreso("pago")).toBe(true);
   });
 
-  it("returns bg-muted when maxMonto is 0", () => {
-    expect(cellClass(500, 0)).toBe("bg-muted");
+  it("returns true for enganche", () => {
+    expect(esCategoriaIngreso("enganche")).toBe(true);
   });
 
-  it("returns lightest green when monto <= 25% of max", () => {
-    expect(cellClass(200, 1000)).toContain("hsl(140,45%,78%)");
+  it("returns false for condonacion", () => {
+    expect(esCategoriaIngreso("condonacion")).toBe(false);
   });
 
-  it("returns second green when monto <= 50% of max", () => {
-    expect(cellClass(400, 1000)).toContain("hsl(143,50%,57%)");
+  it("returns false for perdida", () => {
+    expect(esCategoriaIngreso("perdida")).toBe(false);
   });
 
-  it("returns third green when monto <= 75% of max", () => {
-    expect(cellClass(600, 1000)).toContain("hsl(146,62%,38%)");
+  it("returns true for otro", () => {
+    expect(esCategoriaIngreso("otro")).toBe(true);
+  });
+});
+
+describe("dominantCategoria", () => {
+  it("returns null for empty array", () => {
+    expect(dominantCategoria([])).toBeNull();
   });
 
-  it("returns darkest green when monto > 75% of max", () => {
-    expect(cellClass(800, 1000)).toContain("hsl(150,78%,24%)");
+  it("returns the single category when only one movement", () => {
+    expect(dominantCategoria([{ categoria: "pago", importe: 500 }])).toBe("pago");
   });
 
-  it("returns darkest green when monto equals max", () => {
-    expect(cellClass(1000, 1000)).toContain("hsl(150,78%,24%)");
+  it("returns category with highest importe sum", () => {
+    const movs: { categoria: CategoriaPago; importe: number }[] = [
+      { categoria: "pago", importe: 1000 },
+      { categoria: "condonacion", importe: 2000 },
+    ];
+    expect(dominantCategoria(movs)).toBe("condonacion");
+  });
+
+  it("in tie, income category beats non-income", () => {
+    const movs: { categoria: CategoriaPago; importe: number }[] = [
+      { categoria: "condonacion", importe: 500 },
+      { categoria: "pago", importe: 500 },
+    ];
+    expect(dominantCategoria(movs)).toBe("pago");
+  });
+
+  it("sums multiple movements of same category before comparing", () => {
+    const movs: { categoria: CategoriaPago; importe: number }[] = [
+      { categoria: "pago", importe: 300 },
+      { categoria: "pago", importe: 400 },
+      { categoria: "condonacion", importe: 600 },
+    ];
+    // pago sum=700, condonacion=600 → pago wins
+    expect(dominantCategoria(movs)).toBe("pago");
   });
 });

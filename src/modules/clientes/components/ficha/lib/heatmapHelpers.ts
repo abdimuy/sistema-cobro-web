@@ -1,6 +1,7 @@
 import type { ElementType } from "react";
 import { Banknote, CircleCheck, CreditCard } from "lucide-react";
 import type { EventoRitmo, EventoTipo, SemanaRitmo } from "../../../domain/entities/RitmoPago";
+import type { CategoriaPago } from "../../../domain/values/CategoriaPago";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -66,14 +67,37 @@ export function formatMoneyCompact(monto: number): string {
   return `$${k.toFixed(1)}k`;
 }
 
-// ─── Cell intensity (relative) ────────────────────────────────────────────────
+// ─── Category helpers ─────────────────────────────────────────────────────────
 
-export function cellClass(monto: number, maxMonto: number): string {
-  if (monto <= 0 || maxMonto <= 0) return "bg-muted";
-  if (monto <= maxMonto * 0.25)    return "[background:hsl(140,45%,78%)] dark:[background:hsl(143,28%,24%)]";
-  if (monto <= maxMonto * 0.50)    return "[background:hsl(143,50%,57%)] dark:[background:hsl(144,42%,35%)]";
-  if (monto <= maxMonto * 0.75)    return "[background:hsl(146,62%,38%)] dark:[background:hsl(145,58%,47%)]";
-  return "[background:hsl(150,78%,24%)] dark:[background:hsl(145,72%,62%)]";
+/** Returns true for income categories (everything except condonacion and perdida). */
+export function esCategoriaIngreso(cat: CategoriaPago): boolean {
+  return cat !== "condonacion" && cat !== "perdida";
+}
+
+/** Returns the dominant category by summed importe. On tie, income beats non-income. */
+export function dominantCategoria(
+  movs: { categoria: CategoriaPago; importe: number }[],
+): CategoriaPago | null {
+  if (movs.length === 0) return null;
+  const sums = new Map<CategoriaPago, number>();
+  for (const m of movs) {
+    sums.set(m.categoria, (sums.get(m.categoria) ?? 0) + m.importe);
+  }
+  let bestCat: CategoriaPago | null = null;
+  let bestAmt = -Infinity;
+  for (const [cat, amt] of sums.entries()) {
+    const wins =
+      amt > bestAmt ||
+      (amt === bestAmt &&
+        esCategoriaIngreso(cat) &&
+        bestCat !== null &&
+        !esCategoriaIngreso(bestCat));
+    if (wins) {
+      bestCat = cat;
+      bestAmt = amt;
+    }
+  }
+  return bestCat;
 }
 
 // ─── Event icon ───────────────────────────────────────────────────────────────

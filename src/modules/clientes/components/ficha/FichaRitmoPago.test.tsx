@@ -121,20 +121,37 @@ describe("FichaRitmoPago", () => {
     expect(screen.getByRole("button", { name: /ocultar historial/i })).toBeInTheDocument();
   });
 
-  it("cell with max monto uses darkest green class (relative intensity)", () => {
-    // May 25 has monto 1500, which is the max → should be g4 (darkest)
-    // May 4 has monto 1200 = 80% of max → > 75% → g4
-    // May 11 has monto 850 = 56.7% of max → > 50%, <= 75% → g3
-    // May 18 has monto 0 → g0
-    const ritmo = makeFakeRitmoPago();
-    const { container } = render(<FichaRitmoPago ritmo={ritmo} />);
-
-    // Find cells with aria-labels
-    const maxCell = container.querySelector('[aria-label*="25"]') ??
-      container.querySelector('[aria-label*="$1,500"]');
-    expect(maxCell).not.toBeNull();
-    // Should have darkest green background
-    expect(maxCell?.className).toContain("hsl(150,78%,24%)");
+  it("cell with pagos renders color bands by categoria", () => {
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "850.00",
+          saldo: "7450.00",
+          numPagos: 1,
+          pagos: [makePagoRitmo({ doctoCcId: 70234, importe: "850.00", categoria: "pago" })],
+        },
+        {
+          semanaInicio: new Date("2026-05-18T00:00:00.000Z"),
+          montoAbonado: "500.00",
+          saldo: "6950.00",
+          numPagos: 1,
+          pagos: [makePagoRitmo({ doctoCcId: 70235, importe: "500.00", categoria: "condonacion" })],
+        },
+      ],
+      eventos: [],
+    });
+    const { container } = render(<FichaRitmoPago ritmo={ritmo} onPagoClick={vi.fn()} />);
+    // CellBands renders inner flex-1 divs with inline backgroundColor
+    const allDivs = Array.from(container.querySelectorAll("div[style]"));
+    const bandColors = allDivs
+      .map((d) => (d as HTMLElement).style.backgroundColor)
+      .filter(Boolean);
+    // pago (green) and condonacion (violet) should produce at least 2 distinct colors
+    const colorSet = new Set(bandColors);
+    expect(colorSet.size).toBeGreaterThanOrEqual(2);
+    // At least one band color exists per active week (non-empty)
+    expect(bandColors.length).toBeGreaterThan(0);
   });
 
   it("event icons render with aria-labels", () => {

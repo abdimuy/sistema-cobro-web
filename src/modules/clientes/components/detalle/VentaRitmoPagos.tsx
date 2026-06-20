@@ -8,6 +8,7 @@ import { categoriaMeta } from "../lib/pagoConcepto";
 import { formatMoney } from "../lib/format";
 import {
   computeMaxMonto,
+  dominantCategoria,
   groupByMonth,
   formatMoneyCompact,
   GAP,
@@ -15,7 +16,7 @@ import {
   MONTH_NAMES,
   type TooltipState,
 } from "../ficha/lib/heatmapHelpers";
-import { SaldoSvg, Tooltip } from "../ficha/lib/HeatmapPrimitives";
+import { CellBands, SaldoSvg, Tooltip } from "../ficha/lib/HeatmapPrimitives";
 
 // ─── Local types ──────────────────────────────────────────────────────────────
 
@@ -39,6 +40,7 @@ type VentaSemana = {
   pagos: [];
   categoriaSums: Partial<Record<CategoriaPago, number>>;
   doctoCcIds: number[];
+  movimentos: { categoria: CategoriaPago; importe: number }[];
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -61,24 +63,6 @@ function floorToWeekStartMs(ms: number): number {
     (d.getUTCHours() * 3600 + d.getUTCMinutes() * 60 + d.getUTCSeconds()) * 1000 -
     d.getUTCMilliseconds()
   );
-}
-
-function getDominantCategory(
-  sums: Partial<Record<CategoriaPago, number>>,
-): CategoriaPago {
-  let best: CategoriaPago = "otro";
-  let bestAmt = 0;
-  let bestIsIncome = false;
-  for (const [cat, amt] of Object.entries(sums) as [CategoriaPago, number][]) {
-    if (amt === undefined || amt <= 0) continue;
-    const isIncome = INCOME_CATS.includes(cat);
-    if (amt > bestAmt || (amt === bestAmt && isIncome && !bestIsIncome)) {
-      best = cat;
-      bestAmt = amt;
-      bestIsIncome = isIncome;
-    }
-  }
-  return best;
 }
 
 function buildVentaSemanas(
@@ -130,6 +114,7 @@ function buildVentaSemanas(
     pagos: [],
     categoriaSums: {},
     doctoCcIds: [],
+    movimentos: [],
   }));
 
   // Bucket movements
@@ -141,6 +126,7 @@ function buildVentaSemanas(
     b.montoAbonado = (Number(b.montoAbonado) + amount).toFixed(2);
     b.numPagos++;
     b.categoriaSums[m.categoria] = (b.categoriaSums[m.categoria] ?? 0) + amount;
+    b.movimentos.push({ categoria: m.categoria, importe: amount });
     if (m.doctoCcId !== null) {
       b.doctoCcIds.push(m.doctoCcId as number);
     }
@@ -362,15 +348,8 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
                   const vs = semanaByMs.get(s.semanaInicio.getTime())!;
                   const monto = Number(vs.montoAbonado);
                   const isClickable = vs.doctoCcIds.length > 0;
-                  const dominantCat = getDominantCategory(vs.categoriaSums);
                   const isActive = monto > 0 && maxMonto > 0;
-
-                  const cellStyle: React.CSSProperties = isActive
-                    ? {
-                        backgroundColor: categoriaMeta(dominantCat).color,
-                        opacity: 0.15 + 0.85 * Math.min(1, monto / maxMonto),
-                      }
-                    : {};
+                  const dominantCat = dominantCategoria(vs.movimentos) ?? "otro";
 
                   const dateStr = vs.semanaInicio.toLocaleDateString("es-MX", {
                     day: "numeric",
@@ -391,10 +370,9 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
                           ? `cell-pago-${vs.doctoCcIds[0]}`
                           : undefined
                       }
-                      style={{ width: CELL_SIZE, height: CELL_SIZE, ...cellStyle }}
+                      style={{ width: CELL_SIZE, height: CELL_SIZE }}
                       className={[
                         "rounded-[2px] transition-transform",
-                        isActive ? "" : "bg-muted/50",
                         isClickable
                           ? "cursor-pointer hover:scale-125"
                           : "cursor-default",
@@ -409,7 +387,14 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
                       onMouseLeave={() => setTooltip(null)}
                       onClick={(e) => handleCellClick(vs, e)}
                       aria-label={ariaLabel}
-                    />
+                    >
+                      <CellBands
+                        movimentos={vs.movimentos}
+                        weekMonto={monto}
+                        maxMonto={maxMonto}
+                        size={CELL_SIZE}
+                      />
+                    </button>
                   );
                 })}
                 {gi < monthGroups.length - 1 && (

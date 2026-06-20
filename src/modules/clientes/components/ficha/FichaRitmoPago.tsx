@@ -7,9 +7,9 @@ import {
   EVENT_META,
   MONTH_SEP,
   GAP,
-  cellClass,
   computeMaxMonto,
   defaultWindow,
+  dominantCategoria,
   eventsForWeek,
   formatMoneyCompact,
   groupByMonth,
@@ -17,7 +17,7 @@ import {
   monthSubtotal,
   type TooltipState,
 } from "./lib/heatmapHelpers";
-import { Leyenda, SaldoSvg, Tooltip } from "./lib/HeatmapPrimitives";
+import { CellBands, Leyenda, SaldoSvg, Tooltip } from "./lib/HeatmapPrimitives";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -170,15 +170,23 @@ function HeatmapCell({
   const hasPagos = semana.pagos.length > 0;
   const clickable = hasPagos && Boolean(onPagoClick);
 
-  const baseClass = [
+  const wrapperClass = [
     "rounded-[2px] transition-transform",
-    cellClass(monto, maxMonto),
     current ? "outline outline-2 outline-foreground/60 outline-offset-1" : "",
     "cursor-pointer hover:scale-125",
     className ?? "",
-  ].join(" ");
+  ].filter(Boolean).join(" ");
 
   const ariaLabel = `Semana ${semana.semanaInicio.toLocaleDateString("es-MX")} — ${monto > 0 ? formatMoney(semana.montoAbonado) : "Sin pago"}`;
+
+  const bands = (
+    <CellBands
+      movimentos={semana.pagos.map(p => ({ categoria: p.categoria, importe: Number(p.importe) }))}
+      weekMonto={monto}
+      maxMonto={maxMonto}
+      size={cellSize}
+    />
+  );
 
   function openPicker(e: React.MouseEvent | React.KeyboardEvent) {
     if (!onPickerOpen) return;
@@ -212,24 +220,28 @@ function HeatmapCell({
       <button
         type="button"
         style={{ width: cellSize, height: cellSize }}
-        className={baseClass}
+        className={wrapperClass}
         aria-label={ariaLabel}
         onMouseMove={(e) => onHover(e, semana)}
         onMouseLeave={onLeave}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
-      />
+      >
+        {bands}
+      </button>
     );
   }
 
   return (
     <div
       style={{ width: cellSize, height: cellSize }}
-      className={baseClass}
+      className={wrapperClass}
       aria-label={ariaLabel}
       onMouseMove={(e) => onHover(e, semana)}
       onMouseLeave={onLeave}
-    />
+    >
+      {bands}
+    </div>
   );
 }
 
@@ -442,14 +454,22 @@ function FullHistoryPanel({
                   <div className="flex gap-[1px]">
                     {g.semanas.map((s) => {
                       const monto = Number(s.montoAbonado);
+                      const dom = dominantCategoria(
+                        s.pagos.map(p => ({ categoria: p.categoria, importe: Number(p.importe) })),
+                      );
+                      const opacity = dom !== null && maxMonto > 0
+                        ? 0.4 + 0.6 * Math.min(1, monto / maxMonto)
+                        : undefined;
                       return (
                         <div
                           key={s.semanaInicio.getTime()}
-                          style={{ width: 11, height: 11 }}
-                          className={[
-                            "rounded-[1px]",
-                            cellClass(monto, maxMonto),
-                          ].join(" ")}
+                          style={{
+                            width: 11,
+                            height: 11,
+                            backgroundColor: dom !== null ? categoriaMeta(dom).color : undefined,
+                            opacity,
+                          }}
+                          className={["rounded-[1px]", dom === null ? "bg-muted" : ""].join(" ")}
                           aria-label={`Semana ${s.semanaInicio.toLocaleDateString("es-MX")} — ${monto > 0 ? formatMoney(s.montoAbonado) : "Sin pago"}`}
                         />
                       );
@@ -768,7 +788,7 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, onPagoClick, pu
       )}
 
       <div className="mt-4">
-        <Leyenda maxMonto={maxMonto} />
+        <Leyenda />
       </div>
 
       <Tooltip tooltip={tooltip} />

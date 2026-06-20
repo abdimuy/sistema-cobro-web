@@ -1,7 +1,39 @@
 import { createPortal } from "react-dom";
 import type { EventoTipo, SemanaRitmo } from "../../../domain/entities/RitmoPago";
+import type { CategoriaPago } from "../../../domain/values/CategoriaPago";
 import { formatMoney } from "../../lib/format";
+import { categoriaMeta } from "../../lib/pagoConcepto";
 import { EVENT_META, GAP, MONTH_SEP, formatMoneyCompact, type TooltipState } from "./heatmapHelpers";
+
+// ─── CellBands ────────────────────────────────────────────────────────────────
+
+export function CellBands({
+  movimentos,
+  weekMonto,
+  maxMonto,
+  size,
+}: {
+  movimentos: { categoria: CategoriaPago; importe: number }[];
+  weekMonto: number;
+  maxMonto: number;
+  size: number;
+}) {
+  if (movimentos.length === 0) {
+    return <div className="rounded-[2px] bg-muted" style={{ width: size, height: size }} />;
+  }
+  const opacity = 0.4 + 0.6 * (maxMonto > 0 ? Math.min(1, weekMonto / maxMonto) : 0);
+  return (
+    <div className="flex overflow-hidden rounded-[2px]" style={{ width: size, height: size }}>
+      {movimentos.map((m, i) => (
+        <div
+          key={i}
+          className="flex-1"
+          style={{ backgroundColor: categoriaMeta(m.categoria).color, opacity }}
+        />
+      ))}
+    </div>
+  );
+}
 
 // ─── Saldo SVG (horizontal) ───────────────────────────────────────────────────
 
@@ -115,25 +147,22 @@ export function Tooltip({ tooltip }: { tooltip: TooltipState }) {
 
 // ─── Leyenda ──────────────────────────────────────────────────────────────────
 
-export function Leyenda({ maxMonto }: { maxMonto: number }) {
-  // Relative ramp: less → more, 5 swatches (g0–g4)
-  const swatches = [
-    { cls: "bg-muted" },
-    { cls: "[background:hsl(140,45%,78%)] dark:[background:hsl(143,28%,24%)]" },
-    { cls: "[background:hsl(143,50%,57%)] dark:[background:hsl(144,42%,35%)]" },
-    { cls: "[background:hsl(146,62%,38%)] dark:[background:hsl(145,58%,47%)]" },
-    { cls: "[background:hsl(150,78%,24%)] dark:[background:hsl(145,72%,62%)]" },
-  ];
+const LEYENDA_CATS: readonly CategoriaPago[] = ["pago", "enganche", "condonacion", "perdida"];
 
+export function Leyenda() {
   return (
     <div className="flex flex-wrap items-center gap-4">
-      {/* Relative ramp */}
-      <div className="flex items-center gap-1">
-        <span className="font-mono text-[9px] text-muted-foreground/60">menos</span>
-        {swatches.map(({ cls }, i) => (
-          <div key={i} className={`h-3 w-3 rounded-[2px] ${cls}`} />
-        ))}
-        <span className="font-mono text-[9px] text-muted-foreground/60">más</span>
+      {/* Category dots */}
+      <div className="flex items-center gap-3">
+        {LEYENDA_CATS.map((cat) => {
+          const m = categoriaMeta(cat);
+          return (
+            <div key={cat} className="flex items-center gap-1">
+              <span className={`h-2 w-2 shrink-0 rounded-full ${m.dotClass}`} />
+              <span className="font-mono text-[9px] text-muted-foreground/60">{m.label}</span>
+            </div>
+          );
+        })}
       </div>
 
       <div className="h-3 w-px bg-border/40 mx-1" />
@@ -145,9 +174,6 @@ export function Leyenda({ maxMonto }: { maxMonto: number }) {
           <span className="font-mono text-[9px] text-muted-foreground/60">{label}</span>
         </div>
       ))}
-
-      {/* Invisible consumer of maxMonto to avoid lint warning */}
-      {maxMonto < 0 && <span />}
     </div>
   );
 }
