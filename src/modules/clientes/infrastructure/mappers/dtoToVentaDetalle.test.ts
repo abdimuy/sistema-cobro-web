@@ -133,6 +133,12 @@ describe("dtoToVentaDetalle", () => {
     expect(p.fecha.getTime()).toBe(new Date("2025-04-10T08:35:00Z").getTime());
     expect(p.importe).toBe("3000.00");
     expect(p.formaCobro).toBe("efectivo");
+    // F1a fields
+    expect(p.conceptoCcId).toBe(87327);
+    expect(p.concepto).toBe("ABONO");
+    expect(p.categoria).toBe("pago");
+    expect(p.cobrador).toBe("Cobrador");
+    expect(p.esIngreso).toBe(true);
   });
 
   it("importe in pagos is kept as a decimal string", () => {
