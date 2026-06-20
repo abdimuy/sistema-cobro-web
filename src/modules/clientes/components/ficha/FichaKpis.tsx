@@ -5,21 +5,18 @@ import type { ResumenFicha } from "../../domain/entities/FichaCliente";
 interface KpiCellProps {
   label: string;
   value: string;
-  mono?: boolean;
 }
 
-function KpiCell({ label, value, mono = false }: KpiCellProps) {
+// All values share one font (serif tabular-nums) so their baselines line up
+// across columns — mixing serif money with mono counts left them visibly
+// misaligned at the same size.
+function KpiCell({ label, value }: KpiCellProps) {
   return (
     <div className="flex min-w-0 flex-col gap-1 px-6 py-5 first:pl-0">
       <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </p>
-      <p
-        className={cn(
-          "tabular-nums text-[22px] font-normal leading-none text-foreground",
-          mono ? "font-mono" : "font-serif",
-        )}
-      >
+      <p className="font-serif tabular-nums text-[22px] font-normal leading-none text-foreground">
         {value}
       </p>
     </div>
@@ -35,8 +32,8 @@ export function FichaKpis({ resumen, isLoading = false }: Props) {
   const kpis: KpiCellProps[] = [
     { label: "Total comprado", value: formatMoney(resumen.totalComprado) },
     { label: "Total abonado", value: formatMoney(resumen.totalAbonado) },
-    { label: "# ventas", value: String(resumen.numVentas), mono: true },
-    { label: "# pagos", value: String(resumen.numPagos), mono: true },
+    { label: "# ventas", value: String(resumen.numVentas) },
+    { label: "# pagos", value: String(resumen.numPagos) },
     { label: "Ticket promedio", value: formatMoney(resumen.ticketPromedio) },
   ];
 
