@@ -26,7 +26,7 @@ function NotaBlock({ nota }: { nota: string }) {
       <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
         Nota
       </p>
-      <p className="mt-1 font-sans text-[13px] leading-relaxed text-foreground/75">
+      <p className="mt-1 whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-foreground/75">
         {shown}
         {isLong && (
           <button
