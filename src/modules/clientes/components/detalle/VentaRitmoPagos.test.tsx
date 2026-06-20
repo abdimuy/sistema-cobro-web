@@ -291,6 +291,19 @@ describe("VentaRitmoPagos", () => {
     expect(document.querySelector('[role="listbox"]')).not.toBeInTheDocument();
   });
 
+  it("cell with 2 movements shows count digit; cell with 1 does not", () => {
+    // pago3 + pago4 land in the same week → 2 movements → count "2" visible
+    // pago1 is in a different week alone → no count
+    render(
+      <VentaRitmoPagos venta={baseVenta} pagos={allPagos} contrato={null} />,
+    );
+    // The multi-pago week (week 2) renders the digit "2"
+    expect(screen.getByText("2")).toBeInTheDocument();
+    // Weeks with a single movement must not render a count span (aria via text)
+    // The count "1" should NOT appear anywhere
+    expect(screen.queryByText("1")).not.toBeInTheDocument();
+  });
+
   it("synthetic enganche cell is not clickable (no doctoCcId)", () => {
     // contrato.enganche > 0, no enganche pago → synthesized enganche at venta.fecha
     // The synthetic enganche has no doctoCcId → cell button disabled

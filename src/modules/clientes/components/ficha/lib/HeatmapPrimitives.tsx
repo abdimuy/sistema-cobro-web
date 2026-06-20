@@ -23,7 +23,7 @@ export function CellBands({
   }
   const opacity = 0.4 + 0.6 * (maxMonto > 0 ? Math.min(1, weekMonto / maxMonto) : 0);
   return (
-    <div className="flex overflow-hidden rounded-[2px]" style={{ width: size, height: size }}>
+    <div className="relative flex overflow-hidden rounded-[2px]" style={{ width: size, height: size }}>
       {movimientos.map((m, i) => (
         <div
           key={i}
@@ -31,6 +31,14 @@ export function CellBands({
           style={{ backgroundColor: categoriaMeta(m.categoria).color, opacity }}
         />
       ))}
+      {movimientos.length >= 2 && (
+        <span
+          className="pointer-events-none absolute inset-0 flex items-center justify-center font-bold leading-none text-white text-[9px]"
+          style={{ textShadow: "0 0 2px rgba(0,0,0,0.95), 0 0 1px rgba(0,0,0,0.95)" }}
+        >
+          {movimientos.length}
+        </span>
+      )}
     </div>
   );
 }
