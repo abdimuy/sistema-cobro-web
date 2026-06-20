@@ -190,11 +190,23 @@ export class HttpClientesAdapter implements ClientesPort {
     }
   }
 
-  async descargarReporte(clienteId: number, signal?: AbortSignal): Promise<Blob> {
+  async descargarReporte(
+    clienteId: number,
+    ventaIds?: number[],
+    signal?: AbortSignal,
+  ): Promise<Blob> {
     try {
       const { data } = await this.client.get<Blob>(
         `${CLIENTES_BASE}/${clienteId}/reporte`,
-        { responseType: "blob", signal },
+        {
+          responseType: "blob",
+          // Repeat the param without index brackets (venta=1&venta=2) so the Go
+          // handler reads it as a slice.
+          params:
+            ventaIds && ventaIds.length > 0 ? { venta: ventaIds } : undefined,
+          paramsSerializer: { indexes: null },
+          signal,
+        },
       );
       return data;
     } catch (e) {

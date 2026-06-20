@@ -242,8 +242,23 @@ describe("HttpClientesAdapter.descargarReporte", () => {
 
     expect(get).toHaveBeenCalledWith("/clientes/24037/reporte", {
       responseType: "blob",
+      params: undefined,
+      paramsSerializer: { indexes: null },
       signal: undefined,
     });
     expect(result).toBe(blob);
+  });
+
+  it("sends repeated venta params when ventaIds are given", async () => {
+    const blob = new Blob(["%PDF"], { type: "application/pdf" });
+    const get = vi.fn().mockResolvedValue({ data: blob });
+    const client = { get } as unknown as AxiosInstance;
+    const adapter = new HttpClientesAdapter(client);
+
+    await adapter.descargarReporte(24037, [10231, 11047]);
+
+    const [, config] = get.mock.calls[0];
+    expect(config.params).toEqual({ venta: [10231, 11047] });
+    expect(config.paramsSerializer).toEqual({ indexes: null });
   });
 });

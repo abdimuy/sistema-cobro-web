@@ -4,19 +4,17 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import EstadoPagoBadge from "../badges/EstadoPagoBadge";
 import { getLastClientesUrl } from "../../presentation/clientesViewCache";
-import { useDescargarReporte } from "../../presentation/hooks/useDescargarReporte";
 import type { FichaCliente } from "../../domain/entities/FichaCliente";
 
 interface Props {
   ficha: FichaCliente;
-  clienteId: number;
+  onReporteClick: () => void;
 }
 
-export function FichaHeader({ ficha, clienteId }: Props) {
+export function FichaHeader({ ficha, onReporteClick }: Props) {
   // Return to the directory with its last filters + scroll intact (falls back to
   // the bare route if the user landed here directly).
   const volverUrl = getLastClientesUrl() ?? "/clientes";
-  const { descargar, isLoading: descargando } = useDescargarReporte(clienteId);
   return (
     <header
       className={cn(
@@ -50,12 +48,11 @@ export function FichaHeader({ ficha, clienteId }: Props) {
         <Button
           variant="outline"
           size="sm"
-          onClick={descargar}
-          disabled={descargando}
+          onClick={onReporteClick}
           className="h-7 gap-1.5 font-mono text-xs"
         >
           <FileText className="h-3 w-3" />
-          {descargando ? "Generando…" : "Reporte PDF"}
+          Reporte PDF
         </Button>
         {ficha.telefono && (
           <Button

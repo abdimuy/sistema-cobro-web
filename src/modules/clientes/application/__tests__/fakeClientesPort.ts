@@ -136,10 +136,18 @@ export class FakeClientesPort implements ClientesPort {
     return resolve(this.obtenerPagoDetalleResponse);
   }
 
-  descargarReporteCalls: Array<{ clienteId: number; signal?: AbortSignal }> = [];
+  descargarReporteCalls: Array<{
+    clienteId: number;
+    ventaIds?: number[];
+    signal?: AbortSignal;
+  }> = [];
 
-  async descargarReporte(clienteId: number, signal?: AbortSignal): Promise<Blob> {
-    this.descargarReporteCalls.push({ clienteId, signal });
+  async descargarReporte(
+    clienteId: number,
+    ventaIds?: number[],
+    signal?: AbortSignal,
+  ): Promise<Blob> {
+    this.descargarReporteCalls.push({ clienteId, ventaIds, signal });
     const e = this.takeThrow("descargarReporte");
     if (e) throw e;
     return new Blob(["%PDF-1.4 fake"], { type: "application/pdf" });

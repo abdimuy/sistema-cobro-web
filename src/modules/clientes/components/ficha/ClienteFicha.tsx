@@ -17,6 +17,7 @@ import { FichaVentasList } from "./FichaVentasList";
 import { FichaNextBestAction } from "./FichaNextBestAction";
 import { FichaRitmoPago } from "./FichaRitmoPago";
 import { FichaSaludStrip } from "./FichaSaludStrip";
+import { ReporteModal } from "./ReporteModal";
 
 interface Props {
   clienteId: number;
@@ -31,6 +32,7 @@ export function ClienteFicha({ clienteId }: Props) {
     null,
   );
   const [selectedPagoId, setSelectedPagoId] = useState<number | null>(null);
+  const [reporteOpen, setReporteOpen] = useState(false);
 
   // Full-page loading (first load only)
   if (isLoading && !ficha) {
@@ -79,7 +81,7 @@ export function ClienteFicha({ clienteId }: Props) {
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-[1400px]">
       {/* ── Zona 1 — Identidad y acción ── */}
-      <FichaHeader ficha={ficha} clienteId={clienteId} />
+      <FichaHeader ficha={ficha} onReporteClick={() => setReporteOpen(true)} />
       <FichaHero ficha={ficha} />
       <FichaSaludStrip resumen={ficha.resumen} pulso={ficha.pulso} />
       <FichaNextBestAction pulso={ficha.pulso} telefono={ficha.telefono} />
@@ -125,6 +127,15 @@ export function ClienteFicha({ clienteId }: Props) {
         clienteId={clienteId}
         doctoCcId={selectedPagoId}
         onClose={() => setSelectedPagoId(null)}
+      />
+      <ReporteModal
+        open={reporteOpen}
+        onClose={() => setReporteOpen(false)}
+        clienteId={clienteId}
+        ventas={ventasState.ventas}
+        hasMore={ventasState.hasMore}
+        loadMore={ventasState.loadMore}
+        isLoadingMore={ventasState.isLoadingMore}
       />
       </div>
     </div>

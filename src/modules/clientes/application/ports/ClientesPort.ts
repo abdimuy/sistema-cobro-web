@@ -48,6 +48,11 @@ export interface ClientesPort {
     signal?: AbortSignal,
   ): Promise<PagoDetalle>;
   // descargarReporte fetches the client's PDF report (info + sales with payments)
-  // as a binary blob, ready to download or print.
-  descargarReporte(clienteId: number, signal?: AbortSignal): Promise<Blob>;
+  // as a binary blob, ready to download or print. When ventaIds is non-empty the
+  // report is limited to those sales; otherwise it covers all of them.
+  descargarReporte(
+    clienteId: number,
+    ventaIds?: number[],
+    signal?: AbortSignal,
+  ): Promise<Blob>;
 }
