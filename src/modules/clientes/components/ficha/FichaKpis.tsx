@@ -12,7 +12,7 @@ interface KpiCellProps {
 // misaligned at the same size.
 function KpiCell({ label, value }: KpiCellProps) {
   return (
-    <div className="flex min-w-0 flex-col gap-1 px-6 py-5 first:pl-0">
+    <div className="flex min-w-0 flex-col items-center gap-1 px-6 py-5 text-center">
       <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </p>
