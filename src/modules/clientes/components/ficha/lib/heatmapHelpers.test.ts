@@ -3,7 +3,7 @@ import { groupByMonth, computeMaxMonto, cellClass, weekMs, isCurrentWeek } from 
 import type { SemanaRitmo } from "../../../domain/entities/RitmoPago";
 
 function makeSemana(semanaInicio: Date, montoAbonado = "0.00", saldo = "0.00"): SemanaRitmo {
-  return { semanaInicio, montoAbonado, saldo, numPagos: 0 };
+  return { semanaInicio, montoAbonado, saldo, numPagos: 0, pagoIds: [] };
 }
 
 describe("weekMs", () => {

@@ -33,6 +33,7 @@ type VentaSemana = {
   montoAbonado: string;
   saldo: string;
   numPagos: number;
+  pagoIds: number[];
   categoriaSums: Partial<Record<CategoriaPago, number>>;
   doctoCcIds: number[];
 };
@@ -123,6 +124,7 @@ function buildVentaSemanas(
     montoAbonado: "0.00",
     saldo: "0.00",
     numPagos: 0,
+    pagoIds: [],
     categoriaSums: {},
     doctoCcIds: [],
   }));
@@ -138,6 +140,7 @@ function buildVentaSemanas(
     b.categoriaSums[m.categoria] = (b.categoriaSums[m.categoria] ?? 0) + amount;
     if (m.doctoCcId !== null) {
       b.doctoCcIds.push(m.doctoCcId as number);
+      b.pagoIds.push(m.doctoCcId as number);
     }
   }
 

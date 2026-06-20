@@ -24,6 +24,7 @@ export function dtoToRitmoPago(dto: RitmoPagoDTO): RitmoPago {
     montoAbonado: s.monto_abonado,
     saldo: s.saldo,
     numPagos: s.num_pagos,
+    pagoIds: s.pago_ids ?? [],
   }));
 
   const eventos: EventoRitmo[] = dto.eventos.map((e) => ({

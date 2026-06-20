@@ -53,12 +53,12 @@ describe("FichaRitmoPago", () => {
     // Backend generates through current week, so the tail IS today's end.
     const ritmo = makeFakeRitmoPago({
       semanas: [
-        { semanaInicio: new Date("2026-05-04T00:00:00.000Z"), montoAbonado: "1200.00", saldo: "8300.00", numPagos: 1 },
-        { semanaInicio: new Date("2026-05-11T00:00:00.000Z"), montoAbonado: "850.00",  saldo: "7450.00", numPagos: 1 },
-        { semanaInicio: new Date("2026-05-25T00:00:00.000Z"), montoAbonado: "1500.00", saldo: "5950.00", numPagos: 1 },
-        { semanaInicio: new Date("2026-06-01T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0 },
-        { semanaInicio: new Date("2026-06-08T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0 },
-        { semanaInicio: new Date("2026-06-15T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0 },
+        { semanaInicio: new Date("2026-05-04T00:00:00.000Z"), montoAbonado: "1200.00", saldo: "8300.00", numPagos: 1, pagoIds: [] },
+        { semanaInicio: new Date("2026-05-11T00:00:00.000Z"), montoAbonado: "850.00",  saldo: "7450.00", numPagos: 1, pagoIds: [] },
+        { semanaInicio: new Date("2026-05-25T00:00:00.000Z"), montoAbonado: "1500.00", saldo: "5950.00", numPagos: 1, pagoIds: [] },
+        { semanaInicio: new Date("2026-06-01T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0, pagoIds: [] },
+        { semanaInicio: new Date("2026-06-08T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0, pagoIds: [] },
+        { semanaInicio: new Date("2026-06-15T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0, pagoIds: [] },
       ],
     });
     render(<FichaRitmoPago ritmo={ritmo} />);
@@ -164,6 +164,135 @@ describe("FichaRitmoPago", () => {
   });
 });
 
+describe("FichaRitmoPago — onPagoClick", () => {
+  it("cell with one pagoId calls onPagoClick with that id on click", async () => {
+    const onPagoClick = vi.fn();
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "850.00",
+          saldo: "7450.00",
+          numPagos: 1,
+          pagoIds: [70234],
+        },
+      ],
+      eventos: [],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} onPagoClick={onPagoClick} />);
+
+    // aria-label uses toLocaleDateString — match on the money amount which is unique
+    const cell = screen.getByRole("button", { name: /\$850\.00/ });
+    await userEvent.click(cell);
+
+    expect(onPagoClick).toHaveBeenCalledWith(70234);
+    expect(onPagoClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("cell with multiple pagoIds opens mini-picker, selecting one calls onPagoClick", async () => {
+    const onPagoClick = vi.fn();
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "1500.00",
+          saldo: "6000.00",
+          numPagos: 2,
+          pagoIds: [70234, 70235],
+        },
+      ],
+      eventos: [],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} onPagoClick={onPagoClick} />);
+
+    const cell = screen.getByRole("button", { name: /\$1,500\.00/ });
+    await userEvent.click(cell);
+
+    // Picker should appear
+    expect(screen.getByRole("listbox", { name: /seleccionar pago/i })).toBeInTheDocument();
+    expect(onPagoClick).not.toHaveBeenCalled();
+
+    // Select the second option
+    const options = screen.getAllByRole("option");
+    expect(options).toHaveLength(2);
+    await userEvent.click(options[1]);
+
+    expect(onPagoClick).toHaveBeenCalledWith(70235);
+    expect(onPagoClick).toHaveBeenCalledTimes(1);
+    // Picker closes after selection
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("cell with empty pagoIds is not a button (non-clickable)", () => {
+    const onPagoClick = vi.fn();
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-18T00:00:00.000Z"),
+          montoAbonado: "0.00",
+          saldo: "7450.00",
+          numPagos: 0,
+          pagoIds: [],
+        },
+      ],
+      eventos: [],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} onPagoClick={onPagoClick} />);
+
+    // No button for this cell (no pagoIds) — it renders as a div
+    const cellButton = screen.queryByRole("button", { name: /Sin pago/ });
+    expect(cellButton).toBeNull();
+    // The div is still rendered with the aria-label
+    expect(screen.getByLabelText(/Sin pago/)).toBeInTheDocument();
+  });
+
+  it("renders without onPagoClick (back-compat — no crash, cells non-clickable)", () => {
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "850.00",
+          saldo: "7450.00",
+          numPagos: 1,
+          pagoIds: [70234],
+        },
+      ],
+      eventos: [],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} />);
+    // No button rendered for the heatmap cell when onPagoClick is absent
+    const cellButton = screen.queryByRole("button", { name: /\$850\.00/ });
+    expect(cellButton).toBeNull();
+    // Still renders correctly
+    expect(screen.getByText("Ritmo de pago")).toBeInTheDocument();
+  });
+
+  it("picker closes on Escape key", async () => {
+    const onPagoClick = vi.fn();
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "1500.00",
+          saldo: "6000.00",
+          numPagos: 2,
+          pagoIds: [70234, 70235],
+        },
+      ],
+      eventos: [],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} onPagoClick={onPagoClick} />);
+
+    const cell = screen.getByRole("button", { name: /\$1,500\.00/ });
+    await userEvent.click(cell);
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(onPagoClick).not.toHaveBeenCalled();
+  });
+});
+
 describe("FichaRitmoPago — onVentaClick", () => {
   it("icon button with doctoPvId>0 calls onVentaClick when clicked", async () => {
     // The liquidacion event (May 15) falls in the week starting May 11,
@@ -188,6 +317,7 @@ describe("FichaRitmoPago — onVentaClick", () => {
           montoAbonado: "850.00",
           saldo: "7450.00",
           numPagos: 1,
+          pagoIds: [],
         },
       ],
       eventos: [

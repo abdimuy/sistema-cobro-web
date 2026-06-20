@@ -95,7 +95,7 @@ export function ClienteFicha({ clienteId }: Props) {
       <FichaKpis resumen={ficha.resumen} isLoading={isLoading} />
 
       {/* ── Zona 2 — Inteligencia ── */}
-      <FichaRitmoPago ritmo={ritmoState.ritmo} isLoading={ritmoState.isLoading} onVentaClick={setSelectedDoctoPvId} pulso={ficha.pulso} />
+      <FichaRitmoPago ritmo={ritmoState.ritmo} isLoading={ritmoState.isLoading} onVentaClick={setSelectedDoctoPvId} onPagoClick={setSelectedPagoId} pulso={ficha.pulso} />
       <FichaInteligenciaScores pulso={ficha.pulso} />
 
       {/* ── Zona 3 — Detalle ── */}

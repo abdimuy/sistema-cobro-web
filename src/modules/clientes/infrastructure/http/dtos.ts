@@ -246,6 +246,7 @@ export type SemanaRitmoDTO = {
   monto_abonado: string; // decimal 2 dec
   saldo: string;         // decimal 2 dec
   num_pagos: number;
+  pago_ids: number[];    // DOCTO_CC_IDs of the week's abonos; empty when no pagos
 };
 
 export type EventoRitmoDTO = {

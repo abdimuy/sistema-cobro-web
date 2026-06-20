@@ -241,6 +241,7 @@ describe("ClienteFicha", () => {
           montoAbonado: "500.00",
           saldo: "3000.00",
           numPagos: 1,
+          pagoIds: [],
         },
       ],
       eventos: [

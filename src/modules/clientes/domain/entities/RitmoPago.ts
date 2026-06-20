@@ -9,6 +9,7 @@ export type SemanaRitmo = {
   readonly montoAbonado: string;
   readonly saldo: string;
   readonly numPagos: number;
+  readonly pagoIds: number[];
 };
 
 export type EventoRitmo = {

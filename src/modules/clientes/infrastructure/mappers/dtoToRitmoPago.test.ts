@@ -11,12 +11,14 @@ function buildValidDTO(overrides: Partial<RitmoPagoDTO> = {}): RitmoPagoDTO {
         monto_abonado: "1500.00",
         saldo: "8000.00",
         num_pagos: 2,
+        pago_ids: [70100, 70101],
       },
       {
         semana_inicio: "2026-05-12T00:00:00Z",
         monto_abonado: "0.00",
         saldo: "8000.00",
         num_pagos: 0,
+        pago_ids: [],
       },
     ],
     eventos: [
@@ -73,6 +75,26 @@ describe("dtoToRitmoPago", () => {
     expect(ritmo.semanas[0].montoAbonado).toBe("1500.00");
     expect(ritmo.semanas[0].saldo).toBe("8000.00");
     expect(ritmo.semanas[0].numPagos).toBe(2);
+    expect(ritmo.semanas[0].pagoIds).toEqual([70100, 70101]);
+  });
+
+  it("maps pago_ids to pagoIds (flows through)", () => {
+    const ritmo = dtoToRitmoPago(buildValidDTO());
+    expect(ritmo.semanas[0].pagoIds).toEqual([70100, 70101]);
+    expect(ritmo.semanas[1].pagoIds).toEqual([]);
+  });
+
+  it("defaults pagoIds to [] when pago_ids is absent from DTO", () => {
+    const dto = buildValidDTO();
+    // Simulate old API response without pago_ids field
+    const semanaWithoutPagoIds = { ...dto.semanas[0] } as Partial<typeof dto.semanas[0]>;
+    delete semanaWithoutPagoIds.pago_ids;
+    const dtoWithMissing = {
+      ...dto,
+      semanas: [semanaWithoutPagoIds as typeof dto.semanas[0], dto.semanas[1]],
+    };
+    const ritmo = dtoToRitmoPago(dtoWithMissing);
+    expect(ritmo.semanas[0].pagoIds).toEqual([]);
   });
 
   it("semana montoAbonado and saldo remain as strings (not numbers)", () => {

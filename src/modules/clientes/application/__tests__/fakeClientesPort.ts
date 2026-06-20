@@ -335,24 +335,28 @@ export function makeFakeRitmoPago(overrides: Partial<RitmoPago> = {}): RitmoPago
         montoAbonado: "1200.00",
         saldo: "8300.00",
         numPagos: 1,
+        pagoIds: [],
       },
       {
         semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
         montoAbonado: "850.00",
         saldo: "7450.00",
         numPagos: 1,
+        pagoIds: [],
       },
       {
         semanaInicio: new Date("2026-05-18T00:00:00.000Z"),
         montoAbonado: "0.00",
         saldo: "7450.00",
         numPagos: 0,
+        pagoIds: [],
       },
       {
         semanaInicio: new Date("2026-05-25T00:00:00.000Z"),
         montoAbonado: "1500.00",
         saldo: "5950.00",
         numPagos: 2,
+        pagoIds: [],
       },
     ],
     eventos: [

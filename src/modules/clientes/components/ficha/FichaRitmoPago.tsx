@@ -22,6 +22,69 @@ import { Leyenda, SaldoSvg, Tooltip } from "./lib/HeatmapPrimitives";
 
 const BREAKPOINT = 700;
 
+// ─── Mini-picker popover ──────────────────────────────────────────────────────
+
+interface PickerAnchor {
+  weekMs: number;
+  x: number;
+  y: number;
+  pagoIds: number[];
+}
+
+function WeekPagosPicker({
+  anchor,
+  onSelect,
+  onClose,
+}: {
+  anchor: PickerAnchor;
+  onSelect: (doctoCcId: number) => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    }
+    document.addEventListener("keydown", handleKey);
+    document.addEventListener("mousedown", handleClick);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.removeEventListener("mousedown", handleClick);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      role="listbox"
+      aria-label="Seleccionar pago"
+      style={{ position: "fixed", left: anchor.x + 8, top: anchor.y + 8, zIndex: 50 }}
+      className="min-w-[120px] rounded border border-border bg-popover shadow-md py-1"
+    >
+      {anchor.pagoIds.map((id, i) => (
+        <button
+          key={id}
+          role="option"
+          aria-selected={false}
+          type="button"
+          className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-[11px] hover:bg-muted focus:bg-muted focus:outline-none"
+          onClick={() => {
+            onSelect(id);
+            onClose();
+          }}
+        >
+          <span className="text-muted-foreground/60">{i + 1}.</span>
+          <span>Pago {id}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ─── Sparkline (vertical / compact) ──────────────────────────────────────────
 
 function Sparkline({ semanas }: { semanas: SemanaRitmo[] }) {
@@ -58,6 +121,84 @@ function Sparkline({ semanas }: { semanas: SemanaRitmo[] }) {
   );
 }
 
+// ─── Cell element — handles click / keyboard for pago navigation ──────────────
+
+function HeatmapCell({
+  semana,
+  cellSize,
+  maxMonto,
+  onHover,
+  onLeave,
+  onPagoClick,
+  onPickerOpen,
+  className,
+}: {
+  semana: SemanaRitmo;
+  cellSize: number;
+  maxMonto: number;
+  onHover: (e: React.MouseEvent, semana: SemanaRitmo) => void;
+  onLeave: () => void;
+  onPagoClick?: (doctoCcId: number) => void;
+  onPickerOpen?: (e: React.MouseEvent, semana: SemanaRitmo) => void;
+  className?: string;
+}) {
+  const monto = Number(semana.montoAbonado);
+  const current = isCurrentWeek(semana);
+  const hasIds = semana.pagoIds.length > 0;
+  const clickable = hasIds && Boolean(onPagoClick);
+
+  const baseClass = [
+    "rounded-[2px] transition-transform",
+    cellClass(monto, maxMonto),
+    current ? "outline outline-2 outline-foreground/60 outline-offset-1" : "",
+    clickable ? "cursor-pointer hover:scale-125" : "cursor-default hover:scale-125",
+    className ?? "",
+  ].join(" ");
+
+  const ariaLabel = `Semana ${semana.semanaInicio.toLocaleDateString("es-MX")} — ${monto > 0 ? formatMoney(semana.montoAbonado) : "Sin pago"}`;
+
+  function handleClick(e: React.MouseEvent) {
+    if (!onPagoClick) return;
+    if (semana.pagoIds.length === 1) {
+      onPagoClick(semana.pagoIds[0]);
+    } else if (semana.pagoIds.length > 1) {
+      onPickerOpen?.(e, semana);
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleClick(e as unknown as React.MouseEvent);
+    }
+  }
+
+  if (clickable) {
+    return (
+      <button
+        type="button"
+        style={{ width: cellSize, height: cellSize }}
+        className={baseClass}
+        aria-label={ariaLabel}
+        onMouseMove={(e) => onHover(e, semana)}
+        onMouseLeave={onLeave}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+      />
+    );
+  }
+
+  return (
+    <div
+      style={{ width: cellSize, height: cellSize }}
+      className={baseClass}
+      aria-label={ariaLabel}
+      onMouseMove={(e) => onHover(e, semana)}
+      onMouseLeave={onLeave}
+    />
+  );
+}
+
 // ─── Horizontal heatmap ───────────────────────────────────────────────────────
 
 function HorizontalHeatmap({
@@ -68,6 +209,8 @@ function HorizontalHeatmap({
   onHover,
   onLeave,
   onVentaClick,
+  onPagoClick,
+  onPickerOpen,
 }: {
   semanas: SemanaRitmo[];
   eventos: EventoRitmo[];
@@ -76,6 +219,8 @@ function HorizontalHeatmap({
   onHover: (e: React.MouseEvent, semana: SemanaRitmo) => void;
   onLeave: () => void;
   onVentaClick?: (doctoPvId: number) => void;
+  onPagoClick?: (doctoCcId: number) => void;
+  onPickerOpen?: (e: React.MouseEvent, semana: SemanaRitmo) => void;
 }) {
   const groups = groupByMonth(semanas);
 
@@ -148,24 +293,18 @@ function HorizontalHeatmap({
       <div className="flex items-center">
         {groups.map((g, gi) => (
           <div key={g.key} className="flex gap-[2px]">
-            {g.semanas.map((s) => {
-              const monto = Number(s.montoAbonado);
-              const current = isCurrentWeek(s);
-              return (
-                <div
-                  key={s.semanaInicio.getTime()}
-                  style={{ width: cellSize, height: cellSize }}
-                  className={[
-                    "rounded-[2px] cursor-pointer hover:scale-125 transition-transform",
-                    cellClass(monto, maxMonto),
-                    current ? "outline outline-2 outline-foreground/60 outline-offset-1" : "",
-                  ].join(" ")}
-                  onMouseMove={(e) => onHover(e, s)}
-                  onMouseLeave={onLeave}
-                  aria-label={`Semana ${s.semanaInicio.toLocaleDateString("es-MX")} — ${monto > 0 ? formatMoney(s.montoAbonado) : "Sin pago"}`}
-                />
-              );
-            })}
+            {g.semanas.map((s) => (
+              <HeatmapCell
+                key={s.semanaInicio.getTime()}
+                semana={s}
+                cellSize={cellSize}
+                maxMonto={maxMonto}
+                onHover={onHover}
+                onLeave={onLeave}
+                onPagoClick={onPagoClick}
+                onPickerOpen={onPickerOpen}
+              />
+            ))}
             {gi < groups.length - 1 && <div style={{ width: MONTH_SEP }} />}
           </div>
         ))}
@@ -265,7 +404,7 @@ function FullHistoryPanel({
                       );
                     })}
                   </div>
-                  {/* Cells */}
+                  {/* Cells — history panel uses simple divs (no pago click) */}
                   <div className="flex gap-[1px]">
                     {g.semanas.map((s) => {
                       const monto = Number(s.montoAbonado);
@@ -301,6 +440,8 @@ function VerticalHeatmap({
   onHover,
   onLeave,
   onVentaClick,
+  onPagoClick,
+  onPickerOpen,
 }: {
   semanas: SemanaRitmo[];
   eventos: EventoRitmo[];
@@ -308,6 +449,8 @@ function VerticalHeatmap({
   onHover: (e: React.MouseEvent, semana: SemanaRitmo) => void;
   onLeave: () => void;
   onVentaClick?: (doctoPvId: number) => void;
+  onPagoClick?: (doctoCcId: number) => void;
+  onPickerOpen?: (e: React.MouseEvent, semana: SemanaRitmo) => void;
 }) {
   const groups = groupByMonth(semanas);
   const cellSize = 14;
@@ -322,8 +465,6 @@ function VerticalHeatmap({
           </span>
           <div className="flex flex-wrap gap-[2px]">
             {g.semanas.map((s) => {
-              const monto = Number(s.montoAbonado);
-              const current = isCurrentWeek(s);
               const evts = eventsForWeek(eventos, s);
               return (
                 <div
@@ -331,16 +472,14 @@ function VerticalHeatmap({
                   className="relative"
                   style={{ width: cellSize, height: cellSize }}
                 >
-                  <div
-                    style={{ width: cellSize, height: cellSize }}
-                    className={[
-                      "rounded-[2px] cursor-pointer hover:scale-125 transition-transform",
-                      cellClass(monto, maxMonto),
-                      current ? "outline outline-2 outline-foreground/60 outline-offset-1" : "",
-                    ].join(" ")}
-                    onMouseMove={(e) => onHover(e, s)}
-                    onMouseLeave={onLeave}
-                    aria-label={`Semana ${s.semanaInicio.toLocaleDateString("es-MX")} — ${monto > 0 ? formatMoney(s.montoAbonado) : "Sin pago"}`}
+                  <HeatmapCell
+                    semana={s}
+                    cellSize={cellSize}
+                    maxMonto={maxMonto}
+                    onHover={onHover}
+                    onLeave={onLeave}
+                    onPagoClick={onPagoClick}
+                    onPickerOpen={onPickerOpen}
                   />
                   {evts.length > 0 && (
                     <div
@@ -458,13 +597,15 @@ interface Props {
   ritmo: RitmoPago | null;
   isLoading?: boolean;
   onVentaClick?: (doctoPvId: number) => void;
+  onPagoClick?: (doctoCcId: number) => void;
   pulso?: Pulso | null;
 }
 
-export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, pulso }: Props) {
+export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, onPagoClick, pulso }: Props) {
   const [showHistory, setShowHistory] = useState(false);
   const [containerWidth, setContainerWidth] = useState<number>(800);
   const [tooltip, setTooltip] = useState<TooltipState>(null);
+  const [pickerAnchor, setPickerAnchor] = useState<PickerAnchor | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -506,6 +647,15 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, pulso }: Props)
 
   function handleCellLeave() {
     setTooltip(null);
+  }
+
+  function handlePickerOpen(e: React.MouseEvent, semana: SemanaRitmo) {
+    setPickerAnchor({
+      weekMs: semana.semanaInicio.getTime(),
+      x: e.clientX,
+      y: e.clientY,
+      pagoIds: semana.pagoIds,
+    });
   }
 
   return (
@@ -551,6 +701,8 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, pulso }: Props)
               onHover={handleCellHover}
               onLeave={handleCellLeave}
               onVentaClick={onVentaClick}
+              onPagoClick={onPagoClick}
+              onPickerOpen={handlePickerOpen}
             />
             <SaldoSvg
               semanas={visibleSemanas}
@@ -567,6 +719,8 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, pulso }: Props)
           onHover={handleCellHover}
           onLeave={handleCellLeave}
           onVentaClick={onVentaClick}
+          onPagoClick={onPagoClick}
+          onPickerOpen={handlePickerOpen}
         />
       )}
 
@@ -584,6 +738,14 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, pulso }: Props)
       </div>
 
       <Tooltip tooltip={tooltip} />
+
+      {pickerAnchor && onPagoClick && (
+        <WeekPagosPicker
+          anchor={pickerAnchor}
+          onSelect={onPagoClick}
+          onClose={() => setPickerAnchor(null)}
+        />
+      )}
     </section>
   );
 }
