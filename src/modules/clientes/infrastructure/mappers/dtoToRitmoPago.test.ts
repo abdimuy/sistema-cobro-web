@@ -14,6 +14,7 @@ function makePagoRitmoDTO(overrides: Partial<PagoRitmoDTO> = {}): PagoRitmoDTO {
     es_ingreso: true,
     docto_pv_id: 30022,
     folio: "AB0001775",
+    articulo: "LAVADORA EASY 15KG",
     ...overrides,
   };
 }
@@ -137,6 +138,18 @@ describe("dtoToRitmoPago", () => {
     expect(pago.conceptoCcId).toBe(87327);
     expect(pago.esIngreso).toBe(true);
     expect(pago.doctoPvId).toBe(30022);
+  });
+
+  it("maps pago.articulo from DTO articulo field", () => {
+    const ritmo = dtoToRitmoPago(buildValidDTO());
+    expect(ritmo.semanas[0].pagos[0].articulo).toBe("LAVADORA EASY 15KG");
+  });
+
+  it("maps pago.articulo as empty string when DTO articulo is empty", () => {
+    const dto = buildValidDTO();
+    dto.semanas[0].pagos[0] = { ...dto.semanas[0].pagos[0], articulo: "" };
+    const ritmo = dtoToRitmoPago(dto);
+    expect(ritmo.semanas[0].pagos[0].articulo).toBe("");
   });
 
   it("defaults pagos to [] when pagos field is absent from DTO semana", () => {

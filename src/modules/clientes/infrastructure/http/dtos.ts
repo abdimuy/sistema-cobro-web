@@ -252,6 +252,7 @@ export type PagoRitmoDTO = {
   es_ingreso: boolean;
   docto_pv_id: number;   // linked PV sale; 0 if not resolvable
   folio: string;         // e.g. "AB0001775"; "" if not resolvable
+  articulo: string;      // first article name of the linked sale; "" if not resolvable
 };
 
 export type SemanaRitmoDTO = {

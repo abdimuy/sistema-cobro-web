@@ -51,6 +51,7 @@ function makePagoRitmo(overrides: Partial<PagoRitmo> = {}): PagoRitmo {
     esIngreso: true,
     doctoPvId: 30021,
     folio: "AB0001775",
+    articulo: "LAVADORA EASY 15KG",
   };
   return { ...base, ...overrides };
 }
@@ -319,7 +320,7 @@ describe("FichaRitmoPago — onPagoClick", () => {
     expect(onPagoClick).toHaveBeenCalledTimes(1);
   });
 
-  it("cell with multiple pagos opens picker showing fecha, importe and folio", async () => {
+  it("cell with multiple pagos opens picker showing importe rows and group header", async () => {
     const onPagoClick = vi.fn();
     const ritmo = makeFakeRitmoPago({
       semanas: [
@@ -329,8 +330,8 @@ describe("FichaRitmoPago — onPagoClick", () => {
           saldo: "6000.00",
           numPagos: 2,
           pagos: [
-            makePagoRitmo({ doctoCcId: 70234, importe: "750.00", folio: "AB0001775" }),
-            makePagoRitmo({ doctoCcId: 70235, importe: "750.00", folio: "AB0001776" }),
+            makePagoRitmo({ doctoCcId: 70234, importe: "750.00", folio: "AB0001775", doctoPvId: 30021 }),
+            makePagoRitmo({ doctoCcId: 70235, importe: "750.00", folio: "AB0001776", doctoPvId: 30021 }),
           ],
         },
       ],
@@ -345,12 +346,12 @@ describe("FichaRitmoPago — onPagoClick", () => {
     expect(screen.getByRole("listbox", { name: /seleccionar pago/i })).toBeInTheDocument();
     expect(onPagoClick).not.toHaveBeenCalled();
 
-    // Both folios and importes appear
+    // Both pagos are same venta → one group header with first pago's folio
     expect(screen.getByText("AB0001775")).toBeInTheDocument();
-    expect(screen.getByText("AB0001776")).toBeInTheDocument();
+    // Both importes appear in the pago rows
     expect(screen.getAllByText(/\$750\.00/).length).toBeGreaterThanOrEqual(2);
 
-    // Select the second option
+    // Two option buttons (one per pago)
     const options = screen.getAllByRole("option");
     expect(options).toHaveLength(2);
     await userEvent.click(options[1]);
@@ -485,6 +486,186 @@ describe("FichaRitmoPago — onPagoClick", () => {
     fireEvent.mouseDown(document.body);
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(onPagoClick).not.toHaveBeenCalled();
+  });
+});
+
+describe("WeekPagosPicker — agrupado por venta", () => {
+  it("pagos de 2 ventas distintas muestran 2 grupos con artículo y folio", async () => {
+    const onPagoClick = vi.fn();
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "1500.00",
+          saldo: "6000.00",
+          numPagos: 2,
+          pagos: [
+            makePagoRitmo({
+              doctoCcId: 70234,
+              importe: "750.00",
+              folio: "AB0001775",
+              doctoPvId: 30021,
+              articulo: "LAVADORA EASY 15KG",
+            }),
+            makePagoRitmo({
+              doctoCcId: 70235,
+              importe: "750.00",
+              folio: "AB0001800",
+              doctoPvId: 30055,
+              articulo: "REFRIGERADOR MABE 14P",
+            }),
+          ],
+        },
+      ],
+      eventos: [],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} onPagoClick={onPagoClick} />);
+
+    const cell = screen.getByRole("button", { name: /\$1,500\.00/ });
+    await userEvent.click(cell);
+
+    expect(screen.getByRole("listbox", { name: /seleccionar pago/i })).toBeInTheDocument();
+
+    // Ambos artículos aparecen como encabezados de grupo
+    expect(screen.getByText(/LAVADORA EASY 15KG/i)).toBeInTheDocument();
+    expect(screen.getByText(/REFRIGERADOR MABE 14P/i)).toBeInTheDocument();
+
+    // Ambos grupos tienen acentos de color distintos
+    const accentBars = document.querySelectorAll("[data-venta-accent]");
+    expect(accentBars).toHaveLength(2);
+    const colors = Array.from(accentBars).map((el) => (el as HTMLElement).style.backgroundColor);
+    expect(colors[0]).not.toBe(colors[1]);
+
+    // Dos opciones clickeables (una por pago)
+    const options = screen.getAllByRole("option");
+    expect(options).toHaveLength(2);
+  });
+
+  it("pagos de la misma venta quedan bajo un solo encabezado", async () => {
+    const onPagoClick = vi.fn();
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "1500.00",
+          saldo: "6000.00",
+          numPagos: 2,
+          pagos: [
+            makePagoRitmo({
+              doctoCcId: 70234,
+              importe: "750.00",
+              folio: "AB0001775",
+              doctoPvId: 30021,
+              articulo: "LAVADORA EASY 15KG",
+            }),
+            makePagoRitmo({
+              doctoCcId: 70235,
+              importe: "750.00",
+              folio: "AB0001776",
+              doctoPvId: 30021,
+              articulo: "LAVADORA EASY 15KG",
+            }),
+          ],
+        },
+      ],
+      eventos: [],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} onPagoClick={onPagoClick} />);
+
+    const cell = screen.getByRole("button", { name: /\$1,500\.00/ });
+    await userEvent.click(cell);
+
+    // Un solo encabezado de grupo (un acento)
+    const accentBars = document.querySelectorAll("[data-venta-accent]");
+    expect(accentBars).toHaveLength(1);
+
+    // El artículo aparece una sola vez como encabezado
+    expect(screen.getAllByText(/LAVADORA EASY 15KG/i)).toHaveLength(1);
+
+    // Dos opciones (un botón por pago)
+    const options = screen.getAllByRole("option");
+    expect(options).toHaveLength(2);
+  });
+
+  it("seleccionar pago de un grupo llama onPagoClick con el doctoCcId correcto", async () => {
+    const onPagoClick = vi.fn();
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "1500.00",
+          saldo: "6000.00",
+          numPagos: 2,
+          pagos: [
+            makePagoRitmo({
+              doctoCcId: 70234,
+              importe: "750.00",
+              doctoPvId: 30021,
+              articulo: "LAVADORA EASY 15KG",
+            }),
+            makePagoRitmo({
+              doctoCcId: 70299,
+              importe: "750.00",
+              doctoPvId: 30055,
+              articulo: "COMEDOR 6 PERSONAS",
+            }),
+          ],
+        },
+      ],
+      eventos: [],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} onPagoClick={onPagoClick} />);
+
+    const cell = screen.getByRole("button", { name: /\$1,500\.00/ });
+    await userEvent.click(cell);
+
+    // Seleccionar el segundo pago (del segundo grupo)
+    const options = screen.getAllByRole("option");
+    expect(options).toHaveLength(2);
+    await userEvent.click(options[1]);
+
+    expect(onPagoClick).toHaveBeenCalledWith(70299);
+    expect(onPagoClick).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("encabezado muestra solo folio cuando articulo está vacío", async () => {
+    const onPagoClick = vi.fn();
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "1500.00",
+          saldo: "6000.00",
+          numPagos: 2,
+          pagos: [
+            makePagoRitmo({
+              doctoCcId: 70234,
+              importe: "750.00",
+              folio: "AB0001775",
+              doctoPvId: 30021,
+              articulo: "",
+            }),
+            makePagoRitmo({
+              doctoCcId: 70235,
+              importe: "750.00",
+              folio: "AB0001800",
+              doctoPvId: 30055,
+              articulo: "",
+            }),
+          ],
+        },
+      ],
+      eventos: [],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} onPagoClick={onPagoClick} />);
+
+    const cell = screen.getByRole("button", { name: /\$1,500\.00/ });
+    await userEvent.click(cell);
+
+    // Folios como encabezados cuando artículo está vacío
+    expect(screen.getByText("AB0001775")).toBeInTheDocument();
+    expect(screen.getByText("AB0001800")).toBeInTheDocument();
   });
 });
 

@@ -16,6 +16,7 @@ export type PagoRitmo = {
   readonly esIngreso: boolean;
   readonly doctoPvId: number;
   readonly folio: string;
+  readonly articulo: string;   // first article name of the linked sale; "" if not resolvable
 };
 
 export type SemanaRitmo = {

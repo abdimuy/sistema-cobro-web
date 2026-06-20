@@ -32,6 +32,7 @@ export function dtoToRitmoPago(dto: RitmoPagoDTO): RitmoPago {
       esIngreso: p.es_ingreso,
       doctoPvId: p.docto_pv_id,
       folio: p.folio,
+      articulo: p.articulo,
     }));
     return {
       semanaInicio: parseRequiredDate(

@@ -339,6 +339,7 @@ export function makePagoRitmo(overrides: Partial<PagoRitmo> = {}): PagoRitmo {
     esIngreso: true,
     doctoPvId: 30021,
     folio: "AB0001775",
+    articulo: "LAVADORA EASY 15KG",
   };
   return { ...base, ...overrides };
 }

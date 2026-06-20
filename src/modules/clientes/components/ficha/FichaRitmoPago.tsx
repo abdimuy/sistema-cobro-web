@@ -26,6 +26,17 @@ const BREAKPOINT = 700;
 
 // ─── Mini-picker popover ──────────────────────────────────────────────────────
 
+// Per-venta accent palette — distinct hues, intentionally different from categoria colors
+// (which use green/violet/amber/red/gray). These use blue/teal/rose/indigo/lime/orange.
+const VENTA_ACCENT_PALETTE = [
+  "hsl(217 91% 60%)",   // azul
+  "hsl(174 72% 47%)",   // teal
+  "hsl(347 77% 62%)",   // rosa
+  "hsl(245 58% 62%)",   // índigo
+  "hsl(84 61% 44%)",    // lima
+  "hsl(28 93% 58%)",    // ámbar-naranja
+] as const;
+
 interface PickerAnchor {
   weekMs: number;
   x: number;
@@ -59,50 +70,95 @@ function WeekPagosPicker({
     };
   }, [onClose]);
 
+  // Group pagos by doctoPvId, preserving order of first appearance
+  const ventaOrder: number[] = [];
+  const byVenta = new Map<number, PagoRitmo[]>();
+  for (const pago of anchor.pagos) {
+    if (!byVenta.has(pago.doctoPvId)) {
+      byVenta.set(pago.doctoPvId, []);
+      ventaOrder.push(pago.doctoPvId);
+    }
+    byVenta.get(pago.doctoPvId)!.push(pago);
+  }
+
+  // Assign a palette color to each distinct doctoPvId
+  const ventaColor = new Map<number, string>();
+  ventaOrder.forEach((id, idx) => {
+    ventaColor.set(id, VENTA_ACCENT_PALETTE[idx % VENTA_ACCENT_PALETTE.length]);
+  });
+
   return (
     <div
       ref={ref}
       role="listbox"
       aria-label="Seleccionar pago"
       style={{ position: "fixed", left: anchor.x + 8, top: anchor.y + 8, zIndex: 50 }}
-      className="min-w-[200px] rounded border border-border bg-popover shadow-md py-1"
+      className="min-w-[220px] rounded border border-border bg-popover shadow-md py-1"
     >
-      {anchor.pagos.map((pago) => {
-        const meta = categoriaMeta(pago.categoria);
-        const fecha = pago.fecha.toLocaleDateString("es-MX", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        });
-        const hora = pago.hora.slice(0, 5);
+      {ventaOrder.map((doctoPvId) => {
+        const pagos = byVenta.get(doctoPvId)!;
+        const accent = ventaColor.get(doctoPvId)!;
+        // Use the first pago's articulo/folio for the group header
+        const firstPago = pagos[0];
+        const headerLabel = firstPago.articulo
+          ? `${firstPago.articulo} · ${firstPago.folio}`
+          : firstPago.folio;
+
         return (
-          <button
-            key={pago.doctoCcId}
-            role="option"
-            aria-selected={false}
-            type="button"
-            className="flex w-full flex-col gap-0.5 px-3 py-2 text-left hover:bg-muted focus:bg-muted focus:outline-none"
-            onClick={() => {
-              onSelect(pago.doctoCcId);
-              onClose();
-            }}
-          >
-            <div className="flex items-center gap-1.5">
-              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta.dotClass}`} />
-              <span className="font-mono text-[11px] text-foreground">
-                {fecha} {hora}
+          <div key={doctoPvId} data-docto-pv-id={doctoPvId}>
+            {/* Group header: accent bar + articulo + folio */}
+            <div
+              className="flex items-center gap-2 px-3 pt-2 pb-1"
+              aria-label={headerLabel}
+            >
+              <span
+                className="h-3.5 w-1 shrink-0 rounded-full"
+                style={{ backgroundColor: accent }}
+                data-venta-accent={doctoPvId}
+              />
+              <span className="truncate font-mono text-[10px] font-semibold text-foreground max-w-[160px]">
+                {firstPago.articulo ? firstPago.articulo : firstPago.folio}
               </span>
-              <span className={`ml-auto truncate max-w-[120px] ${meta.badgeClass}`}>
-                {pago.concepto}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 pl-3 font-mono text-[11px] text-muted-foreground">
-              <span className="tabular-nums">{formatMoney(pago.importe)}</span>
-              {pago.folio && (
-                <span className="text-muted-foreground/60">{pago.folio}</span>
+              {firstPago.articulo && (
+                <span className="ml-auto font-mono text-[9px] text-muted-foreground/60 shrink-0">
+                  {firstPago.folio}
+                </span>
               )}
             </div>
-          </button>
+
+            {/* Pagos rows */}
+            {pagos.map((pago) => {
+              const meta = categoriaMeta(pago.categoria);
+              const fecha = pago.fecha.toLocaleDateString("es-MX", {
+                day: "2-digit",
+                month: "short",
+              });
+              const hora = pago.hora.slice(0, 5);
+              return (
+                <button
+                  key={pago.doctoCcId}
+                  role="option"
+                  aria-selected={false}
+                  type="button"
+                  className="flex w-full flex-col gap-0.5 pl-6 pr-3 py-1.5 text-left hover:bg-muted focus:bg-muted focus:outline-none"
+                  onClick={() => {
+                    onSelect(pago.doctoCcId);
+                    onClose();
+                  }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta.dotClass}`} />
+                    <span className="font-mono text-[11px] text-foreground">
+                      {fecha} {hora}
+                    </span>
+                    <span className="ml-auto font-mono text-[11px] tabular-nums text-foreground">
+                      {formatMoney(pago.importe)}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         );
       })}
     </div>
