@@ -91,7 +91,7 @@ function WeekPagosPicker({
               <span className="font-mono text-[11px] text-foreground">
                 {fecha} {hora}
               </span>
-              <span className={`ml-auto ${meta.badgeClass}`}>
+              <span className={`ml-auto truncate max-w-[120px] ${meta.badgeClass}`}>
                 {pago.concepto}
               </span>
             </div>

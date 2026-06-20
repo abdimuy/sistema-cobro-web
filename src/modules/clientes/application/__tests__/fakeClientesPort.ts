@@ -327,6 +327,22 @@ export function makeFakeVentaDetalle(
   return { ...base, ...overrides };
 }
 
+export function makePagoRitmo(overrides: Partial<PagoRitmo> = {}): PagoRitmo {
+  const base: PagoRitmo = {
+    doctoCcId: 70234,
+    fecha: new Date("2026-05-05T10:30:00.000Z"),
+    hora: "10:30:00",
+    importe: "1200.00",
+    conceptoCcId: 87327,
+    concepto: "ABONO",
+    categoria: "pago",
+    esIngreso: true,
+    doctoPvId: 30021,
+    folio: "AB0001775",
+  };
+  return { ...base, ...overrides };
+}
+
 export function makeFakeRitmoPago(overrides: Partial<RitmoPago> = {}): RitmoPago {
   const base: RitmoPago = {
     anclaDiaRuta: "lunes",
@@ -336,28 +352,59 @@ export function makeFakeRitmoPago(overrides: Partial<RitmoPago> = {}): RitmoPago
         montoAbonado: "1200.00",
         saldo: "8300.00",
         numPagos: 1,
-        pagos: [] as PagoRitmo[],
+        pagos: [
+          makePagoRitmo({
+            doctoCcId: 70234,
+            fecha: new Date("2026-05-05T10:30:00.000Z"),
+            hora: "10:30:00",
+            importe: "1200.00",
+            folio: "AB0001775",
+          }),
+        ],
       },
       {
         semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
         montoAbonado: "850.00",
         saldo: "7450.00",
         numPagos: 1,
-        pagos: [] as PagoRitmo[],
+        pagos: [
+          makePagoRitmo({
+            doctoCcId: 70235,
+            fecha: new Date("2026-05-12T10:30:00.000Z"),
+            hora: "10:30:00",
+            importe: "850.00",
+            folio: "AB0001776",
+          }),
+        ],
       },
       {
         semanaInicio: new Date("2026-05-18T00:00:00.000Z"),
         montoAbonado: "0.00",
         saldo: "7450.00",
         numPagos: 0,
-        pagos: [] as PagoRitmo[],
+        pagos: [],
       },
       {
         semanaInicio: new Date("2026-05-25T00:00:00.000Z"),
         montoAbonado: "1500.00",
         saldo: "5950.00",
         numPagos: 2,
-        pagos: [] as PagoRitmo[],
+        pagos: [
+          makePagoRitmo({
+            doctoCcId: 70236,
+            fecha: new Date("2026-05-26T10:30:00.000Z"),
+            hora: "10:30:00",
+            importe: "750.00",
+            folio: "AB0001777",
+          }),
+          makePagoRitmo({
+            doctoCcId: 70237,
+            fecha: new Date("2026-05-28T14:15:00.000Z"),
+            hora: "14:15:00",
+            importe: "750.00",
+            folio: "AB0001778",
+          }),
+        ],
       },
     ],
     eventos: [
