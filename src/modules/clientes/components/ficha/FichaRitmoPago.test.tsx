@@ -536,6 +536,16 @@ describe("WeekPagosPicker — agrupado por venta", () => {
     const colors = Array.from(accentBars).map((el) => (el as HTMLElement).style.backgroundColor);
     expect(colors[0]).not.toBe(colors[1]);
 
+    // Ningún acento de venta debe coincidir con un color de categoría
+    const categoriaColors = new Set(
+      (["pago", "enganche", "condonacion", "perdida", "otro"] as const).map(
+        (c) => categoriaMeta(c).color,
+      ),
+    );
+    for (const color of colors) {
+      expect(categoriaColors.has(color)).toBe(false);
+    }
+
     // Dos opciones clickeables (una por pago)
     const options = screen.getAllByRole("option");
     expect(options).toHaveLength(2);

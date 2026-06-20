@@ -26,15 +26,16 @@ const BREAKPOINT = 700;
 
 // ─── Mini-picker popover ──────────────────────────────────────────────────────
 
-// Per-venta accent palette — distinct hues, intentionally different from categoria colors
-// (which use green/violet/amber/red/gray). These use blue/teal/rose/indigo/lime/orange.
+// Per-venta accent palette — distinct hues, clear of all categoría hues:
+// avoid 142±20 (green/pago), 217±20 (blue/enganche), 263±20 (violet/condonacion),
+// 0±20 or 360±20 (red/perdida), near-zero-sat (neutral/otro).
 const VENTA_ACCENT_PALETTE = [
-  "hsl(217 91% 60%)",   // azul
-  "hsl(174 72% 47%)",   // teal
-  "hsl(347 77% 62%)",   // rosa
-  "hsl(245 58% 62%)",   // índigo
-  "hsl(84 61% 44%)",    // lima
-  "hsl(28 93% 58%)",    // ámbar-naranja
+  "hsl(197 90% 50%)",   // cyan
+  "hsl(35 95% 55%)",    // amber-orange
+  "hsl(168 80% 42%)",   // teal
+  "hsl(330 85% 60%)",   // rose
+  "hsl(85 75% 45%)",    // lime
+  "hsl(290 75% 60%)",   // fuchsia
 ] as const;
 
 interface PickerAnchor {
@@ -108,6 +109,7 @@ function WeekPagosPicker({
           <div key={doctoPvId} data-docto-pv-id={doctoPvId}>
             {/* Group header: accent bar + articulo + folio */}
             <div
+              role="group"
               className="flex items-center gap-2 px-3 pt-2 pb-1"
               aria-label={headerLabel}
             >
