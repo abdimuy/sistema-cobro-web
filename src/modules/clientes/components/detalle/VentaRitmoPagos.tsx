@@ -11,6 +11,7 @@ import {
   formatMoneyCompact,
   GAP,
   MONTH_SEP,
+  MONTH_NAMES,
   type TooltipState,
 } from "../ficha/lib/heatmapHelpers";
 import { SaldoSvg, Tooltip } from "../ficha/lib/HeatmapPrimitives";
@@ -308,26 +309,33 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
       {/* Heatmap + saldo curve */}
       <div className="overflow-x-auto">
         <div className="inline-flex flex-col gap-1 min-w-max">
-          {/* Month labels */}
+          {/* Month labels — compact, clipped to each group's width so partial
+              months (1-2 weeks at the window edges) never overflow into the
+              next month's label. Year shown only at year boundaries. */}
           <div className="flex items-end">
-            {monthGroups.map((g, gi) => (
-              <div key={g.key} className="flex gap-[2px]">
-                <div
-                  style={{
-                    width:
-                      g.semanas.length * CELL_SIZE +
-                      (g.semanas.length - 1) * GAP,
-                  }}
-                >
-                  <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground/60">
-                    {g.label}
-                  </span>
+            {monthGroups.map((g, gi) => {
+              const groupWidth =
+                g.semanas.length * CELL_SIZE + (g.semanas.length - 1) * GAP;
+              const d = g.semanas[0].semanaInicio;
+              const mon = MONTH_NAMES[d.getMonth()];
+              const yy = String(d.getFullYear()).slice(2);
+              const yearMark = gi === 0 || d.getMonth() === 0;
+              // ~6.5px/char at 9px mono: "mon" needs ~20px, "mon yy" ~42px.
+              const label =
+                groupWidth < 20 ? "" : yearMark && groupWidth >= 42 ? `${mon} ${yy}` : mon;
+              return (
+                <div key={g.key} className="flex gap-[2px]">
+                  <div className="overflow-hidden" style={{ width: groupWidth }}>
+                    <span className="block whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground/60">
+                      {label}
+                    </span>
+                  </div>
+                  {gi < monthGroups.length - 1 && (
+                    <div style={{ width: MONTH_SEP }} />
+                  )}
                 </div>
-                {gi < monthGroups.length - 1 && (
-                  <div style={{ width: MONTH_SEP }} />
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Cells */}
