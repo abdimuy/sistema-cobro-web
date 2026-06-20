@@ -189,4 +189,16 @@ export class HttpClientesAdapter implements ClientesPort {
       throw apperrorToDomainError(e);
     }
   }
+
+  async descargarReporte(clienteId: number, signal?: AbortSignal): Promise<Blob> {
+    try {
+      const { data } = await this.client.get<Blob>(
+        `${CLIENTES_BASE}/${clienteId}/reporte`,
+        { responseType: "blob", signal },
+      );
+      return data;
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
 }

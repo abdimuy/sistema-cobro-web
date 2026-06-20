@@ -1,19 +1,22 @@
-import { Phone, ArrowLeft } from "lucide-react";
+import { Phone, ArrowLeft, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import EstadoPagoBadge from "../badges/EstadoPagoBadge";
 import { getLastClientesUrl } from "../../presentation/clientesViewCache";
+import { useDescargarReporte } from "../../presentation/hooks/useDescargarReporte";
 import type { FichaCliente } from "../../domain/entities/FichaCliente";
 
 interface Props {
   ficha: FichaCliente;
+  clienteId: number;
 }
 
-export function FichaHeader({ ficha }: Props) {
+export function FichaHeader({ ficha, clienteId }: Props) {
   // Return to the directory with its last filters + scroll intact (falls back to
   // the bare route if the user landed here directly).
   const volverUrl = getLastClientesUrl() ?? "/clientes";
+  const { descargar, isLoading: descargando } = useDescargarReporte(clienteId);
   return (
     <header
       className={cn(
@@ -42,20 +45,32 @@ export function FichaHeader({ ficha }: Props) {
         )}
       </div>
 
-      {/* Right: Llamar button */}
-      {ficha.telefono && (
+      {/* Right: actions */}
+      <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
-          asChild
+          onClick={descargar}
+          disabled={descargando}
           className="h-7 gap-1.5 font-mono text-xs"
         >
-          <a href={`tel:${ficha.telefono}`}>
-            <Phone className="h-3 w-3" />
-            Llamar
-          </a>
+          <FileText className="h-3 w-3" />
+          {descargando ? "Generando…" : "Reporte PDF"}
         </Button>
-      )}
+        {ficha.telefono && (
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="h-7 gap-1.5 font-mono text-xs"
+          >
+            <a href={`tel:${ficha.telefono}`}>
+              <Phone className="h-3 w-3" />
+              Llamar
+            </a>
+          </Button>
+        )}
+      </div>
     </header>
   );
 }

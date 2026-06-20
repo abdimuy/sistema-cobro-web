@@ -230,3 +230,20 @@ describe("HttpClientesAdapter cursor: omitted next_cursor → empty string", () 
     expect(result.nextCursor).toBe("");
   });
 });
+
+describe("HttpClientesAdapter.descargarReporte", () => {
+  it("GETs the report endpoint as a blob", async () => {
+    const blob = new Blob(["%PDF"], { type: "application/pdf" });
+    const get = vi.fn().mockResolvedValue({ data: blob });
+    const client = { get } as unknown as AxiosInstance;
+    const adapter = new HttpClientesAdapter(client);
+
+    const result = await adapter.descargarReporte(24037);
+
+    expect(get).toHaveBeenCalledWith("/clientes/24037/reporte", {
+      responseType: "blob",
+      signal: undefined,
+    });
+    expect(result).toBe(blob);
+  });
+});

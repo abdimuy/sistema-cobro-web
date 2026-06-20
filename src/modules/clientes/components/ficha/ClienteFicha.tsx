@@ -79,7 +79,7 @@ export function ClienteFicha({ clienteId }: Props) {
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-[1400px]">
       {/* ── Zona 1 — Identidad y acción ── */}
-      <FichaHeader ficha={ficha} />
+      <FichaHeader ficha={ficha} clienteId={clienteId} />
       <FichaHero ficha={ficha} />
       <FichaSaludStrip resumen={ficha.resumen} pulso={ficha.pulso} />
       <FichaNextBestAction pulso={ficha.pulso} telefono={ficha.telefono} />

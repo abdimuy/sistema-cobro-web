@@ -136,6 +136,15 @@ export class FakeClientesPort implements ClientesPort {
     return resolve(this.obtenerPagoDetalleResponse);
   }
 
+  descargarReporteCalls: Array<{ clienteId: number; signal?: AbortSignal }> = [];
+
+  async descargarReporte(clienteId: number, signal?: AbortSignal): Promise<Blob> {
+    this.descargarReporteCalls.push({ clienteId, signal });
+    const e = this.takeThrow("descargarReporte");
+    if (e) throw e;
+    return new Blob(["%PDF-1.4 fake"], { type: "application/pdf" });
+  }
+
   private takeThrow(method: keyof ClientesPort): Error | undefined {
     const e = this.throwOnNext[method];
     if (e) {
