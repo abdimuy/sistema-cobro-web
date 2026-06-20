@@ -20,9 +20,10 @@ interface Props {
   doctoPvId: number | null;
   open: boolean;
   onClose: () => void;
+  onPagoClick?: (doctoCcId: number) => void;
 }
 
-export function VentaModal({ clienteId, doctoPvId, open, onClose }: Props) {
+export function VentaModal({ clienteId, doctoPvId, open, onClose, onPagoClick }: Props) {
   const { detalle, isLoading, error } = useVentaDetalle(clienteId, doctoPvId);
 
   if (!open || doctoPvId === null) {
@@ -126,7 +127,7 @@ export function VentaModal({ clienteId, doctoPvId, open, onClose }: Props) {
 
               <hr className="border-border/60" />
 
-              <VentaPagosList pagos={detalle.pagos} />
+              <VentaPagosList pagos={detalle.pagos} onPagoClick={onPagoClick} />
 
               {detalle.contrato !== null && (
                 <>

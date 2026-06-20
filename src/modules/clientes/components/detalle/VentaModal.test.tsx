@@ -135,9 +135,9 @@ describe("VentaModal", () => {
     renderModal(port, { doctoPvId: 30015 });
 
     await waitFor(() =>
-      expect(screen.getByText("EFECTIVO")).toBeInTheDocument(),
+      expect(screen.getByText(/EFECTIVO/)).toBeInTheDocument(),
     );
-    expect(screen.getByText("TRANSFERENCIA SPEI")).toBeInTheDocument();
+    expect(screen.getByText(/TRANSFERENCIA SPEI/)).toBeInTheDocument();
   });
 
   it("shows 'Sin pagos registrados' for empty pagos", async () => {

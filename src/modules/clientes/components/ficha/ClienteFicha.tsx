@@ -5,6 +5,7 @@ import { useVentasCliente } from "../../presentation/hooks/useVentasCliente";
 import { useRitmoPago } from "../../presentation/hooks/useRitmoPago";
 import type { FichaDateRange } from "../../application/ports/ClientesPort";
 import { VentaModal } from "../detalle/VentaModal";
+import { PagoModal } from "../detalle/PagoModal";
 import { FichaHeader } from "./FichaHeader";
 import { FichaHero } from "./FichaHero";
 import { FichaKpis } from "./FichaKpis";
@@ -29,6 +30,7 @@ export function ClienteFicha({ clienteId }: Props) {
   const [selectedDoctoPvId, setSelectedDoctoPvId] = useState<number | null>(
     null,
   );
+  const [selectedPagoId, setSelectedPagoId] = useState<number | null>(null);
 
   // Full-page loading (first load only)
   if (isLoading && !ficha) {
@@ -117,6 +119,12 @@ export function ClienteFicha({ clienteId }: Props) {
         doctoPvId={selectedDoctoPvId}
         open={selectedDoctoPvId !== null}
         onClose={() => setSelectedDoctoPvId(null)}
+        onPagoClick={setSelectedPagoId}
+      />
+      <PagoModal
+        clienteId={clienteId}
+        doctoCcId={selectedPagoId}
+        onClose={() => setSelectedPagoId(null)}
       />
       </div>
     </div>
