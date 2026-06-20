@@ -181,6 +181,11 @@ const DEFAULT_VENTA_DETALLE: VentaDetalleDTO = {
       fecha: "2025-12-15T00:00:00Z",
       importe: "3200.00",
       forma_cobro: "EFECTIVO",
+      concepto_cc_id: 87327,
+      concepto: "ABONO",
+      categoria: "pago",
+      cobrador: "José Guadalupe Pérez Morales",
+      es_ingreso: true,
     },
   ],
 };

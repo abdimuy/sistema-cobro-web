@@ -1,5 +1,5 @@
 import type { AxiosInstance } from "axios";
-import type { FichaCliente, VentaDetalle, RitmoPago } from "../../domain/entities";
+import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle } from "../../domain/entities";
 import type { ClientesPort, FichaDateRange } from "../../application/ports/ClientesPort";
 import type {
   BuscarClientesInput,
@@ -7,6 +7,7 @@ import type {
   ListarVentasInput,
   ListarVentasOutput,
   ObtenerVentaDetalleInput,
+  ObtenerPagoDetalleInput,
   RefrescarBusquedaOutput,
 } from "../../application/dto";
 
@@ -15,6 +16,7 @@ import { dtoToFichaCliente } from "../mappers/dtoToFichaCliente";
 import { dtoToVentaCliente } from "../mappers/dtoToVentaCliente";
 import { dtoToVentaDetalle } from "../mappers/dtoToVentaDetalle";
 import { dtoToRitmoPago } from "../mappers/dtoToRitmoPago";
+import { dtoToPagoDetalle } from "../mappers/dtoToPagoDetalle";
 import { apperrorToDomainError } from "../mappers/errorMapper";
 import type {
   ListResponseDTO,
@@ -24,6 +26,7 @@ import type {
   VentaDetalleDTO,
   RefrescarBusquedaResponseDTO,
   RitmoPagoDTO,
+  PagoDetalleDTO,
 } from "./dtos";
 
 const CLIENTES_BASE = "/clientes";
@@ -166,6 +169,22 @@ export class HttpClientesAdapter implements ClientesPort {
       );
 
       return dtoToRitmoPago(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async obtenerPagoDetalle(
+    input: ObtenerPagoDetalleInput,
+    signal?: AbortSignal,
+  ): Promise<PagoDetalle> {
+    try {
+      const { data } = await this.client.get<PagoDetalleDTO>(
+        `${CLIENTES_BASE}/${input.clienteId}/pagos/${input.doctoCcId}`,
+        { signal },
+      );
+
+      return dtoToPagoDetalle(data);
     } catch (e) {
       throw apperrorToDomainError(e);
     }

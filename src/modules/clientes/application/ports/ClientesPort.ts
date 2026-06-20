@@ -1,10 +1,11 @@
-import type { FichaCliente, VentaDetalle, RitmoPago } from "../../domain/entities";
+import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle } from "../../domain/entities";
 import type {
   BuscarClientesInput,
   BuscarClientesOutput,
   ListarVentasInput,
   ListarVentasOutput,
   ObtenerVentaDetalleInput,
+  ObtenerPagoDetalleInput,
   RefrescarBusquedaOutput,
 } from "../dto";
 
@@ -42,4 +43,8 @@ export interface ClientesPort {
     range?: FichaDateRange,
     signal?: AbortSignal,
   ): Promise<RitmoPago>;
+  obtenerPagoDetalle(
+    input: ObtenerPagoDetalleInput,
+    signal?: AbortSignal,
+  ): Promise<PagoDetalle>;
 }

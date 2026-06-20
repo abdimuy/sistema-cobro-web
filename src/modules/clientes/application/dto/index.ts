@@ -3,4 +3,5 @@ export type { BuscarClientesOutput, DirectorioFacets } from "./BuscarClientesOut
 export type { ListarVentasInput } from "./ListarVentasInput";
 export type { ListarVentasOutput } from "./ListarVentasOutput";
 export type { ObtenerVentaDetalleInput } from "./ObtenerVentaDetalleInput";
+export type { ObtenerPagoDetalleInput } from "./ObtenerPagoDetalleInput";
 export type { RefrescarBusquedaOutput } from "./RefrescarBusquedaOutput";

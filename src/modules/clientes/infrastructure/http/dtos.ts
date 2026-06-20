@@ -186,6 +186,11 @@ export type PagoDTO = {
   fecha: string; // RFC3339
   importe: string; // decimal as string
   forma_cobro: string;
+  concepto_cc_id: number;
+  concepto: string;
+  categoria: string;
+  cobrador: string;
+  es_ingreso: boolean;
 };
 
 export type VentaDetalleDTO = {
@@ -193,6 +198,34 @@ export type VentaDetalleDTO = {
   productos: ProductoVentaDTO[];
   contrato?: ContratoDTO | null; // omitted (undefined) for cash/legacy sales; may also be null
   pagos: PagoDTO[];
+};
+
+// ─── GET /clientes/{id}/pagos/{doctoCcId} ────────────────────────────────────
+
+export type PagoDetalleDTO = {
+  importe: string;
+  iva: string;
+  fecha: string; // RFC3339
+  forma_cobro_id: number;
+  forma_cobro: string;
+  referencia: string;
+  cobrador_id: number;
+  cobrador: string;
+  concepto_cc_id: number;
+  concepto: string;
+  categoria: string;
+  es_ingreso: boolean;
+  folio: string;
+  lat?: string;
+  lon?: string;
+  aplica_a_cargo_id: number;
+  saldo_cargo?: string;
+  docto_pv_id: number;
+  cancelado: boolean;
+  aplicado: boolean;
+  recibido_at?: string; // RFC3339
+  aplicado_at?: string; // RFC3339
+  origen: string; // "app" | "microsip"
 };
 
 // ─── POST /clientes/_search/refresh ──────────────────────────────────────────

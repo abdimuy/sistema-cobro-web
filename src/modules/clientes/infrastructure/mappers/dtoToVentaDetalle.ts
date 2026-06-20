@@ -1,6 +1,7 @@
 import type { VentaDetalle, ContratoCredito, ProductoVenta, Pago } from "../../domain/entities";
 import { DomainError } from "../../domain/errors";
 import { TipoVenta } from "../../domain/values/TipoVenta";
+import { toCategoriaPago } from "../../domain/values/CategoriaPago";
 import type { VentaDetalleDTO } from "../http/dtos";
 
 export function dtoToVentaDetalle(dto: VentaDetalleDTO): VentaDetalle {
@@ -66,6 +67,11 @@ export function dtoToVentaDetalle(dto: VentaDetalleDTO): VentaDetalle {
       fecha: fechaPago,
       importe: p.importe,
       formaCobro: p.forma_cobro,
+      conceptoCcId: p.concepto_cc_id,
+      concepto: p.concepto,
+      categoria: toCategoriaPago(p.categoria),
+      cobrador: p.cobrador,
+      esIngreso: p.es_ingreso,
     };
   });
 

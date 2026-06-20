@@ -136,7 +136,7 @@ describe("calcularPlanPagos", () => {
   it("pagos cubriendo enganche → enganche=pagada, cuota1=actual", () => {
     // pagado = 3700 (exactly covers enganche)
     const d = makeDetalle({
-      pagos: [{ doctoCcId: 1, fecha: BASE_FECHA, importe: "3700.00", formaCobro: "EFECTIVO" }],
+      pagos: [{ doctoCcId: 1, fecha: BASE_FECHA, importe: "3700.00", formaCobro: "EFECTIVO", conceptoCcId: 87327, concepto: "ABONO", categoria: "pago" as const, cobrador: "Cobrador", esIngreso: true }],
     });
     const plan = calcularPlanPagos(d)!;
     expect(plan.filas[0].estado).toBe("pagada");
@@ -148,8 +148,8 @@ describe("calcularPlanPagos", () => {
     // pagado = 3700+3200 = 6900
     const d = makeDetalle({
       pagos: [
-        { doctoCcId: 1, fecha: BASE_FECHA, importe: "3700.00", formaCobro: "EFECTIVO" },
-        { doctoCcId: 2, fecha: BASE_FECHA, importe: "3200.00", formaCobro: "EFECTIVO" },
+        { doctoCcId: 1, fecha: BASE_FECHA, importe: "3700.00", formaCobro: "EFECTIVO", conceptoCcId: 87327, concepto: "ABONO", categoria: "pago" as const, cobrador: "Cobrador", esIngreso: true },
+        { doctoCcId: 2, fecha: BASE_FECHA, importe: "3200.00", formaCobro: "EFECTIVO", conceptoCcId: 87327, concepto: "ABONO", categoria: "pago" as const, cobrador: "Cobrador", esIngreso: true },
       ],
     });
     const plan = calcularPlanPagos(d)!;
@@ -160,7 +160,7 @@ describe("calcularPlanPagos", () => {
 
   it("pagos >= total → all pagada, no actual", () => {
     const d = makeDetalle({
-      pagos: [{ doctoCcId: 1, fecha: BASE_FECHA, importe: "18500.00", formaCobro: "EFECTIVO" }],
+      pagos: [{ doctoCcId: 1, fecha: BASE_FECHA, importe: "18500.00", formaCobro: "EFECTIVO", conceptoCcId: 87327, concepto: "ABONO", categoria: "pago" as const, cobrador: "Cobrador", esIngreso: true }],
     });
     const plan = calcularPlanPagos(d)!;
     for (const fila of plan.filas) {
@@ -171,8 +171,8 @@ describe("calcularPlanPagos", () => {
   it("resumen: pagado = sum of pagos, saldo = venta.saldoVenta", () => {
     const d = makeDetalle({
       pagos: [
-        { doctoCcId: 1, fecha: BASE_FECHA, importe: "3200.00", formaCobro: "EFECTIVO" },
-        { doctoCcId: 2, fecha: BASE_FECHA, importe: "3200.00", formaCobro: "EFECTIVO" },
+        { doctoCcId: 1, fecha: BASE_FECHA, importe: "3200.00", formaCobro: "EFECTIVO", conceptoCcId: 87327, concepto: "ABONO", categoria: "pago" as const, cobrador: "Cobrador", esIngreso: true },
+        { doctoCcId: 2, fecha: BASE_FECHA, importe: "3200.00", formaCobro: "EFECTIVO", conceptoCcId: 87327, concepto: "ABONO", categoria: "pago" as const, cobrador: "Cobrador", esIngreso: true },
       ],
     });
     const plan = calcularPlanPagos(d)!;

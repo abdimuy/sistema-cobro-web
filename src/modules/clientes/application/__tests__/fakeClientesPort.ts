@@ -6,6 +6,7 @@ import type {
   ProductoVenta,
   Pago,
   RitmoPago,
+  PagoDetalle,
 } from "../../domain/entities";
 import type { ClientesPort, FichaDateRange } from "../ports/ClientesPort";
 import type {
@@ -14,6 +15,7 @@ import type {
   ListarVentasInput,
   ListarVentasOutput,
   ObtenerVentaDetalleInput,
+  ObtenerPagoDetalleInput,
   RefrescarBusquedaOutput,
 } from "../dto";
 
@@ -32,6 +34,10 @@ export class FakeClientesPort implements ClientesPort {
   }> = [];
   refrescarCalls: Array<Record<string, never>> = [];
   ritmoCalls: Array<{ clienteId: number; range?: FichaDateRange; signal?: AbortSignal }> = [];
+  obtenerPagoDetalleCalls: Array<{
+    input: ObtenerPagoDetalleInput;
+    signal?: AbortSignal;
+  }> = [];
 
   buscarResponse: BuscarClientesOutput | (() => BuscarClientesOutput) = {
     items: [],
@@ -54,6 +60,8 @@ export class FakeClientesPort implements ClientesPort {
     documentos: 0,
   };
   ritmoResponse: RitmoPago | (() => RitmoPago) = makeFakeRitmoPago();
+  obtenerPagoDetalleResponse: PagoDetalle | (() => PagoDetalle) =
+    makeFakePagoDetalle();
 
   // When set, the next call to the matching method throws this error.
   throwOnNext: Partial<Record<keyof ClientesPort, Error>> = {};
@@ -115,6 +123,16 @@ export class FakeClientesPort implements ClientesPort {
     const e = this.takeThrow("obtenerRitmoPago");
     if (e) throw e;
     return resolve(this.ritmoResponse);
+  }
+
+  async obtenerPagoDetalle(
+    input: ObtenerPagoDetalleInput,
+    signal?: AbortSignal,
+  ): Promise<PagoDetalle> {
+    this.obtenerPagoDetalleCalls.push({ input, signal });
+    const e = this.takeThrow("obtenerPagoDetalle");
+    if (e) throw e;
+    return resolve(this.obtenerPagoDetalleResponse);
   }
 
   private takeThrow(method: keyof ClientesPort): Error | undefined {
@@ -245,6 +263,42 @@ export function makeFakePago(overrides: Partial<Pago> = {}): Pago {
     fecha: new Date("2025-12-15T00:00:00.000Z"),
     importe: "3200.00",
     formaCobro: "EFECTIVO",
+    conceptoCcId: 87327,
+    concepto: "ABONO",
+    categoria: "pago",
+    cobrador: "José Guadalupe Pérez Morales",
+    esIngreso: true,
+  };
+  return { ...base, ...overrides };
+}
+
+export function makeFakePagoDetalle(
+  overrides: Partial<PagoDetalle> = {},
+): PagoDetalle {
+  const base: PagoDetalle = {
+    importe: "3200.00",
+    iva: "0.00",
+    fecha: new Date("2025-12-15T00:00:00.000Z"),
+    formaCobroId: 52569,
+    formaCobro: "EFECTIVO",
+    referencia: "",
+    cobradorId: 7,
+    cobrador: "José Guadalupe Pérez Morales",
+    conceptoCcId: 87327,
+    concepto: "ABONO",
+    categoria: "pago",
+    esIngreso: true,
+    folio: "AB-00234",
+    lat: 19.4326,
+    lon: -99.1332,
+    aplicaACargoId: 55801,
+    saldoCargo: "5300.00",
+    doctoPvId: 30015,
+    cancelado: false,
+    aplicado: true,
+    recibidoAt: new Date("2025-12-15T10:30:00.000Z"),
+    aplicadoAt: new Date("2025-12-15T10:31:00.000Z"),
+    origen: "app",
   };
   return { ...base, ...overrides };
 }
