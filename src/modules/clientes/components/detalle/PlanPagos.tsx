@@ -92,7 +92,7 @@ export function PlanPagos({ detalle }: Props) {
           <TooltipTrigger asChild>
             <div
               aria-label="Avance de pago"
-              className="relative h-2 w-full cursor-help overflow-hidden rounded-full bg-border/50"
+              className="relative h-2 w-full overflow-hidden rounded-full bg-border/50"
             >
               <div
                 className="absolute inset-y-0 left-0 rounded-full bg-foreground/25"
