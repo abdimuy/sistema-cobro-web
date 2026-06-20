@@ -40,7 +40,7 @@ type VentaSemana = {
   pagos: [];
   categoriaSums: Partial<Record<CategoriaPago, number>>;
   doctoCcIds: number[];
-  movimentos: { categoria: CategoriaPago; importe: number }[];
+  movimientos: { categoria: CategoriaPago; importe: number }[];
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -114,7 +114,7 @@ function buildVentaSemanas(
     pagos: [],
     categoriaSums: {},
     doctoCcIds: [],
-    movimentos: [],
+    movimientos: [],
   }));
 
   // Bucket movements
@@ -126,7 +126,7 @@ function buildVentaSemanas(
     b.montoAbonado = (Number(b.montoAbonado) + amount).toFixed(2);
     b.numPagos++;
     b.categoriaSums[m.categoria] = (b.categoriaSums[m.categoria] ?? 0) + amount;
-    b.movimentos.push({ categoria: m.categoria, importe: amount });
+    b.movimientos.push({ categoria: m.categoria, importe: amount });
     if (m.doctoCcId !== null) {
       b.doctoCcIds.push(m.doctoCcId as number);
     }
@@ -349,7 +349,7 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
                   const monto = Number(vs.montoAbonado);
                   const isClickable = vs.doctoCcIds.length > 0;
                   const isActive = monto > 0 && maxMonto > 0;
-                  const dominantCat = dominantCategoria(vs.movimentos) ?? "otro";
+                  const dominantCat = dominantCategoria(vs.movimientos) ?? "otro";
 
                   const dateStr = vs.semanaInicio.toLocaleDateString("es-MX", {
                     day: "numeric",
@@ -372,7 +372,7 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
                       }
                       style={{ width: CELL_SIZE, height: CELL_SIZE }}
                       className={[
-                        "rounded-[2px] transition-transform",
+                        "transition-transform",
                         isClickable
                           ? "cursor-pointer hover:scale-125"
                           : "cursor-default",
@@ -389,7 +389,7 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
                       aria-label={ariaLabel}
                     >
                       <CellBands
-                        movimentos={vs.movimentos}
+                        movimientos={vs.movimientos}
                         weekMonto={monto}
                         maxMonto={maxMonto}
                         size={CELL_SIZE}

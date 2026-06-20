@@ -85,9 +85,11 @@ describe("VentaRitmoPagos", () => {
     const { container } = render(
       <VentaRitmoPagos venta={baseVenta} pagos={allPagos} contrato={baseContrato} />,
     );
-    // CellBands renders inner divs with backgroundColor set via inline style
-    const allDivs = container.querySelectorAll("div[style]");
-    const bandColors = Array.from(allDivs)
+    // CellBands renders inner flex-1 divs with backgroundColor set via inline style.
+    // Using div.flex-1[style] targets only band divs, excluding unrelated styled elements
+    // (saldo svg wrapper, month labels, etc.) that would pollute the color set.
+    const bandDivs = container.querySelectorAll("div.flex-1[style]");
+    const bandColors = Array.from(bandDivs)
       .map((d) => (d as HTMLElement).style.backgroundColor)
       .filter(Boolean);
     // pago → green, condonacion → violet — at least 2 distinct colors

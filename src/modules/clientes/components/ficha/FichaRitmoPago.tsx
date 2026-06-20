@@ -171,7 +171,7 @@ function HeatmapCell({
   const clickable = hasPagos && Boolean(onPagoClick);
 
   const wrapperClass = [
-    "rounded-[2px] transition-transform",
+    "transition-transform",
     current ? "outline outline-2 outline-foreground/60 outline-offset-1" : "",
     "cursor-pointer hover:scale-125",
     className ?? "",
@@ -181,7 +181,7 @@ function HeatmapCell({
 
   const bands = (
     <CellBands
-      movimentos={semana.pagos.map(p => ({ categoria: p.categoria, importe: Number(p.importe) }))}
+      movimientos={semana.pagos.map(p => ({ categoria: p.categoria, importe: Number(p.importe) }))}
       weekMonto={monto}
       maxMonto={maxMonto}
       size={cellSize}

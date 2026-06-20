@@ -5,6 +5,7 @@ import { FichaRitmoPago } from "./FichaRitmoPago";
 import { makeFakeRitmoPago } from "../../application/__tests__/fakeClientesPort";
 import type { Pulso } from "../../domain/entities/FichaCliente";
 import type { PagoRitmo } from "../../domain/entities/RitmoPago";
+import { categoriaMeta } from "../lib/pagoConcepto";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -141,10 +142,20 @@ describe("FichaRitmoPago", () => {
       ],
       eventos: [],
     });
+    // Use a helper div to resolve HSL → computed RGB so assertions match what jsdom stores
+    function resolveColor(hsl: string): string {
+      const el = document.createElement("div");
+      el.style.backgroundColor = hsl;
+      document.body.appendChild(el);
+      const resolved = getComputedStyle(el).backgroundColor;
+      document.body.removeChild(el);
+      return resolved;
+    }
+
     const { container } = render(<FichaRitmoPago ritmo={ritmo} onPagoClick={vi.fn()} />);
     // CellBands renders inner flex-1 divs with inline backgroundColor
-    const allDivs = Array.from(container.querySelectorAll("div[style]"));
-    const bandColors = allDivs
+    const bandDivs = Array.from(container.querySelectorAll("div.flex-1[style]"));
+    const bandColors = bandDivs
       .map((d) => (d as HTMLElement).style.backgroundColor)
       .filter(Boolean);
     // pago (green) and condonacion (violet) should produce at least 2 distinct colors
@@ -152,6 +163,14 @@ describe("FichaRitmoPago", () => {
     expect(colorSet.size).toBeGreaterThanOrEqual(2);
     // At least one band color exists per active week (non-empty)
     expect(bandColors.length).toBeGreaterThan(0);
+
+    // Explicit: condonación week's bands must use the condonación color, not pago color.
+    // Resolve HSL values to what jsdom stores (rgb strings) before comparing.
+    const condonResolvedColor = resolveColor(categoriaMeta("condonacion").color);
+    const pagoResolvedColor = resolveColor(categoriaMeta("pago").color);
+    const condonBandColors = bandColors.filter((c) => c === condonResolvedColor);
+    expect(condonBandColors).toContain(condonResolvedColor);
+    expect(condonBandColors).not.toContain(pagoResolvedColor);
   });
 
   it("event icons render with aria-labels", () => {

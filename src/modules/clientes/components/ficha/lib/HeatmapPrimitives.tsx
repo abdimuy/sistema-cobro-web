@@ -8,23 +8,23 @@ import { EVENT_META, GAP, MONTH_SEP, formatMoneyCompact, type TooltipState } fro
 // ─── CellBands ────────────────────────────────────────────────────────────────
 
 export function CellBands({
-  movimentos,
+  movimientos,
   weekMonto,
   maxMonto,
   size,
 }: {
-  movimentos: { categoria: CategoriaPago; importe: number }[];
+  movimientos: { categoria: CategoriaPago; importe: number }[];
   weekMonto: number;
   maxMonto: number;
   size: number;
 }) {
-  if (movimentos.length === 0) {
+  if (movimientos.length === 0) {
     return <div className="rounded-[2px] bg-muted" style={{ width: size, height: size }} />;
   }
   const opacity = 0.4 + 0.6 * (maxMonto > 0 ? Math.min(1, weekMonto / maxMonto) : 0);
   return (
     <div className="flex overflow-hidden rounded-[2px]" style={{ width: size, height: size }}>
-      {movimentos.map((m, i) => (
+      {movimientos.map((m, i) => (
         <div
           key={i}
           className="flex-1"
