@@ -36,7 +36,8 @@ export type EventoRitmo = {
 };
 
 export type ResumenRitmo = {
-  readonly totalAbonado: string;
+  readonly totalAbonado: string;    // income only (excludes condonacion/perdida)
+  readonly totalPerdonado: string;  // condonacion + perdida
   readonly semanasConPago: number;
   readonly semanasActivas: number;
   readonly rachaActualSem: number;

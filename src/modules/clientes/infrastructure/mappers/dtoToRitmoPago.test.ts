@@ -68,6 +68,7 @@ function buildValidDTO(overrides: Partial<RitmoPagoDTO> = {}): RitmoPagoDTO {
     ],
     resumen: {
       total_abonado: "4700.00",
+      total_perdonado: "350.00",
       semanas_con_pago: 1,
       semanas_activas: 2,
       racha_actual_sem: 0,
@@ -195,6 +196,7 @@ describe("dtoToRitmoPago", () => {
   it("maps resumen all fields correctly", () => {
     const ritmo = dtoToRitmoPago(buildValidDTO());
     expect(ritmo.resumen.totalAbonado).toBe("4700.00");
+    expect(ritmo.resumen.totalPerdonado).toBe("350.00");
     expect(ritmo.resumen.semanasConPago).toBe(1);
     expect(ritmo.resumen.semanasActivas).toBe(2);
     expect(ritmo.resumen.rachaActualSem).toBe(0);
@@ -205,6 +207,7 @@ describe("dtoToRitmoPago", () => {
   it("resumen decimal fields remain as strings", () => {
     const ritmo = dtoToRitmoPago(buildValidDTO());
     expect(typeof ritmo.resumen.totalAbonado).toBe("string");
+    expect(typeof ritmo.resumen.totalPerdonado).toBe("string");
     expect(typeof ritmo.resumen.constanciaPct).toBe("string");
     expect(typeof ritmo.resumen.saldoActual).toBe("string");
   });

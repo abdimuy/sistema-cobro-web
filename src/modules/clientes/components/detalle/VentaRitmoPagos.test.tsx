@@ -97,6 +97,19 @@ describe("VentaRitmoPagos", () => {
     expect(colorSet.size).toBeGreaterThanOrEqual(2);
   });
 
+  it("ABONADO excludes condonacion; PERDÓN captures it", () => {
+    // allPagos: pago1=$3000(pago) + pago2=$1000(condonacion) + pago3=$2000(pago) + pago4=$1000(pago)
+    // income = 3000 + 2000 + 1000 = $6000 → $6.0k
+    // perdonado = 1000 → $1.0k
+    render(
+      <VentaRitmoPagos venta={baseVenta} pagos={allPagos} contrato={null} />,
+    );
+    expect(screen.getByText("ABONADO")).toBeInTheDocument();
+    expect(screen.getByText("$6.0k")).toBeInTheDocument();
+    expect(screen.getByText("PERDÓN")).toBeInTheDocument();
+    expect(screen.getByText("$1.0k")).toBeInTheDocument();
+  });
+
   it("% liquidado is computed and rendered correctly", () => {
     const v = makeFakeVentaCliente({
       fecha: VENTA_FECHA,

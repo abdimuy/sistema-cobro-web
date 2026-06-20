@@ -9,6 +9,7 @@ import { formatMoney } from "../lib/format";
 import {
   computeMaxMonto,
   dominantCategoria,
+  esCategoriaIngreso,
   groupByMonth,
   formatMoneyCompact,
   GAP,
@@ -48,8 +49,6 @@ type VentaSemana = {
 const CELL_SIZE = 14;
 
 const LEGEND_CATS: CategoriaPago[] = ["pago", "enganche", "condonacion", "perdida"];
-
-const INCOME_CATS: CategoriaPago[] = ["pago", "enganche"];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -234,10 +233,22 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
   const monthGroups = groupByMonth(ventaSemanas);
 
   // Summary stats
-  const totalAbonado = ventaSemanas.reduce(
-    (acc, s) => acc + Number(s.montoAbonado),
-    0,
-  );
+  // ABONADO = income only (esCategoriaIngreso excludes condonacion/perdida)
+  const totalAbonado = ventaSemanas.reduce((acc, s) => {
+    const ingresoSum = (
+      Object.entries(s.categoriaSums) as [CategoriaPago, number][]
+    ).reduce((sum, [cat, amt]) => (esCategoriaIngreso(cat) ? sum + amt : sum), 0);
+    return acc + ingresoSum;
+  }, 0);
+
+  // PERDÓN = condonacion + perdida
+  const totalPerdonado = ventaSemanas.reduce((acc, s) => {
+    const perdonSum = (
+      Object.entries(s.categoriaSums) as [CategoriaPago, number][]
+    ).reduce((sum, [cat, amt]) => (!esCategoriaIngreso(cat) ? sum + amt : sum), 0);
+    return acc + perdonSum;
+  }, 0);
+
   const pctLiquidado =
     Number(venta.total) > 0
       ? Math.round((1 - Number(venta.saldoVenta) / Number(venta.total)) * 100)
@@ -248,7 +259,7 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
     const s = ventaSemanas[i];
     const hasIncome = (
       Object.entries(s.categoriaSums) as [CategoriaPago, number][]
-    ).some(([cat, amt]) => INCOME_CATS.includes(cat) && amt > 0);
+    ).some(([cat, amt]) => esCategoriaIngreso(cat) && amt > 0);
     if (hasIncome) racha++;
     else break;
   }
@@ -285,6 +296,7 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
       {/* Summary strip */}
       <div className="mb-4 flex flex-wrap gap-x-6 gap-y-2">
         <Stat label="ABONADO" value={formatMoneyCompact(totalAbonado)} />
+        <Stat label="PERDÓN" value={formatMoneyCompact(totalPerdonado)} />
         <Stat
           label="SALDO"
           value={formatMoneyCompact(Number(venta.saldoVenta))}

@@ -104,6 +104,39 @@ describe("FichaRitmoPago", () => {
     expect(screen.getByText("75%")).toBeInTheDocument();
   });
 
+  it("ABONADO stat reflects resumen.totalAbonado (income only from BE)", () => {
+    // totalAbonado in fixture = "3550.00" → $3.5k (3550/1000=3.55 → toFixed(1)="3.5")
+    const ritmo = makeFakeRitmoPago();
+    render(<FichaRitmoPago ritmo={ritmo} />);
+    expect(screen.getByText("ABONADO 12M")).toBeInTheDocument();
+    expect(screen.getByText("$3.5k")).toBeInTheDocument();
+  });
+
+  it("PERDÓN stat reflects resumen.totalPerdonado", () => {
+    // totalPerdonado in fixture = "200.00" → $0.2k
+    const ritmo = makeFakeRitmoPago();
+    render(<FichaRitmoPago ritmo={ritmo} />);
+    expect(screen.getByText("PERDÓN")).toBeInTheDocument();
+    expect(screen.getByText("$0.2k")).toBeInTheDocument();
+  });
+
+  it("PERDÓN stat is shown as $0 when totalPerdonado is zero", () => {
+    const ritmo = makeFakeRitmoPago({
+      resumen: {
+        totalAbonado: "5000.00",
+        totalPerdonado: "0.00",
+        semanasConPago: 2,
+        semanasActivas: 4,
+        rachaActualSem: 0,
+        constanciaPct: "50.00",
+        saldoActual: "3000.00",
+      },
+    });
+    render(<FichaRitmoPago ritmo={ritmo} />);
+    expect(screen.getByText("PERDÓN")).toBeInTheDocument();
+    expect(screen.getByText("$0")).toBeInTheDocument();
+  });
+
   it("history panel shows year rows when toggled", () => {
     const ritmo = makeFakeRitmoPago();
     render(<FichaRitmoPago ritmo={ritmo} />);

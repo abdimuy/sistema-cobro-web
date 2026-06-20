@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { EventoRitmo, PagoRitmo, RitmoPago, SemanaRitmo } from "../../domain/entities/RitmoPago";
+import type { EventoRitmo, PagoRitmo, RitmoPago, ResumenRitmo, SemanaRitmo } from "../../domain/entities/RitmoPago";
 import type { Pulso } from "../../domain/entities/FichaCliente";
 import { formatMoney, formatMoneyShort } from "../lib/format";
 import { categoriaMeta } from "../lib/pagoConcepto";
@@ -575,9 +575,18 @@ function VerticalHeatmap({
 
 // ─── Resumen strip ────────────────────────────────────────────────────────────
 
-function ResumenStrip({ semanas, pulso }: { semanas: SemanaRitmo[]; pulso?: Pulso | null }) {
-  // ABONADO 12M: sum of visible montoAbonado
-  const totalAbonado = semanas.reduce((acc, s) => acc + Number(s.montoAbonado), 0);
+function ResumenStrip({
+  semanas,
+  resumen,
+  pulso,
+}: {
+  semanas: SemanaRitmo[];
+  resumen: ResumenRitmo;
+  pulso?: Pulso | null;
+}) {
+  // ABONADO y PERDÓN vienen del dominio (backend ya discrimina por es_ingreso).
+  const totalAbonado = Number(resumen.totalAbonado);
+  const totalPerdonado = Number(resumen.totalPerdonado);
 
   // Semanas ACTIVAS = semanas en que el cliente tenía saldo por pagar (o pagó).
   // Esto excluye los periodos sin deuda (ya liquidado / antes de su compra), para
@@ -603,6 +612,10 @@ function ResumenStrip({ semanas, pulso }: { semanas: SemanaRitmo[]; pulso?: Puls
     {
       label: "ABONADO 12M",
       value: formatMoneyCompact(totalAbonado),
+    },
+    {
+      label: "PERDÓN",
+      value: formatMoneyCompact(totalPerdonado),
     },
     {
       label: "ABONÓ EN",
@@ -737,7 +750,7 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, onPagoClick, pu
       </div>
 
       <div className="mb-4">
-        <ResumenStrip semanas={visibleSemanas} pulso={pulso} />
+        <ResumenStrip semanas={visibleSemanas} resumen={ritmo.resumen} pulso={pulso} />
       </div>
 
       {visibleSemanas.length === 0 ? (

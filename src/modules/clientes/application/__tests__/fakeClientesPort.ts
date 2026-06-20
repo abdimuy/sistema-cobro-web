@@ -435,6 +435,7 @@ export function makeFakeRitmoPago(overrides: Partial<RitmoPago> = {}): RitmoPago
     ],
     resumen: {
       totalAbonado: "3550.00",
+      totalPerdonado: "200.00",
       semanasConPago: 3,
       semanasActivas: 4,
       rachaActualSem: 1,

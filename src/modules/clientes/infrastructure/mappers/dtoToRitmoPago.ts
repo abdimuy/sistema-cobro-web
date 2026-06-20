@@ -61,6 +61,7 @@ export function dtoToRitmoPago(dto: RitmoPagoDTO): RitmoPago {
 
   const resumen: ResumenRitmo = {
     totalAbonado: dto.resumen.total_abonado,
+    totalPerdonado: dto.resumen.total_perdonado,
     semanasConPago: dto.resumen.semanas_con_pago,
     semanasActivas: dto.resumen.semanas_activas,
     rachaActualSem: dto.resumen.racha_actual_sem,

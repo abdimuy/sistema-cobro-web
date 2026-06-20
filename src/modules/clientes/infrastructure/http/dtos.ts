@@ -272,7 +272,8 @@ export type EventoRitmoDTO = {
 };
 
 export type ResumenRitmoDTO = {
-  total_abonado: string;    // decimal 2 dec
+  total_abonado: string;    // decimal 2 dec — income only (excludes condonacion/perdida)
+  total_perdonado: string;  // decimal 2 dec — condonacion + perdida
   semanas_con_pago: number;
   semanas_activas: number;
   racha_actual_sem: number;
