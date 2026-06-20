@@ -139,7 +139,7 @@ function HeatmapCell({
   onHover: (e: React.MouseEvent, semana: SemanaRitmo) => void;
   onLeave: () => void;
   onPagoClick?: (doctoCcId: number) => void;
-  onPickerOpen?: (e: React.MouseEvent, semana: SemanaRitmo) => void;
+  onPickerOpen?: (coords: { x: number; y: number }, semana: SemanaRitmo) => void;
   className?: string;
 }) {
   const monto = Number(semana.montoAbonado);
@@ -151,25 +151,36 @@ function HeatmapCell({
     "rounded-[2px] transition-transform",
     cellClass(monto, maxMonto),
     current ? "outline outline-2 outline-foreground/60 outline-offset-1" : "",
-    clickable ? "cursor-pointer hover:scale-125" : "cursor-default hover:scale-125",
+    "cursor-pointer hover:scale-125",
     className ?? "",
   ].join(" ");
 
   const ariaLabel = `Semana ${semana.semanaInicio.toLocaleDateString("es-MX")} — ${monto > 0 ? formatMoney(semana.montoAbonado) : "Sin pago"}`;
+
+  function openPicker(e: React.MouseEvent | React.KeyboardEvent) {
+    if (!onPickerOpen) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    onPickerOpen({ x: rect.left, y: rect.bottom }, semana);
+  }
 
   function handleClick(e: React.MouseEvent) {
     if (!onPagoClick) return;
     if (semana.pagoIds.length === 1) {
       onPagoClick(semana.pagoIds[0]);
     } else if (semana.pagoIds.length > 1) {
-      onPickerOpen?.(e, semana);
+      openPicker(e);
     }
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      handleClick(e as unknown as React.MouseEvent);
+      if (!onPagoClick) return;
+      if (semana.pagoIds.length === 1) {
+        onPagoClick(semana.pagoIds[0]);
+      } else if (semana.pagoIds.length > 1) {
+        openPicker(e);
+      }
     }
   }
 
@@ -220,7 +231,7 @@ function HorizontalHeatmap({
   onLeave: () => void;
   onVentaClick?: (doctoPvId: number) => void;
   onPagoClick?: (doctoCcId: number) => void;
-  onPickerOpen?: (e: React.MouseEvent, semana: SemanaRitmo) => void;
+  onPickerOpen?: (coords: { x: number; y: number }, semana: SemanaRitmo) => void;
 }) {
   const groups = groupByMonth(semanas);
 
@@ -450,7 +461,7 @@ function VerticalHeatmap({
   onLeave: () => void;
   onVentaClick?: (doctoPvId: number) => void;
   onPagoClick?: (doctoCcId: number) => void;
-  onPickerOpen?: (e: React.MouseEvent, semana: SemanaRitmo) => void;
+  onPickerOpen?: (coords: { x: number; y: number }, semana: SemanaRitmo) => void;
 }) {
   const groups = groupByMonth(semanas);
   const cellSize = 14;
@@ -649,11 +660,11 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, onPagoClick, pu
     setTooltip(null);
   }
 
-  function handlePickerOpen(e: React.MouseEvent, semana: SemanaRitmo) {
+  function handlePickerOpen(coords: { x: number; y: number }, semana: SemanaRitmo) {
     setPickerAnchor({
       weekMs: semana.semanaInicio.getTime(),
-      x: e.clientX,
-      y: e.clientY,
+      x: coords.x,
+      y: coords.y,
       pagoIds: semana.pagoIds,
     });
   }

@@ -291,6 +291,54 @@ describe("FichaRitmoPago — onPagoClick", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(onPagoClick).not.toHaveBeenCalled();
   });
+
+  it("multi-pago cell activated via keyboard opens the picker", async () => {
+    const onPagoClick = vi.fn();
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "1500.00",
+          saldo: "6000.00",
+          numPagos: 2,
+          pagoIds: [70234, 70235],
+        },
+      ],
+      eventos: [],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} onPagoClick={onPagoClick} />);
+
+    const cell = screen.getByRole("button", { name: /\$1,500\.00/ });
+    fireEvent.keyDown(cell, { key: "Enter" });
+
+    expect(screen.getByRole("listbox", { name: /seleccionar pago/i })).toBeInTheDocument();
+    expect(onPagoClick).not.toHaveBeenCalled();
+  });
+
+  it("picker closes on click-outside (mousedown) without calling onPagoClick", async () => {
+    const onPagoClick = vi.fn();
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "1500.00",
+          saldo: "6000.00",
+          numPagos: 2,
+          pagoIds: [70234, 70235],
+        },
+      ],
+      eventos: [],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} onPagoClick={onPagoClick} />);
+
+    const cell = screen.getByRole("button", { name: /\$1,500\.00/ });
+    await userEvent.click(cell);
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(onPagoClick).not.toHaveBeenCalled();
+  });
 });
 
 describe("FichaRitmoPago — onVentaClick", () => {
