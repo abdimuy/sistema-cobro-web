@@ -241,12 +241,25 @@ export type RefrescarBusquedaResponseDTO = {
 
 // ─── GET /clientes/{id}/ritmo-pago ──────────────────────────────────────────
 
+export type PagoRitmoDTO = {
+  docto_cc_id: number;
+  fecha: string;         // RFC3339 UTC
+  hora: string;          // "HH:MM:SS" Microsip local, not UTC
+  importe: string;       // gross amount, 2 decimals
+  concepto_cc_id: number;
+  concepto: string;
+  categoria: string;     // pago | enganche | condonacion | perdida | otro
+  es_ingreso: boolean;
+  docto_pv_id: number;   // linked PV sale; 0 if not resolvable
+  folio: string;         // e.g. "AB0001775"; "" if not resolvable
+};
+
 export type SemanaRitmoDTO = {
   semana_inicio: string; // RFC3339 UTC
   monto_abonado: string; // decimal 2 dec
   saldo: string;         // decimal 2 dec
   num_pagos: number;
-  pago_ids: number[];    // DOCTO_CC_IDs of the week's abonos; empty when no pagos
+  pagos: PagoRitmoDTO[]; // never null; [] when no pagos
 };
 
 export type EventoRitmoDTO = {

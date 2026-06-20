@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import type { EventoRitmo, RitmoPago, SemanaRitmo } from "../../domain/entities/RitmoPago";
+import type { EventoRitmo, PagoRitmo, RitmoPago, SemanaRitmo } from "../../domain/entities/RitmoPago";
 import type { Pulso } from "../../domain/entities/FichaCliente";
 import { formatMoney, formatMoneyShort } from "../lib/format";
+import { categoriaMeta } from "../lib/pagoConcepto";
 import {
   EVENT_META,
   MONTH_SEP,
@@ -28,7 +29,7 @@ interface PickerAnchor {
   weekMs: number;
   x: number;
   y: number;
-  pagoIds: number[];
+  pagos: PagoRitmo[];
 }
 
 function WeekPagosPicker({
@@ -63,24 +64,46 @@ function WeekPagosPicker({
       role="listbox"
       aria-label="Seleccionar pago"
       style={{ position: "fixed", left: anchor.x + 8, top: anchor.y + 8, zIndex: 50 }}
-      className="min-w-[120px] rounded border border-border bg-popover shadow-md py-1"
+      className="min-w-[200px] rounded border border-border bg-popover shadow-md py-1"
     >
-      {anchor.pagoIds.map((id, i) => (
-        <button
-          key={id}
-          role="option"
-          aria-selected={false}
-          type="button"
-          className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-[11px] hover:bg-muted focus:bg-muted focus:outline-none"
-          onClick={() => {
-            onSelect(id);
-            onClose();
-          }}
-        >
-          <span className="text-muted-foreground/60">{i + 1}.</span>
-          <span>Pago {id}</span>
-        </button>
-      ))}
+      {anchor.pagos.map((pago) => {
+        const meta = categoriaMeta(pago.categoria);
+        const fecha = pago.fecha.toLocaleDateString("es-MX", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+        const hora = pago.hora.slice(0, 5);
+        return (
+          <button
+            key={pago.doctoCcId}
+            role="option"
+            aria-selected={false}
+            type="button"
+            className="flex w-full flex-col gap-0.5 px-3 py-2 text-left hover:bg-muted focus:bg-muted focus:outline-none"
+            onClick={() => {
+              onSelect(pago.doctoCcId);
+              onClose();
+            }}
+          >
+            <div className="flex items-center gap-1.5">
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta.dotClass}`} />
+              <span className="font-mono text-[11px] text-foreground">
+                {fecha} {hora}
+              </span>
+              <span className={`ml-auto ${meta.badgeClass}`}>
+                {pago.concepto}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 pl-3 font-mono text-[11px] text-muted-foreground">
+              <span className="tabular-nums">{formatMoney(pago.importe)}</span>
+              {pago.folio && (
+                <span className="text-muted-foreground/60">{pago.folio}</span>
+              )}
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -144,8 +167,8 @@ function HeatmapCell({
 }) {
   const monto = Number(semana.montoAbonado);
   const current = isCurrentWeek(semana);
-  const hasIds = semana.pagoIds.length > 0;
-  const clickable = hasIds && Boolean(onPagoClick);
+  const hasPagos = semana.pagos.length > 0;
+  const clickable = hasPagos && Boolean(onPagoClick);
 
   const baseClass = [
     "rounded-[2px] transition-transform",
@@ -165,9 +188,9 @@ function HeatmapCell({
 
   function handleClick(e: React.MouseEvent) {
     if (!onPagoClick) return;
-    if (semana.pagoIds.length === 1) {
-      onPagoClick(semana.pagoIds[0]);
-    } else if (semana.pagoIds.length > 1) {
+    if (semana.pagos.length === 1) {
+      onPagoClick(semana.pagos[0].doctoCcId);
+    } else if (semana.pagos.length > 1) {
       openPicker(e);
     }
   }
@@ -176,9 +199,9 @@ function HeatmapCell({
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       if (!onPagoClick) return;
-      if (semana.pagoIds.length === 1) {
-        onPagoClick(semana.pagoIds[0]);
-      } else if (semana.pagoIds.length > 1) {
+      if (semana.pagos.length === 1) {
+        onPagoClick(semana.pagos[0].doctoCcId);
+      } else if (semana.pagos.length > 1) {
         openPicker(e);
       }
     }
@@ -665,7 +688,7 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, onPagoClick, pu
       weekMs: semana.semanaInicio.getTime(),
       x: coords.x,
       y: coords.y,
-      pagoIds: semana.pagoIds,
+      pagos: semana.pagos,
     });
   }
 

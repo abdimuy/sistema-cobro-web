@@ -1,6 +1,7 @@
-import type { RitmoPago, SemanaRitmo, EventoRitmo, ResumenRitmo } from "../../domain/entities";
+import type { RitmoPago, SemanaRitmo, PagoRitmo, EventoRitmo, ResumenRitmo } from "../../domain/entities";
 import { validateEventoTipo } from "../../domain/entities";
 import { DomainError } from "../../domain/errors";
+import { toCategoriaPago } from "../../domain/values/CategoriaPago";
 import type { RitmoPagoDTO } from "../http/dtos";
 
 function parseRequiredDate(raw: string, code: string, message: string): Date {
@@ -15,17 +16,35 @@ function parseRequiredDate(raw: string, code: string, message: string): Date {
 }
 
 export function dtoToRitmoPago(dto: RitmoPagoDTO): RitmoPago {
-  const semanas: SemanaRitmo[] = dto.semanas.map((s) => ({
-    semanaInicio: parseRequiredDate(
-      s.semana_inicio,
-      "semana_inicio_invalida",
-      "semana_inicio no es un timestamp válido",
-    ),
-    montoAbonado: s.monto_abonado,
-    saldo: s.saldo,
-    numPagos: s.num_pagos,
-    pagoIds: s.pago_ids ?? [],
-  }));
+  const semanas: SemanaRitmo[] = dto.semanas.map((s) => {
+    const pagos: PagoRitmo[] = (s.pagos ?? []).map((p) => ({
+      doctoCcId: p.docto_cc_id,
+      fecha: parseRequiredDate(
+        p.fecha,
+        "pago_fecha_invalida",
+        "fecha de pago no es un timestamp válido",
+      ),
+      hora: p.hora,
+      importe: p.importe,
+      conceptoCcId: p.concepto_cc_id,
+      concepto: p.concepto,
+      categoria: toCategoriaPago(p.categoria),
+      esIngreso: p.es_ingreso,
+      doctoPvId: p.docto_pv_id,
+      folio: p.folio,
+    }));
+    return {
+      semanaInicio: parseRequiredDate(
+        s.semana_inicio,
+        "semana_inicio_invalida",
+        "semana_inicio no es un timestamp válido",
+      ),
+      montoAbonado: s.monto_abonado,
+      saldo: s.saldo,
+      numPagos: s.num_pagos,
+      pagos,
+    };
+  });
 
   const eventos: EventoRitmo[] = dto.eventos.map((e) => ({
     fecha: parseRequiredDate(

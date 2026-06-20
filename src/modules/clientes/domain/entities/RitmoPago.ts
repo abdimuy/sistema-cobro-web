@@ -1,15 +1,29 @@
 import { DomainError } from "../errors";
+import type { CategoriaPago } from "../values/CategoriaPago";
 
 const EVENTO_TIPOS = ["venta_credito", "venta_contado", "liquidacion"] as const;
 
 export type EventoTipo = (typeof EVENTO_TIPOS)[number];
+
+export type PagoRitmo = {
+  readonly doctoCcId: number;
+  readonly fecha: Date;
+  readonly hora: string;       // "HH:MM:SS" display (Microsip local, not UTC)
+  readonly importe: string;    // decimal string
+  readonly conceptoCcId: number;
+  readonly concepto: string;
+  readonly categoria: CategoriaPago;
+  readonly esIngreso: boolean;
+  readonly doctoPvId: number;
+  readonly folio: string;
+};
 
 export type SemanaRitmo = {
   readonly semanaInicio: Date;
   readonly montoAbonado: string;
   readonly saldo: string;
   readonly numPagos: number;
-  readonly pagoIds: number[];
+  readonly pagos: PagoRitmo[];
 };
 
 export type EventoRitmo = {

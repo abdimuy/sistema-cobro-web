@@ -1,6 +1,22 @@
 import { describe, it, expect } from "vitest";
 import { dtoToRitmoPago } from "./dtoToRitmoPago";
-import type { RitmoPagoDTO } from "../http/dtos";
+import type { RitmoPagoDTO, PagoRitmoDTO } from "../http/dtos";
+
+function makePagoRitmoDTO(overrides: Partial<PagoRitmoDTO> = {}): PagoRitmoDTO {
+  return {
+    docto_cc_id: 70100,
+    fecha: "2026-05-06T10:30:00Z",
+    hora: "10:30:00",
+    importe: "1500.00",
+    concepto_cc_id: 87327,
+    concepto: "Cobranza en ruta",
+    categoria: "pago",
+    es_ingreso: true,
+    docto_pv_id: 30022,
+    folio: "AB0001775",
+    ...overrides,
+  };
+}
 
 function buildValidDTO(overrides: Partial<RitmoPagoDTO> = {}): RitmoPagoDTO {
   return {
@@ -11,14 +27,17 @@ function buildValidDTO(overrides: Partial<RitmoPagoDTO> = {}): RitmoPagoDTO {
         monto_abonado: "1500.00",
         saldo: "8000.00",
         num_pagos: 2,
-        pago_ids: [70100, 70101],
+        pagos: [
+          makePagoRitmoDTO({ docto_cc_id: 70100, importe: "750.00" }),
+          makePagoRitmoDTO({ docto_cc_id: 70101, importe: "750.00", folio: "AB0001776" }),
+        ],
       },
       {
         semana_inicio: "2026-05-12T00:00:00Z",
         monto_abonado: "0.00",
         saldo: "8000.00",
         num_pagos: 0,
-        pago_ids: [],
+        pagos: [],
       },
     ],
     eventos: [
@@ -75,26 +94,66 @@ describe("dtoToRitmoPago", () => {
     expect(ritmo.semanas[0].montoAbonado).toBe("1500.00");
     expect(ritmo.semanas[0].saldo).toBe("8000.00");
     expect(ritmo.semanas[0].numPagos).toBe(2);
-    expect(ritmo.semanas[0].pagoIds).toEqual([70100, 70101]);
   });
 
-  it("maps pago_ids to pagoIds (flows through)", () => {
+  it("maps pagos array — doctoCcId, importe and folio flow through", () => {
     const ritmo = dtoToRitmoPago(buildValidDTO());
-    expect(ritmo.semanas[0].pagoIds).toEqual([70100, 70101]);
-    expect(ritmo.semanas[1].pagoIds).toEqual([]);
+    expect(ritmo.semanas[0].pagos).toHaveLength(2);
+    expect(ritmo.semanas[0].pagos[0].doctoCcId).toBe(70100);
+    expect(ritmo.semanas[0].pagos[1].doctoCcId).toBe(70101);
+    expect(ritmo.semanas[0].pagos[0].importe).toBe("750.00");
+    expect(ritmo.semanas[0].pagos[1].folio).toBe("AB0001776");
   });
 
-  it("defaults pagoIds to [] when pago_ids is absent from DTO", () => {
+  it("maps pago.fecha as Date instance from RFC3339", () => {
+    const ritmo = dtoToRitmoPago(buildValidDTO());
+    const pago = ritmo.semanas[0].pagos[0];
+    expect(pago.fecha).toBeInstanceOf(Date);
+    expect(pago.fecha.getTime()).toBe(new Date("2026-05-06T10:30:00Z").getTime());
+  });
+
+  it("maps pago.hora as display string (HH:MM:SS)", () => {
+    const ritmo = dtoToRitmoPago(buildValidDTO());
+    expect(ritmo.semanas[0].pagos[0].hora).toBe("10:30:00");
+  });
+
+  it("maps pago.categoria via toCategoriaPago", () => {
+    const ritmo = dtoToRitmoPago(buildValidDTO());
+    expect(ritmo.semanas[0].pagos[0].categoria).toBe("pago");
+  });
+
+  it("maps unknown categoria to 'otro' (toCategoriaPago fallback)", () => {
     const dto = buildValidDTO();
-    // Simulate old API response without pago_ids field
-    const semanaWithoutPagoIds = { ...dto.semanas[0] } as Partial<typeof dto.semanas[0]>;
-    delete semanaWithoutPagoIds.pago_ids;
+    dto.semanas[0].pagos[0] = { ...dto.semanas[0].pagos[0], categoria: "categoria_desconocida" };
+    const ritmo = dtoToRitmoPago(dto);
+    expect(ritmo.semanas[0].pagos[0].categoria).toBe("otro");
+  });
+
+  it("maps pago identity fields (concepto, conceptoCcId, esIngreso, doctoPvId)", () => {
+    const ritmo = dtoToRitmoPago(buildValidDTO());
+    const pago = ritmo.semanas[0].pagos[0];
+    expect(pago.concepto).toBe("Cobranza en ruta");
+    expect(pago.conceptoCcId).toBe(87327);
+    expect(pago.esIngreso).toBe(true);
+    expect(pago.doctoPvId).toBe(30022);
+  });
+
+  it("defaults pagos to [] when pagos field is absent from DTO semana", () => {
+    const dto = buildValidDTO();
+    // Simulate old API response without pagos field
+    const semanaWithoutPagos = { ...dto.semanas[0] } as Partial<typeof dto.semanas[0]>;
+    delete semanaWithoutPagos.pagos;
     const dtoWithMissing = {
       ...dto,
-      semanas: [semanaWithoutPagoIds as typeof dto.semanas[0], dto.semanas[1]],
+      semanas: [semanaWithoutPagos as typeof dto.semanas[0], dto.semanas[1]],
     };
     const ritmo = dtoToRitmoPago(dtoWithMissing);
-    expect(ritmo.semanas[0].pagoIds).toEqual([]);
+    expect(ritmo.semanas[0].pagos).toEqual([]);
+  });
+
+  it("empty semana has pagos = []", () => {
+    const ritmo = dtoToRitmoPago(buildValidDTO());
+    expect(ritmo.semanas[1].pagos).toEqual([]);
   });
 
   it("semana montoAbonado and saldo remain as strings (not numbers)", () => {
@@ -193,6 +252,14 @@ describe("dtoToRitmoPago", () => {
     dto.eventos[0] = { ...dto.eventos[0], fecha: "" };
     expect(() => dtoToRitmoPago(dto)).toThrowError(
       expect.objectContaining({ code: "evento_fecha_invalida" }),
+    );
+  });
+
+  it("throws DomainError when pago.fecha is invalid date string", () => {
+    const dto = buildValidDTO();
+    dto.semanas[0].pagos[0] = { ...dto.semanas[0].pagos[0], fecha: "no-es-fecha" };
+    expect(() => dtoToRitmoPago(dto)).toThrowError(
+      expect.objectContaining({ code: "pago_fecha_invalida" }),
     );
   });
 });

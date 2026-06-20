@@ -4,6 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { FichaRitmoPago } from "./FichaRitmoPago";
 import { makeFakeRitmoPago } from "../../application/__tests__/fakeClientesPort";
 import type { Pulso } from "../../domain/entities/FichaCliente";
+import type { PagoRitmo } from "../../domain/entities/RitmoPago";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function makeFakePulso(overrides: Partial<Pulso> = {}): Pulso {
   const base: Pulso = {
@@ -35,6 +38,24 @@ function makeFakePulso(overrides: Partial<Pulso> = {}): Pulso {
   return { ...base, ...overrides };
 }
 
+function makePagoRitmo(overrides: Partial<PagoRitmo> = {}): PagoRitmo {
+  const base: PagoRitmo = {
+    doctoCcId: 70234,
+    fecha: new Date("2026-05-11T10:00:00Z"),
+    hora: "10:00:00",
+    importe: "850.00",
+    conceptoCcId: 87327,
+    concepto: "Cobranza en ruta",
+    categoria: "pago",
+    esIngreso: true,
+    doctoPvId: 30021,
+    folio: "AB0001775",
+  };
+  return { ...base, ...overrides };
+}
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
+
 describe("FichaRitmoPago", () => {
   it("renders nothing when ritmo is null", () => {
     const { container } = render(<FichaRitmoPago ritmo={null} />);
@@ -53,12 +74,12 @@ describe("FichaRitmoPago", () => {
     // Backend generates through current week, so the tail IS today's end.
     const ritmo = makeFakeRitmoPago({
       semanas: [
-        { semanaInicio: new Date("2026-05-04T00:00:00.000Z"), montoAbonado: "1200.00", saldo: "8300.00", numPagos: 1, pagoIds: [] },
-        { semanaInicio: new Date("2026-05-11T00:00:00.000Z"), montoAbonado: "850.00",  saldo: "7450.00", numPagos: 1, pagoIds: [] },
-        { semanaInicio: new Date("2026-05-25T00:00:00.000Z"), montoAbonado: "1500.00", saldo: "5950.00", numPagos: 1, pagoIds: [] },
-        { semanaInicio: new Date("2026-06-01T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0, pagoIds: [] },
-        { semanaInicio: new Date("2026-06-08T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0, pagoIds: [] },
-        { semanaInicio: new Date("2026-06-15T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0, pagoIds: [] },
+        { semanaInicio: new Date("2026-05-04T00:00:00.000Z"), montoAbonado: "1200.00", saldo: "8300.00", numPagos: 1, pagos: [] },
+        { semanaInicio: new Date("2026-05-11T00:00:00.000Z"), montoAbonado: "850.00",  saldo: "7450.00", numPagos: 1, pagos: [] },
+        { semanaInicio: new Date("2026-05-25T00:00:00.000Z"), montoAbonado: "1500.00", saldo: "5950.00", numPagos: 1, pagos: [] },
+        { semanaInicio: new Date("2026-06-01T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0, pagos: [] },
+        { semanaInicio: new Date("2026-06-08T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0, pagos: [] },
+        { semanaInicio: new Date("2026-06-15T00:00:00.000Z"), montoAbonado: "0.00",    saldo: "5950.00", numPagos: 0, pagos: [] },
       ],
     });
     render(<FichaRitmoPago ritmo={ritmo} />);
@@ -165,7 +186,7 @@ describe("FichaRitmoPago", () => {
 });
 
 describe("FichaRitmoPago — onPagoClick", () => {
-  it("cell with one pagoId calls onPagoClick with that id on click", async () => {
+  it("cell with one pago calls onPagoClick with that doctoCcId on click", async () => {
     const onPagoClick = vi.fn();
     const ritmo = makeFakeRitmoPago({
       semanas: [
@@ -174,7 +195,7 @@ describe("FichaRitmoPago — onPagoClick", () => {
           montoAbonado: "850.00",
           saldo: "7450.00",
           numPagos: 1,
-          pagoIds: [70234],
+          pagos: [makePagoRitmo({ doctoCcId: 70234, importe: "850.00" })],
         },
       ],
       eventos: [],
@@ -189,7 +210,7 @@ describe("FichaRitmoPago — onPagoClick", () => {
     expect(onPagoClick).toHaveBeenCalledTimes(1);
   });
 
-  it("cell with multiple pagoIds opens mini-picker, selecting one calls onPagoClick", async () => {
+  it("cell with multiple pagos opens picker showing fecha, importe and folio", async () => {
     const onPagoClick = vi.fn();
     const ritmo = makeFakeRitmoPago({
       semanas: [
@@ -198,7 +219,10 @@ describe("FichaRitmoPago — onPagoClick", () => {
           montoAbonado: "1500.00",
           saldo: "6000.00",
           numPagos: 2,
-          pagoIds: [70234, 70235],
+          pagos: [
+            makePagoRitmo({ doctoCcId: 70234, importe: "750.00", folio: "AB0001775" }),
+            makePagoRitmo({ doctoCcId: 70235, importe: "750.00", folio: "AB0001776" }),
+          ],
         },
       ],
       eventos: [],
@@ -212,6 +236,11 @@ describe("FichaRitmoPago — onPagoClick", () => {
     expect(screen.getByRole("listbox", { name: /seleccionar pago/i })).toBeInTheDocument();
     expect(onPagoClick).not.toHaveBeenCalled();
 
+    // Both folios and importes appear
+    expect(screen.getByText("AB0001775")).toBeInTheDocument();
+    expect(screen.getByText("AB0001776")).toBeInTheDocument();
+    expect(screen.getAllByText(/\$750\.00/).length).toBeGreaterThanOrEqual(2);
+
     // Select the second option
     const options = screen.getAllByRole("option");
     expect(options).toHaveLength(2);
@@ -223,7 +252,7 @@ describe("FichaRitmoPago — onPagoClick", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
-  it("cell with empty pagoIds is not a button (non-clickable)", () => {
+  it("cell with empty pagos is not a button (non-clickable)", () => {
     const onPagoClick = vi.fn();
     const ritmo = makeFakeRitmoPago({
       semanas: [
@@ -232,14 +261,14 @@ describe("FichaRitmoPago — onPagoClick", () => {
           montoAbonado: "0.00",
           saldo: "7450.00",
           numPagos: 0,
-          pagoIds: [],
+          pagos: [],
         },
       ],
       eventos: [],
     });
     render(<FichaRitmoPago ritmo={ritmo} onPagoClick={onPagoClick} />);
 
-    // No button for this cell (no pagoIds) — it renders as a div
+    // No button for this cell (no pagos) — it renders as a div
     const cellButton = screen.queryByRole("button", { name: /Sin pago/ });
     expect(cellButton).toBeNull();
     // The div is still rendered with the aria-label
@@ -254,7 +283,7 @@ describe("FichaRitmoPago — onPagoClick", () => {
           montoAbonado: "850.00",
           saldo: "7450.00",
           numPagos: 1,
-          pagoIds: [70234],
+          pagos: [makePagoRitmo({ doctoCcId: 70234, importe: "850.00" })],
         },
       ],
       eventos: [],
@@ -276,7 +305,10 @@ describe("FichaRitmoPago — onPagoClick", () => {
           montoAbonado: "1500.00",
           saldo: "6000.00",
           numPagos: 2,
-          pagoIds: [70234, 70235],
+          pagos: [
+            makePagoRitmo({ doctoCcId: 70234, importe: "750.00" }),
+            makePagoRitmo({ doctoCcId: 70235, importe: "750.00" }),
+          ],
         },
       ],
       eventos: [],
@@ -301,7 +333,10 @@ describe("FichaRitmoPago — onPagoClick", () => {
           montoAbonado: "1500.00",
           saldo: "6000.00",
           numPagos: 2,
-          pagoIds: [70234, 70235],
+          pagos: [
+            makePagoRitmo({ doctoCcId: 70234, importe: "750.00" }),
+            makePagoRitmo({ doctoCcId: 70235, importe: "750.00" }),
+          ],
         },
       ],
       eventos: [],
@@ -324,7 +359,10 @@ describe("FichaRitmoPago — onPagoClick", () => {
           montoAbonado: "1500.00",
           saldo: "6000.00",
           numPagos: 2,
-          pagoIds: [70234, 70235],
+          pagos: [
+            makePagoRitmo({ doctoCcId: 70234, importe: "750.00" }),
+            makePagoRitmo({ doctoCcId: 70235, importe: "750.00" }),
+          ],
         },
       ],
       eventos: [],
@@ -365,7 +403,7 @@ describe("FichaRitmoPago — onVentaClick", () => {
           montoAbonado: "850.00",
           saldo: "7450.00",
           numPagos: 1,
-          pagoIds: [],
+          pagos: [],
         },
       ],
       eventos: [
