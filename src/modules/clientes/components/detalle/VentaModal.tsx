@@ -139,14 +139,14 @@ export function VentaModal({ clienteId, doctoPvId, open, onClose, onPagoClick }:
 
               <hr className="border-border/60" />
 
-              <VentaPagosList pagos={detalle.pagos} onPagoClick={onPagoClick} />
-
               {detalle.contrato !== null && (
                 <>
-                  <hr className="border-border/60" />
                   <PlanPagos detalle={detalle} />
+                  <hr className="border-border/60" />
                 </>
               )}
+
+              <VentaPagosList pagos={detalle.pagos} onPagoClick={onPagoClick} />
             </div>
           )}
         </div>
