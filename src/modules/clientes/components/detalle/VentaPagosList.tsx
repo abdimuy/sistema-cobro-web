@@ -51,9 +51,13 @@ export function VentaPagosList({ pagos, onPagoClick }: Props) {
               type="button"
               disabled={!isClickable}
               onClick={isClickable ? () => onPagoClick!(pago.doctoCcId) : undefined}
+              // Accent via inset box-shadow (not a border): the list container uses
+              // `divide-border` which overrides per-row border-color on all rows except
+              // the first, so a border-l accent would only show on row 1. box-shadow is
+              // immune to that and matches the mockup (inset 3px 0 0).
+              style={{ boxShadow: `inset 3px 0 0 ${meta.color}` }}
               className={cn(
                 "flex w-full items-center justify-between px-4 py-3 text-left",
-                meta.accentClass,
                 isClickable && "cursor-pointer hover:bg-muted/40 group",
                 !isClickable && "cursor-default",
               )}
