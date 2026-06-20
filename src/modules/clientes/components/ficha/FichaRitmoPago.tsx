@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { EventoRitmo, PagoRitmo, RitmoPago, ResumenRitmo, SemanaRitmo } from "../../domain/entities/RitmoPago";
 import type { Pulso } from "../../domain/entities/FichaCliente";
 import { formatMoney, formatMoneyShort } from "../lib/format";
@@ -9,7 +9,6 @@ import {
   GAP,
   computeMaxMonto,
   defaultWindow,
-  dominantCategoria,
   esCategoriaIngreso,
   eventsForWeek,
   formatMoneyCompact,
@@ -23,6 +22,11 @@ import { CellBands, Leyenda, SaldoSvg, Tooltip } from "./lib/HeatmapPrimitives";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const BREAKPOINT = 700;
+
+// Fixed horizontal cell size (px). Matches the size the fluid layout reached on
+// a wide panel (its 22px cap) — the size users saw most of the time. Constant so
+// the heatmap never shrinks on a width-measurement glitch; it scrolls instead.
+const HEATMAP_CELL_SIZE = 22;
 
 // ─── Mini-picker popover ──────────────────────────────────────────────────────
 
@@ -438,12 +442,20 @@ function FullHistoryPanel({
   semanas,
   eventos,
   maxMonto,
+  onHover,
+  onLeave,
   onVentaClick,
+  onPagoClick,
+  onPickerOpen,
 }: {
   semanas: SemanaRitmo[];
   eventos: EventoRitmo[];
   maxMonto: number;
+  onHover: (e: React.MouseEvent, semana: SemanaRitmo) => void;
+  onLeave: () => void;
   onVentaClick?: (doctoPvId: number) => void;
+  onPagoClick?: (doctoCcId: number) => void;
+  onPickerOpen?: (coords: { x: number; y: number }, semana: SemanaRitmo) => void;
 }) {
   // Group all semanas by year, then by month within each year
   const byYear = new Map<number, SemanaRitmo[]>();
@@ -456,90 +468,89 @@ function FullHistoryPanel({
   const years = Array.from(byYear.entries()).sort(([a], [b]) => a - b);
 
   return (
-    <div className="border-t border-dashed border-border/40 pt-3 mt-3 flex flex-col gap-4">
+    // Single horizontal scroll for the whole history: one scrollbar at the
+    // bottom, shown only when the widest year doesn't fit (no per-year bars).
+    <div className="border-t border-dashed border-border/40 pt-3 mt-3 overflow-x-auto">
+      <div className="flex flex-col gap-5 min-w-max">
       {years.map(([year, ySemanas]) => {
         const monthGroups = groupByMonth(ySemanas);
         return (
-          <div key={year} className="flex items-start gap-3">
-            <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground/50 pt-1 w-8 shrink-0">
+          <div key={year} className="flex flex-col gap-1">
+            {/* Year heading on top (not inline) so it doesn't add to the row
+                width — keeps each year the same width budget as the main
+                heatmap, which fits at 22px without horizontal scroll. */}
+            <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground/50">
               {year}
             </span>
-            <div className="flex flex-wrap gap-x-2 gap-y-1">
-              {monthGroups.map((g) => (
-                <div key={g.key} className="flex flex-col gap-[1px]">
-                  <span className="font-mono text-[8px] uppercase text-muted-foreground/40">
-                    {g.label.split(" ")[0]}
-                  </span>
-                  {/* Icon lane */}
-                  <div className="flex gap-[1px]">
-                    {g.semanas.map((s) => {
-                      const evts = eventsForWeek(eventos, s);
-                      return (
-                        <div
+            {/* Same interactive cells as the main heatmap (big + clickable);
+                gap-1 between month groups matches the main's month spacing. */}
+            <div className="flex gap-1">
+                {monthGroups.map((g) => (
+                  <div key={g.key} className="flex flex-col gap-1">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground/40">
+                      {g.label.split(" ")[0]}
+                    </span>
+                    {/* Icon lane */}
+                    <div className="flex gap-[2px]">
+                      {g.semanas.map((s) => {
+                        const evts = eventsForWeek(eventos, s);
+                        return (
+                          <div
+                            key={s.semanaInicio.getTime()}
+                            style={{ width: HEATMAP_CELL_SIZE, height: 14 }}
+                            className="flex items-center justify-center"
+                          >
+                            {evts.length > 0 && (
+                              <div className="flex gap-px">
+                                {evts.map((ev, i) => {
+                                  const { Icon, cls } = EVENT_META[ev.tipo];
+                                  return ev.doctoPvId > 0 ? (
+                                    <button
+                                      key={i}
+                                      type="button"
+                                      onClick={() => onVentaClick?.(ev.doctoPvId)}
+                                      aria-label={`Ver venta ${ev.folio}`}
+                                      className="cursor-pointer focus:outline-none"
+                                    >
+                                      <Icon size={10} className={cls} />
+                                    </button>
+                                  ) : (
+                                    <Icon
+                                      key={i}
+                                      size={10}
+                                      className={cls}
+                                      aria-label={EVENT_META[ev.tipo].label}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Cells — reuse HeatmapCell: big, franjas + count, clickable */}
+                    <div className="flex gap-[2px]">
+                      {g.semanas.map((s) => (
+                        <HeatmapCell
                           key={s.semanaInicio.getTime()}
-                          style={{ width: 11, height: 11 }}
-                          className="flex items-center justify-center"
-                        >
-                          {evts.length > 0 && (
-                            <div className="flex">
-                              {evts.map((ev, i) => {
-                                const { Icon, cls } = EVENT_META[ev.tipo];
-                                return ev.doctoPvId > 0 ? (
-                                  <button
-                                    key={i}
-                                    type="button"
-                                    onClick={() => onVentaClick?.(ev.doctoPvId)}
-                                    aria-label={`Ver venta ${ev.folio}`}
-                                    className="cursor-pointer focus:outline-none"
-                                  >
-                                    <Icon size={7} className={cls} />
-                                  </button>
-                                ) : (
-                                  <Icon
-                                    key={i}
-                                    size={7}
-                                    className={cls}
-                                    aria-label={EVENT_META[ev.tipo].label}
-                                  />
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {/* Cells — history panel uses simple divs (no pago click) */}
-                  <div className="flex gap-[1px]">
-                    {g.semanas.map((s) => {
-                      const monto = Number(s.montoAbonado);
-                      const dom = dominantCategoria(
-                        s.pagos.map(p => ({ categoria: p.categoria, importe: Number(p.importe) })),
-                      );
-                      const opacity = dom !== null && maxMonto > 0
-                        ? 0.4 + 0.6 * Math.min(1, monto / maxMonto)
-                        : undefined;
-                      return (
-                        <div
-                          key={s.semanaInicio.getTime()}
-                          style={{
-                            width: 11,
-                            height: 11,
-                            backgroundColor: dom !== null ? categoriaMeta(dom).color : undefined,
-                            opacity,
-                          }}
-                          className={["rounded-[1px]", dom === null ? "bg-muted" : ""].join(" ")}
-                          aria-label={`Semana ${s.semanaInicio.toLocaleDateString("es-MX")} — ${monto > 0 ? formatMoney(s.montoAbonado) : "Sin pago"}`}
+                          semana={s}
+                          cellSize={HEATMAP_CELL_SIZE}
+                          maxMonto={maxMonto}
+                          onHover={onHover}
+                          onLeave={onLeave}
+                          onPagoClick={onPagoClick}
+                          onPickerOpen={onPickerOpen}
                         />
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
@@ -737,7 +748,11 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, onPagoClick, pu
   const [pickerAnchor, setPickerAnchor] = useState<PickerAnchor | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // useLayoutEffect (not useEffect): measure the real container width BEFORE the
+  // browser paints, so the fluid cellSize never renders at the 800px placeholder
+  // (which yields tiny ~11px cells for 52 weeks). Otherwise every mount/HMR shows
+  // a one-frame "shrunk" heatmap until the post-paint effect corrects it.
+  useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const ro = new ResizeObserver((entries) => {
@@ -760,13 +775,12 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, onPagoClick, pu
 
   const isHorizontal = containerWidth >= BREAKPOINT;
 
-  // Compute fluid cell size for horizontal layout
-  const weekCount = visibleSemanas.length;
-  const monthCount = groupByMonth(visibleSemanas).length;
-  const separators = Math.max(0, monthCount - 1) * MONTH_SEP;
-  const gaps = Math.max(0, weekCount - 1) * GAP;
-  const available = containerWidth - 32 - separators - gaps;
-  const cellSize = Math.max(9, Math.min(22, Math.floor(available / Math.max(1, weekCount))));
+  // Fixed cell size (not fluid). The old fluid sizing divided the MEASURED
+  // container width among the weeks; when the width measurement glitched to its
+  // 800px fallback (ref null at effect time / HMR re-mount), cells shrank to the
+  // ~11px floor and stayed there ("a veces chico"). A constant size + the
+  // existing overflow-x-auto (scroll when it doesn't fit) is always consistent.
+  const cellSize = HEATMAP_CELL_SIZE;
 
   const monthGroups = groupByMonth(visibleSemanas);
 
@@ -858,7 +872,11 @@ export function FichaRitmoPago({ ritmo, isLoading, onVentaClick, onPagoClick, pu
           semanas={ritmo.semanas}
           eventos={ritmo.eventos}
           maxMonto={maxMonto}
+          onHover={handleCellHover}
+          onLeave={handleCellLeave}
           onVentaClick={onVentaClick}
+          onPagoClick={onPagoClick}
+          onPickerOpen={handlePickerOpen}
         />
       )}
 
