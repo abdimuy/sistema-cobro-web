@@ -84,24 +84,64 @@ describe("FichaRitmoPago", () => {
       ],
     });
     render(<FichaRitmoPago ritmo={ritmo} />);
-    // Trailing gray cells: 3 weeks without payment → RACHA ACTUAL = 0
+    // Trailing gray cells: 3 weeks without payment → RACHA ACTUAL = 0, ABONÓ EN = 0
     const rachaEl = screen.getByText("RACHA ACTUAL", { exact: false });
     expect(rachaEl).toBeInTheDocument();
-    // racha = 0 because last 3 weeks have montoAbonado=0
-    // The "0" value appears in the summary strip
-    expect(screen.getByText("0")).toBeInTheDocument();
+    // Both racha and semanasConPago are 0 (fixture weeks have no pagos arrays)
+    expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(2);
     // Trailing gray cells are rendered for Jun 1, Jun 8, Jun 15 (Sin pago)
     const grayCells = document.querySelectorAll('[aria-label*="Sin pago"]');
     expect(grayCells.length).toBeGreaterThanOrEqual(3);
   });
 
   it("summary is calculated from the visible window (relative)", () => {
+    // Fixture: May 4 (pago=income), May 11 (pago=income), May 18 (no pagos), May 25 (pago=income)
+    // Income-based: semanasConPago=3, racha=1 (May 25 income, May 18 breaks), constancia=3/4=75%
     const ritmo = makeFakeRitmoPago();
     render(<FichaRitmoPago ritmo={ritmo} />);
-    // RACHA ACTUAL: consecutive paid from end = 1 (May 25 paid, May 18 zero)
+    // RACHA ACTUAL: consecutive income weeks from end = 1 (May 25 has income, May 18 has none)
     expect(screen.getByText("1")).toBeInTheDocument(); // racha value
-    // CONSTANCIA = 75%
+    // CONSTANCIA = 75% (3 income weeks / 4 active weeks)
     expect(screen.getByText("75%")).toBeInTheDocument();
+  });
+
+  it("condonación-only week does not count as income for racha or semanasConPago", () => {
+    // Week 1: real pago (income). Week 2: condonacion only (non-income). Week 3: real pago (income).
+    // Income-based: semanasConPago=2, racha=1 (week 3 income, week 2 non-income breaks)
+    // Old monto-based would give semanasConPago=3, racha=3 (wrong)
+    const ritmo = makeFakeRitmoPago({
+      semanas: [
+        {
+          semanaInicio: new Date("2026-05-04T00:00:00.000Z"),
+          montoAbonado: "1200.00",
+          saldo: "8300.00",
+          numPagos: 1,
+          pagos: [makePagoRitmo({ doctoCcId: 70234, importe: "1200.00", categoria: "pago" })],
+        },
+        {
+          semanaInicio: new Date("2026-05-11T00:00:00.000Z"),
+          montoAbonado: "200.00",
+          saldo: "8300.00",
+          numPagos: 1,
+          pagos: [makePagoRitmo({ doctoCcId: 70235, importe: "200.00", categoria: "condonacion" })],
+        },
+        {
+          semanaInicio: new Date("2026-05-18T00:00:00.000Z"),
+          montoAbonado: "850.00",
+          saldo: "7450.00",
+          numPagos: 1,
+          pagos: [makePagoRitmo({ doctoCcId: 70236, importe: "850.00", categoria: "pago" })],
+        },
+      ],
+      eventos: [],
+    });
+    render(<FichaRitmoPago ritmo={ritmo} />);
+    // racha=1 (only the last week has income; condonacion-only week breaks the streak)
+    expect(screen.getByText("1")).toBeInTheDocument();
+    // semanasConPago=2 out of semanasActivas=3 → constancia=67%
+    expect(screen.getByText("67%")).toBeInTheDocument();
+    // ABONÓ EN shows 2/3
+    expect(screen.getByText("2")).toBeInTheDocument();
   });
 
   it("ABONADO stat reflects resumen.totalAbonado (income only from BE)", () => {

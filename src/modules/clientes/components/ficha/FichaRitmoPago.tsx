@@ -10,6 +10,7 @@ import {
   computeMaxMonto,
   defaultWindow,
   dominantCategoria,
+  esCategoriaIngreso,
   eventsForWeek,
   formatMoneyCompact,
   groupByMonth,
@@ -596,12 +597,15 @@ function ResumenStrip({
   ).length;
 
   // ABONÓ EN / CONSTANCIA se miden sobre las semanas activas (mismo denominador).
-  const semanasConPago = semanas.filter(s => Number(s.montoAbonado) > 0).length;
+  // Income-based: only weeks where the client made a real payment (not condonación/pérdida).
+  const semanasConPago = semanas.filter(
+    s => s.pagos.some(p => esCategoriaIngreso(p.categoria)),
+  ).length;
 
-  // RACHA ACTUAL: semanas consecutivas con pago desde el FINAL de la ventana.
+  // RACHA ACTUAL: semanas consecutivas con ingreso real desde el FINAL de la ventana.
   let racha = 0;
   for (let i = semanas.length - 1; i >= 0; i--) {
-    if (Number(semanas[i].montoAbonado) > 0) racha++;
+    if (semanas[i].pagos.some(p => esCategoriaIngreso(p.categoria))) racha++;
     else break;
   }
 
