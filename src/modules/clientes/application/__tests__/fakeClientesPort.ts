@@ -239,6 +239,10 @@ export function makeFakeVentaCliente(
     total: "18500.00",
     saldoVenta: "3200.00",
     numPagos: 5,
+    hora: "14:32:00",
+    almacen: "Camioneta Nissan — Jueves",
+    primerArticulo: "Sala Imperial 3-2-1",
+    numArticulos: 1,
   };
   return { ...base, ...overrides };
 }

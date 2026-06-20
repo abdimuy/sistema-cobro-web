@@ -17,6 +17,9 @@ export function dtoToVentaDetalle(dto: VentaDetalleDTO): VentaDetalle {
     );
   }
 
+  // The detail endpoint (VentaHeaderDTO) does not supply the enriched list
+  // fields (hora, almacen, primerArticulo, numArticulos) — default them to
+  // empty/zero so the VentaCliente domain type is satisfied.
   const venta = {
     doctoPvId: dto.venta.docto_pv_id,
     fecha: fechaVenta,
@@ -25,6 +28,10 @@ export function dtoToVentaDetalle(dto: VentaDetalleDTO): VentaDetalle {
     total: dto.venta.total,
     saldoVenta: dto.venta.saldo_venta,
     numPagos: dto.venta.num_pagos,
+    hora: "",
+    almacen: "",
+    primerArticulo: "",
+    numArticulos: 0,
   };
 
   // Map productos

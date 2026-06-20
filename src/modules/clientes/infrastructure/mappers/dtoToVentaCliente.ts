@@ -23,5 +23,9 @@ export function dtoToVentaCliente(dto: VentaListItemDTO): VentaCliente {
     total: dto.total,
     saldoVenta: dto.saldo_venta,
     numPagos: dto.num_pagos,
+    hora: dto.hora,
+    almacen: dto.almacen,
+    primerArticulo: dto.primer_articulo,
+    numArticulos: dto.num_articulos,
   };
 }

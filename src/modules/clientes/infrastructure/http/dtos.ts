@@ -148,6 +148,10 @@ export type VentaListItemDTO = {
   total: string; // decimal as string
   saldo_venta: string; // decimal as string
   num_pagos: number;
+  hora: string; // "HH:MM:SS" local Microsip wall-clock — display string, not UTC
+  almacen: string;
+  primer_articulo: string; // first J/N line article name; empty if none
+  num_articulos: number; // count of J/N lines
 };
 
 // ─── GET /clientes/{id}/ventas/{doctoPvId} ───────────────────────────────────

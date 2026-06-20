@@ -31,6 +31,21 @@ function TipoBadge({ tipo }: { tipo: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// Liquidación badge
+// ---------------------------------------------------------------------------
+
+function LiquidadaBadge() {
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full border border-green-500/20 bg-green-500/10 px-2 py-0.5 font-mono text-[10px] tracking-wider text-green-500"
+      aria-label="Liquidada"
+    >
+      ✓ Liquidada
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Row
 // ---------------------------------------------------------------------------
 
@@ -41,16 +56,42 @@ interface RowProps {
 
 function VentaRow({ venta, onClick }: RowProps) {
   const fecha = dayjs(venta.fecha).format("DD MMM YYYY");
+  const isLiquidada = Number(venta.saldoVenta) === 0;
+  // Trim "HH:MM:SS" to "HH:MM" for compact display
+  const horaDisplay = venta.hora.length >= 5 ? venta.hora.slice(0, 5) : venta.hora;
 
   return (
     <tr
-      className="group cursor-pointer border-b border-border/40 transition-colors last:border-b-0 hover:bg-muted/30"
+      className={cn(
+        "group cursor-pointer border-b border-border/40 transition-colors last:border-b-0 hover:bg-muted/30",
+        isLiquidada ? "border-l-2 border-l-green-500" : "border-l-2 border-l-amber-500",
+      )}
       onClick={() => onClick(venta.doctoPvId)}
     >
-      <td className="py-3 pl-8 pr-4">
-        <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
-          {fecha}
-        </span>
+      <td className="py-3 pl-6 pr-4">
+        <div className="font-mono text-[11px] text-muted-foreground tabular-nums">
+          {fecha}{" "}
+          <span className="text-muted-foreground/60">· {horaDisplay}</span>
+        </div>
+        {/* Second line: article + almacén */}
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+          {venta.primerArticulo && (
+            <span className="text-foreground/80">{venta.primerArticulo}</span>
+          )}
+          {venta.numArticulos > 1 && (
+            <span className="rounded border border-green-500/20 bg-green-500/10 px-1 font-mono text-[10px] text-green-500">
+              +{venta.numArticulos - 1} más
+            </span>
+          )}
+          {(venta.primerArticulo || venta.numArticulos > 1) && venta.almacen && (
+            <span className="text-muted-foreground/50">·</span>
+          )}
+          {venta.almacen && (
+            <span className="font-mono text-[10px] tracking-wide text-muted-foreground/60">
+              {venta.almacen}
+            </span>
+          )}
+        </div>
       </td>
       <td className="px-4 py-3">
         <span className="font-mono text-xs tracking-wider text-foreground">
@@ -66,16 +107,18 @@ function VentaRow({ venta, onClick }: RowProps) {
         </span>
       </td>
       <td className="px-4 py-3 text-right">
-        <span
-          className={cn(
-            "tabular-nums font-mono text-[13px]",
-            Number(venta.saldoVenta) > 0
-              ? "text-foreground"
-              : "text-muted-foreground/50",
-          )}
-        >
-          {formatMoney(venta.saldoVenta)}
-        </span>
+        {isLiquidada ? (
+          <LiquidadaBadge />
+        ) : (
+          <div className="text-right">
+            <span className="font-serif tabular-nums text-[15px] text-amber-400">
+              {formatMoney(venta.saldoVenta)}
+            </span>
+            <span className="block font-mono text-[9px] uppercase tracking-wider text-amber-400/80">
+              debe
+            </span>
+          </div>
+        )}
       </td>
       <td className="py-3 pl-4 pr-8 text-right">
         <span className="font-mono text-[11px] text-muted-foreground tabular-nums">

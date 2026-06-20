@@ -16,6 +16,10 @@ function makeDetalle(overrides: Partial<VentaDetalle> = {}): VentaDetalle {
       total: "18500.00",
       saldoVenta: "3200.00",
       numPagos: 5,
+      hora: "",
+      almacen: "",
+      primerArticulo: "",
+      numArticulos: 0,
     },
     productos: [],
     contrato: {

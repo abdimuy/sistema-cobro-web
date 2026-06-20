@@ -11,4 +11,9 @@ export type VentaCliente = {
   readonly total: string;
   readonly saldoVenta: string;
   readonly numPagos: number;
+  // Enriched fields from Microsip native
+  readonly hora: string; // "HH:MM:SS" display string — never parse as a Date
+  readonly almacen: string;
+  readonly primerArticulo: string; // first J/N line article name; empty if none
+  readonly numArticulos: number; // count of J/N lines
 };

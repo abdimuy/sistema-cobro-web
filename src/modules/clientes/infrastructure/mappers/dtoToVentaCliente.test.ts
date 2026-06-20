@@ -11,6 +11,10 @@ function buildValidDTO(overrides: Partial<VentaListItemDTO> = {}): VentaListItem
     total: "18500.00",
     saldo_venta: "9200.00",
     num_pagos: 8,
+    hora: "14:32:00",
+    almacen: "Camioneta Nissan — Jueves",
+    primer_articulo: "Colchón Restonic Ghana Matrimonial",
+    num_articulos: 3,
     ...overrides,
   };
 }
@@ -60,5 +64,33 @@ describe("dtoToVentaCliente", () => {
     expect(() => dtoToVentaCliente(dto)).toThrowError(
       expect.objectContaining({ code: "fecha_venta_invalida" }),
     );
+  });
+
+  it("maps enriched fields: hora, almacen, primerArticulo, numArticulos", () => {
+    const dto = buildValidDTO({
+      hora: "18:06:49",
+      almacen: "Tienda de Exhibición",
+      primer_articulo: "Sala Imperial 3-2-1",
+      num_articulos: 2,
+    });
+    const venta = dtoToVentaCliente(dto);
+    expect(venta.hora).toBe("18:06:49");
+    expect(venta.almacen).toBe("Tienda de Exhibición");
+    expect(venta.primerArticulo).toBe("Sala Imperial 3-2-1");
+    expect(venta.numArticulos).toBe(2);
+  });
+
+  it("hora is kept as a plain string, not parsed as a Date", () => {
+    const dto = buildValidDTO({ hora: "08:00:00" });
+    const venta = dtoToVentaCliente(dto);
+    expect(typeof venta.hora).toBe("string");
+    expect(venta.hora).not.toBeInstanceOf(Date);
+  });
+
+  it("maps empty primer_articulo when no articles", () => {
+    const dto = buildValidDTO({ primer_articulo: "", num_articulos: 0 });
+    const venta = dtoToVentaCliente(dto);
+    expect(venta.primerArticulo).toBe("");
+    expect(venta.numArticulos).toBe(0);
   });
 });
