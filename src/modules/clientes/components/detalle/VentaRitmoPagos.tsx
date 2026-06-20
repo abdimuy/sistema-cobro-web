@@ -309,34 +309,49 @@ export function VentaRitmoPagos({ venta, pagos, contrato, onPagoClick }: Props) 
       {/* Heatmap + saldo curve */}
       <div className="overflow-x-auto">
         <div className="inline-flex flex-col gap-1 min-w-max">
-          {/* Month labels — compact, clipped to each group's width so partial
-              months (1-2 weeks at the window edges) never overflow into the
-              next month's label. Year shown only at year boundaries. */}
-          <div className="flex items-end">
-            {monthGroups.map((g, gi) => {
-              const groupWidth =
-                g.semanas.length * CELL_SIZE + (g.semanas.length - 1) * GAP;
-              const d = g.semanas[0].semanaInicio;
-              const mon = MONTH_NAMES[d.getMonth()];
-              const yy = String(d.getFullYear()).slice(2);
-              const yearMark = gi === 0 || d.getMonth() === 0;
-              // ~6.5px/char at 9px mono: "mon" needs ~20px, "mon yy" ~42px.
-              const label =
-                groupWidth < 20 ? "" : yearMark && groupWidth >= 42 ? `${mon} ${yy}` : mon;
-              return (
-                <div key={g.key} className="flex gap-[2px]">
-                  <div className="overflow-hidden" style={{ width: groupWidth }}>
-                    <span className="block whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground/60">
-                      {label}
-                    </span>
-                  </div>
-                  {gi < monthGroups.length - 1 && (
-                    <div style={{ width: MONTH_SEP }} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          {/* Month labels — absolutely positioned at each month's exact
+              first-cell x offset (same math as the cells row below), so a label
+              always sits over its own month. Single-week partial months at the
+              window edges are skipped (no room for a label); the year is shown
+              only at year boundaries. A light collision guard prevents overlap. */}
+          {(() => {
+            const CHAR_PX = 6.3; // ~width per char of the 9px mono label
+            const placed: { key: string; x: number; text: string }[] = [];
+            let x = 0;
+            let lastRight = -Infinity;
+            monthGroups.forEach((g, gi) => {
+              const n = g.semanas.length;
+              const groupWidth = n * CELL_SIZE + (n - 1) * GAP;
+              if (n >= 2) {
+                const d = g.semanas[0].semanaInicio;
+                const yearMark = gi === 0 || d.getMonth() === 0;
+                const text = yearMark
+                  ? `${MONTH_NAMES[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`
+                  : MONTH_NAMES[d.getMonth()];
+                if (x >= lastRight + 3) {
+                  placed.push({ key: g.key, x, text });
+                  lastRight = x + text.length * CHAR_PX;
+                }
+              }
+              // advance to the next group's first-cell x (matches the cells row:
+              // group wrapper width = cells + inter-cell gaps + gap + separator)
+              if (gi < monthGroups.length - 1) x += groupWidth + GAP + MONTH_SEP;
+            });
+            const totalWidth = x;
+            return (
+              <div className="relative h-3" style={{ width: totalWidth }}>
+                {placed.map((l) => (
+                  <span
+                    key={l.key}
+                    className="absolute top-0 whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground/60"
+                    style={{ left: l.x }}
+                  >
+                    {l.text}
+                  </span>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Cells */}
           <div className="flex items-center">
