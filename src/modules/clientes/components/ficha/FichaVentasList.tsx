@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import "dayjs/locale/es";
-import { ChevronDown } from "lucide-react";
+import { Banknote, ChevronDown, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -14,17 +14,16 @@ dayjs.locale("es");
 // Tipo badge
 // ---------------------------------------------------------------------------
 
+// Neutral pill + the same icon the heatmap uses for the sale event (CreditCard
+// for crédito, Banknote for contado). Neutral on purpose: blue stays reserved
+// for the "enganche" category in the charts, and the icon — not a hue — carries
+// the meaning, matching the heatmap event glyphs.
 function TipoBadge({ tipo }: { tipo: string }) {
   const isCredito = tipo === "CREDITO";
+  const Icon = isCredito ? CreditCard : Banknote;
   return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider",
-        isCredito
-          ? "border-blue-500/20 bg-blue-500/10 text-blue-500"
-          : "border-border/60 bg-muted/40 text-muted-foreground",
-      )}
-    >
+    <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+      <Icon className="h-3 w-3" aria-hidden="true" />
       {isCredito ? "Crédito" : "Contado"}
     </span>
   );
