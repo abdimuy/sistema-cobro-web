@@ -14,6 +14,7 @@ import { VentaModalHero } from "./VentaModalHero";
 import { VentaProductosTable } from "./VentaProductosTable";
 import { VentaContratoCard } from "./VentaContratoCard";
 import { VentaPagosList } from "./VentaPagosList";
+import { VentaRitmoPagos } from "./VentaRitmoPagos";
 import { PlanPagos } from "./PlanPagos";
 
 interface Props {
@@ -126,6 +127,15 @@ export function VentaModal({ clienteId, doctoPvId, open, onClose, onPagoClick }:
                   <VentaContratoCard contrato={detalle.contrato} />
                 </>
               )}
+
+              <hr className="border-border/60" />
+
+              <VentaRitmoPagos
+                venta={detalle.venta}
+                pagos={detalle.pagos}
+                contrato={detalle.contrato}
+                onPagoClick={onPagoClick}
+              />
 
               <hr className="border-border/60" />
 
