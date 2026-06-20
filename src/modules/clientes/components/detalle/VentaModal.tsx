@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ export function VentaModal({ clienteId, doctoPvId, open, onClose, onPagoClick }:
         )}
       >
         <DialogTitle className="sr-only">Detalle de venta</DialogTitle>
+        <DialogDescription className="sr-only">detalle de la venta</DialogDescription>
 
         {/* Sticky header */}
         <header className="sticky top-0 z-10 flex h-[60px] shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/80">

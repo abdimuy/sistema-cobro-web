@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -12,25 +13,15 @@ import { cn } from "@/lib/utils";
 
 import { usePagoDetalle } from "../../presentation/hooks/usePagoDetalle";
 import { categoriaMeta } from "../lib/pagoConcepto";
+import { formatMoney } from "../lib/format";
 
 // FichaMapEmbed is lazy-loaded — avoids pulling in the maps bundle for closed modals.
 const FichaMapEmbed = lazy(() =>
   import("../ficha/FichaMapEmbed").then((m) => ({ default: m.FichaMapEmbed })),
 );
 
-const fmtMXN = (raw: string): string => {
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return raw;
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(n);
-};
-
-const fmtDate = (d: Date | null): string =>
-  d ? dayjs(d).format("DD MMM YYYY · HH:mm") : "—";
+const fmtDateWithSeconds = (d: Date | null): string =>
+  d ? dayjs(d).format("DD MMM YYYY · HH:mm:ss") : "—";
 
 interface Props {
   clienteId: number;
@@ -63,6 +54,7 @@ export function PagoModal({ clienteId, doctoCcId, onClose }: Props) {
         )}
       >
         <DialogTitle className="sr-only">Detalle de pago</DialogTitle>
+        <DialogDescription className="sr-only">detalle del pago</DialogDescription>
 
         {/* Sticky header */}
         <header className="sticky top-0 z-10 flex h-[60px] shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -77,6 +69,7 @@ export function PagoModal({ clienteId, doctoCcId, onClose }: Props) {
             variant="ghost"
             size="icon"
             onClick={onClose}
+            aria-label="Cerrar"
             className="h-7 w-7 text-muted-foreground"
           >
             <X className="h-3.5 w-3.5" />
@@ -134,7 +127,7 @@ export function PagoModal({ clienteId, doctoCcId, onClose }: Props) {
                     Importe
                   </p>
                   <p className="font-serif text-[34px] tabular-nums leading-none text-foreground">
-                    {fmtMXN(detalle.importe)}
+                    {formatMoney(detalle.importe)}
                   </p>
                 </div>
               </div>
@@ -162,8 +155,8 @@ export function PagoModal({ clienteId, doctoCcId, onClose }: Props) {
                     )}
                     {detalle.iva && detalle.iva !== "0.00" && (
                       <div className="flex items-baseline justify-between gap-4">
-                        <dt className="font-mono text-[11px] text-muted-foreground">IVA</dt>
-                        <dd className="font-mono text-sm text-foreground">{fmtMXN(detalle.iva)}</dd>
+                        <dt className="font-mono text-[11px] text-muted-foreground">IVA incluido</dt>
+                        <dd className="font-mono text-sm text-foreground">{formatMoney(detalle.iva)}</dd>
                       </div>
                     )}
                   </dl>
@@ -248,7 +241,7 @@ export function PagoModal({ clienteId, doctoCcId, onClose }: Props) {
                   <div className="flex items-baseline justify-between gap-4">
                     <dt className="font-mono text-[11px] text-muted-foreground">Saldo del cargo</dt>
                     <dd className="font-mono text-sm text-foreground">
-                      {detalle.saldoCargo !== null ? fmtMXN(detalle.saldoCargo) : "—"}
+                      {detalle.saldoCargo !== null ? formatMoney(detalle.saldoCargo) : "—"}
                     </dd>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
@@ -270,13 +263,13 @@ export function PagoModal({ clienteId, doctoCcId, onClose }: Props) {
                       <div className="flex items-baseline justify-between gap-4">
                         <dt className="font-mono text-[11px] text-muted-foreground">Recibido</dt>
                         <dd className="font-mono text-[11px] text-foreground">
-                          {fmtDate(detalle.recibidoAt)}
+                          {fmtDateWithSeconds(detalle.recibidoAt)}
                         </dd>
                       </div>
                       <div className="flex items-baseline justify-between gap-4">
                         <dt className="font-mono text-[11px] text-muted-foreground">Aplicado en Microsip</dt>
                         <dd className="font-mono text-[11px] text-foreground">
-                          {fmtDate(detalle.aplicadoAt)}
+                          {fmtDateWithSeconds(detalle.aplicadoAt)}
                         </dd>
                       </div>
                     </dl>

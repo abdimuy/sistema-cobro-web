@@ -53,7 +53,7 @@ describe("PagoModal", () => {
       expect(screen.getAllByText("AB-00234").length).toBeGreaterThan(0),
     );
     // importe formatted as MXN
-    expect(screen.getAllByText(/\$3[,.]?200/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("$3,200.00").length).toBeGreaterThan(0);
     // cobrador
     expect(screen.getByText("José Guadalupe Pérez Morales")).toBeInTheDocument();
     // concepto badge
@@ -114,8 +114,7 @@ describe("PagoModal", () => {
     await waitFor(() =>
       expect(screen.getAllByText("AB-00234").length).toBeGreaterThan(0),
     );
-    const buttons = screen.getAllByRole("button");
-    const closeBtn = buttons[buttons.length - 1];
+    const closeBtn = screen.getByRole("button", { name: /cerrar/i });
     await userEvent.click(closeBtn);
     expect(onClose).toHaveBeenCalledTimes(1);
   });

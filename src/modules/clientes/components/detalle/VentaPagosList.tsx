@@ -4,17 +4,7 @@ import { cn } from "@/lib/utils";
 import type { Pago } from "../../domain/entities";
 import { categoriaMeta } from "../lib/pagoConcepto";
 import type { CategoriaPago } from "../../domain/values/CategoriaPago";
-
-const fmtMXN = (raw: string): string => {
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return raw;
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(n);
-};
+import { formatMoney } from "../lib/format";
 
 const LEGEND_CATEGORIAS: CategoriaPago[] = ["pago", "enganche", "condonacion", "perdida"];
 
@@ -87,7 +77,7 @@ export function VentaPagosList({ pagos, onPagoClick }: Props) {
               </div>
               <div className="flex items-center gap-1 shrink-0 ml-4">
                 <p className="tabular-nums font-mono text-sm font-medium text-foreground">
-                  {fmtMXN(pago.importe)}
+                  {formatMoney(pago.importe)}
                 </p>
                 {isClickable && (
                   <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
