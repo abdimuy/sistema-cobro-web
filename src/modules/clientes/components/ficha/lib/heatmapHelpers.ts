@@ -102,20 +102,27 @@ export function dominantCategoria(
 
 // ─── Event icon ───────────────────────────────────────────────────────────────
 
+// Event icons are intentionally NEUTRAL: the icon SHAPE carries the meaning
+// (card = crédito, bill = contado, check = liquidación). Color is reserved
+// exclusively for payment categories (pago/enganche/condonación/pérdida), so on
+// this analysis page each hue means exactly one thing. Borrowing a category hue
+// here would make blue/violet/green ambiguous.
+const EVENT_ICON_CLS = "text-foreground/70";
+
 export const EVENT_META: Record<EventoTipo, { Icon: ElementType; cls: string; label: string }> = {
   venta_credito: {
     Icon: CreditCard,
-    cls: "[color:hsl(217,91%,55%)] dark:[color:hsl(217,91%,64%)]",
+    cls: EVENT_ICON_CLS,
     label: "Venta crédito",
   },
   venta_contado: {
     Icon: Banknote,
-    cls: "[color:hsl(262,60%,58%)] dark:[color:hsl(262,75%,70%)]",
+    cls: EVENT_ICON_CLS,
     label: "Venta contado",
   },
   liquidacion: {
     Icon: CircleCheck,
-    cls: "[color:hsl(142,64%,38%)] dark:[color:hsl(142,64%,50%)]",
+    cls: EVENT_ICON_CLS,
     label: "Liquidación",
   },
 };
