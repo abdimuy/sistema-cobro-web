@@ -11,6 +11,7 @@ import { FichaKpis } from "./FichaKpis";
 import { FichaCharts } from "./FichaCharts";
 import { FichaUbicacion } from "./FichaUbicacion";
 import { FichaInteligenciaScores } from "./FichaInteligenciaScores";
+import { FichaLecturaAnalista } from "./FichaLecturaAnalista";
 import { FichaVentasList } from "./FichaVentasList";
 import { FichaRitmoPago } from "./FichaRitmoPago";
 import { FichaSaludStrip } from "./FichaSaludStrip";
@@ -88,6 +89,7 @@ export function ClienteFicha({ clienteId }: Props) {
       {/* ── Zona 2 — Inteligencia ── */}
       <FichaRitmoPago ritmo={ritmoState.ritmo} isLoading={ritmoState.isLoading} onVentaClick={setSelectedDoctoPvId} onPagoClick={setSelectedPagoId} pulso={ficha.pulso} />
       <FichaInteligenciaScores pulso={ficha.pulso} />
+      <FichaLecturaAnalista pulso={ficha.pulso} />
 
       {/* ── Zona 3 — Detalle ── */}
       <FichaCharts

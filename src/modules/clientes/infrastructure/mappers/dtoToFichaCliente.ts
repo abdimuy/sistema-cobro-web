@@ -80,6 +80,8 @@ function mapPulso(dto: PulsoDTO): Pulso {
     creditoResumen: dto.credito_resumen,
     recompraResumen: dto.recompra_resumen,
     clvResumen: dto.clv_resumen,
+    narrativa: dto.narrativa || undefined,
+    rasgosIA: dto.rasgos_ia && dto.rasgos_ia.length > 0 ? dto.rasgos_ia : undefined,
   };
 }
 
