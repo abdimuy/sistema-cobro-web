@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/es";
 import EstadoPagoBadge from "../badges/EstadoPagoBadge";
 import { formatMoney, formatPct } from "../lib/format";
+import { InfoHint } from "./lib/InfoHint";
 import type { ResumenFicha, Pulso } from "../../domain/entities/FichaCliente";
 
 dayjs.locale("es");
@@ -10,15 +11,18 @@ dayjs.locale("es");
 
 function StripItem({
   label,
+  hint,
   children,
 }: {
   label: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">
+      <span className="inline-flex items-center gap-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">
         {label}
+        {hint && <InfoHint text={hint} label={label} />}
       </span>
       <div className="flex flex-col gap-1">{children}</div>
     </div>
@@ -49,12 +53,20 @@ export function FichaSaludStrip({ resumen, pulso }: Props) {
   }
 
   // ── Próximo pago ─────────────────────────────────────────────────────────────
+  // The expected next-payment date can fall in the past for a delinquent client
+  // (the backend keeps it as last payment + cadencia). When it has, surface
+  // "vencido hace N días" so the stale future-looking date is not misread as on time.
   let proxPagoFecha: string | null = null;
   let proxPagoMonto: string | null = null;
+  let proxPagoVencidoDias = 0;
   if (pulso !== null && pulso.fechaProxPago !== null) {
     proxPagoFecha = dayjs(pulso.fechaProxPago).format("D MMM YYYY");
     proxPagoMonto = formatMoney(pulso.montoProxPago);
+    proxPagoVencidoDias = dayjs()
+      .startOf("day")
+      .diff(dayjs(pulso.fechaProxPago).startOf("day"), "day");
   }
+  const proxPagoVencido = proxPagoVencidoDias > 0;
 
   return (
     <section
@@ -89,22 +101,33 @@ export function FichaSaludStrip({ resumen, pulso }: Props) {
         )}
 
         {/* 2. Puntualidad */}
-        <StripItem label="Puntualidad">
+        <StripItem label="Puntualidad" hint="% de pagos hechos dentro de su cadencia (+7 días de tolerancia).">
           <span className="font-serif text-[22px] leading-none tabular-nums text-foreground">
             {puntualidadDisplay}
           </span>
         </StripItem>
 
         {/* 3. Próximo pago */}
-        <StripItem label="Próximo pago">
+        <StripItem label="Próximo pago" hint="Fecha estimada del siguiente pago (último pago + cadencia).">
           {proxPagoFecha !== null ? (
             <>
-              <span className="font-mono text-xs tabular-nums text-foreground">
+              <span
+                className={`font-mono text-xs tabular-nums ${
+                  proxPagoVencido ? "text-amber-600 dark:text-amber-500" : "text-foreground"
+                }`}
+              >
                 {proxPagoFecha}
               </span>
-              <span className="font-mono text-xs tabular-nums text-muted-foreground/70">
-                {proxPagoMonto}
-              </span>
+              {proxPagoVencido ? (
+                <span className="font-mono text-xs tabular-nums text-amber-600 dark:text-amber-500 font-medium">
+                  Vencido hace {proxPagoVencidoDias}{" "}
+                  {proxPagoVencidoDias === 1 ? "día" : "días"}
+                </span>
+              ) : (
+                <span className="font-mono text-xs tabular-nums text-muted-foreground/70">
+                  {proxPagoMonto}
+                </span>
+              )}
             </>
           ) : (
             <span className="font-mono text-xs text-muted-foreground/60 italic">

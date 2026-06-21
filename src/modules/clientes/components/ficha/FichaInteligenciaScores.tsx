@@ -4,6 +4,7 @@ import { ScoreMeter, type MeterBand } from "./ScoreMeter";
 import { clvDrivers } from "./clvDrivers";
 import { formatMoney } from "../lib/format";
 import SegmentoBadge from "../badges/SegmentoBadge";
+import { InfoHint } from "./lib/InfoHint";
 import type { Pulso } from "../../domain/entities/FichaCliente";
 
 dayjs.locale("es");
@@ -101,17 +102,22 @@ function DriverList({ drivers, accent }: { drivers: readonly string[]; accent: A
 
 function Panel({
   title,
+  titleHint,
   subtitle,
   children,
 }: {
   title: string;
+  titleHint?: string;
   subtitle: string;
   children: React.ReactNode;
 }) {
   return (
     <section className="flex flex-col gap-4 rounded-md border border-border/60 px-5 py-5">
       <div>
-        <h4 className="font-serif text-sm font-normal text-foreground">{title}</h4>
+        <h4 className="flex items-center gap-1 font-serif text-sm font-normal text-foreground">
+          {title}
+          {titleHint && <InfoHint text={titleHint} label={title} />}
+        </h4>
         <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
           {subtitle}
         </p>
@@ -123,15 +129,17 @@ function Panel({
 
 function EmptyPanel({
   title,
+  titleHint,
   subtitle,
   text,
 }: {
   title: string;
+  titleHint?: string;
   subtitle: string;
   text: string;
 }) {
   return (
-    <Panel title={title} subtitle={subtitle}>
+    <Panel title={title} titleHint={titleHint} subtitle={subtitle}>
       <p className="font-mono text-[11px] italic text-muted-foreground/60">{text}</p>
     </Panel>
   );
@@ -176,7 +184,7 @@ export function FichaInteligenciaScores({ pulso }: Props) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {/* ── Riesgo de crédito ── */}
         {pulso.bandaCredito ? (
-          <Panel title="Riesgo de crédito" subtitle="probabilidad de impago">
+          <Panel title="Riesgo de crédito" titleHint="Qué tan buen pagador es (0–100). Mayor = menor riesgo de impago." subtitle="calidad de pago">
             <Statement
               stmt={CREDITO_STMT[pulso.bandaCredito] ?? CREDITO_STMT.MEDIO}
               detail={`${pulso.scoreCredito ?? 0} / 100`}
@@ -204,14 +212,15 @@ export function FichaInteligenciaScores({ pulso }: Props) {
         ) : (
           <EmptyPanel
             title="Riesgo de crédito"
-            subtitle="probabilidad de impago"
+            titleHint="Qué tan buen pagador es (0–100). Mayor = menor riesgo de impago."
+            subtitle="calidad de pago"
             text="Sin saldo a crédito"
           />
         )}
 
         {/* ── Propensión a recompra ── */}
         {pulso.bandaRecompra ? (
-          <Panel title="Propensión a recompra" subtitle="próxima compra (12m)">
+          <Panel title="Propensión a recompra" titleHint="Probabilidad de que vuelva a comprar en los próximos 12 meses." subtitle="próxima compra (12m)">
             <Statement
               stmt={RECOMPRA_STMT[pulso.bandaRecompra] ?? RECOMPRA_STMT.MEDIA}
               detail={`${pulso.scoreRecompra ?? 0} / 100`}
@@ -237,6 +246,7 @@ export function FichaInteligenciaScores({ pulso }: Props) {
         ) : (
           <EmptyPanel
             title="Propensión a recompra"
+            titleHint="Probabilidad de que vuelva a comprar en los próximos 12 meses."
             subtitle="próxima compra (12m)"
             text="Sin historial de compras"
           />
@@ -244,7 +254,7 @@ export function FichaInteligenciaScores({ pulso }: Props) {
 
         {/* ── Valor del cliente (CLV) ── */}
         {pulso.bandaClv && pulso.clv ? (
-          <Panel title="Valor del cliente" subtitle="valor estimado (24m)">
+          <Panel title="Valor del cliente" titleHint="Valor estimado que dejará en 24 meses, ajustado por riesgo." subtitle="valor estimado (24m)">
             <Statement
               stmt={CLV_STMT[pulso.bandaClv] ?? CLV_STMT.MEDIO}
               detail={formatMoney(pulso.clv)}
@@ -270,6 +280,7 @@ export function FichaInteligenciaScores({ pulso }: Props) {
         ) : (
           <EmptyPanel
             title="Valor del cliente"
+            titleHint="Valor estimado que dejará en 24 meses, ajustado por riesgo."
             subtitle="valor estimado (24m)"
             text="Sin historial de compras"
           />

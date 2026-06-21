@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import dayjs from "dayjs";
+import "dayjs/locale/es";
 import { FichaSaludStrip } from "./FichaSaludStrip";
 import type { ResumenFicha, Pulso } from "../../domain/entities/FichaCliente";
 
@@ -150,20 +152,55 @@ describe("FichaSaludStrip — Puntualidad", () => {
 // ─── Próximo pago ─────────────────────────────────────────────────────────────
 
 describe("FichaSaludStrip — Próximo pago", () => {
-  it("renders formatted date and monto when pulso has fechaProxPago", () => {
+  it("renders formatted date and monto when fechaProxPago is in the future", () => {
+    const future = dayjs().add(20, "day");
     render(
       <FichaSaludStrip
         resumen={makeResumen()}
         pulso={makePulso({
-          fechaProxPago: new Date("2026-01-12T12:00:00Z"),
+          fechaProxPago: future.toDate(),
           montoProxPago: "4000.00",
         })}
       />,
     );
-    // dayjs D MMM YYYY in es locale → "12 ene 2026"
-    expect(screen.getByText(/12 ene 2026/i)).toBeInTheDocument();
+    // dayjs D MMM YYYY in es locale
+    expect(
+      screen.getByText(future.locale("es").format("D MMM YYYY")),
+    ).toBeInTheDocument();
     // formatMoney("4000.00") → "$4,000.00" in es-MX
     expect(screen.getByText(/\$4[.,]000/i)).toBeInTheDocument();
+    // Not overdue → no "Vencido" annotation
+    expect(screen.queryByText(/vencido hace/i)).not.toBeInTheDocument();
+  });
+
+  it("shows 'Vencido hace N días' when fechaProxPago is in the past", () => {
+    const past = dayjs().subtract(130, "day");
+    render(
+      <FichaSaludStrip
+        resumen={makeResumen()}
+        pulso={makePulso({
+          fechaProxPago: past.toDate(),
+          montoProxPago: "4000.00",
+        })}
+      />,
+    );
+    // The expected date still renders...
+    expect(
+      screen.getByText(past.locale("es").format("D MMM YYYY")),
+    ).toBeInTheDocument();
+    // ...alongside the overdue annotation (replacing the monto line).
+    expect(screen.getByText(/vencido hace 130 días/i)).toBeInTheDocument();
+  });
+
+  it("uses the singular 'día' when overdue by exactly one day", () => {
+    const past = dayjs().subtract(1, "day");
+    render(
+      <FichaSaludStrip
+        resumen={makeResumen()}
+        pulso={makePulso({ fechaProxPago: past.toDate(), montoProxPago: "4000.00" })}
+      />,
+    );
+    expect(screen.getByText(/vencido hace 1 día$/i)).toBeInTheDocument();
   });
 
   it("shows 'Sin pago programado' when pulso.fechaProxPago is null", () => {

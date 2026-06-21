@@ -153,15 +153,15 @@ describe("FichaRitmoPago", () => {
     expect(screen.getByText("$3.5k")).toBeInTheDocument();
   });
 
-  it("PERDÓN stat reflects resumen.totalPerdonado", () => {
+  it("AJUSTES stat reflects resumen.totalPerdonado", () => {
     // totalPerdonado in fixture = "200.00" → $0.2k
     const ritmo = makeFakeRitmoPago();
     render(<FichaRitmoPago ritmo={ritmo} />);
-    expect(screen.getByText("PERDÓN")).toBeInTheDocument();
+    expect(screen.getByText("AJUSTES")).toBeInTheDocument();
     expect(screen.getByText("$0.2k")).toBeInTheDocument();
   });
 
-  it("PERDÓN stat is shown as $0 when totalPerdonado is zero", () => {
+  it("AJUSTES stat is shown as $0 when totalPerdonado is zero", () => {
     const ritmo = makeFakeRitmoPago({
       resumen: {
         totalAbonado: "5000.00",
@@ -174,7 +174,7 @@ describe("FichaRitmoPago", () => {
       },
     });
     render(<FichaRitmoPago ritmo={ritmo} />);
-    expect(screen.getByText("PERDÓN")).toBeInTheDocument();
+    expect(screen.getByText("AJUSTES")).toBeInTheDocument();
     expect(screen.getByText("$0")).toBeInTheDocument();
   });
 

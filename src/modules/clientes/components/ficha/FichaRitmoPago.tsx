@@ -24,6 +24,7 @@ import {
   TooltipProvider as UITooltipProvider,
   TooltipTrigger as UITooltipTrigger,
 } from "@/components/ui/tooltip";
+import { InfoHint } from "./lib/InfoHint";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -696,7 +697,7 @@ function ResumenStrip({
   resumen: ResumenRitmo;
   pulso?: Pulso | null;
 }) {
-  // ABONADO y PERDÓN vienen del dominio (backend ya discrimina por es_ingreso).
+  // ABONADO y AJUSTES vienen del dominio (backend ya discrimina por es_ingreso).
   const totalAbonado = Number(resumen.totalAbonado);
   const totalPerdonado = Number(resumen.totalPerdonado);
 
@@ -723,43 +724,48 @@ function ResumenStrip({
   const constancia =
     semanasActivas > 0 ? Math.round((semanasConPago / semanasActivas) * 100) : 0;
 
-  const stats: { label: string; value: string; unit?: string }[] = [
+  const stats: { label: string; value: string; unit?: string; hint?: string }[] = [
     {
       label: "ABONADO 12M",
       value: formatMoneyCompact(totalAbonado),
     },
     {
-      label: "PERDÓN",
+      label: "AJUSTES",
       value: formatMoneyCompact(totalPerdonado),
+      hint: "Monto que bajó el saldo sin ser dinero real (condonaciones, descuentos, correcciones).",
     },
     {
       label: "ABONÓ EN",
       value: String(semanasConPago),
       unit: `/${semanasActivas} sem`,
+      hint: "Semanas en que abonó, de las semanas con deuda.",
     },
     {
       label: "RACHA ACTUAL",
       value: String(racha),
       unit: " sem",
+      hint: "Semanas seguidas pagando hasta hoy.",
     },
     {
       label: "CONSTANCIA",
       value: `${constancia}%`,
+      hint: "% de semanas con deuda en las que sí abonó.",
     },
   ];
   if (pulso) {
     stats.push(
-      { label: "CADENCIA", value: String(pulso.cadenciaDias), unit: " días" },
-      { label: "ATRASO PROM", value: String(pulso.diasAtrasoProm), unit: " días" },
+      { label: "CADENCIA", value: String(pulso.cadenciaDias), unit: " días", hint: "Cada cuántos días suele pagar, en promedio." },
+      { label: "ATRASO PROM", value: String(pulso.diasAtrasoProm), unit: " días", hint: "Días promedio que se atrasa respecto a su cadencia." },
     );
   }
 
   return (
     <div className="flex flex-wrap gap-x-6 gap-y-2">
-      {stats.map(({ label, value, unit }) => (
+      {stats.map(({ label, value, unit, hint }) => (
         <div key={label} className="flex flex-col">
-          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">
+          <span className="inline-flex items-center gap-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/60">
             {label}
+            {hint && <InfoHint text={hint} label={label} />}
           </span>
           <span className="font-serif text-[27px] leading-none text-foreground">
             {value}
