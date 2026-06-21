@@ -123,6 +123,10 @@ const DEFAULT_FICHA: FichaDTO = {
     recompra_drivers: ["Alta frecuencia de compra"],
     clv: "9200.00",
     banda_clv: "ALTO",
+    clv_drivers: ["recompra recurrente esperada", "ticket $17,142"],
+    credito_resumen: "Algunos retrasos recientes — monitorear.",
+    recompra_resumen: "Muy probable que recompre — alta frecuencia.",
+    clv_resumen: "Valor estimado $9,200 en 24m por su recompra y ticket.",
   },
   ubicacion: {
     lat: 19.4326,

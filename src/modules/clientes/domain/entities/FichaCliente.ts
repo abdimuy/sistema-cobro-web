@@ -75,6 +75,11 @@ export type Pulso = {
   // Customer Lifetime Value — undefined when no aplica; decimal as string
   readonly clv?: string;
   readonly bandaClv?: string;               // ALTO | MEDIO | BAJO
+  // Razones / titulares — resúmenes siempre presentes; clvDrivers gated por banda
+  readonly clvDrivers?: readonly string[];
+  readonly creditoResumen?: string;
+  readonly recompraResumen?: string;
+  readonly clvResumen?: string;
 };
 
 // DireccionCliente holds the address components for a client.

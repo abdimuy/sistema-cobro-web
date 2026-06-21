@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { FichaInteligenciaScores } from "./FichaInteligenciaScores";
-import { clvDrivers } from "./clvDrivers";
 import type { Pulso } from "../../domain/entities/FichaCliente";
 
 function makePulso(overrides: Partial<Pulso> = {}): Pulso {
@@ -32,36 +31,13 @@ function makePulso(overrides: Partial<Pulso> = {}): Pulso {
     recompraDrivers: ["buen historial de pago", "tickets de mayor valor"],
     clv: "302.17",
     bandaClv: "MEDIO",
+    clvDrivers: ["recompra moderada esperada", "ticket $5,000"],
+    creditoResumen: "Buen pagador: paga cada ~30 días, 95% a tiempo.",
+    recompraResumen: "Recompra moderada — compró hace 2 meses.",
+    clvResumen: "Valor estimado $302 en 24m por su recompra y ticket de $5,000.",
   };
   return { ...base, ...overrides };
 }
-
-describe("clvDrivers", () => {
-  it("derives propensity, payment and ticket reasons", () => {
-    const d = clvDrivers(
-      makePulso({ bandaRecompra: "ALTA", bandaCredito: "BAJO", bandaClv: "ALTO" }),
-    );
-    expect(d).toContain("recompra recurrente esperada");
-    expect(d).toContain("pagos confiables");
-    expect(d).toContain("tickets de alto valor");
-  });
-
-  it("flags impago risk for a high-risk credit band", () => {
-    const d = clvDrivers(makePulso({ bandaCredito: "CRITICO" }));
-    expect(d).toContain("riesgo de impago");
-  });
-
-  it("falls back to estadoPago when there is no credit band", () => {
-    const d = clvDrivers(
-      makePulso({ bandaCredito: undefined, estadoPago: "LIQUIDADO" }),
-    );
-    expect(d).toContain("pagos confiables");
-  });
-
-  it("returns at most 3 reasons", () => {
-    expect(clvDrivers(makePulso()).length).toBeLessThanOrEqual(3);
-  });
-});
 
 describe("FichaInteligenciaScores", () => {
   it("renders nothing without pulso", () => {
@@ -95,23 +71,24 @@ describe("FichaInteligenciaScores", () => {
 
   it("renders a per-panel no-aplica placeholder", () => {
     render(
-      <FichaInteligenciaScores pulso={makePulso({ bandaCredito: undefined })} />,
+      <FichaInteligenciaScores pulso={makePulso({ bandaCredito: undefined, creditoResumen: "Sin saldo a crédito — no se evalúa." })} />,
     );
-    expect(screen.getByText("Sin saldo a crédito")).toBeInTheDocument();
+    expect(screen.getByText(/Sin saldo a crédito/)).toBeInTheDocument();
     expect(screen.getByText("MEDIA recompra")).toBeInTheDocument();
   });
 
-  it("surfaces the derived CLV drivers", () => {
+  it("surfaces the backend CLV drivers", () => {
     render(
       <FichaInteligenciaScores
-        pulso={makePulso({
-          bandaRecompra: "ALTA",
-          bandaClv: "ALTO",
-          bandaCredito: "BAJO",
-        })}
+        pulso={makePulso({ clvDrivers: ["ticket $9,483"] })}
       />,
     );
-    expect(screen.getByText("tickets de alto valor")).toBeInTheDocument();
+    expect(screen.getByText("ticket $9,483")).toBeInTheDocument();
+  });
+
+  it("titular renders above the bullets in a populated panel", () => {
+    render(<FichaInteligenciaScores pulso={makePulso()} />);
+    expect(screen.getByText("Buen pagador: paga cada ~30 días, 95% a tiempo.")).toBeInTheDocument();
   });
 
   it("renders drivers as a bullet list (no ¿Por qué? heading)", () => {
@@ -142,12 +119,12 @@ describe("FichaInteligenciaScores", () => {
   it("panel with undefined band shows empty placeholder, no driver lists", () => {
     render(
       <FichaInteligenciaScores
-        pulso={makePulso({ bandaCredito: undefined, bandaRecompra: undefined, bandaClv: undefined, clv: undefined })}
+        pulso={makePulso({ bandaCredito: undefined, bandaRecompra: undefined, bandaClv: undefined, clv: undefined, creditoResumen: "Sin saldo a crédito — no se evalúa.", recompraResumen: "Sin historial de compras — no se evalúa.", clvResumen: "Sin historial de compras — no se evalúa." })}
       />,
     );
     expect(screen.queryByRole("list", { name: "Factores del score" })).not.toBeInTheDocument();
-    expect(screen.getByText("Sin saldo a crédito")).toBeInTheDocument();
-    const sinHistorial = screen.getAllByText("Sin historial de compras");
+    expect(screen.getByText(/Sin saldo a crédito/)).toBeInTheDocument();
+    const sinHistorial = screen.getAllByText(/Sin historial de compras/);
     expect(sinHistorial).toHaveLength(2);
   });
 

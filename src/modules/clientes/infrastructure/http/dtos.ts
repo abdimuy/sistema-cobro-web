@@ -118,6 +118,11 @@ export type PulsoDTO = {
   // Customer Lifetime Value
   clv: string;                // decimal as string; "" when no aplica
   banda_clv: string;          // ALTO | MEDIO | BAJO; "" when no aplica
+  // Razones / titulares de los scores (Fase 1)
+  clv_drivers: string[];      // quantified CLV drivers; [] when no aplica
+  credito_resumen: string;    // titular crédito (always present)
+  recompra_resumen: string;   // titular recompra (always present)
+  clv_resumen: string;        // titular CLV (always present)
 };
 
 export type UbicacionDTO = {

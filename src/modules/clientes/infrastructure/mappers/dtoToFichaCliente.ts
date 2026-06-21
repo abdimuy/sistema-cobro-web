@@ -76,6 +76,10 @@ function mapPulso(dto: PulsoDTO): Pulso {
     // CLV — only present when clv is non-empty
     clv: dto.clv || undefined,
     bandaClv: dto.banda_clv || undefined,
+    clvDrivers: dto.banda_clv ? (dto.clv_drivers ?? []) : undefined,
+    creditoResumen: dto.credito_resumen,
+    recompraResumen: dto.recompra_resumen,
+    clvResumen: dto.clv_resumen,
   };
 }
 
