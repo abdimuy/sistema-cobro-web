@@ -82,6 +82,10 @@ function buildValidDTO(overrides: Partial<FichaDTO> = {}): FichaDTO {
       recompra_drivers: ["Alta frecuencia de compra"],
       clv: "8204.83",
       banda_clv: "ALTO",
+      clv_drivers: ["recompra recurrente esperada", "ticket $9,483"],
+      credito_resumen: "Buen pagador: al corriente.",
+      recompra_resumen: "Muy probable que recompre — compró este mes.",
+      clv_resumen: "Valor estimado $8,205 en 24m por su recompra y ticket de $9,483.",
     },
     ubicacion: {
       lat: 19.4326,
@@ -358,6 +362,17 @@ describe("dtoToFichaCliente", () => {
     const p = ficha.pulso!;
     expect(p.clv).toBeUndefined();
     expect(p.bandaClv).toBeUndefined();
+  });
+
+  // ── Titulares y drivers cuantificados (Fase 1) ───────────────────────────────
+
+  it("maps clv_drivers, credito_resumen, recompra_resumen and clv_resumen from pulso DTO", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    const p = ficha.pulso!;
+    expect(p.clvDrivers).toEqual(["recompra recurrente esperada", "ticket $9,483"]);
+    expect(p.creditoResumen).toBe("Buen pagador: al corriente.");
+    expect(p.recompraResumen).toBe("Muy probable que recompre — compró este mes.");
+    expect(p.clvResumen).toBe("Valor estimado $8,205 en 24m por su recompra y ticket de $9,483.");
   });
 });
 

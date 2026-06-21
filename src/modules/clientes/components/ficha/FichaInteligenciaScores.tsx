@@ -1,7 +1,6 @@
 import dayjs from "dayjs";
 import "dayjs/locale/es";
 import { ScoreMeter, type MeterBand } from "./ScoreMeter";
-import { clvDrivers } from "./clvDrivers";
 import { formatMoney } from "../lib/format";
 import SegmentoBadge from "../badges/SegmentoBadge";
 import { InfoHint } from "./lib/InfoHint";
@@ -97,6 +96,15 @@ function DriverList({ drivers, accent }: { drivers: readonly string[]; accent: A
         </li>
       ))}
     </ul>
+  );
+}
+
+function Titular({ text }: { text?: string }) {
+  if (!text) return null;
+  return (
+    <p className="font-serif text-[13px] leading-snug text-foreground/80">
+      {text}
+    </p>
   );
 }
 
@@ -196,6 +204,7 @@ export function FichaInteligenciaScores({ pulso }: Props) {
               bands={SCALE_CREDITO.bands}
               activeBand={pulso.bandaCredito}
             />
+            <Titular text={pulso.creditoResumen} />
             <DriverList
               drivers={pulso.creditoDrivers ?? []}
               accent={
@@ -214,7 +223,7 @@ export function FichaInteligenciaScores({ pulso }: Props) {
             title="Riesgo de crédito"
             titleHint="Qué tan buen pagador es (0–100). Mayor = menor riesgo de impago."
             subtitle="calidad de pago"
-            text="Sin saldo a crédito"
+            text={pulso.creditoResumen || "Sin saldo a crédito"}
           />
         )}
 
@@ -232,6 +241,7 @@ export function FichaInteligenciaScores({ pulso }: Props) {
               bands={SCALE_RECOMPRA.bands}
               activeBand={pulso.bandaRecompra}
             />
+            <Titular text={pulso.recompraResumen} />
             <DriverList
               drivers={pulso.recompraDrivers ?? []}
               accent={
@@ -248,7 +258,7 @@ export function FichaInteligenciaScores({ pulso }: Props) {
             title="Propensión a recompra"
             titleHint="Probabilidad de que vuelva a comprar en los próximos 12 meses."
             subtitle="próxima compra (12m)"
-            text="Sin historial de compras"
+            text={pulso.recompraResumen || "Sin historial de compras"}
           />
         )}
 
@@ -266,8 +276,9 @@ export function FichaInteligenciaScores({ pulso }: Props) {
               bands={SCALE_CLV.bands}
               activeBand={pulso.bandaClv}
             />
+            <Titular text={pulso.clvResumen} />
             <DriverList
-              drivers={clvDrivers(pulso)}
+              drivers={pulso.clvDrivers ?? []}
               accent={
                 pulso.bandaClv === "ALTO"
                   ? "green"
@@ -282,7 +293,7 @@ export function FichaInteligenciaScores({ pulso }: Props) {
             title="Valor del cliente"
             titleHint="Valor estimado que dejará en 24 meses, ajustado por riesgo."
             subtitle="valor estimado (24m)"
-            text="Sin historial de compras"
+            text={pulso.clvResumen || "Sin historial de compras"}
           />
         )}
       </div>
