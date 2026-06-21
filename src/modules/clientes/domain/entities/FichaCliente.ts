@@ -80,6 +80,8 @@ export type Pulso = {
   readonly creditoResumen?: string;
   readonly recompraResumen?: string;
   readonly clvResumen?: string;
+  readonly narrativa?: string;                // IA analyst reading
+  readonly rasgosIA?: readonly string[];      // IA-detected traits
 };
 
 // DireccionCliente holds the address components for a client.

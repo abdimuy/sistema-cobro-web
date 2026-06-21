@@ -86,6 +86,8 @@ function buildValidDTO(overrides: Partial<FichaDTO> = {}): FichaDTO {
       credito_resumen: "Buen pagador: al corriente.",
       recompra_resumen: "Muy probable que recompre — compró este mes.",
       clv_resumen: "Valor estimado $8,205 en 24m por su recompra y ticket de $9,483.",
+      narrativa: "",
+      rasgos_ia: [],
     },
     ubicacion: {
       lat: 19.4326,
@@ -373,6 +375,28 @@ describe("dtoToFichaCliente", () => {
     expect(p.creditoResumen).toBe("Buen pagador: al corriente.");
     expect(p.recompraResumen).toBe("Muy probable que recompre — compró este mes.");
     expect(p.clvResumen).toBe("Valor estimado $8,205 en 24m por su recompra y ticket de $9,483.");
+  });
+
+  // ── Narrativa y rasgos IA ────────────────────────────────────────────────────
+
+  it("maps narrativa and rasgos_ia from pulso DTO when populated", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.narrativa = "Cliente con potencial moderado. Últimamente activo tras período dormido.";
+    dto.pulso!.rasgos_ia = ["Reactivación reciente", "Patrón de compra estable"];
+    const ficha = dtoToFichaCliente(dto);
+    const p = ficha.pulso!;
+    expect(p.narrativa).toBe("Cliente con potencial moderado. Últimamente activo tras período dormido.");
+    expect(p.rasgosIA).toEqual(["Reactivación reciente", "Patrón de compra estable"]);
+  });
+
+  it("maps narrativa to undefined and rasgosIA to undefined when both empty", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.narrativa = "";
+    dto.pulso!.rasgos_ia = [];
+    const ficha = dtoToFichaCliente(dto);
+    const p = ficha.pulso!;
+    expect(p.narrativa).toBeUndefined();
+    expect(p.rasgosIA).toBeUndefined();
   });
 });
 

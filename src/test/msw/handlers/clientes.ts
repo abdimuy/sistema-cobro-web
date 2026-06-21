@@ -127,6 +127,8 @@ const DEFAULT_FICHA: FichaDTO = {
     credito_resumen: "Algunos retrasos recientes — monitorear.",
     recompra_resumen: "Muy probable que recompre — alta frecuencia.",
     clv_resumen: "Valor estimado $9,200 en 24m por su recompra y ticket.",
+    narrativa: "",
+    rasgos_ia: [],
   },
   ubicacion: {
     lat: 19.4326,

@@ -123,6 +123,8 @@ export type PulsoDTO = {
   credito_resumen: string;    // titular crédito (always present)
   recompra_resumen: string;   // titular recompra (always present)
   clv_resumen: string;        // titular CLV (always present)
+  narrativa: string;       // IA analyst reading (Spanish); "" when LLM off
+  rasgos_ia: string[];     // IA-detected behavioral traits; [] when none
 };
 
 export type UbicacionDTO = {
