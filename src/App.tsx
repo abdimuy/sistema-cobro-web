@@ -20,6 +20,7 @@ import FailedIntents from "./modules/failedIntents/FailedIntents";
 import Winback from "./modules/winback/Winback";
 import { Clientes } from "./modules/clientes/Clientes";
 import ClienteFichaPage from "./modules/clientes/ClienteFichaPage";
+import { Rutas } from "./modules/rutas/Rutas";
 
 // Auth Components
 import LoginPage from "./components/auth/LoginPage";
@@ -122,6 +123,10 @@ function App() {
 
               <Route path="/clientes/:id" element={
                 <ProtectedRoute requiredModule="CLIENTES"><ClienteFichaPage /></ProtectedRoute>
+              } />
+
+              <Route path="/rutas" element={
+                <ProtectedRoute requiredModule="RUTAS"><Rutas /></ProtectedRoute>
               } />
 
               <Route path="/settings" element={
