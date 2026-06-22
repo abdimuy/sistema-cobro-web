@@ -129,6 +129,7 @@ const DEFAULT_FICHA: FichaDTO = {
     clv_resumen: "Valor estimado $9,200 en 24m por su recompra y ticket.",
     narrativa: "",
     rasgos_ia: [],
+    contexto_operativo: "",
   },
   ubicacion: {
     lat: 19.4326,

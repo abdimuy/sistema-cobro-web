@@ -88,8 +88,8 @@ export function ClienteFicha({ clienteId }: Props) {
 
       {/* ── Zona 2 — Inteligencia ── */}
       <FichaRitmoPago ritmo={ritmoState.ritmo} isLoading={ritmoState.isLoading} onVentaClick={setSelectedDoctoPvId} onPagoClick={setSelectedPagoId} pulso={ficha.pulso} />
-      <FichaInteligenciaScores pulso={ficha.pulso} />
       <FichaLecturaAnalista pulso={ficha.pulso} />
+      <FichaInteligenciaScores pulso={ficha.pulso} />
 
       {/* ── Zona 3 — Detalle ── */}
       <FichaCharts

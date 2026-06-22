@@ -125,6 +125,7 @@ export type PulsoDTO = {
   clv_resumen: string;        // titular CLV (always present)
   narrativa: string;       // IA analyst reading (Spanish); "" when LLM off
   rasgos_ia: string[];     // IA-detected behavioral traits; [] when none
+  contexto_operativo: string; // IA-distilled operational signals from the cobrador's note; "" when none
 };
 
 export type UbicacionDTO = {
