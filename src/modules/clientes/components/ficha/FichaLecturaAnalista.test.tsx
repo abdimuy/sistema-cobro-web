@@ -104,6 +104,45 @@ describe("FichaLecturaAnalista", () => {
     expect(screen.getByText("Patrón de compra estable")).toBeInTheDocument();
   });
 
+  it("renders the contexto operativo line when contextoOperativo is non-empty", () => {
+    render(
+      <FichaLecturaAnalista
+        pulso={makePulso({
+          narrativa: "Cliente con potencial moderado.",
+          contextoOperativo: "Acuerdo de pago con Carmelo; domicilio compartido con Amada.",
+        })}
+      />,
+    );
+    expect(screen.getByText("Contexto operativo")).toBeInTheDocument();
+    expect(
+      screen.getByText("Acuerdo de pago con Carmelo; domicilio compartido con Amada."),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the panel with only the contexto line when narrativa and rasgos absent", () => {
+    render(
+      <FichaLecturaAnalista
+        pulso={makePulso({
+          narrativa: undefined,
+          rasgosIA: undefined,
+          contextoOperativo: "Responsable de pago: la hija.",
+        })}
+      />,
+    );
+    expect(screen.getByText("Lectura del analista (IA)")).toBeInTheDocument();
+    expect(screen.getByText("Contexto operativo")).toBeInTheDocument();
+    expect(screen.getByText("Responsable de pago: la hija.")).toBeInTheDocument();
+  });
+
+  it("does not render the contexto line when contextoOperativo is empty", () => {
+    render(
+      <FichaLecturaAnalista
+        pulso={makePulso({ narrativa: "Texto de prueba.", contextoOperativo: undefined })}
+      />,
+    );
+    expect(screen.queryByText("Contexto operativo")).not.toBeInTheDocument();
+  });
+
   it("shows the InfoHint tooltip trigger when panel is rendered", () => {
     render(
       <FichaLecturaAnalista

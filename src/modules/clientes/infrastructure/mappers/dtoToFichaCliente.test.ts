@@ -88,6 +88,7 @@ function buildValidDTO(overrides: Partial<FichaDTO> = {}): FichaDTO {
       clv_resumen: "Valor estimado $8,205 en 24m por su recompra y ticket de $9,483.",
       narrativa: "",
       rasgos_ia: [],
+      contexto_operativo: "",
     },
     ubicacion: {
       lat: 19.4326,
@@ -397,6 +398,22 @@ describe("dtoToFichaCliente", () => {
     const p = ficha.pulso!;
     expect(p.narrativa).toBeUndefined();
     expect(p.rasgosIA).toBeUndefined();
+  });
+
+  it("maps contexto_operativo from pulso DTO when populated", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.contexto_operativo = "Acuerdo de pago con Carmelo; domicilio compartido con Amada.";
+    const ficha = dtoToFichaCliente(dto);
+    expect(ficha.pulso!.contextoOperativo).toBe(
+      "Acuerdo de pago con Carmelo; domicilio compartido con Amada.",
+    );
+  });
+
+  it("maps contexto_operativo to undefined when empty", () => {
+    const dto = buildValidDTO();
+    dto.pulso!.contexto_operativo = "";
+    const ficha = dtoToFichaCliente(dto);
+    expect(ficha.pulso!.contextoOperativo).toBeUndefined();
   });
 });
 

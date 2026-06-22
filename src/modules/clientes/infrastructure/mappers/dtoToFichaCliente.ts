@@ -82,6 +82,7 @@ function mapPulso(dto: PulsoDTO): Pulso {
     clvResumen: dto.clv_resumen,
     narrativa: dto.narrativa || undefined,
     rasgosIA: dto.rasgos_ia && dto.rasgos_ia.length > 0 ? dto.rasgos_ia : undefined,
+    contextoOperativo: dto.contexto_operativo || undefined,
   };
 }
 
