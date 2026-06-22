@@ -56,10 +56,10 @@ describe("FichaLecturaAnalista", () => {
     render(
       <FichaLecturaAnalista pulso={makePulso({ narrativa: undefined, rasgosIA: [] })} />,
     );
-    expect(screen.queryByText("Lectura del analista (IA)")).not.toBeInTheDocument();
+    expect(screen.queryByText("Lectura del analista")).not.toBeInTheDocument();
   });
 
-  it("renders panel title and narrativa when narrativa non-empty, no rasgos", () => {
+  it("renders the narrativa as a quote with a signed byline (no IA branding)", () => {
     render(
       <FichaLecturaAnalista
         pulso={makePulso({
@@ -68,12 +68,14 @@ describe("FichaLecturaAnalista", () => {
         })}
       />,
     );
-    expect(screen.getByText("Lectura del analista (IA)")).toBeInTheDocument();
     expect(screen.getByText("Cliente con potencial moderado.")).toBeInTheDocument();
-    expect(screen.queryByText("Rasgos (IA)")).not.toBeInTheDocument();
+    expect(screen.getByText("Lectura del analista")).toBeInTheDocument();
+    // The card must not carry "IA" branding anywhere.
+    expect(screen.queryByText(/\(IA\)/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Rasgos")).not.toBeInTheDocument();
   });
 
-  it("renders chips but no narrativa paragraph when narrativa absent, rasgos present", () => {
+  it("renders chips under a 'Rasgos' label but no quote when narrativa absent", () => {
     render(
       <FichaLecturaAnalista
         pulso={makePulso({
@@ -82,13 +84,14 @@ describe("FichaLecturaAnalista", () => {
         })}
       />,
     );
-    expect(screen.getByText("Lectura del analista (IA)")).toBeInTheDocument();
-    expect(screen.getByText("Rasgos (IA)")).toBeInTheDocument();
+    // The brief header is always present; the quote paragraph is not.
+    expect(screen.getByText("Lectura del analista")).toBeInTheDocument();
+    expect(screen.getByText("Rasgos")).toBeInTheDocument();
     expect(screen.getByText("Reactivación reciente")).toBeInTheDocument();
     expect(screen.getByText("Patrón de compra estable")).toBeInTheDocument();
   });
 
-  it("renders both narrativa and all rasgo chips when both present", () => {
+  it("renders both the quote and all rasgo chips when both present", () => {
     render(
       <FichaLecturaAnalista
         pulso={makePulso({
@@ -97,60 +100,23 @@ describe("FichaLecturaAnalista", () => {
         })}
       />,
     );
-    expect(screen.getByText("Lectura del analista (IA)")).toBeInTheDocument();
+    expect(screen.getByText("Lectura del analista")).toBeInTheDocument();
     expect(screen.getByText("Cliente con potencial moderado. Últimamente activo.")).toBeInTheDocument();
-    expect(screen.getByText("Rasgos (IA)")).toBeInTheDocument();
+    expect(screen.getByText("Rasgos")).toBeInTheDocument();
     expect(screen.getByText("Reactivación reciente")).toBeInTheDocument();
     expect(screen.getByText("Patrón de compra estable")).toBeInTheDocument();
   });
 
-  it("renders the contexto operativo line when contextoOperativo is non-empty", () => {
+  it("does not render contexto operativo here (it lives next to the note)", () => {
     render(
       <FichaLecturaAnalista
         pulso={makePulso({
-          narrativa: "Cliente con potencial moderado.",
-          contextoOperativo: "Acuerdo de pago con Carmelo; domicilio compartido con Amada.",
+          narrativa: "Texto de prueba.",
+          contextoOperativo: "Acuerdo de pago con Carmelo.",
         })}
-      />,
-    );
-    expect(screen.getByText("Contexto operativo")).toBeInTheDocument();
-    expect(
-      screen.getByText("Acuerdo de pago con Carmelo; domicilio compartido con Amada."),
-    ).toBeInTheDocument();
-  });
-
-  it("renders the panel with only the contexto line when narrativa and rasgos absent", () => {
-    render(
-      <FichaLecturaAnalista
-        pulso={makePulso({
-          narrativa: undefined,
-          rasgosIA: undefined,
-          contextoOperativo: "Responsable de pago: la hija.",
-        })}
-      />,
-    );
-    expect(screen.getByText("Lectura del analista (IA)")).toBeInTheDocument();
-    expect(screen.getByText("Contexto operativo")).toBeInTheDocument();
-    expect(screen.getByText("Responsable de pago: la hija.")).toBeInTheDocument();
-  });
-
-  it("does not render the contexto line when contextoOperativo is empty", () => {
-    render(
-      <FichaLecturaAnalista
-        pulso={makePulso({ narrativa: "Texto de prueba.", contextoOperativo: undefined })}
       />,
     );
     expect(screen.queryByText("Contexto operativo")).not.toBeInTheDocument();
-  });
-
-  it("shows the InfoHint tooltip trigger when panel is rendered", () => {
-    render(
-      <FichaLecturaAnalista
-        pulso={makePulso({ narrativa: "Texto de prueba." })}
-      />,
-    );
-    expect(
-      screen.getByRole("button", { name: /Lectura del analista \(IA\)/i }),
-    ).toBeInTheDocument();
+    expect(screen.queryByText("Acuerdo de pago con Carmelo.")).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { Highlighter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ScoreBadge from "../badges/ScoreBadge";
 import SegmentoBadge from "../badges/SegmentoBadge";
@@ -83,6 +84,24 @@ function NotaBlock({ nota }: { nota: string }) {
   );
 }
 
+// ContextoOperativoBlock renders the operational signals distilled from the
+// cobrador's note (payment agreements, responsibles, shared address, dates).
+// It sits directly under NotaBlock as its read: same column, an ink-amber rule
+// to mark it as the distilled layer over the raw note.
+function ContextoOperativoBlock({ texto }: { texto: string }) {
+  return (
+    <div className="max-w-2xl border-l-2 border-amber-500/30 pl-3">
+      <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+        <Highlighter className="h-3 w-3 text-amber-500/70" aria-hidden />
+        Contexto operativo
+      </p>
+      <p className="mt-1 whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-foreground/75">
+        {texto}
+      </p>
+    </div>
+  );
+}
+
 export function FichaHero({ ficha }: Props) {
   const { pulso } = ficha;
   const tieneSaldo = Number(ficha.resumen.saldo) > 0;
@@ -128,7 +147,14 @@ export function FichaHero({ ficha }: Props) {
             </p>
           )}
 
-          {ficha.notas && <NotaBlock nota={ficha.notas} />}
+          {(ficha.notas || pulso?.contextoOperativo) && (
+            <div className="space-y-2.5">
+              {ficha.notas && <NotaBlock nota={ficha.notas} />}
+              {pulso?.contextoOperativo && (
+                <ContextoOperativoBlock texto={pulso.contextoOperativo} />
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right: Saldo + Reactivación */}

@@ -106,4 +106,25 @@ describe("FichaHero", () => {
     expect(screen.getByText("AMONTONAMIENTO")).toBeInTheDocument();
     expect(screen.queryByText(/\*\*\*\*/)).not.toBeInTheDocument();
   });
+
+  it("renders the contexto operativo block next to the note when present", () => {
+    const base = makeFicha();
+    const ficha = {
+      ...base,
+      pulso: {
+        ...base.pulso!,
+        contextoOperativo: "Acuerdo de pago con Carmelo; revisión 11-12-2025.",
+      },
+    };
+    render(<FichaHero ficha={ficha} />);
+    expect(screen.getByText("Contexto operativo")).toBeInTheDocument();
+    expect(
+      screen.getByText("Acuerdo de pago con Carmelo; revisión 11-12-2025."),
+    ).toBeInTheDocument();
+  });
+
+  it("does not render a contexto operativo block when absent", () => {
+    render(<FichaHero ficha={makeFicha()} />);
+    expect(screen.queryByText("Contexto operativo")).not.toBeInTheDocument();
+  });
 });
