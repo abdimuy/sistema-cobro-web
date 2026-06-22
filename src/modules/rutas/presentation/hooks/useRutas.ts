@@ -19,7 +19,7 @@ export function useRutas(): UseRutasReturn {
   const port = useRutasPort();
 
   const [rutas, setRutas] = useState<ReadonlyArray<Ruta>>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<DomainError | null>(null);
   // Tick increments to force a re-fetch on refresh().
   const [tick, setTick] = useState(0);

@@ -32,7 +32,7 @@ export function RutasScreen() {
       {/* Error state */}
       {error && (
         <p className="font-mono text-[12px] text-destructive" role="alert">
-          {error.message}
+          Error al cargar
         </p>
       )}
 
