@@ -14,9 +14,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useRutas } from "../presentation/hooks/useRutas";
 import { useDesgloseCobranza } from "../presentation/hooks/useDesgloseCobranza";
-import { formatMoney, formatPct } from "./lib/format";
+import { formatMoney, formatPct, formatCuotas, formatMoneyShort } from "./lib/format";
+import { filterVentas, sortVentas } from "./lib/tableOps";
+import type { SortKey, SortDir } from "./lib/tableOps";
 import type { ProductoVenta, Ruta } from "../domain/entities";
 import { obtenerProductosVenta } from "../application/usecases/obtenerProductosVenta";
 import { useRutasPort } from "../presentation/context/RutasContext";
@@ -184,16 +187,25 @@ type ProductosCache = Record<
   { loading: boolean; error: boolean; productos: ProductoVenta[] }
 >;
 
+function SortIndicator({ active, dir }: { active: boolean; dir: SortDir }) {
+  if (!active) return null;
+  return <span className="ml-1 text-[10px]">{dir === "asc" ? "▲" : "▼"}</span>;
+}
+
 function DesglosePanel({ zonaId }: { zonaId: number }) {
   const port = useRutasPort();
   const { ventas, fechaInicio, resumen, isLoading, error } = useDesgloseCobranza(zonaId);
   const [expandedVentaId, setExpandedVentaId] = useState<number | null>(null);
   const [productosCache, setProductosCache] = useState<ProductosCache>({});
+  const [query, setQuery] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  const rows = sortVentas(filterVentas(ventas, query), sortKey, sortDir);
 
   const handleVentaClick = async (ventaId: number, clienteId: number, doctoPvId: number) => {
     if (doctoPvId === 0) return;
 
-    // Toggle collapse if already expanded
     if (expandedVentaId === ventaId) {
       setExpandedVentaId(null);
       return;
@@ -201,7 +213,6 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
 
     setExpandedVentaId(ventaId);
 
-    // Use cached result if available
     if (productosCache[ventaId]) return;
 
     setProductosCache((prev) => ({
@@ -223,6 +234,15 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
     }
   };
 
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
   const COL_COUNT = 8;
 
   return (
@@ -236,7 +256,7 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
         </p>
         {!isLoading && (
           <p className="font-mono text-[11px] text-muted-foreground tabular-nums">
-            Σ aporte {resumen.numerador} ÷ {resumen.denominador} aplican = {formatPct(resumen.pctPonderado)}
+            Σ aporte {formatCuotas(resumen.numerador)} ÷ {resumen.denominador} aplican = {formatPct(resumen.pctPonderado)}
           </p>
         )}
       </DialogHeader>
@@ -247,13 +267,23 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
         </p>
       )}
 
-      <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
+      <Input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Buscar cliente o folio"
+        className="h-8 font-mono text-[12px]"
+      />
+
+      <div className="rounded-lg border border-border/60 bg-card max-h-[60vh] overflow-auto">
         <Table>
           <TableHeader>
-            <TableRow className="border-border/60 hover:bg-transparent">
-              <TableHead className="h-9 px-3 bg-muted/30">
+            <TableRow className="border-border/60 hover:bg-transparent sticky top-0 z-10">
+              <TableHead
+                className="h-9 px-3 bg-muted/30 cursor-pointer select-none"
+                onClick={() => handleSort("clienteNombre")}
+              >
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Cliente
+                  Cliente<SortIndicator active={sortKey === "clienteNombre"} dir={sortDir} />
                 </span>
               </TableHead>
               <TableHead className="h-9 px-3 bg-muted/30">
@@ -271,24 +301,36 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
                   Aplica
                 </span>
               </TableHead>
-              <TableHead className="h-9 px-3 bg-muted/30 text-right">
+              <TableHead
+                className="h-9 px-3 bg-muted/30 text-right cursor-pointer select-none"
+                onClick={() => handleSort("atrasoAntesCuotas")}
+              >
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Atraso antes
+                  Atraso antes<SortIndicator active={sortKey === "atrasoAntesCuotas"} dir={sortDir} />
                 </span>
               </TableHead>
-              <TableHead className="h-9 px-3 bg-muted/30 text-right">
+              <TableHead
+                className="h-9 px-3 bg-muted/30 text-right cursor-pointer select-none"
+                onClick={() => handleSort("pagoCuotas")}
+              >
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Pago
+                  Pago<SortIndicator active={sortKey === "pagoCuotas"} dir={sortDir} />
                 </span>
               </TableHead>
-              <TableHead className="h-9 px-3 bg-muted/30 text-right">
+              <TableHead
+                className="h-9 px-3 bg-muted/30 text-right cursor-pointer select-none"
+                onClick={() => handleSort("aporte")}
+              >
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Aporte
+                  Aporte<SortIndicator active={sortKey === "aporte"} dir={sortDir} />
                 </span>
               </TableHead>
-              <TableHead className="h-9 px-3 bg-muted/30 text-right">
+              <TableHead
+                className="h-9 px-3 bg-muted/30 text-right cursor-pointer select-none"
+                onClick={() => handleSort("atrasoDespuesCuotas")}
+              >
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Atraso después
+                  Atraso después<SortIndicator active={sortKey === "atrasoDespuesCuotas"} dir={sortDir} />
                 </span>
               </TableHead>
             </TableRow>
@@ -304,17 +346,17 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
                   ))}
                 </TableRow>
               ))
-            ) : ventas.length === 0 ? (
+            ) : rows.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={COL_COUNT}
                   className="h-24 text-center text-sm text-muted-foreground"
                 >
-                  Sin ventas
+                  {ventas.length === 0 ? "Sin ventas" : "Sin resultados"}
                 </TableCell>
               </TableRow>
             ) : (
-              ventas.flatMap((venta) => {
+              rows.flatMap((venta) => {
                 const isExpanded = expandedVentaId === venta.ventaId;
                 const cache = productosCache[venta.ventaId];
                 const canExpand = venta.doctoPvId > 0;
@@ -346,16 +388,25 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
                       </span>
                     </TableCell>
                     <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {Number(venta.atrasoAntesCuotas).toFixed(2)} · {formatMoney(venta.atrasoAntesPesos)}
+                      <div className="flex flex-col items-end">
+                        <span className="tabular-nums">{formatCuotas(venta.atrasoAntesCuotas)}</span>
+                        <span className="text-[11px] text-muted-foreground">{formatMoneyShort(venta.atrasoAntesPesos)}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {Number(venta.pagoCuotas).toFixed(2)} · {formatMoney(venta.abonoSemana)}
+                      <div className="flex flex-col items-end">
+                        <span className="tabular-nums">{formatCuotas(venta.pagoCuotas)}</span>
+                        <span className="text-[11px] text-muted-foreground">{formatMoneyShort(venta.abonoSemana)}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {Number(venta.aporte).toFixed(2)}
+                      {formatCuotas(venta.aporte)}
                     </TableCell>
                     <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {Number(venta.atrasoDespuesCuotas).toFixed(2)} · {formatMoney(venta.atrasoDespuesPesos)}
+                      <div className="flex flex-col items-end">
+                        <span className="tabular-nums">{formatCuotas(venta.atrasoDespuesCuotas)}</span>
+                        <span className="text-[11px] text-muted-foreground">{formatMoneyShort(venta.atrasoDespuesPesos)}</span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -401,7 +452,9 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
 
       {!isLoading && ventas.length > 0 && (
         <span className="font-mono text-[11px] text-muted-foreground">
-          {ventas.length} venta{ventas.length !== 1 ? "s" : ""}
+          {query || sortKey
+            ? `${rows.length} de ${ventas.length} venta${ventas.length !== 1 ? "s" : ""}`
+            : `${ventas.length} venta${ventas.length !== 1 ? "s" : ""}`}
         </span>
       )}
     </div>
