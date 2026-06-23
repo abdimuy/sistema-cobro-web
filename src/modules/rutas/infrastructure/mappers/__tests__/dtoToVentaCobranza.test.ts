@@ -7,6 +7,9 @@ function buildValidDTO(overrides: Partial<VentaCobranzaDTO> = {}): VentaCobranza
   return {
     venta_id: 1001,
     cliente_id: 5,
+    cliente_nombre: "JUAN PÉREZ",
+    folio: "A-123",
+    docto_pv_id: 555,
     parcialidad: "3",
     frecuencia: "SEMANAL",
     abono_semana: "500.00",
@@ -14,6 +17,11 @@ function buildValidDTO(overrides: Partial<VentaCobranzaDTO> = {}): VentaCobranza
     aporte: "0.85",
     saldo: "4200.00",
     aplica_ponderado: true,
+    atraso_antes_cuotas: "2",
+    atraso_antes_pesos: "200.00",
+    pago_cuotas: "1",
+    atraso_despues_cuotas: "1",
+    atraso_despues_pesos: "100.00",
     ...overrides,
   };
 }
@@ -79,5 +87,23 @@ describe("dtoToVentaCobranza", () => {
   it("DomainError hereda de Error", () => {
     const dto = buildValidDTO({ venta_id: 0 });
     expect(() => dtoToVentaCobranza(dto)).toThrow(DomainError);
+  });
+
+  it("mapea los campos de auditoría", () => {
+    const v = dtoToVentaCobranza(buildValidDTO());
+    expect(v.clienteNombre).toBe("JUAN PÉREZ");
+    expect(v.folio).toBe("A-123");
+    expect(v.doctoPvId).toBe(555);
+    expect(v.atrasoAntesCuotas).toBe("2");
+  });
+
+  it("lanza DomainError si cliente_nombre no es string", () => {
+    expect(() => dtoToVentaCobranza(buildValidDTO({ cliente_nombre: 1 as unknown as string })))
+      .toThrowError(expect.objectContaining({ code: "cliente_nombre_invalido" }));
+  });
+
+  it("lanza DomainError si docto_pv_id no es número", () => {
+    expect(() => dtoToVentaCobranza(buildValidDTO({ docto_pv_id: "x" as unknown as number })))
+      .toThrowError(expect.objectContaining({ code: "docto_pv_id_invalido" }));
   });
 });

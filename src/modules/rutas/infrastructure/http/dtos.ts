@@ -20,6 +20,9 @@ export type RutasListResponseDTO = {
 export interface VentaCobranzaDTO {
   venta_id: number;
   cliente_id: number;
+  cliente_nombre: string;
+  folio: string;
+  docto_pv_id: number;
   parcialidad: string;
   frecuencia: string;
   abono_semana: string;
@@ -27,10 +30,20 @@ export interface VentaCobranzaDTO {
   aporte: string;
   saldo: string;
   aplica_ponderado: boolean;
+  atraso_antes_cuotas: string;
+  atraso_antes_pesos: string;
+  pago_cuotas: string;
+  atraso_despues_cuotas: string;
+  atraso_despues_pesos: string;
 }
 
 export interface DesgloseCobranzaDTO {
   zona_id: number;
   fecha_inicio_semana: string | null;
   items: VentaCobranzaDTO[];
+  resumen: {
+    numerador: string;
+    denominador: number;
+    pct_ponderado: string | null;
+  };
 }

@@ -66,9 +66,68 @@ export function dtoToVentaCobranza(dto: VentaCobranzaDTO): VentaCobranza {
     );
   }
 
+  if (typeof dto.cliente_nombre !== "string") {
+    throw new DomainError(
+      "cliente_nombre_invalido",
+      "cliente_nombre debe ser una cadena",
+    );
+  }
+
+  if (typeof dto.folio !== "string") {
+    throw new DomainError(
+      "folio_invalido",
+      "folio debe ser una cadena",
+    );
+  }
+
+  if (typeof dto.docto_pv_id !== "number" || !Number.isFinite(dto.docto_pv_id)) {
+    throw new DomainError(
+      "docto_pv_id_invalido",
+      "docto_pv_id debe ser un número válido",
+    );
+  }
+
+  if (typeof dto.atraso_antes_cuotas !== "string") {
+    throw new DomainError(
+      "atraso_antes_cuotas_invalido",
+      "atraso_antes_cuotas debe ser una cadena",
+    );
+  }
+
+  if (typeof dto.atraso_antes_pesos !== "string") {
+    throw new DomainError(
+      "atraso_antes_pesos_invalido",
+      "atraso_antes_pesos debe ser una cadena decimal",
+    );
+  }
+
+  if (typeof dto.pago_cuotas !== "string") {
+    throw new DomainError(
+      "pago_cuotas_invalido",
+      "pago_cuotas debe ser una cadena",
+    );
+  }
+
+  if (typeof dto.atraso_despues_cuotas !== "string") {
+    throw new DomainError(
+      "atraso_despues_cuotas_invalido",
+      "atraso_despues_cuotas debe ser una cadena",
+    );
+  }
+
+  if (typeof dto.atraso_despues_pesos !== "string") {
+    throw new DomainError(
+      "atraso_despues_pesos_invalido",
+      "atraso_despues_pesos debe ser una cadena decimal",
+    );
+  }
+
   return {
     ventaId: dto.venta_id,
     clienteId: dto.cliente_id,
+    clienteNombre: dto.cliente_nombre,
+    folio: dto.folio,
+    doctoPvId: dto.docto_pv_id,
     parcialidad: dto.parcialidad,
     frecuencia: dto.frecuencia,
     abonoSemana: dto.abono_semana,
@@ -76,5 +135,10 @@ export function dtoToVentaCobranza(dto: VentaCobranzaDTO): VentaCobranza {
     aporte: dto.aporte,
     saldo: dto.saldo,
     aplicaPonderado: dto.aplica_ponderado,
+    atrasoAntesCuotas: dto.atraso_antes_cuotas,
+    atrasoAntesPesos: dto.atraso_antes_pesos,
+    pagoCuotas: dto.pago_cuotas,
+    atrasoDespuesCuotas: dto.atraso_despues_cuotas,
+    atrasoDespuesPesos: dto.atraso_despues_pesos,
   };
 }

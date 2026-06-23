@@ -10,10 +10,11 @@ export class FakeRutasPort implements RutasPort {
 
   listarResponse: Ruta[] | (() => Ruta[]) = [];
   desgloseResponse:
-    | { fechaInicioSemana: string | null; ventas: VentaCobranza[] }
-    | (() => Promise<{ fechaInicioSemana: string | null; ventas: VentaCobranza[] }>) = {
+    | { fechaInicioSemana: string | null; ventas: VentaCobranza[]; resumen: { numerador: string; denominador: number; pctPonderado: string | null } }
+    | (() => Promise<{ fechaInicioSemana: string | null; ventas: VentaCobranza[]; resumen: { numerador: string; denominador: number; pctPonderado: string | null } }>) = {
     fechaInicioSemana: null,
     ventas: [],
+    resumen: { numerador: "0", denominador: 0, pctPonderado: null },
   };
 
   // When set, the next call to that method throws this error.
@@ -29,7 +30,7 @@ export class FakeRutasPort implements RutasPort {
   async desgloseCobranza(
     zonaId: number,
     signal?: AbortSignal,
-  ): Promise<{ fechaInicioSemana: string | null; ventas: VentaCobranza[] }> {
+  ): Promise<{ fechaInicioSemana: string | null; ventas: VentaCobranza[]; resumen: { numerador: string; denominador: number; pctPonderado: string | null } }> {
     this.desgloseCalls.push({ zonaId, signal });
     const e = this.takeThrow("desgloseCobranza");
     if (e) throw e;
@@ -69,6 +70,9 @@ export function makeFakeVentaCobranza(overrides: Partial<VentaCobranza> = {}): V
   const base: VentaCobranza = {
     ventaId: 1001,
     clienteId: 5,
+    clienteNombre: "JUAN PÉREZ TORRES",
+    folio: "A-1001",
+    doctoPvId: 555,
     parcialidad: "3",
     frecuencia: "SEMANAL",
     abonoSemana: "500.00",
@@ -76,6 +80,11 @@ export function makeFakeVentaCobranza(overrides: Partial<VentaCobranza> = {}): V
     aporte: "0.85",
     saldo: "4200.00",
     aplicaPonderado: true,
+    atrasoAntesCuotas: "2",
+    atrasoAntesPesos: "200.00",
+    pagoCuotas: "1",
+    atrasoDespuesCuotas: "1",
+    atrasoDespuesPesos: "100.00",
   };
   return { ...base, ...overrides };
 }

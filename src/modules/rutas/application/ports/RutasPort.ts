@@ -8,5 +8,9 @@ export interface RutasPort {
   desgloseCobranza(
     zonaId: number,
     signal?: AbortSignal,
-  ): Promise<{ fechaInicioSemana: string | null; ventas: VentaCobranza[] }>;
+  ): Promise<{
+    fechaInicioSemana: string | null;
+    ventas: VentaCobranza[];
+    resumen: { numerador: string; denominador: number; pctPonderado: string | null };
+  }>;
 }

@@ -8,6 +8,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useRutas } from "../presentation/hooks/useRutas";
 import { useDesgloseCobranza } from "../presentation/hooks/useDesgloseCobranza";
 import { formatMoney, formatPct } from "./lib/format";
@@ -159,27 +165,36 @@ export function RutasScreen() {
         )}
       </section>
 
-      {/* Drill-down */}
-      {selectedZonaId !== null && (
-        <DesglosePanel zonaId={selectedZonaId} />
-      )}
+      {/* Drill-down modal */}
+      <Dialog open={selectedZonaId !== null} onOpenChange={(o) => !o && setSelectedZonaId(null)}>
+        <DialogContent className="max-w-5xl w-full overflow-y-auto max-h-[90vh]">
+          {selectedZonaId !== null && (
+            <DesglosePanel zonaId={selectedZonaId} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 function DesglosePanel({ zonaId }: { zonaId: number }) {
-  const { ventas, fechaInicio, isLoading, error } = useDesgloseCobranza(zonaId);
+  const { ventas, fechaInicio, resumen, isLoading, error } = useDesgloseCobranza(zonaId);
 
   return (
-    <section className="flex flex-col gap-4 rounded-md border border-border/60 px-5 py-5">
-      <div>
-        <h4 className="font-serif text-sm font-normal text-foreground">
+    <div className="flex flex-col gap-4">
+      <DialogHeader>
+        <DialogTitle className="font-serif text-sm font-normal text-foreground">
           Desglose por venta
-        </h4>
+        </DialogTitle>
         <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
           {fechaInicio ? `Semana ${fechaInicio}` : "Semana en curso"}
         </p>
-      </div>
+        {!isLoading && (
+          <p className="font-mono text-[11px] text-muted-foreground tabular-nums">
+            Σ aporte {resumen.numerador} ÷ {resumen.denominador} aplican = {formatPct(resumen.pctPonderado)}
+          </p>
+        )}
+      </DialogHeader>
 
       {error && (
         <p className="font-mono text-[12px] text-destructive" role="alert">
@@ -196,29 +211,14 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
                   Cliente
                 </span>
               </TableHead>
-              <TableHead className="h-9 px-3 bg-muted/30 text-right">
+              <TableHead className="h-9 px-3 bg-muted/30">
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Parcialidad
+                  Folio
                 </span>
               </TableHead>
               <TableHead className="h-9 px-3 bg-muted/30">
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Frecuencia
-                </span>
-              </TableHead>
-              <TableHead className="h-9 px-3 bg-muted/30 text-right">
-                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Abonó
-                </span>
-              </TableHead>
-              <TableHead className="h-9 px-3 bg-muted/30 text-right">
-                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Vencidas
-                </span>
-              </TableHead>
-              <TableHead className="h-9 px-3 bg-muted/30 text-right">
-                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Aporte
                 </span>
               </TableHead>
               <TableHead className="h-9 px-3 bg-muted/30">
@@ -228,7 +228,22 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
               </TableHead>
               <TableHead className="h-9 px-3 bg-muted/30 text-right">
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Saldo
+                  Atraso antes
+                </span>
+              </TableHead>
+              <TableHead className="h-9 px-3 bg-muted/30 text-right">
+                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Pago
+                </span>
+              </TableHead>
+              <TableHead className="h-9 px-3 bg-muted/30 text-right">
+                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Aporte
+                </span>
+              </TableHead>
+              <TableHead className="h-9 px-3 bg-muted/30 text-right">
+                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Atraso después
                 </span>
               </TableHead>
             </TableRow>
@@ -259,23 +274,14 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
                   key={venta.ventaId}
                   className="border-border/40 hover:bg-muted/50 transition-colors"
                 >
-                  <TableCell className="px-3 py-2 font-mono text-sm text-foreground tabular-nums">
-                    {venta.clienteId}
+                  <TableCell className="px-3 py-2 text-sm text-foreground">
+                    {venta.clienteNombre || String(venta.clienteId)}
                   </TableCell>
-                  <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                    {venta.parcialidad}
+                  <TableCell className="px-3 py-2 font-mono text-sm text-muted-foreground tabular-nums">
+                    {venta.folio}
                   </TableCell>
                   <TableCell className="px-3 py-2 text-sm text-muted-foreground">
                     {venta.frecuencia}
-                  </TableCell>
-                  <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                    {formatMoney(venta.abonoSemana)}
-                  </TableCell>
-                  <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                    {Number(venta.vencidas).toFixed(2)}
-                  </TableCell>
-                  <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                    {Number(venta.aporte).toFixed(2)}
                   </TableCell>
                   <TableCell className="px-3 py-2 text-sm">
                     <span
@@ -289,7 +295,16 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
                     </span>
                   </TableCell>
                   <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                    {formatMoney(venta.saldo)}
+                    {Number(venta.atrasoAntesCuotas).toFixed(2)} · {formatMoney(venta.atrasoAntesPesos)}
+                  </TableCell>
+                  <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
+                    {Number(venta.pagoCuotas).toFixed(2)} · {formatMoney(venta.abonoSemana)}
+                  </TableCell>
+                  <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
+                    {Number(venta.aporte).toFixed(2)}
+                  </TableCell>
+                  <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
+                    {Number(venta.atrasoDespuesCuotas).toFixed(2)} · {formatMoney(venta.atrasoDespuesPesos)}
                   </TableCell>
                 </TableRow>
               ))
@@ -303,6 +318,6 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
           {ventas.length} venta{ventas.length !== 1 ? "s" : ""}
         </span>
       )}
-    </section>
+    </div>
   );
 }

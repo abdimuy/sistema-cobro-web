@@ -24,6 +24,7 @@ describe("useDesgloseCobranza", () => {
         makeFakeVentaCobranza({ ventaId: 1001, clienteId: 5 }),
         makeFakeVentaCobranza({ ventaId: 1002, clienteId: 8 }),
       ],
+      resumen: { numerador: "1.70", denominador: 2, pctPonderado: "85.0" },
     };
 
     const { result } = renderHook(() => useDesgloseCobranza(3), {

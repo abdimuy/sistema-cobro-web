@@ -27,7 +27,11 @@ export class HttpRutasAdapter implements RutasPort {
   async desgloseCobranza(
     zonaId: number,
     signal?: AbortSignal,
-  ): Promise<{ fechaInicioSemana: string | null; ventas: VentaCobranza[] }> {
+  ): Promise<{
+    fechaInicioSemana: string | null;
+    ventas: VentaCobranza[];
+    resumen: { numerador: string; denominador: number; pctPonderado: string | null };
+  }> {
     try {
       const { data } = await this.client.get<DesgloseCobranzaDTO>(
         `/rutas/${zonaId}/cobranza`,
@@ -36,6 +40,11 @@ export class HttpRutasAdapter implements RutasPort {
       return {
         fechaInicioSemana: data.fecha_inicio_semana,
         ventas: data.items.map(dtoToVentaCobranza),
+        resumen: {
+          numerador: data.resumen.numerador,
+          denominador: data.resumen.denominador,
+          pctPonderado: data.resumen.pct_ponderado,
+        },
       };
     } catch (e) {
       throw apperrorToDomainError(e);

@@ -8,6 +8,7 @@ import { toDomainError } from "./lib/toDomainError";
 export type UseDesgloseCobranzaReturn = {
   ventas: ReadonlyArray<VentaCobranza>;
   fechaInicio: string | null;
+  resumen: { numerador: string; denominador: number; pctPonderado: string | null };
   isLoading: boolean;
   error: DomainError | null;
 };
@@ -22,6 +23,7 @@ export function useDesgloseCobranza(
 
   const [ventas, setVentas] = useState<ReadonlyArray<VentaCobranza>>([]);
   const [fechaInicio, setFechaInicio] = useState<string | null>(null);
+  const [resumen, setResumen] = useState<{ numerador: string; denominador: number; pctPonderado: string | null }>({ numerador: "0", denominador: 0, pctPonderado: null });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<DomainError | null>(null);
 
@@ -31,6 +33,7 @@ export function useDesgloseCobranza(
     if (zonaId === null) {
       setVentas([]);
       setFechaInicio(null);
+      setResumen({ numerador: "0", denominador: 0, pctPonderado: null });
       setIsLoading(false);
       setError(null);
       return;
@@ -47,6 +50,7 @@ export function useDesgloseCobranza(
         if (ctrl.signal.aborted) return;
         setVentas(result.ventas);
         setFechaInicio(result.fechaInicioSemana);
+        setResumen(result.resumen);
       })
       .catch((e: unknown) => {
         if (ctrl.signal.aborted) return;
@@ -59,5 +63,5 @@ export function useDesgloseCobranza(
     return () => ctrl.abort();
   }, [port, zonaId]);
 
-  return { ventas, fechaInicio, isLoading, error };
+  return { ventas, fechaInicio, resumen, isLoading, error };
 }
