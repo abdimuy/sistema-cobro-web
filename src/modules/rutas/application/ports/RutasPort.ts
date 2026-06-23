@@ -1,4 +1,4 @@
-import type { Ruta, VentaCobranza } from "../../domain/entities";
+import type { ProductoVenta, Ruta, VentaCobranza } from "../../domain/entities";
 
 // RutasPort is the outbound interface the rutas module requires from its host.
 // The HTTP adapter satisfies it for production; an in-memory fake satisfies it
@@ -13,4 +13,9 @@ export interface RutasPort {
     ventas: VentaCobranza[];
     resumen: { numerador: string; denominador: number; pctPonderado: string | null };
   }>;
+  obtenerProductos(
+    clienteId: number,
+    doctoPvId: number,
+    signal?: AbortSignal,
+  ): Promise<ProductoVenta[]>;
 }

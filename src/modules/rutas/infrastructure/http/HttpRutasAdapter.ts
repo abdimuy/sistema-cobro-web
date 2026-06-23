@@ -1,9 +1,10 @@
 import type { AxiosInstance } from "axios";
 import type { RutasPort } from "../../application/ports/RutasPort";
-import type { Ruta, VentaCobranza } from "../../domain/entities";
+import type { ProductoVenta, Ruta, VentaCobranza } from "../../domain/entities";
 import type { DesgloseCobranzaDTO, RutasListResponseDTO } from "./dtos";
 import { dtoToRuta } from "../mappers/dtoToRuta";
 import { dtoToVentaCobranza } from "../mappers/dtoToVentaCobranza";
+import { dtoToProductoVenta } from "../mappers/dtoToProductoVenta";
 import { apperrorToDomainError } from "../mappers/errorMapper";
 
 // HttpRutasAdapter is the production implementation of RutasPort.
@@ -46,6 +47,23 @@ export class HttpRutasAdapter implements RutasPort {
           pctPonderado: data.resumen.pct_ponderado,
         },
       };
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async obtenerProductos(
+    clienteId: number,
+    doctoPvId: number,
+    signal?: AbortSignal,
+  ): Promise<ProductoVenta[]> {
+    try {
+      const { data } = await this.client.get<{ productos: unknown[] }>(
+        `/clientes/${clienteId}/ventas/${doctoPvId}`,
+        { signal },
+      );
+      const productos: unknown[] = data.productos ?? [];
+      return productos.map(dtoToProductoVenta);
     } catch (e) {
       throw apperrorToDomainError(e);
     }

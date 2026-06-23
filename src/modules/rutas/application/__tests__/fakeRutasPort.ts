@@ -1,4 +1,4 @@
-import type { Ruta, VentaCobranza } from "../../domain/entities";
+import type { ProductoVenta, Ruta, VentaCobranza } from "../../domain/entities";
 import type { RutasPort } from "../ports/RutasPort";
 
 // FakeRutasPort is a hand-rolled in-memory implementation of RutasPort
@@ -7,8 +7,10 @@ import type { RutasPort } from "../ports/RutasPort";
 export class FakeRutasPort implements RutasPort {
   listarCalls: Array<{ signal?: AbortSignal }> = [];
   desgloseCalls: Array<{ zonaId: number; signal?: AbortSignal }> = [];
+  productosCalls: Array<{ clienteId: number; doctoPvId: number; signal?: AbortSignal }> = [];
 
   listarResponse: Ruta[] | (() => Ruta[]) = [];
+  productosResponse: ProductoVenta[] | (() => Promise<ProductoVenta[]>) = [];
   desgloseResponse:
     | { fechaInicioSemana: string | null; ventas: VentaCobranza[]; resumen: { numerador: string; denominador: number; pctPonderado: string | null } }
     | (() => Promise<{ fechaInicioSemana: string | null; ventas: VentaCobranza[]; resumen: { numerador: string; denominador: number; pctPonderado: string | null } }>) = {
@@ -35,6 +37,18 @@ export class FakeRutasPort implements RutasPort {
     const e = this.takeThrow("desgloseCobranza");
     if (e) throw e;
     const r = this.desgloseResponse;
+    return typeof r === "function" ? r() : r;
+  }
+
+  async obtenerProductos(
+    clienteId: number,
+    doctoPvId: number,
+    signal?: AbortSignal,
+  ): Promise<ProductoVenta[]> {
+    this.productosCalls.push({ clienteId, doctoPvId, signal });
+    const e = this.takeThrow("obtenerProductos");
+    if (e) throw e;
+    const r = this.productosResponse;
     return typeof r === "function" ? r() : r;
   }
 

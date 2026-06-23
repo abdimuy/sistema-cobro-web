@@ -17,7 +17,9 @@ import {
 import { useRutas } from "../presentation/hooks/useRutas";
 import { useDesgloseCobranza } from "../presentation/hooks/useDesgloseCobranza";
 import { formatMoney, formatPct } from "./lib/format";
-import type { Ruta } from "../domain/entities";
+import type { ProductoVenta, Ruta } from "../domain/entities";
+import { obtenerProductosVenta } from "../application/usecases/obtenerProductosVenta";
+import { useRutasPort } from "../presentation/context/RutasContext";
 
 const SKELETON_ROWS = 6;
 
@@ -177,8 +179,51 @@ export function RutasScreen() {
   );
 }
 
+type ProductosCache = Record<
+  number,
+  { loading: boolean; error: boolean; productos: ProductoVenta[] }
+>;
+
 function DesglosePanel({ zonaId }: { zonaId: number }) {
+  const port = useRutasPort();
   const { ventas, fechaInicio, resumen, isLoading, error } = useDesgloseCobranza(zonaId);
+  const [expandedVentaId, setExpandedVentaId] = useState<number | null>(null);
+  const [productosCache, setProductosCache] = useState<ProductosCache>({});
+
+  const handleVentaClick = async (ventaId: number, clienteId: number, doctoPvId: number) => {
+    if (doctoPvId === 0) return;
+
+    // Toggle collapse if already expanded
+    if (expandedVentaId === ventaId) {
+      setExpandedVentaId(null);
+      return;
+    }
+
+    setExpandedVentaId(ventaId);
+
+    // Use cached result if available
+    if (productosCache[ventaId]) return;
+
+    setProductosCache((prev) => ({
+      ...prev,
+      [ventaId]: { loading: true, error: false, productos: [] },
+    }));
+
+    try {
+      const productos = await obtenerProductosVenta(port, clienteId, doctoPvId);
+      setProductosCache((prev) => ({
+        ...prev,
+        [ventaId]: { loading: false, error: false, productos },
+      }));
+    } catch {
+      setProductosCache((prev) => ({
+        ...prev,
+        [ventaId]: { loading: false, error: true, productos: [] },
+      }));
+    }
+  };
+
+  const COL_COUNT = 8;
 
   return (
     <div className="flex flex-col gap-4">
@@ -252,7 +297,7 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <TableRow key={i} className="border-border/40">
-                  {Array.from({ length: 8 }).map((_, ci) => (
+                  {Array.from({ length: COL_COUNT }).map((_, ci) => (
                     <TableCell key={ci} className="px-3 py-2">
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
@@ -262,52 +307,93 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
             ) : ventas.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={COL_COUNT}
                   className="h-24 text-center text-sm text-muted-foreground"
                 >
                   Sin ventas
                 </TableCell>
               </TableRow>
             ) : (
-              ventas.map((venta) => (
-                <TableRow
-                  key={venta.ventaId}
-                  className="border-border/40 hover:bg-muted/50 transition-colors"
-                >
-                  <TableCell className="px-3 py-2 text-sm text-foreground">
-                    {venta.clienteNombre || String(venta.clienteId)}
-                  </TableCell>
-                  <TableCell className="px-3 py-2 font-mono text-sm text-muted-foreground tabular-nums">
-                    {venta.folio}
-                  </TableCell>
-                  <TableCell className="px-3 py-2 text-sm text-muted-foreground">
-                    {venta.frecuencia}
-                  </TableCell>
-                  <TableCell className="px-3 py-2 text-sm">
-                    <span
-                      className={
-                        venta.aplicaPonderado
-                          ? "font-mono text-[11px] text-foreground"
-                          : "font-mono text-[11px] text-muted-foreground/60"
-                      }
-                    >
-                      {venta.aplicaPonderado ? "Sí" : "No"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                    {Number(venta.atrasoAntesCuotas).toFixed(2)} · {formatMoney(venta.atrasoAntesPesos)}
-                  </TableCell>
-                  <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                    {Number(venta.pagoCuotas).toFixed(2)} · {formatMoney(venta.abonoSemana)}
-                  </TableCell>
-                  <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                    {Number(venta.aporte).toFixed(2)}
-                  </TableCell>
-                  <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                    {Number(venta.atrasoDespuesCuotas).toFixed(2)} · {formatMoney(venta.atrasoDespuesPesos)}
-                  </TableCell>
-                </TableRow>
-              ))
+              ventas.flatMap((venta) => {
+                const isExpanded = expandedVentaId === venta.ventaId;
+                const cache = productosCache[venta.ventaId];
+                const canExpand = venta.doctoPvId > 0;
+
+                const mainRow = (
+                  <TableRow
+                    key={venta.ventaId}
+                    className={`border-border/40 transition-colors ${canExpand ? "hover:bg-muted/50 cursor-pointer" : "cursor-default"} ${isExpanded ? "bg-muted/20" : ""}`}
+                    onClick={() => handleVentaClick(venta.ventaId, venta.clienteId, venta.doctoPvId)}
+                  >
+                    <TableCell className="px-3 py-2 text-sm text-foreground">
+                      {venta.clienteNombre || String(venta.clienteId)}
+                    </TableCell>
+                    <TableCell className="px-3 py-2 font-mono text-sm text-muted-foreground tabular-nums">
+                      {venta.folio}
+                    </TableCell>
+                    <TableCell className="px-3 py-2 text-sm text-muted-foreground">
+                      {venta.frecuencia}
+                    </TableCell>
+                    <TableCell className="px-3 py-2 text-sm">
+                      <span
+                        className={
+                          venta.aplicaPonderado
+                            ? "font-mono text-[11px] text-foreground"
+                            : "font-mono text-[11px] text-muted-foreground/60"
+                        }
+                      >
+                        {venta.aplicaPonderado ? "Sí" : "No"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
+                      {Number(venta.atrasoAntesCuotas).toFixed(2)} · {formatMoney(venta.atrasoAntesPesos)}
+                    </TableCell>
+                    <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
+                      {Number(venta.pagoCuotas).toFixed(2)} · {formatMoney(venta.abonoSemana)}
+                    </TableCell>
+                    <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
+                      {Number(venta.aporte).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
+                      {Number(venta.atrasoDespuesCuotas).toFixed(2)} · {formatMoney(venta.atrasoDespuesPesos)}
+                    </TableCell>
+                  </TableRow>
+                );
+
+                if (!isExpanded || !cache) return [mainRow];
+
+                const subRow = (
+                  <TableRow key={`${venta.ventaId}-productos`} className="border-border/40 bg-muted/10">
+                    <TableCell colSpan={COL_COUNT} className="px-4 py-2">
+                      {cache.loading ? (
+                        <div className="flex flex-col gap-1.5 py-1">
+                          <Skeleton className="h-3 w-3/4" />
+                          <Skeleton className="h-3 w-2/3" />
+                        </div>
+                      ) : cache.error ? (
+                        <p className="font-mono text-[11px] text-destructive">
+                          Error al cargar
+                        </p>
+                      ) : cache.productos.length === 0 ? (
+                        <p className="font-mono text-[11px] text-muted-foreground">
+                          Sin artículos
+                        </p>
+                      ) : (
+                        <ul className="flex flex-col gap-0.5">
+                          {cache.productos.map((p, idx) => (
+                            <li key={idx} className="font-mono text-[11px] text-foreground tabular-nums">
+                              {p.nombre}
+                              <span className="text-muted-foreground"> · {p.cantidad} · {formatMoney(p.importe)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+
+                return [mainRow, subRow];
+              })
             )}
           </TableBody>
         </Table>
