@@ -7,6 +7,10 @@ export const apiClient: AxiosInstance = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
+  // Espera a que Firebase restaure la sesión antes de leer el token. Sin
+  // esto, un fetch en el primer render tras un hard-refresh sale sin token
+  // (auth.currentUser aún es null) y el backend responde 401.
+  await auth.authStateReady();
   const token = await auth.currentUser?.getIdToken();
   if (token) {
     config.headers = config.headers ?? {};
