@@ -221,6 +221,11 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
                   Aporte
                 </span>
               </TableHead>
+              <TableHead className="h-9 px-3 bg-muted/30">
+                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Aplica
+                </span>
+              </TableHead>
               <TableHead className="h-9 px-3 bg-muted/30 text-right">
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Saldo
@@ -232,7 +237,7 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <TableRow key={i} className="border-border/40">
-                  {Array.from({ length: 7 }).map((_, ci) => (
+                  {Array.from({ length: 8 }).map((_, ci) => (
                     <TableCell key={ci} className="px-3 py-2">
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
@@ -242,7 +247,7 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
             ) : ventas.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="h-24 text-center text-sm text-muted-foreground"
                 >
                   Sin ventas
@@ -271,6 +276,17 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
                   </TableCell>
                   <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
                     {Number(venta.aporte).toFixed(2)}
+                  </TableCell>
+                  <TableCell className="px-3 py-2 text-sm">
+                    <span
+                      className={
+                        venta.aplicaPonderado
+                          ? "font-mono text-[11px] text-foreground"
+                          : "font-mono text-[11px] text-muted-foreground/60"
+                      }
+                    >
+                      {venta.aplicaPonderado ? "Sí" : "No"}
+                    </span>
                   </TableCell>
                   <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
                     {formatMoney(venta.saldo)}

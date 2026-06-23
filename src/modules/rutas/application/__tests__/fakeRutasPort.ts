@@ -75,6 +75,7 @@ export function makeFakeVentaCobranza(overrides: Partial<VentaCobranza> = {}): V
     vencidas: "0.50",
     aporte: "0.85",
     saldo: "4200.00",
+    aplicaPonderado: true,
   };
   return { ...base, ...overrides };
 }

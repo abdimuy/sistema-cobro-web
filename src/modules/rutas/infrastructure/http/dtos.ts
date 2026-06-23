@@ -26,6 +26,7 @@ export interface VentaCobranzaDTO {
   vencidas: string;
   aporte: string;
   saldo: string;
+  aplica_ponderado: boolean;
 }
 
 export interface DesgloseCobranzaDTO {

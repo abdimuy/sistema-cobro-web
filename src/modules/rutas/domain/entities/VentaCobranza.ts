@@ -7,4 +7,5 @@ export interface VentaCobranza {
   vencidas: string;
   aporte: string;
   saldo: string;
+  aplicaPonderado: boolean;
 }

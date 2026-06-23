@@ -59,6 +59,13 @@ export function dtoToVentaCobranza(dto: VentaCobranzaDTO): VentaCobranza {
     );
   }
 
+  if (typeof dto.aplica_ponderado !== "boolean") {
+    throw new DomainError(
+      "aplica_ponderado_invalido",
+      "aplica_ponderado debe ser un booleano",
+    );
+  }
+
   return {
     ventaId: dto.venta_id,
     clienteId: dto.cliente_id,
@@ -68,5 +75,6 @@ export function dtoToVentaCobranza(dto: VentaCobranzaDTO): VentaCobranza {
     vencidas: dto.vencidas,
     aporte: dto.aporte,
     saldo: dto.saldo,
+    aplicaPonderado: dto.aplica_ponderado,
   };
 }
