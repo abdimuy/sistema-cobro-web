@@ -1,4 +1,4 @@
-import type { Ruta } from "../../domain/entities";
+import type { Ruta, VentaCobranza } from "../../domain/entities";
 import type { RutasPort } from "../ports/RutasPort";
 
 // FakeRutasPort is a hand-rolled in-memory implementation of RutasPort
@@ -6,10 +6,17 @@ import type { RutasPort } from "../ports/RutasPort";
 // standing up MSW or a real HTTP adapter.
 export class FakeRutasPort implements RutasPort {
   listarCalls: Array<{ signal?: AbortSignal }> = [];
+  desgloseCalls: Array<{ zonaId: number; signal?: AbortSignal }> = [];
 
   listarResponse: Ruta[] | (() => Ruta[]) = [];
+  desgloseResponse:
+    | { fechaInicioSemana: string | null; ventas: VentaCobranza[] }
+    | (() => Promise<{ fechaInicioSemana: string | null; ventas: VentaCobranza[] }>) = {
+    fechaInicioSemana: null,
+    ventas: [],
+  };
 
-  // When set, the next listarRutas call throws this error.
+  // When set, the next call to that method throws this error.
   throwOnNext: Partial<Record<keyof RutasPort, Error>> = {};
 
   async listarRutas(signal?: AbortSignal): Promise<Ruta[]> {
@@ -17,6 +24,17 @@ export class FakeRutasPort implements RutasPort {
     const e = this.takeThrow("listarRutas");
     if (e) throw e;
     return resolve(this.listarResponse);
+  }
+
+  async desgloseCobranza(
+    zonaId: number,
+    signal?: AbortSignal,
+  ): Promise<{ fechaInicioSemana: string | null; ventas: VentaCobranza[] }> {
+    this.desgloseCalls.push({ zonaId, signal });
+    const e = this.takeThrow("desgloseCobranza");
+    if (e) throw e;
+    const r = this.desgloseResponse;
+    return typeof r === "function" ? r() : r;
   }
 
   private takeThrow(method: keyof RutasPort): Error | undefined {
@@ -40,6 +58,23 @@ export function makeFakeRuta(overrides: Partial<Ruta> = {}): Ruta {
     cobradorNombre: "JUAN PÉREZ TORRES",
     numClientes: 48,
     saldoTotal: "125000.00",
+    pctCoberturaSemanal: null,
+    pctPonderadoSemanal: null,
+    fechaInicioSemana: null,
+  };
+  return { ...base, ...overrides };
+}
+
+export function makeFakeVentaCobranza(overrides: Partial<VentaCobranza> = {}): VentaCobranza {
+  const base: VentaCobranza = {
+    ventaId: 1001,
+    clienteId: 5,
+    parcialidad: "3",
+    frecuencia: "SEMANAL",
+    abonoSemana: "500.00",
+    vencidas: "0.50",
+    aporte: "0.85",
+    saldo: "4200.00",
   };
   return { ...base, ...overrides };
 }

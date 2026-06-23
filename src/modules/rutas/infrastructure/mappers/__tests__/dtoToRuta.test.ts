@@ -11,6 +11,9 @@ function buildValidDTO(overrides: Partial<RutaResumenDTO> = {}): RutaResumenDTO 
     cobrador_nombre: "JUAN PÉREZ TORRES",
     num_clientes: 48,
     saldo_total: "125000.00",
+    pct_cobertura_semanal: null,
+    pct_ponderado_semanal: null,
+    fecha_inicio_semana: null,
     ...overrides,
   };
 }
@@ -78,5 +81,29 @@ describe("dtoToRuta", () => {
   it("DomainError hereda de Error", () => {
     const dto = buildValidDTO({ zona_nombre: "" });
     expect(() => dtoToRuta(dto)).toThrow(DomainError);
+  });
+
+  it("mapea los campos de cobertura semanal cuando están presentes", () => {
+    const dto = buildValidDTO({
+      pct_cobertura_semanal: "78.5",
+      pct_ponderado_semanal: "65.2",
+      fecha_inicio_semana: "2026-06-16",
+    });
+    const ruta = dtoToRuta(dto);
+    expect(ruta.pctCoberturaSemanal).toBe("78.5");
+    expect(ruta.pctPonderadoSemanal).toBe("65.2");
+    expect(ruta.fechaInicioSemana).toBe("2026-06-16");
+  });
+
+  it("mapea los campos de cobertura semanal como null cuando son null", () => {
+    const dto = buildValidDTO({
+      pct_cobertura_semanal: null,
+      pct_ponderado_semanal: null,
+      fecha_inicio_semana: null,
+    });
+    const ruta = dtoToRuta(dto);
+    expect(ruta.pctCoberturaSemanal).toBeNull();
+    expect(ruta.pctPonderadoSemanal).toBeNull();
+    expect(ruta.fechaInicioSemana).toBeNull();
   });
 });

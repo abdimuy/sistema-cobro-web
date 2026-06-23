@@ -37,5 +37,8 @@ export function dtoToRuta(dto: RutaResumenDTO): Ruta {
     cobradorNombre: dto.cobrador_nombre ?? "",
     numClientes: dto.num_clientes,
     saldoTotal: dto.saldo_total,
+    pctCoberturaSemanal: dto.pct_cobertura_semanal ?? null,
+    pctPonderadoSemanal: dto.pct_ponderado_semanal ?? null,
+    fechaInicioSemana: dto.fecha_inicio_semana ?? null,
   };
 }

@@ -8,8 +8,28 @@ export type RutaResumenDTO = {
   num_clientes: number;
   // Decimal string — never parse to number.
   saldo_total: string;
+  pct_cobertura_semanal: string | null;
+  pct_ponderado_semanal: string | null;
+  fecha_inicio_semana: string | null;
 };
 
 export type RutasListResponseDTO = {
   items: RutaResumenDTO[];
 };
+
+export interface VentaCobranzaDTO {
+  venta_id: number;
+  cliente_id: number;
+  parcialidad: string;
+  frecuencia: string;
+  abono_semana: string;
+  vencidas: string;
+  aporte: string;
+  saldo: string;
+}
+
+export interface DesgloseCobranzaDTO {
+  zona_id: number;
+  fecha_inicio_semana: string | null;
+  items: VentaCobranzaDTO[];
+}

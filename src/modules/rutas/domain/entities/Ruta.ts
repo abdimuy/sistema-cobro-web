@@ -8,4 +8,8 @@ export type Ruta = {
   readonly numClientes: number;
   // Decimal as string — do not parse to number; use formatMoney for display.
   readonly saldoTotal: string;
+  // Percentage strings — null when no weekly data available yet.
+  readonly pctCoberturaSemanal: string | null;
+  readonly pctPonderadoSemanal: string | null;
+  readonly fechaInicioSemana: string | null;
 };
