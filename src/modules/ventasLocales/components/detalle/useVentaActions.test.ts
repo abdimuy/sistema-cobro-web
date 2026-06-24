@@ -9,7 +9,7 @@ describe("errorMessage", () => {
       },
     };
     expect(errorMessage(err)).toBe(
-      "La zona de la venta no coincide con la del cliente. Corrígela antes de aplicar."
+      "La zona de la venta no coincide con la del cliente en Microsip."
     );
   });
 
