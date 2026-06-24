@@ -25,6 +25,7 @@ import VentaUbicacionTab from "./VentaUbicacionTab";
 import VentaImagenesGrid from "./VentaImagenesGrid";
 import VentaAuditoriaTab from "./VentaAuditoriaTab";
 import VentaCanceladaBanner from "./VentaCanceladaBanner";
+import ZonaMismatchBanner from "./ZonaMismatchBanner";
 import VentaDetalleSkeleton from "./VentaDetalleSkeleton";
 
 interface Props {
@@ -133,6 +134,12 @@ export const VentaDetalleModal = ({ ventaId, onClose }: Props) => {
             <div className="flex-1 overflow-y-auto">
               {venta.situacion === "cancelada" && venta.cancelacion && (
                 <VentaCanceladaBanner cancelacion={venta.cancelacion} />
+              )}
+              {venta.zona_mismatch && (
+                <ZonaMismatchBanner
+                  ventaZonaId={venta.direccion.zona_cliente_id}
+                  microsipZonaId={venta.zona_cliente_microsip_id}
+                />
               )}
 
               <VentaDetalleHero venta={venta} />

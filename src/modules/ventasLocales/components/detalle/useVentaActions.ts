@@ -15,9 +15,12 @@ interface Options {
   onRefetch?: () => void;
 }
 
-const errorMessage = (err: unknown): string => {
+export const errorMessage = (err: unknown): string => {
   if (typeof err === "object" && err && "response" in err) {
-    const resp = (err as { response?: { data?: { detail?: string; title?: string } } }).response;
+    const resp = (err as { response?: { data?: { code?: string; detail?: string; title?: string } } }).response;
+    if (resp?.data?.code === "venta_zona_no_coincide_cliente") {
+      return "La zona de la venta no coincide con la del cliente. Corrígela antes de aplicar.";
+    }
     return resp?.data?.detail ?? resp?.data?.title ?? "Error inesperado del servidor";
   }
   return err instanceof Error ? err.message : "Error inesperado";
