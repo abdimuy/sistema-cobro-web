@@ -32,12 +32,12 @@ vi.mock("recharts", async (importOriginal) => {
 });
 
 // ---------------------------------------------------------------------------
-// Helper render
+// Helper render — accepts an optional initial URL path+search for deep-link tests
 // ---------------------------------------------------------------------------
 
-function renderFicha(port: FakeClientesPort) {
+function renderFicha(port: FakeClientesPort, initialUrl = "/clientes/1042") {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialUrl]}>
       <ClientesProvider port={port}>
         <ClienteFicha clienteId={1042} />
       </ClientesProvider>
@@ -90,6 +90,93 @@ describe("ClienteFicha", () => {
     port.ritmoResponse = makeFakeRitmoPago();
   });
 
+  // ── Tab structure ──────────────────────────────────────────────────────────
+
+  it("renders 5 tab triggers", async () => {
+    renderFicha(port);
+    await waitFor(() =>
+      expect(screen.getByText("Total comprado")).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("tab", { name: "Resumen" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Análisis & predicción" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Pagos & solvencia" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Productos" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Riesgo & crédito" })).toBeInTheDocument();
+  });
+
+  it("clicking 'Análisis & predicción' reveals scores section", async () => {
+    renderFicha(port);
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Análisis & predicción" })).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Inteligencia del cliente")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("tab", { name: "Análisis & predicción" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Inteligencia del cliente")).toBeInTheDocument(),
+    );
+  });
+
+  it("clicking 'Pagos & solvencia' reveals ritmo de pago", async () => {
+    renderFicha(port);
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Pagos & solvencia" })).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Ritmo de pago")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("tab", { name: "Pagos & solvencia" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Ritmo de pago")).toBeInTheDocument(),
+    );
+  });
+
+  it("clicking 'Productos' reveals ventas list", async () => {
+    renderFicha(port);
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Productos" })).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Historial de ventas")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("tab", { name: "Productos" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Historial de ventas")).toBeInTheDocument(),
+    );
+  });
+
+  it("clicking 'Riesgo & crédito' reveals chart section", async () => {
+    renderFicha(port);
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Riesgo & crédito" })).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Comprado vs abonado")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("tab", { name: "Riesgo & crédito" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Comprado vs abonado")).toBeInTheDocument(),
+    );
+  });
+
+  it("?tab=pagos URL opens on Pagos & solvencia tab", async () => {
+    renderFicha(port, "/clientes/1042?tab=pagos");
+    await waitFor(() =>
+      expect(screen.getByText("Ritmo de pago")).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Total comprado")).not.toBeInTheDocument();
+  });
+
+  it("?tab=analisis URL opens on Análisis & predicción tab", async () => {
+    renderFicha(port, "/clientes/1042?tab=analisis");
+    await waitFor(() =>
+      expect(screen.getByText("Inteligencia del cliente")).toBeInTheDocument(),
+    );
+  });
+
+  // ── Resumen tab (default) ──────────────────────────────────────────────────
+
   it("renders nombre in serif heading", async () => {
     renderFicha(port);
     await waitFor(() =>
@@ -123,99 +210,6 @@ describe("ClienteFicha", () => {
     );
   });
 
-  it("renders chart section title", async () => {
-    renderFicha(port);
-    await waitFor(() =>
-      expect(screen.getByText("Comprado vs abonado")).toBeInTheDocument(),
-    );
-    expect(screen.queryByText("Abonos por mes")).not.toBeInTheDocument();
-  });
-
-  it("renders inteligencia scores section with segmento when pulso present", async () => {
-    renderFicha(port);
-    await waitFor(() =>
-      expect(screen.getByText("Inteligencia del cliente")).toBeInTheDocument(),
-    );
-    // Segmento badge label (appears in hero and inteligencia Contexto RFM row)
-    expect(screen.getAllByText("Dormido valioso").length).toBeGreaterThan(0);
-  });
-
-  it("hides inteligencia scores section when pulso is null", async () => {
-    port.fichaResponse = makeFakeFichaCliente({ pulso: null });
-    renderFicha(port);
-    // FichaInteligenciaScores returns null when pulso is null
-    // Wait for ficha to load by checking the KPI heading
-    await waitFor(() =>
-      expect(screen.getByText("Total comprado")).toBeInTheDocument(),
-    );
-    expect(screen.queryByText("Inteligencia del cliente")).not.toBeInTheDocument();
-  });
-
-  it("renders ventas list rows", async () => {
-    port.listarVentasResponse = {
-      items: [
-        makeFakeVentaCliente({ folio: "CV-00542" }),
-        makeFakeVentaCliente({ doctoPvId: 30016, folio: "CV-00543" }),
-      ],
-      nextCursor: "",
-    };
-    renderFicha(port);
-    await waitFor(() =>
-      expect(screen.getByText("CV-00542")).toBeInTheDocument(),
-    );
-    expect(screen.getByText("CV-00543")).toBeInTheDocument();
-  });
-
-  it("clicking a venta row opens VentaModal (shows folio in modal)", async () => {
-    port.listarVentasResponse = {
-      items: [makeFakeVentaCliente({ folio: "CV-00542" })],
-      nextCursor: "",
-    };
-    port.obtenerDetalleResponse = makeFakeVentaDetalle();
-
-    renderFicha(port);
-
-    // Wait for ventas list to load
-    const row = await screen.findByText("CV-00542");
-    await userEvent.click(row.closest("tr")!);
-
-    // Modal opens and fetches detalle — folio appears at least twice
-    await waitFor(() =>
-      expect(
-        screen.getAllByText("CV-00542").length,
-      ).toBeGreaterThan(1),
-    );
-  });
-
-  it("shows full-page error when ficha fetch fails", async () => {
-    port.throwOnNext.obtenerFicha = new Error("falla de red");
-    renderFicha(port);
-    await waitFor(() =>
-      expect(
-        screen.getByText("No se pudo cargar el cliente"),
-      ).toBeInTheDocument(),
-    );
-    expect(screen.getByText("falla de red")).toBeInTheDocument();
-  });
-
-  it("shows empty ventas state when no ventas", async () => {
-    port.listarVentasResponse = { items: [], nextCursor: "" };
-    renderFicha(port);
-    await waitFor(() =>
-      expect(
-        screen.getByText("Sin ventas registradas"),
-      ).toBeInTheDocument(),
-    );
-  });
-
-  it("does not render the 'Acción recomendada' section (hidden for now)", async () => {
-    renderFicha(port);
-    await waitFor(() =>
-      expect(screen.getByText("Inteligencia del cliente")).toBeInTheDocument(),
-    );
-    expect(screen.queryByText("Acción recomendada")).not.toBeInTheDocument();
-  });
-
   it("renders FichaSaludStrip progressbar", async () => {
     renderFicha(port);
     await waitFor(() =>
@@ -223,15 +217,38 @@ describe("ClienteFicha", () => {
     );
   });
 
+  // ── Análisis & predicción tab ──────────────────────────────────────────────
+
+  it("renders inteligencia scores section with segmento when pulso present", async () => {
+    renderFicha(port, "/clientes/1042?tab=analisis");
+    await waitFor(() =>
+      expect(screen.getByText("Inteligencia del cliente")).toBeInTheDocument(),
+    );
+    // Segmento badge label (appears in inteligencia Contexto RFM row)
+    expect(screen.getAllByText("Dormido valioso").length).toBeGreaterThan(0);
+  });
+
+  it("hides inteligencia scores section when pulso is null", async () => {
+    port.fichaResponse = makeFakeFichaCliente({ pulso: null });
+    renderFicha(port, "/clientes/1042?tab=analisis");
+    // Wait for ficha to load (header is always visible after load)
+    await waitFor(() =>
+      expect(screen.queryByText("No se pudo cargar el cliente")).not.toBeInTheDocument(),
+    );
+    // FichaInteligenciaScores returns null when pulso is null
+    expect(screen.queryByText("Inteligencia del cliente")).not.toBeInTheDocument();
+  });
+
+  // ── Pagos & solvencia tab ──────────────────────────────────────────────────
+
   it("renders FichaRitmoPago with 'Ritmo de pago' heading", async () => {
-    renderFicha(port);
+    renderFicha(port, "/clientes/1042?tab=pagos");
     await waitFor(() =>
       expect(screen.getByText("Ritmo de pago")).toBeInTheDocument(),
     );
   });
 
   it("clicking a ritmo pago icon opens VentaModal for that venta", async () => {
-    // Use a ritmo with an evento in the current visible window (week of Jun 9, 2026).
     port.ritmoResponse = makeFakeRitmoPago({
       semanas: [
         {
@@ -253,20 +270,94 @@ describe("ClienteFicha", () => {
         },
       ],
     });
-    // Set up venta detalle response for doctoPvId 30099
     port.obtenerDetalleResponse = makeFakeVentaDetalle({
       venta: makeFakeVentaCliente({ doctoPvId: 30099, folio: "CV-00999" }),
     });
 
-    renderFicha(port);
+    renderFicha(port, "/clientes/1042?tab=pagos");
 
-    // Wait for ritmo to load and icon button to appear
     const iconBtn = await screen.findByRole("button", { name: "Ver venta CV-00999" });
     await userEvent.click(iconBtn);
 
-    // VentaModal should open and show the folio
     await waitFor(() =>
       expect(screen.getAllByText("CV-00999").length).toBeGreaterThan(1),
     );
+  });
+
+  // ── Productos tab ──────────────────────────────────────────────────────────
+
+  it("renders ventas list rows", async () => {
+    port.listarVentasResponse = {
+      items: [
+        makeFakeVentaCliente({ folio: "CV-00542" }),
+        makeFakeVentaCliente({ doctoPvId: 30016, folio: "CV-00543" }),
+      ],
+      nextCursor: "",
+    };
+    renderFicha(port, "/clientes/1042?tab=productos");
+    await waitFor(() =>
+      expect(screen.getByText("CV-00542")).toBeInTheDocument(),
+    );
+    expect(screen.getByText("CV-00543")).toBeInTheDocument();
+  });
+
+  it("clicking a venta row opens VentaModal (shows folio in modal)", async () => {
+    port.listarVentasResponse = {
+      items: [makeFakeVentaCliente({ folio: "CV-00542" })],
+      nextCursor: "",
+    };
+    port.obtenerDetalleResponse = makeFakeVentaDetalle();
+
+    renderFicha(port, "/clientes/1042?tab=productos");
+
+    const row = await screen.findByText("CV-00542");
+    await userEvent.click(row.closest("tr")!);
+
+    await waitFor(() =>
+      expect(
+        screen.getAllByText("CV-00542").length,
+      ).toBeGreaterThan(1),
+    );
+  });
+
+  it("shows empty ventas state when no ventas", async () => {
+    port.listarVentasResponse = { items: [], nextCursor: "" };
+    renderFicha(port, "/clientes/1042?tab=productos");
+    await waitFor(() =>
+      expect(
+        screen.getByText("Sin ventas registradas"),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  // ── Riesgo & crédito tab ───────────────────────────────────────────────────
+
+  it("renders chart section title in riesgo tab", async () => {
+    renderFicha(port, "/clientes/1042?tab=riesgo");
+    await waitFor(() =>
+      expect(screen.getByText("Comprado vs abonado")).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Abonos por mes")).not.toBeInTheDocument();
+  });
+
+  // ── Error / edge cases ─────────────────────────────────────────────────────
+
+  it("shows full-page error when ficha fetch fails", async () => {
+    port.throwOnNext.obtenerFicha = new Error("falla de red");
+    renderFicha(port);
+    await waitFor(() =>
+      expect(
+        screen.getByText("No se pudo cargar el cliente"),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.getByText("falla de red")).toBeInTheDocument();
+  });
+
+  it("does not render the 'Acción recomendada' section (hidden for now)", async () => {
+    renderFicha(port, "/clientes/1042?tab=analisis");
+    await waitFor(() =>
+      expect(screen.getByText("Inteligencia del cliente")).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Acción recomendada")).not.toBeInTheDocument();
   });
 });

@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useFichaCliente } from "../../presentation/hooks/useFichaCliente";
 import { useVentasCliente } from "../../presentation/hooks/useVentasCliente";
 import { useRitmoPago } from "../../presentation/hooks/useRitmoPago";
@@ -17,6 +19,14 @@ import { FichaRitmoPago } from "./FichaRitmoPago";
 import { FichaSaludStrip } from "./FichaSaludStrip";
 import { ReporteModal } from "./ReporteModal";
 
+// Tab deep-link param: ?tab=resumen|analisis|pagos|productos|riesgo
+const VALID_TABS = ["resumen", "analisis", "pagos", "productos", "riesgo"] as const;
+type TabValue = (typeof VALID_TABS)[number];
+
+function isValidTab(v: string | null): v is TabValue {
+  return VALID_TABS.includes(v as TabValue);
+}
+
 interface Props {
   clienteId: number;
 }
@@ -30,6 +40,21 @@ export function ClienteFicha({ clienteId }: Props) {
   );
   const [selectedPagoId, setSelectedPagoId] = useState<number | null>(null);
   const [reporteOpen, setReporteOpen] = useState(false);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get("tab");
+  const activeTab: TabValue = isValidTab(rawTab) ? rawTab : "resumen";
+
+  const handleTabChange = (value: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("tab", value);
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   // Full-page loading (first load only)
   if (isLoading && !ficha) {
@@ -77,57 +102,92 @@ export function ClienteFicha({ clienteId }: Props) {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-[1400px]">
-      {/* ── Zona 1 — Identidad y acción ── */}
-      <FichaHeader ficha={ficha} onReporteClick={() => setReporteOpen(true)} />
-      <FichaHero ficha={ficha} />
-      <FichaSaludStrip resumen={ficha.resumen} pulso={ficha.pulso} />
-      {/* Ocultos por ahora (siguen en el repo para reactivarlos):
-          - Acción recomendada (FichaNextBestAction): el motor aún no está listo.
-          - Filtro de rango de fechas (FichaRangeFilter): a pedido del usuario. */}
-      <FichaKpis resumen={ficha.resumen} isLoading={isLoading} />
+        {/* Always-visible: back button + title + acciones (reporte, etc.) */}
+        <FichaHeader ficha={ficha} onReporteClick={() => setReporteOpen(true)} />
 
-      {/* ── Zona 2 — Inteligencia ── */}
-      <FichaRitmoPago ritmo={ritmoState.ritmo} isLoading={ritmoState.isLoading} onVentaClick={setSelectedDoctoPvId} onPagoClick={setSelectedPagoId} pulso={ficha.pulso} />
-      <FichaLecturaAnalista pulso={ficha.pulso} />
-      <FichaInteligenciaScores pulso={ficha.pulso} />
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <div className="sticky top-0 z-10 bg-background border-b border-border/60 px-6 py-2">
+            <TabsList>
+              <TabsTrigger value="resumen">Resumen</TabsTrigger>
+              <TabsTrigger value="analisis">Análisis & predicción</TabsTrigger>
+              <TabsTrigger value="pagos">Pagos & solvencia</TabsTrigger>
+              <TabsTrigger value="productos">Productos</TabsTrigger>
+              <TabsTrigger value="riesgo">Riesgo & crédito</TabsTrigger>
+            </TabsList>
+          </div>
 
-      {/* ── Zona 3 — Detalle ── */}
-      <FichaCharts
-        compradoVsAbonado={ficha.resumen.compradoVsAbonado}
-        isLoading={isLoading}
-      />
-      <FichaUbicacion ubicacion={ficha.ubicacion} />
-      <FichaVentasList
-        ventas={ventasState.ventas}
-        isLoading={ventasState.isLoading}
-        isLoadingMore={ventasState.isLoadingMore}
-        error={ventasState.error}
-        hasMore={ventasState.hasMore}
-        loadMore={ventasState.loadMore}
-        onVentaClick={setSelectedDoctoPvId}
-      />
+          {/* Tab 1 — Resumen: identidad, salud y narrativa IA */}
+          <TabsContent value="resumen">
+            <FichaHero ficha={ficha} />
+            <FichaSaludStrip resumen={ficha.resumen} pulso={ficha.pulso} />
+            {/* Ocultos por ahora (siguen en el repo para reactivarlos):
+                - Acción recomendada (FichaNextBestAction): motor aún no listo.
+                - Filtro de rango de fechas (FichaRangeFilter): a pedido del usuario. */}
+            <FichaKpis resumen={ficha.resumen} isLoading={isLoading} />
+            <FichaLecturaAnalista pulso={ficha.pulso} />
+            <FichaUbicacion ubicacion={ficha.ubicacion} />
+          </TabsContent>
 
-      <VentaModal
-        clienteId={clienteId}
-        doctoPvId={selectedDoctoPvId}
-        open={selectedDoctoPvId !== null}
-        onClose={() => setSelectedDoctoPvId(null)}
-        onPagoClick={setSelectedPagoId}
-      />
-      <PagoModal
-        clienteId={clienteId}
-        doctoCcId={selectedPagoId}
-        onClose={() => setSelectedPagoId(null)}
-      />
-      <ReporteModal
-        open={reporteOpen}
-        onClose={() => setReporteOpen(false)}
-        clienteId={clienteId}
-        ventas={ventasState.ventas}
-        hasMore={ventasState.hasMore}
-        loadMore={ventasState.loadMore}
-        isLoadingMore={ventasState.isLoadingMore}
-      />
+          {/* Tab 2 — Análisis & predicción: tres scores de inteligencia */}
+          <TabsContent value="analisis">
+            <FichaInteligenciaScores pulso={ficha.pulso} />
+          </TabsContent>
+
+          {/* Tab 3 — Pagos & solvencia: heatmap/timeline de pagos */}
+          <TabsContent value="pagos">
+            <FichaRitmoPago
+              ritmo={ritmoState.ritmo}
+              isLoading={ritmoState.isLoading}
+              onVentaClick={setSelectedDoctoPvId}
+              onPagoClick={setSelectedPagoId}
+              pulso={ficha.pulso}
+            />
+          </TabsContent>
+
+          {/* Tab 4 — Productos: historial de ventas */}
+          <TabsContent value="productos">
+            <FichaVentasList
+              ventas={ventasState.ventas}
+              isLoading={ventasState.isLoading}
+              isLoadingMore={ventasState.isLoadingMore}
+              error={ventasState.error}
+              hasMore={ventasState.hasMore}
+              loadMore={ventasState.loadMore}
+              onVentaClick={setSelectedDoctoPvId}
+            />
+          </TabsContent>
+
+          {/* Tab 5 — Riesgo & crédito: comprado vs abonado */}
+          <TabsContent value="riesgo">
+            <FichaCharts
+              compradoVsAbonado={ficha.resumen.compradoVsAbonado}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+        </Tabs>
+
+        {/* Modals rendered at top level so any tab can open them */}
+        <VentaModal
+          clienteId={clienteId}
+          doctoPvId={selectedDoctoPvId}
+          open={selectedDoctoPvId !== null}
+          onClose={() => setSelectedDoctoPvId(null)}
+          onPagoClick={setSelectedPagoId}
+        />
+        <PagoModal
+          clienteId={clienteId}
+          doctoCcId={selectedPagoId}
+          onClose={() => setSelectedPagoId(null)}
+        />
+        <ReporteModal
+          open={reporteOpen}
+          onClose={() => setReporteOpen(false)}
+          clienteId={clienteId}
+          ventas={ventasState.ventas}
+          hasMore={ventasState.hasMore}
+          loadMore={ventasState.loadMore}
+          isLoadingMore={ventasState.isLoadingMore}
+        />
       </div>
     </div>
   );
