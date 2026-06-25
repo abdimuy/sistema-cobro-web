@@ -1,8 +1,13 @@
 import type { AxiosInstance } from "axios";
-import type { RutasPort } from "../../application/ports/RutasPort";
-import type { ProductoVenta, Ruta, VentaCobranza } from "../../domain/entities";
-import type { DesgloseCobranzaDTO, RutasListResponseDTO } from "./dtos";
+import type { DesgloseCobranza, RutasPort } from "../../application/ports/RutasPort";
+import type { ProductoVenta, ReporteUsuario, Ruta } from "../../domain/entities";
+import type {
+  DesgloseCobranzaDTO,
+  ReporteUsuariosListResponseDTO,
+  RutasListResponseDTO,
+} from "./dtos";
 import { dtoToRuta } from "../mappers/dtoToRuta";
+import { dtoToReporteUsuario } from "../mappers/dtoToReporteUsuario";
 import { dtoToVentaCobranza } from "../mappers/dtoToVentaCobranza";
 import { dtoToProductoVenta } from "../mappers/dtoToProductoVenta";
 import { apperrorToDomainError } from "../mappers/errorMapper";
@@ -25,31 +30,61 @@ export class HttpRutasAdapter implements RutasPort {
     }
   }
 
+  async listarReporteUsuarios(
+    signal?: AbortSignal,
+  ): Promise<ReporteUsuario[]> {
+    try {
+      const { data } =
+        await this.client.get<ReporteUsuariosListResponseDTO>(
+          "/rutas/reporte-usuarios",
+          { signal },
+        );
+      return data.items.map(dtoToReporteUsuario);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
   async desgloseCobranza(
     zonaId: number,
     signal?: AbortSignal,
-  ): Promise<{
-    fechaInicioSemana: string | null;
-    ventas: VentaCobranza[];
-    resumen: { numerador: string; denominador: number; pctPonderado: string | null };
-  }> {
+  ): Promise<DesgloseCobranza> {
     try {
       const { data } = await this.client.get<DesgloseCobranzaDTO>(
         `/rutas/${zonaId}/cobranza`,
         { signal },
       );
-      return {
-        fechaInicioSemana: data.fecha_inicio_semana,
-        ventas: data.items.map(dtoToVentaCobranza),
-        resumen: {
-          numerador: data.resumen.numerador,
-          denominador: data.resumen.denominador,
-          pctPonderado: data.resumen.pct_ponderado,
-        },
-      };
+      return this.mapDesglose(data);
     } catch (e) {
       throw apperrorToDomainError(e);
     }
+  }
+
+  async desgloseCobranzaPorUsuario(
+    uid: string,
+    signal?: AbortSignal,
+  ): Promise<DesgloseCobranza> {
+    try {
+      const { data } = await this.client.get<DesgloseCobranzaDTO>(
+        `/rutas/usuarios/${encodeURIComponent(uid)}/cobranza`,
+        { signal },
+      );
+      return this.mapDesglose(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  private mapDesglose(data: DesgloseCobranzaDTO): DesgloseCobranza {
+    return {
+      fechaInicioSemana: data.fecha_inicio_semana,
+      ventas: data.items.map(dtoToVentaCobranza),
+      resumen: {
+        numerador: data.resumen.numerador,
+        denominador: data.resumen.denominador,
+        pctPonderado: data.resumen.pct_ponderado,
+      },
+    };
   }
 
   async obtenerProductos(

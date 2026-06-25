@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -15,19 +16,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useRutas } from "../presentation/hooks/useRutas";
-import { useDesgloseCobranza } from "../presentation/hooks/useDesgloseCobranza";
+import { useReporteUsuarios } from "../presentation/hooks/useReporteUsuarios";
+import { useDesgloseCobranzaPorUsuario } from "../presentation/hooks/useDesgloseCobranzaPorUsuario";
 import { formatMoney, formatPct, formatCuotas, formatMoneyShort } from "./lib/format";
 import { filterVentas, sortVentas } from "./lib/tableOps";
 import type { SortKey, SortDir } from "./lib/tableOps";
-import type { ProductoVenta, Ruta } from "../domain/entities";
-import { obtenerProductosVenta } from "../application/usecases/obtenerProductosVenta";
-import { useRutasPort } from "../presentation/context/RutasContext";
+import {
+  semaphoreConfig,
+  aporteFillRatio,
+  catchUpMarker,
+  pctBarWidth,
+  pctOverflowMarker,
+  formatVentanaDesde,
+  formatVentanaDias,
+} from "./lib/desgloseUx";
+import type { ReporteUsuario, VentaCobranza } from "../domain/entities";
 
 const SKELETON_ROWS = 6;
+const USER_COL_COUNT = 7;
 
-function sortByCobertura(rutas: ReadonlyArray<Ruta>): Ruta[] {
-  return [...rutas].sort((a, b) => {
+function sortByCobertura(
+  usuarios: ReadonlyArray<ReporteUsuario>,
+): ReporteUsuario[] {
+  return [...usuarios].sort((a, b) => {
     if (a.pctCoberturaSemanal === null && b.pctCoberturaSemanal === null) return 0;
     if (a.pctCoberturaSemanal === null) return 1;
     if (b.pctCoberturaSemanal === null) return -1;
@@ -36,13 +47,13 @@ function sortByCobertura(rutas: ReadonlyArray<Ruta>): Ruta[] {
 }
 
 export function RutasScreen() {
-  const { rutas, isLoading, error } = useRutas();
-  const [selectedZonaId, setSelectedZonaId] = useState<number | null>(null);
+  const { usuarios, isLoading, error } = useReporteUsuarios();
+  const [selected, setSelected] = useState<ReporteUsuario | null>(null);
 
-  const sorted = sortByCobertura(rutas);
+  const sorted = sortByCobertura(usuarios);
 
-  const handleRowClick = (zonaId: number) => {
-    setSelectedZonaId((prev) => (prev === zonaId ? null : zonaId));
+  const handleRowClick = (u: ReporteUsuario) => {
+    setSelected((prev) => (prev?.uid === u.uid ? null : u));
   };
 
   return (
@@ -53,7 +64,7 @@ export function RutasScreen() {
           Cobranza semanal
         </h1>
         <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground mt-1">
-          Reporte por cobrador
+          Reporte por usuario
         </p>
       </div>
 
@@ -68,10 +79,10 @@ export function RutasScreen() {
       <section className="flex flex-col gap-4 rounded-md border border-border/60 px-5 py-5">
         <div>
           <h4 className="font-serif text-sm font-normal text-foreground">
-            Zonas
+            Usuarios
           </h4>
           <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
-            Cobrador · Zona · Clientes · Saldo · Cobertura
+            Usuario · Ruta · Clientes · Saldo · Cobertura
           </p>
         </div>
 
@@ -81,12 +92,12 @@ export function RutasScreen() {
               <TableRow className="border-border/60 hover:bg-transparent">
                 <TableHead className="h-9 px-3 bg-muted/30">
                   <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                    Cobrador
+                    Usuario
                   </span>
                 </TableHead>
                 <TableHead className="h-9 px-3 bg-muted/30">
                   <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                    Zona
+                    Ruta
                   </span>
                 </TableHead>
                 <TableHead className="h-9 px-3 bg-muted/30 text-right">
@@ -96,7 +107,7 @@ export function RutasScreen() {
                 </TableHead>
                 <TableHead className="h-9 px-3 bg-muted/30 text-right">
                   <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                    Saldo total
+                    Saldo
                   </span>
                 </TableHead>
                 <TableHead className="h-9 px-3 bg-muted/30 text-right">
@@ -109,13 +120,18 @@ export function RutasScreen() {
                     % Ponderado
                   </span>
                 </TableHead>
+                <TableHead className="h-9 px-3 bg-muted/30">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Ventana
+                  </span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: SKELETON_ROWS }).map((_, i) => (
                   <TableRow key={i} className="border-border/40">
-                    {Array.from({ length: 6 }).map((_, ci) => (
+                    {Array.from({ length: USER_COL_COUNT }).map((_, ci) => (
                       <TableCell key={ci} className="px-3 py-2">
                         <Skeleton className="h-4 w-full" />
                       </TableCell>
@@ -125,36 +141,55 @@ export function RutasScreen() {
               ) : sorted.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={USER_COL_COUNT}
                     className="h-24 text-center text-sm text-muted-foreground"
                   >
-                    Sin zonas
+                    Sin usuarios
                   </TableCell>
                 </TableRow>
               ) : (
-                sorted.map((ruta) => (
+                sorted.map((u) => (
                   <TableRow
-                    key={ruta.zonaId}
-                    className={`border-border/40 hover:bg-muted/50 transition-colors cursor-pointer ${selectedZonaId === ruta.zonaId ? "bg-muted/30" : ""}`}
-                    onClick={() => handleRowClick(ruta.zonaId)}
+                    key={u.uid}
+                    className={`border-border/40 hover:bg-muted/50 transition-colors cursor-pointer ${selected?.uid === u.uid ? "bg-muted/30" : ""}`}
+                    onClick={() => handleRowClick(u)}
                   >
+                    <TableCell className="px-3 py-2">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm text-foreground">
+                          {u.nombre || "Sin nombre"}
+                        </span>
+                        {u.email && (
+                          <span className="font-mono text-[11px] text-muted-foreground/70">
+                            {u.email}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="px-3 py-2 text-sm text-muted-foreground">
-                      {ruta.cobradorNombre || "Sin asignar"}
-                    </TableCell>
-                    <TableCell className="px-3 py-2 font-medium text-sm text-foreground">
-                      {ruta.zonaNombre}
+                      {u.zonaNombre}
                     </TableCell>
                     <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {ruta.numClientes}
+                      {u.numClientes}
                     </TableCell>
                     <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {formatMoney(ruta.saldoTotal)}
+                      {formatMoney(u.saldoTotal)}
                     </TableCell>
                     <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {formatPct(ruta.pctCoberturaSemanal)}
+                      {formatPct(u.pctCoberturaSemanal)}
                     </TableCell>
                     <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {formatPct(ruta.pctPonderadoSemanal)}
+                      {formatPct(u.pctPonderadoSemanal)}
+                    </TableCell>
+                    <TableCell className="px-3 py-2">
+                      <div className="flex flex-col">
+                        <span className="text-sm text-foreground">
+                          {formatVentanaDesde(u.fechaInicioSemana)}
+                        </span>
+                        <span className="font-mono text-[11px] text-muted-foreground/70">
+                          {formatVentanaDias(u.fechaInicioSemana)}
+                        </span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -165,74 +200,219 @@ export function RutasScreen() {
 
         {!isLoading && sorted.length > 0 && (
           <span className="font-mono text-[11px] text-muted-foreground">
-            {sorted.length} zona{sorted.length !== 1 ? "s" : ""}
+            {sorted.length} usuario{sorted.length !== 1 ? "s" : ""}
           </span>
         )}
       </section>
 
       {/* Drill-down modal */}
-      <Dialog open={selectedZonaId !== null} onOpenChange={(o) => !o && setSelectedZonaId(null)}>
+      <Dialog open={selected !== null} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-5xl w-full overflow-y-auto max-h-[90vh]">
-          {selectedZonaId !== null && (
-            <DesglosePanel zonaId={selectedZonaId} />
-          )}
+          {selected !== null && <DesglosePanel usuario={selected} />}
         </DialogContent>
       </Dialog>
     </div>
   );
 }
 
-type ProductosCache = Record<
-  number,
-  { loading: boolean; error: boolean; productos: ProductoVenta[] }
->;
-
 function SortIndicator({ active, dir }: { active: boolean; dir: SortDir }) {
   if (!active) return null;
   return <span className="ml-1 text-[10px]">{dir === "asc" ? "▲" : "▼"}</span>;
 }
 
-function DesglosePanel({ zonaId }: { zonaId: number }) {
-  const port = useRutasPort();
-  const { ventas, fechaInicio, resumen, isLoading, error } = useDesgloseCobranza(zonaId);
-  const [expandedVentaId, setExpandedVentaId] = useState<number | null>(null);
-  const [productosCache, setProductosCache] = useState<ProductosCache>({});
+function ResumenHero({
+  usuario,
+  pctPonderado,
+  numerador,
+  denominador,
+}: {
+  usuario: ReporteUsuario;
+  pctPonderado: string | null;
+  numerador: string;
+  denominador: number;
+}) {
+  const width = pctBarWidth(pctPonderado);
+  const overflow = pctOverflowMarker(pctPonderado);
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-card px-5 py-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            % Ponderado
+          </p>
+          <p className="font-serif text-[40px] leading-none tabular-nums text-foreground">
+            {formatPct(pctPonderado)}
+          </p>
+          <p className="font-mono text-[11px] text-muted-foreground tabular-nums mt-1">
+            Σ aporte {formatCuotas(numerador)} ÷ {denominador} aplican
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            % Cobertura
+          </p>
+          <p className="font-serif text-2xl leading-none tabular-nums text-foreground">
+            {formatPct(usuario.pctCoberturaSemanal)}
+          </p>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="mt-3 flex items-center gap-2">
+        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-emerald-500 transition-[width]"
+            style={{ width: `${width}%` }}
+          />
+        </div>
+        {overflow && (
+          <span className="font-mono text-[11px] font-medium text-emerald-500 tabular-nums">
+            {overflow}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FrecuenciaBadge({ frecuencia }: { frecuencia: string }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+      {frecuencia}
+    </span>
+  );
+}
+
+function AporteBar({ aporte }: { aporte: string }) {
+  const ratio = aporteFillRatio(aporte);
+  const marker = catchUpMarker(aporte);
+  const level =
+    ratio >= 1 ? "bg-emerald-500" : ratio > 0 ? "bg-amber-500" : "bg-muted-foreground/30";
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="relative h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+        <div className={`h-full rounded-full ${level}`} style={{ width: `${ratio * 100}%` }} />
+      </div>
+      <span className="font-mono text-[11px] tabular-nums text-foreground">
+        {formatCuotas(aporte)}
+      </span>
+      {marker && (
+        <span className="font-mono text-[10px] font-medium text-emerald-500 tabular-nums">
+          {marker}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function AtrasoCell({ cuotas, pesos }: { cuotas: string; pesos: string }) {
+  const n = Number(cuotas);
+  const tone =
+    !Number.isFinite(n) || n <= 0
+      ? "text-muted-foreground"
+      : n >= 2
+        ? "text-red-500"
+        : "text-amber-500";
+  return (
+    <div className="flex flex-col items-end">
+      <span className={`tabular-nums ${tone}`}>{formatCuotas(cuotas)}</span>
+      <span className="text-[11px] text-muted-foreground">{formatMoneyShort(pesos)}</span>
+    </div>
+  );
+}
+
+function PagoCell({ cuotas, pesos }: { cuotas: string; pesos: string }) {
+  const n = Number(cuotas);
+  const tone = Number.isFinite(n) && n > 0 ? "text-emerald-500" : "text-muted-foreground";
+  return (
+    <div className="flex flex-col items-end">
+      <span className={`tabular-nums ${tone}`}>{formatCuotas(cuotas)}</span>
+      <span className="text-[11px] text-muted-foreground">{formatMoneyShort(pesos)}</span>
+    </div>
+  );
+}
+
+function VentaRow({
+  venta,
+  onClienteClick,
+}: {
+  venta: VentaCobranza;
+  onClienteClick: (clienteId: number) => void;
+}) {
+  const sem = semaphoreConfig(venta);
+  const muted = sem.level === "neutral";
+
+  return (
+    <TableRow
+      className={`border-border/40 transition-colors ${muted ? "opacity-60" : ""}`}
+    >
+      {/* Color rail + cliente (navigates) */}
+      <TableCell className="px-3 py-2">
+        <div className="flex items-center gap-2">
+          <span
+            className={`h-7 w-1 rounded-full ${sem.rail}`}
+            aria-hidden="true"
+          />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClienteClick(venta.clienteId);
+            }}
+            className="group flex items-center gap-1 text-left text-sm text-foreground hover:text-primary"
+            aria-label={`Ver ficha de ${venta.clienteNombre || venta.clienteId}`}
+          >
+            <span className="underline-offset-2 group-hover:underline">
+              {venta.clienteNombre || String(venta.clienteId)}
+            </span>
+            <span className="text-muted-foreground transition-transform group-hover:translate-x-0.5">
+              ›
+            </span>
+          </button>
+        </div>
+      </TableCell>
+      <TableCell className="px-3 py-2 font-mono text-sm text-muted-foreground tabular-nums">
+        {venta.folio}
+      </TableCell>
+      <TableCell className="px-3 py-2">
+        <FrecuenciaBadge frecuencia={venta.frecuencia} />
+      </TableCell>
+      <TableCell className="px-3 py-2">
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${sem.bg} ${sem.text} ${sem.border}`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${sem.dot}`} />
+          {muted ? "No aplica" : sem.label}
+        </span>
+      </TableCell>
+      <TableCell className="px-3 py-2 text-right font-mono text-sm">
+        <AtrasoCell cuotas={venta.atrasoAntesCuotas} pesos={venta.atrasoAntesPesos} />
+      </TableCell>
+      <TableCell className="px-3 py-2 text-right font-mono text-sm">
+        <PagoCell cuotas={venta.pagoCuotas} pesos={venta.abonoSemana} />
+      </TableCell>
+      <TableCell className="px-3 py-2 text-right font-mono text-sm">
+        <div className="flex justify-end">
+          <AporteBar aporte={venta.aporte} />
+        </div>
+      </TableCell>
+      <TableCell className="px-3 py-2 text-right font-mono text-sm">
+        <AtrasoCell cuotas={venta.atrasoDespuesCuotas} pesos={venta.atrasoDespuesPesos} />
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function DesglosePanel({ usuario }: { usuario: ReporteUsuario }) {
+  const navigate = useNavigate();
+  const { ventas, fechaInicio, resumen, isLoading, error } =
+    useDesgloseCobranzaPorUsuario(usuario.uid);
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const rows = sortVentas(filterVentas(ventas, query), sortKey, sortDir);
-
-  const handleVentaClick = async (ventaId: number, clienteId: number, doctoPvId: number) => {
-    if (doctoPvId === 0) return;
-
-    if (expandedVentaId === ventaId) {
-      setExpandedVentaId(null);
-      return;
-    }
-
-    setExpandedVentaId(ventaId);
-
-    if (productosCache[ventaId]) return;
-
-    setProductosCache((prev) => ({
-      ...prev,
-      [ventaId]: { loading: true, error: false, productos: [] },
-    }));
-
-    try {
-      const productos = await obtenerProductosVenta(port, clienteId, doctoPvId);
-      setProductosCache((prev) => ({
-        ...prev,
-        [ventaId]: { loading: false, error: false, productos },
-      }));
-    } catch {
-      setProductosCache((prev) => ({
-        ...prev,
-        [ventaId]: { loading: false, error: true, productos: [] },
-      }));
-    }
-  };
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -243,23 +423,29 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
     }
   };
 
+  const handleClienteClick = (clienteId: number) => {
+    navigate(`/clientes/${clienteId}`);
+  };
+
   const COL_COUNT = 8;
 
   return (
     <div className="flex flex-col gap-4">
       <DialogHeader>
         <DialogTitle className="font-serif text-sm font-normal text-foreground">
-          Desglose por venta
+          {usuario.nombre} · {usuario.zonaNombre}
         </DialogTitle>
         <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
-          {fechaInicio ? `Semana ${fechaInicio}` : "Semana en curso"}
+          {fechaInicio ? `Semana ${formatVentanaDesde(fechaInicio)}` : "Semana en curso"}
         </p>
-        {!isLoading && (
-          <p className="font-mono text-[11px] text-muted-foreground tabular-nums">
-            Σ aporte {formatCuotas(resumen.numerador)} ÷ {resumen.denominador} aplican = {formatPct(resumen.pctPonderado)}
-          </p>
-        )}
       </DialogHeader>
+
+      <ResumenHero
+        usuario={usuario}
+        pctPonderado={resumen.pctPonderado}
+        numerador={resumen.numerador}
+        denominador={resumen.denominador}
+      />
 
       {error && (
         <p className="font-mono text-[12px] text-destructive" role="alert">
@@ -274,7 +460,7 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
         className="h-8 font-mono text-[12px]"
       />
 
-      <div className="rounded-lg border border-border/60 bg-card max-h-[60vh] overflow-auto">
+      <div className="rounded-lg border border-border/60 bg-card max-h-[55vh] overflow-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-border/60 hover:bg-transparent sticky top-0 z-10">
@@ -298,7 +484,7 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
               </TableHead>
               <TableHead className="h-9 px-3 bg-muted/30">
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Aplica
+                  Estado
                 </span>
               </TableHead>
               <TableHead
@@ -356,95 +542,13 @@ function DesglosePanel({ zonaId }: { zonaId: number }) {
                 </TableCell>
               </TableRow>
             ) : (
-              rows.flatMap((venta) => {
-                const isExpanded = expandedVentaId === venta.ventaId;
-                const cache = productosCache[venta.ventaId];
-                const canExpand = venta.doctoPvId > 0;
-
-                const mainRow = (
-                  <TableRow
-                    key={venta.ventaId}
-                    className={`border-border/40 transition-colors ${canExpand ? "hover:bg-muted/50 cursor-pointer" : "cursor-default"} ${isExpanded ? "bg-muted/20" : ""}`}
-                    onClick={() => handleVentaClick(venta.ventaId, venta.clienteId, venta.doctoPvId)}
-                  >
-                    <TableCell className="px-3 py-2 text-sm text-foreground">
-                      {venta.clienteNombre || String(venta.clienteId)}
-                    </TableCell>
-                    <TableCell className="px-3 py-2 font-mono text-sm text-muted-foreground tabular-nums">
-                      {venta.folio}
-                    </TableCell>
-                    <TableCell className="px-3 py-2 text-sm text-muted-foreground">
-                      {venta.frecuencia}
-                    </TableCell>
-                    <TableCell className="px-3 py-2 text-sm">
-                      <span
-                        className={
-                          venta.aplicaPonderado
-                            ? "font-mono text-[11px] text-foreground"
-                            : "font-mono text-[11px] text-muted-foreground/60"
-                        }
-                      >
-                        {venta.aplicaPonderado ? "Sí" : "No"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      <div className="flex flex-col items-end">
-                        <span className="tabular-nums">{formatCuotas(venta.atrasoAntesCuotas)}</span>
-                        <span className="text-[11px] text-muted-foreground">{formatMoneyShort(venta.atrasoAntesPesos)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      <div className="flex flex-col items-end">
-                        <span className="tabular-nums">{formatCuotas(venta.pagoCuotas)}</span>
-                        <span className="text-[11px] text-muted-foreground">{formatMoneyShort(venta.abonoSemana)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {formatCuotas(venta.aporte)}
-                    </TableCell>
-                    <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      <div className="flex flex-col items-end">
-                        <span className="tabular-nums">{formatCuotas(venta.atrasoDespuesCuotas)}</span>
-                        <span className="text-[11px] text-muted-foreground">{formatMoneyShort(venta.atrasoDespuesPesos)}</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-
-                if (!isExpanded || !cache) return [mainRow];
-
-                const subRow = (
-                  <TableRow key={`${venta.ventaId}-productos`} className="border-border/40 bg-muted/10">
-                    <TableCell colSpan={COL_COUNT} className="px-4 py-2">
-                      {cache.loading ? (
-                        <div className="flex flex-col gap-1.5 py-1">
-                          <Skeleton className="h-3 w-3/4" />
-                          <Skeleton className="h-3 w-2/3" />
-                        </div>
-                      ) : cache.error ? (
-                        <p className="font-mono text-[11px] text-destructive">
-                          Error al cargar
-                        </p>
-                      ) : cache.productos.length === 0 ? (
-                        <p className="font-mono text-[11px] text-muted-foreground">
-                          Sin artículos
-                        </p>
-                      ) : (
-                        <ul className="flex flex-col gap-0.5">
-                          {cache.productos.map((p, idx) => (
-                            <li key={idx} className="font-mono text-[11px] text-foreground tabular-nums">
-                              {p.nombre}
-                              <span className="text-muted-foreground"> · {p.cantidad} · {formatMoney(p.importe)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-
-                return [mainRow, subRow];
-              })
+              rows.map((venta) => (
+                <VentaRow
+                  key={venta.ventaId}
+                  venta={venta}
+                  onClienteClick={handleClienteClick}
+                />
+              ))
             )}
           </TableBody>
         </Table>

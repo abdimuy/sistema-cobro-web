@@ -17,6 +17,28 @@ export type RutasListResponseDTO = {
   items: RutaResumenDTO[];
 };
 
+// ReporteUsuarioDTO matches GET /v2/rutas/reporte-usuarios.
+// One row per active cobrador. snake_case to match backend JSON.
+export type ReporteUsuarioDTO = {
+  uid: string;
+  nombre: string;
+  email: string;
+  cobrador_id: number;
+  zona_id: number;
+  zona_nombre: string;
+  num_clientes: number;
+  // Decimal string — never parse to number.
+  saldo_total: string;
+  pct_cobertura_semanal: string | null;
+  pct_ponderado_semanal: string | null;
+  // RFC3339.
+  fecha_inicio_semana: string;
+};
+
+export type ReporteUsuariosListResponseDTO = {
+  items: ReporteUsuarioDTO[];
+};
+
 export interface VentaCobranzaDTO {
   venta_id: number;
   cliente_id: number;
