@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useReporteUsuarios } from "../presentation/hooks/useReporteUsuarios";
 import { useDesgloseCobranzaPorUsuario } from "../presentation/hooks/useDesgloseCobranzaPorUsuario";
-import { formatMoney, formatPct, formatCuotas, formatMoneyShort } from "./lib/format";
+import { formatPct, formatCuotas, formatMoneyShort } from "./lib/format";
 import { filterVentas, sortVentas } from "./lib/tableOps";
 import type { SortKey, SortDir } from "./lib/tableOps";
 import {
@@ -33,7 +33,7 @@ import {
 import type { ReporteUsuario, VentaCobranza } from "../domain/entities";
 
 const SKELETON_ROWS = 6;
-const USER_COL_COUNT = 7;
+const USER_COL_COUNT = 5;
 
 function sortByCobertura(
   usuarios: ReadonlyArray<ReporteUsuario>,
@@ -82,7 +82,7 @@ export function RutasScreen() {
             Usuarios
           </h4>
           <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
-            Usuario · Ruta · Clientes · Saldo · % Cuenta · % Cobro
+            Usuario · Ruta · % Cuenta · % Cobro · Ventana
           </p>
         </div>
 
@@ -98,16 +98,6 @@ export function RutasScreen() {
                 <TableHead className="h-9 px-3 bg-muted/30">
                   <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                     Ruta
-                  </span>
-                </TableHead>
-                <TableHead className="h-9 px-3 bg-muted/30 text-right">
-                  <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                    # Clientes
-                  </span>
-                </TableHead>
-                <TableHead className="h-9 px-3 bg-muted/30 text-right">
-                  <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                    Saldo
                   </span>
                 </TableHead>
                 <TableHead className="h-9 px-3 bg-muted/30 text-right">
@@ -168,12 +158,6 @@ export function RutasScreen() {
                     </TableCell>
                     <TableCell className="px-3 py-2 text-sm text-muted-foreground">
                       {u.zonaNombre}
-                    </TableCell>
-                    <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {u.numClientes}
-                    </TableCell>
-                    <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {formatMoney(u.saldoTotal)}
                     </TableCell>
                     <TableCell className="px-3 py-2 text-right">
                       <div className="flex flex-col items-end">
