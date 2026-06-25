@@ -17,6 +17,10 @@ export type ReporteUsuario = {
   // Percentage strings — null when no weekly data available yet.
   readonly pctCoberturaSemanal: string | null;
   readonly pctPonderadoSemanal: string | null;
+  // Counts behind the percentages (numerador/divisor), for transparency.
+  readonly coberturaNum: number;
+  readonly coberturaDen: number;
+  readonly ponderadoDen: number;
   // RFC3339 start of the user's weekly window.
   readonly fechaInicioSemana: string;
 };

@@ -77,6 +77,9 @@ export function dtoToReporteUsuario(dto: ReporteUsuarioDTO): ReporteUsuario {
     saldoTotal: dto.saldo_total,
     pctCoberturaSemanal: dto.pct_cobertura_semanal ?? null,
     pctPonderadoSemanal: dto.pct_ponderado_semanal ?? null,
+    coberturaNum: Number.isFinite(dto.cobertura_num) ? dto.cobertura_num : 0,
+    coberturaDen: Number.isFinite(dto.cobertura_den) ? dto.cobertura_den : 0,
+    ponderadoDen: Number.isFinite(dto.ponderado_den) ? dto.ponderado_den : 0,
     fechaInicioSemana: dto.fecha_inicio_semana,
   };
 }

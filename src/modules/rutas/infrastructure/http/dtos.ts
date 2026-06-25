@@ -31,6 +31,10 @@ export type ReporteUsuarioDTO = {
   saldo_total: string;
   pct_cobertura_semanal: string | null;
   pct_ponderado_semanal: string | null;
+  // Counts behind the percentages (numerador/divisor), for transparency.
+  cobertura_num: number;
+  cobertura_den: number;
+  ponderado_den: number;
   // RFC3339.
   fecha_inicio_semana: string;
 };

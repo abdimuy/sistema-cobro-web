@@ -82,7 +82,7 @@ export function RutasScreen() {
             Usuarios
           </h4>
           <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
-            Usuario · Ruta · Clientes · Saldo · Cobertura
+            Usuario · Ruta · Clientes · Saldo · % Cuenta · % Cobro
           </p>
         </div>
 
@@ -112,12 +112,12 @@ export function RutasScreen() {
                 </TableHead>
                 <TableHead className="h-9 px-3 bg-muted/30 text-right">
                   <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                    % Cobertura
+                    % Cuenta
                   </span>
                 </TableHead>
                 <TableHead className="h-9 px-3 bg-muted/30 text-right">
                   <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                    % Ponderado
+                    % Cobro
                   </span>
                 </TableHead>
                 <TableHead className="h-9 px-3 bg-muted/30">
@@ -175,11 +175,25 @@ export function RutasScreen() {
                     <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
                       {formatMoney(u.saldoTotal)}
                     </TableCell>
-                    <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {formatPct(u.pctCoberturaSemanal)}
+                    <TableCell className="px-3 py-2 text-right">
+                      <div className="flex flex-col items-end">
+                        <span className="tabular-nums font-mono text-sm text-foreground">
+                          {formatPct(u.pctCoberturaSemanal)}
+                        </span>
+                        <span className="font-mono text-[11px] text-muted-foreground/70 tabular-nums">
+                          {u.coberturaNum}/{u.coberturaDen}
+                        </span>
+                      </div>
                     </TableCell>
-                    <TableCell className="px-3 py-2 text-right tabular-nums font-mono text-sm text-foreground">
-                      {formatPct(u.pctPonderadoSemanal)}
+                    <TableCell className="px-3 py-2 text-right">
+                      <div className="flex flex-col items-end">
+                        <span className="tabular-nums font-mono text-sm text-foreground">
+                          {formatPct(u.pctPonderadoSemanal)}
+                        </span>
+                        <span className="font-mono text-[11px] text-muted-foreground/70 tabular-nums">
+                          {u.ponderadoDen} aplican
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="px-3 py-2">
                       <div className="flex flex-col">
@@ -239,7 +253,7 @@ function ResumenHero({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            % Ponderado
+            % Cobro
           </p>
           <p className="font-serif text-[40px] leading-none tabular-nums text-foreground">
             {formatPct(pctPonderado)}
@@ -250,7 +264,7 @@ function ResumenHero({
         </div>
         <div className="text-right">
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            % Cobertura
+            % Cuenta
           </p>
           <p className="font-serif text-2xl leading-none tabular-nums text-foreground">
             {formatPct(usuario.pctCoberturaSemanal)}

@@ -125,6 +125,9 @@ export function makeFakeReporteUsuario(
     saldoTotal: "125000.00",
     pctCoberturaSemanal: "89.50",
     pctPonderadoSemanal: "92.30",
+    coberturaNum: 43,
+    coberturaDen: 48,
+    ponderadoDen: 40,
     fechaInicioSemana: "2026-06-16T00:00:00Z",
   };
   return { ...base, ...overrides };

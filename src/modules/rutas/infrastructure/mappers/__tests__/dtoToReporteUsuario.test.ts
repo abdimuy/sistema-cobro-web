@@ -17,6 +17,9 @@ function buildValidDTO(
     saldo_total: "125000.00",
     pct_cobertura_semanal: "89.50",
     pct_ponderado_semanal: "92.30",
+    cobertura_num: 43,
+    cobertura_den: 48,
+    ponderado_den: 40,
     fecha_inicio_semana: "2026-06-16T00:00:00Z",
     ...overrides,
   };
@@ -35,6 +38,9 @@ describe("dtoToReporteUsuario", () => {
     expect(u.saldoTotal).toBe("125000.00");
     expect(u.pctCoberturaSemanal).toBe("89.50");
     expect(u.pctPonderadoSemanal).toBe("92.30");
+    expect(u.coberturaNum).toBe(43);
+    expect(u.coberturaDen).toBe(48);
+    expect(u.ponderadoDen).toBe(40);
     expect(u.fechaInicioSemana).toBe("2026-06-16T00:00:00Z");
   });
 
