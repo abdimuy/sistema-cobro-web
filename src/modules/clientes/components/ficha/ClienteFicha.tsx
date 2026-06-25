@@ -19,8 +19,8 @@ import { FichaRitmoPago } from "./FichaRitmoPago";
 import { FichaSaludStrip } from "./FichaSaludStrip";
 import { ReporteModal } from "./ReporteModal";
 
-// Tab deep-link param: ?tab=resumen|analisis|pagos|productos|riesgo
-const VALID_TABS = ["resumen", "analisis", "pagos", "productos", "riesgo"] as const;
+// Tab deep-link param: ?tab=resumen|analisis|pagos|productos
+const VALID_TABS = ["resumen", "analisis", "pagos", "productos"] as const;
 type TabValue = (typeof VALID_TABS)[number];
 
 function isValidTab(v: string | null): v is TabValue {
@@ -112,11 +112,10 @@ export function ClienteFicha({ clienteId }: Props) {
               <TabsTrigger value="analisis">Análisis & predicción</TabsTrigger>
               <TabsTrigger value="pagos">Pagos & solvencia</TabsTrigger>
               <TabsTrigger value="productos">Productos</TabsTrigger>
-              <TabsTrigger value="riesgo">Riesgo & crédito</TabsTrigger>
             </TabsList>
           </div>
 
-          {/* Tab 1 — Resumen: identidad, salud y narrativa IA */}
+          {/* Tab 1 — Resumen: identidad, salud, narrativa IA y gráficas */}
           <TabsContent value="resumen">
             <FichaHero ficha={ficha} />
             <FichaSaludStrip resumen={ficha.resumen} pulso={ficha.pulso} />
@@ -124,6 +123,10 @@ export function ClienteFicha({ clienteId }: Props) {
                 - Acción recomendada (FichaNextBestAction): motor aún no listo.
                 - Filtro de rango de fechas (FichaRangeFilter): a pedido del usuario. */}
             <FichaKpis resumen={ficha.resumen} isLoading={isLoading} />
+            <FichaCharts
+              compradoVsAbonado={ficha.resumen.compradoVsAbonado}
+              isLoading={isLoading}
+            />
             <FichaLecturaAnalista pulso={ficha.pulso} />
             <FichaUbicacion ubicacion={ficha.ubicacion} />
           </TabsContent>
@@ -154,14 +157,6 @@ export function ClienteFicha({ clienteId }: Props) {
               hasMore={ventasState.hasMore}
               loadMore={ventasState.loadMore}
               onVentaClick={setSelectedDoctoPvId}
-            />
-          </TabsContent>
-
-          {/* Tab 5 — Riesgo & crédito: comprado vs abonado */}
-          <TabsContent value="riesgo">
-            <FichaCharts
-              compradoVsAbonado={ficha.resumen.compradoVsAbonado}
-              isLoading={isLoading}
             />
           </TabsContent>
         </Tabs>

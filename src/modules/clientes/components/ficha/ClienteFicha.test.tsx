@@ -92,7 +92,7 @@ describe("ClienteFicha", () => {
 
   // ── Tab structure ──────────────────────────────────────────────────────────
 
-  it("renders 5 tab triggers", async () => {
+  it("renders 4 tab triggers", async () => {
     renderFicha(port);
     await waitFor(() =>
       expect(screen.getByText("Total comprado")).toBeInTheDocument(),
@@ -101,7 +101,8 @@ describe("ClienteFicha", () => {
     expect(screen.getByRole("tab", { name: "Análisis & predicción" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Pagos & solvencia" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Productos" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Riesgo & crédito" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Riesgo & crédito" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("tab")).toHaveLength(4);
   });
 
   it("clicking 'Análisis & predicción' reveals scores section", async () => {
@@ -146,15 +147,8 @@ describe("ClienteFicha", () => {
     );
   });
 
-  it("clicking 'Riesgo & crédito' reveals chart section", async () => {
+  it("FichaCharts (comprado vs abonado) renders in Resumen tab by default", async () => {
     renderFicha(port);
-    await waitFor(() =>
-      expect(screen.getByRole("tab", { name: "Riesgo & crédito" })).toBeInTheDocument(),
-    );
-    expect(screen.queryByText("Comprado vs abonado")).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("tab", { name: "Riesgo & crédito" }));
-
     await waitFor(() =>
       expect(screen.getByText("Comprado vs abonado")).toBeInTheDocument(),
     );
@@ -330,14 +324,15 @@ describe("ClienteFicha", () => {
     );
   });
 
-  // ── Riesgo & crédito tab ───────────────────────────────────────────────────
+  // ── ?tab=riesgo (invalid) falls back to Resumen ───────────────────────────
 
-  it("renders chart section title in riesgo tab", async () => {
+  it("?tab=riesgo (invalid) falls back to Resumen and shows charts", async () => {
     renderFicha(port, "/clientes/1042?tab=riesgo");
     await waitFor(() =>
       expect(screen.getByText("Comprado vs abonado")).toBeInTheDocument(),
     );
-    expect(screen.queryByText("Abonos por mes")).not.toBeInTheDocument();
+    // Resumen content is visible (KPIs present)
+    expect(screen.getByText("Total comprado")).toBeInTheDocument();
   });
 
   // ── Error / edge cases ─────────────────────────────────────────────────────
