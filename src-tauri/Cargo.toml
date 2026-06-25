@@ -30,3 +30,9 @@ tauri-plugin-process = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-window-state = "2"
 sha2 = "0.10"
+
+[features]
+# Habilita el inspector (devtools del WebView) en builds release.
+# Solo el build de TEST lo activa con `--features devtools`; prod (CI release.yml)
+# NO lo pasa, así que queda compilado-fuera en producción.
+devtools = ["tauri/devtools"]

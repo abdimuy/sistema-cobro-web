@@ -24,7 +24,7 @@ jobs:
           - platform: 'windows-latest'
             # Solo NSIS: el MSI/WiX exige prerelease numérico (1.13.2-test.2 lo
             # rompe) y NSIS es el canal que prefiere el updater.
-            args: '--config src-tauri/tauri.test.conf.json --bundles nsis'
+            args: '--config src-tauri/tauri.test.conf.json --bundles nsis --features devtools'
 
     runs-on: ${{ matrix.platform }}
 
@@ -49,8 +49,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: v1.13.2-test.2
-          releaseName: 'Sistema Muebles San Pablo TEST v1.13.2-test.2'
+          tagName: v1.13.2-test.6
+          releaseName: 'Sistema Muebles San Pablo TEST v1.13.2-test.6'
           releaseBody: 'Build de PRUEBA (apidev/apidb). Instalable junto al de producción. NO publicar al canal de prod.'
           releaseDraft: true
           prerelease: true
