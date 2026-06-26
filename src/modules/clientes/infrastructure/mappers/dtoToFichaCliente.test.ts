@@ -32,6 +32,7 @@ function buildValidDTO(overrides: Partial<FichaDTO> = {}): FichaDTO {
         { anio: 2025, mes: 1, monto: "2500.00" },
         { anio: 2025, mes: 2, monto: "3000.00" },
       ],
+      tendencia: { slope: 124.5, direccion: "mejorando", cambio: true },
       comprado_vs_abonado: [
         {
           anio: 2025,
@@ -414,6 +415,49 @@ describe("dtoToFichaCliente", () => {
     dto.pulso!.contexto_operativo = "";
     const ficha = dtoToFichaCliente(dto);
     expect(ficha.pulso!.contextoOperativo).toBeUndefined();
+  });
+
+  // ── Tendencia (series) ───────────────────────────────────────────────────────
+
+  it("maps series.tendencia when present", () => {
+    const ficha = dtoToFichaCliente(buildValidDTO());
+    expect(ficha.resumen.tendencia.slope).toBe(124.5);
+    expect(ficha.resumen.tendencia.direccion).toBe("mejorando");
+    expect(ficha.resumen.tendencia.cambio).toBe(true);
+  });
+
+  it("degrades tendencia to estable default when series.tendencia is absent", () => {
+    const dto = buildValidDTO();
+    // Simulate old backend response without tendencia
+    delete (dto.series as { tendencia?: unknown }).tendencia;
+    const ficha = dtoToFichaCliente(dto);
+    expect(ficha.resumen.tendencia).toEqual({ slope: 0, direccion: "estable", cambio: false });
+  });
+
+  it("degrades direccion to estable when backend sends an unrecognised value", () => {
+    const dto = buildValidDTO();
+    dto.series.tendencia = { slope: -50, direccion: "UNKNOWN_DIR", cambio: false };
+    const ficha = dtoToFichaCliente(dto);
+    expect(ficha.resumen.tendencia.direccion).toBe("estable");
+    // slope is still passed through
+    expect(ficha.resumen.tendencia.slope).toBe(-50);
+  });
+
+  it("maps empeorando direccion correctly", () => {
+    const dto = buildValidDTO();
+    dto.series.tendencia = { slope: -200, direccion: "empeorando", cambio: true };
+    const ficha = dtoToFichaCliente(dto);
+    expect(ficha.resumen.tendencia.direccion).toBe("empeorando");
+    expect(ficha.resumen.tendencia.slope).toBe(-200);
+    expect(ficha.resumen.tendencia.cambio).toBe(true);
+  });
+
+  it("maps estable direccion correctly", () => {
+    const dto = buildValidDTO();
+    dto.series.tendencia = { slope: 5, direccion: "estable", cambio: false };
+    const ficha = dtoToFichaCliente(dto);
+    expect(ficha.resumen.tendencia.direccion).toBe("estable");
+    expect(ficha.resumen.tendencia.cambio).toBe(false);
   });
 });
 

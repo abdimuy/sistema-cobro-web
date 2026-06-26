@@ -6,11 +6,30 @@ import type {
   UbicacionCliente,
   PuntoMensual,
   PuntoCompradoAbonado,
+  Tendencia,
+  DireccionTendencia,
 } from "../../domain/entities";
 import { DomainError } from "../../domain/errors";
 import { Segmento } from "../../domain/values/Segmento";
 import { EstadoPago } from "../../domain/values/EstadoPago";
-import type { FichaDTO, PulsoDTO } from "../http/dtos";
+import type { FichaDTO, PulsoDTO, TendenciaDTO } from "../http/dtos";
+
+// Defensive default when tendencia is absent (old data or backend not yet upgraded).
+const TENDENCIA_DEFAULT: Tendencia = { slope: 0, direccion: "estable", cambio: false };
+
+const VALID_DIRECCION: ReadonlySet<DireccionTendencia> = new Set([
+  "mejorando",
+  "estable",
+  "empeorando",
+]);
+
+function mapTendencia(dto: TendenciaDTO | undefined): Tendencia {
+  if (!dto) return TENDENCIA_DEFAULT;
+  const direccion = VALID_DIRECCION.has(dto.direccion as DireccionTendencia)
+    ? (dto.direccion as DireccionTendencia)
+    : "estable";
+  return { slope: dto.slope, direccion, cambio: dto.cambio };
+}
 
 function parseDate(raw: string, code: string, message: string): Date | null {
   if (raw === "" || raw === undefined) return null;
@@ -122,6 +141,7 @@ export function dtoToFichaCliente(dto: FichaDTO): FichaCliente {
     ticketPromedio: dto.resumen.ticket_promedio,
     abonosPorMes,
     compradoVsAbonado,
+    tendencia: mapTendencia(dto.series.tendencia),
   };
 
   const pulso: Pulso | null = dto.pulso !== null ? mapPulso(dto.pulso) : null;

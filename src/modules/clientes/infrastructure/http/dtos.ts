@@ -82,9 +82,18 @@ export type PuntoCompradoAbonadoDTO = {
   otro: string; // decimal as string
 };
 
+// TendenciaDTO mirrors the backend tendencia block inside series.
+// Optional — old data snapshots may not include it; the mapper degrades gracefully.
+export type TendenciaDTO = {
+  slope: number;
+  direccion: string; // DireccionTendencia — validated when mapped to domain
+  cambio: boolean;
+};
+
 export type SeriesDTO = {
   abonos_por_mes: PuntoMensualDTO[];
   comprado_vs_abonado: PuntoCompradoAbonadoDTO[];
+  tendencia?: TendenciaDTO;
 };
 
 export type PulsoDTO = {

@@ -18,6 +18,7 @@ function makeResumen(overrides: Partial<ResumenFicha> = {}): ResumenFicha {
     ticketPromedio: "16666.67",
     abonosPorMes: [],
     compradoVsAbonado: [],
+    tendencia: { slope: 0, direccion: "estable" as const, cambio: false },
     ...overrides,
   };
 }

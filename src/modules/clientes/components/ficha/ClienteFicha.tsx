@@ -10,6 +10,7 @@ import { PagoModal } from "../detalle/PagoModal";
 import { FichaHeader } from "./FichaHeader";
 import { FichaHero } from "./FichaHero";
 import { FichaKpis } from "./FichaKpis";
+import { FichaTendencia } from "./FichaTendencia";
 import { FichaCharts } from "./FichaCharts";
 import { FichaUbicacion } from "./FichaUbicacion";
 import { FichaInteligenciaScores } from "./FichaInteligenciaScores";
@@ -126,6 +127,11 @@ export function ClienteFicha({ clienteId }: Props) {
                 - Acción recomendada (FichaNextBestAction): motor aún no listo.
                 - Filtro de rango de fechas (FichaRangeFilter): a pedido del usuario. */}
             <FichaKpis resumen={ficha.resumen} isLoading={isLoading} />
+            <FichaTendencia
+              abonosPorMes={ficha.resumen.abonosPorMes}
+              tendencia={ficha.resumen.tendencia}
+              isLoading={isLoading}
+            />
             <FichaCharts
               compradoVsAbonado={ficha.resumen.compradoVsAbonado}
               isLoading={isLoading}

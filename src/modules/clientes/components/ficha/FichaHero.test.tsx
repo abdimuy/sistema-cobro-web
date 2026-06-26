@@ -29,6 +29,7 @@ function makeFicha(overrides: Partial<FichaCliente> = {}): FichaCliente {
       ticketPromedio: "5520",
       abonosPorMes: [],
       compradoVsAbonado: [],
+      tendencia: { slope: 0, direccion: "estable" as const, cambio: false },
     },
     pulso: {
       score: 85,

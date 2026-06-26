@@ -257,6 +257,7 @@ export function makeFakeFichaCliente(
       ticketPromedio: "17142.86",
       abonosPorMes: [],
       compradoVsAbonado: [],
+      tendencia: { slope: 0, direccion: "estable" as const, cambio: false },
     },
     pulso: {
       score: 68,

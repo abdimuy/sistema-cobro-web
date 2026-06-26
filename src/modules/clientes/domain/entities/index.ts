@@ -7,6 +7,8 @@ export type {
   UbicacionCliente,
   PuntoMensual,
   PuntoCompradoAbonado,
+  DireccionTendencia,
+  Tendencia,
 } from "./FichaCliente";
 export type { VentaCliente } from "./VentaCliente";
 export type { ProductoVenta } from "./ProductoVenta";

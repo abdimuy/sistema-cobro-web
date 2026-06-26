@@ -8,6 +8,18 @@ export type PuntoMensual = {
   readonly monto: string;
 };
 
+// DireccionTendencia encodes the payment-trend direction over the series window.
+export type DireccionTendencia = "mejorando" | "estable" | "empeorando";
+
+// Tendencia is the linear-regression summary over abonos_por_mes.
+// slope is the monthly change in MXN (can be negative).
+// cambio is true when the direction changed from the prior period.
+export type Tendencia = {
+  readonly slope: number;
+  readonly direccion: DireccionTendencia;
+  readonly cambio: boolean;
+};
+
 // PuntoCompradoAbonado is a (year, month) data point: the gross purchased amount
 // plus the paid amount broken down by category (matches the backend buckets).
 // All monetary fields are decimal strings — do not parse to number; use Intl for
@@ -34,6 +46,7 @@ export type ResumenFicha = {
   readonly ticketPromedio: string;
   readonly abonosPorMes: PuntoMensual[];
   readonly compradoVsAbonado: PuntoCompradoAbonado[];
+  readonly tendencia: Tendencia;
 };
 
 // Pulso holds the analytics signal for a client. Only present when the client
