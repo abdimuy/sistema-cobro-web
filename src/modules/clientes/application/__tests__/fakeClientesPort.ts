@@ -9,6 +9,8 @@ import type {
   RitmoPago,
   PagoDetalle,
   Predicciones,
+  Benchmark,
+  CohortBy,
 } from "../../domain/entities";
 import type { ClientesPort, FichaDateRange } from "../ports/ClientesPort";
 import type {
@@ -41,6 +43,7 @@ export class FakeClientesPort implements ClientesPort {
     signal?: AbortSignal;
   }> = [];
   predicionesCalls: Array<{ clienteId: number; signal?: AbortSignal }> = [];
+  benchmarkCalls: Array<{ clienteId: number; cohortBy: CohortBy; signal?: AbortSignal }> = [];
 
   buscarResponse: BuscarClientesOutput | (() => BuscarClientesOutput) = {
     items: [],
@@ -66,6 +69,7 @@ export class FakeClientesPort implements ClientesPort {
   obtenerPagoDetalleResponse: PagoDetalle | (() => PagoDetalle) =
     makeFakePagoDetalle();
   prediccionesResponse: Predicciones | (() => Predicciones) = makeFakePredicciones();
+  benchmarkResponse: Benchmark | (() => Benchmark) = makeFakeBenchmark();
 
   // When set, the next call to the matching method throws this error.
   throwOnNext: Partial<Record<keyof ClientesPort, Error>> = {};
@@ -147,6 +151,17 @@ export class FakeClientesPort implements ClientesPort {
     const e = this.takeThrow("obtenerPredicciones");
     if (e) throw e;
     return resolve(this.prediccionesResponse);
+  }
+
+  async obtenerBenchmark(
+    clienteId: number,
+    cohortBy: CohortBy,
+    signal?: AbortSignal,
+  ): Promise<Benchmark> {
+    this.benchmarkCalls.push({ clienteId, cohortBy, signal });
+    const e = this.takeThrow("obtenerBenchmark");
+    if (e) throw e;
+    return resolve(this.benchmarkResponse);
   }
 
   descargarReporteCalls: Array<{
@@ -487,6 +502,58 @@ export function makeFakePredicciones(
     clv: { punto: 12450, lo: 6200, hi: 21800 },
     proximaCompraDias: { punto: 38, lo: 21, hi: 64 },
     draws: 2000,
+  };
+  return { ...base, ...overrides };
+}
+
+export function makeFakeBenchmark(
+  overrides: Partial<Benchmark> = {},
+): Benchmark {
+  const base: Benchmark = {
+    disponible: true,
+    cohortBy: "zona",
+    zona: "NORTE",
+    n: 142,
+    puntualidad: {
+      aplica: true,
+      valor: 87.5,
+      percentil: 72,
+      mediana: 80.0,
+      p25: 60,
+      p75: 95,
+      n: 138,
+      muestraPequena: false,
+    },
+    clv: {
+      aplica: true,
+      valor: 12450,
+      percentil: 64,
+      mediana: 9800,
+      p25: 5200,
+      p75: 18900,
+      n: 140,
+      muestraPequena: false,
+    },
+    credito: {
+      aplica: true,
+      valor: 78,
+      percentil: 55,
+      mediana: 75,
+      p25: 60,
+      p75: 88,
+      n: 96,
+      muestraPequena: false,
+    },
+    recompra: {
+      aplica: true,
+      valor: 64,
+      percentil: 48,
+      mediana: 66,
+      p25: 50,
+      p75: 80,
+      n: 140,
+      muestraPequena: false,
+    },
   };
   return { ...base, ...overrides };
 }

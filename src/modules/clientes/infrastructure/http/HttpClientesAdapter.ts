@@ -1,5 +1,5 @@
 import type { AxiosInstance } from "axios";
-import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle, Predicciones } from "../../domain/entities";
+import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle, Predicciones, Benchmark, CohortBy } from "../../domain/entities";
 import type { ClientesPort, FichaDateRange } from "../../application/ports/ClientesPort";
 import type {
   BuscarClientesInput,
@@ -18,6 +18,7 @@ import { dtoToVentaDetalle } from "../mappers/dtoToVentaDetalle";
 import { dtoToRitmoPago } from "../mappers/dtoToRitmoPago";
 import { dtoToPagoDetalle } from "../mappers/dtoToPagoDetalle";
 import { dtoToPredicciones } from "../mappers/dtoToPredicciones";
+import { dtoToBenchmark } from "../mappers/dtoToBenchmark";
 import { apperrorToDomainError } from "../mappers/errorMapper";
 import type {
   ListResponseDTO,
@@ -29,6 +30,7 @@ import type {
   RitmoPagoDTO,
   PagoDetalleDTO,
   PrediccionesDto,
+  BenchmarkDto,
 } from "./dtos";
 
 const CLIENTES_BASE = "/clientes";
@@ -202,6 +204,22 @@ export class HttpClientesAdapter implements ClientesPort {
         { signal },
       );
       return dtoToPredicciones(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async obtenerBenchmark(
+    clienteId: number,
+    cohortBy: CohortBy,
+    signal?: AbortSignal,
+  ): Promise<Benchmark> {
+    try {
+      const { data } = await this.client.get<BenchmarkDto>(
+        `${CLIENTES_BASE}/${clienteId}/benchmark`,
+        { params: { cohort_by: cohortBy }, signal },
+      );
+      return dtoToBenchmark(data);
     } catch (e) {
       throw apperrorToDomainError(e);
     }

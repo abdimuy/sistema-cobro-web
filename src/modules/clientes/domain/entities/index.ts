@@ -16,3 +16,4 @@ export type { RitmoPago, SemanaRitmo, PagoRitmo, EventoRitmo, EventoTipo, Resume
 export { validateEventoTipo } from "./RitmoPago";
 export type { PagoDetalle } from "./PagoDetalle";
 export type { Predicciones, IntervaloEstimado } from "./Predicciones";
+export type { Benchmark, MetricaBenchmark, CohortBy } from "./Benchmark";

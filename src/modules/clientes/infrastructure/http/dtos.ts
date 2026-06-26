@@ -323,3 +323,40 @@ export type PrediccionesDto = {
   proxima_compra_dias: IntervaloDto;
   draws: number;
 };
+
+// ─── GET /clientes/{id}/benchmark ────────────────────────────────────────────
+
+// MetricaDto — numeric metric (puntualidad, credito, recompra)
+export type MetricaDto = {
+  aplica: boolean;
+  valor: number;
+  percentil: number;
+  mediana: number;
+  p25: number;
+  p75: number;
+  n: number;
+  muestra_pequena: boolean;
+};
+
+// MetricaMoneyDto — monetary metric (clv): valor/mediana/p25/p75 are strings
+export type MetricaMoneyDto = {
+  aplica: boolean;
+  valor: string;
+  percentil: number;
+  mediana: string;
+  p25: string;
+  p75: string;
+  n: number;
+  muestra_pequena: boolean;
+};
+
+export type BenchmarkDto = {
+  disponible: boolean;
+  cohort_by: string;
+  zona: string;
+  n: number;
+  puntualidad: MetricaDto;
+  clv: MetricaMoneyDto;
+  credito: MetricaDto;
+  recompra: MetricaDto;
+};

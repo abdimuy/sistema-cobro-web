@@ -1,4 +1,4 @@
-import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle, Predicciones } from "../../domain/entities";
+import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle, Predicciones, Benchmark, CohortBy } from "../../domain/entities";
 import type {
   BuscarClientesInput,
   BuscarClientesOutput,
@@ -59,4 +59,9 @@ export interface ClientesPort {
     clienteId: number,
     signal?: AbortSignal,
   ): Promise<Predicciones>;
+  obtenerBenchmark(
+    clienteId: number,
+    cohortBy: CohortBy,
+    signal?: AbortSignal,
+  ): Promise<Benchmark>;
 }
