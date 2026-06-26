@@ -66,5 +66,25 @@ describe("usePredicciones", () => {
     renderHook(() => usePredicciones(1042), { wrapper: wrapWith(port) });
     await waitFor(() => expect(port.predicionesCalls).toHaveLength(1));
     expect(port.predicionesCalls[0].clienteId).toBe(1042);
+    expect(port.predicionesCalls[0].signal).toBeDefined();
+    expect(port.predicionesCalls[0].signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("aborts in-flight signal when clienteId changes", async () => {
+    const port = new FakeClientesPort();
+    port.prediccionesResponse = makeFakePredicciones();
+
+    const { rerender } = renderHook(
+      (props: { clienteId: number }) => usePredicciones(props.clienteId),
+      { wrapper: wrapWith(port), initialProps: { clienteId: 1 } },
+    );
+
+    await waitFor(() => expect(port.predicionesCalls).toHaveLength(1));
+    const firstSignal = port.predicionesCalls[0].signal!;
+
+    rerender({ clienteId: 2 });
+    await waitFor(() => expect(port.predicionesCalls).toHaveLength(2));
+
+    expect(firstSignal.aborted).toBe(true);
   });
 });

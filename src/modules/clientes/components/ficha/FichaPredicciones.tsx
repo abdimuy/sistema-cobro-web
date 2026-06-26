@@ -4,7 +4,6 @@ import {
   XAxis,
   YAxis,
   ResponsiveContainer,
-  Tooltip,
   ReferenceLine,
 } from "recharts";
 import { ScoreMeter, type MeterBand } from "./ScoreMeter";
@@ -49,10 +48,11 @@ interface ClvChartProps {
 }
 
 function ClvIntervalChart({ punto, lo, hi }: ClvChartProps) {
+  // Two identical data points produce a flat horizontal band spanning [lo, hi].
+  // The two-series stack technique: transparent base at `lo`, filled band of height `hi−lo`.
   const data = [
-    { x: "mín", est: lo },
-    { x: "est.", est: punto },
-    { x: "máx", est: hi },
+    { x: "mín", base: lo, band: hi - lo },
+    { x: "máx", base: lo, band: hi - lo },
   ];
 
   return (
@@ -66,28 +66,31 @@ function ClvIntervalChart({ punto, lo, hi }: ClvChartProps) {
           width={44}
           tickFormatter={(v: number) => MXN_COMPACT.format(v)}
         />
-        <Tooltip
-          formatter={(v) => [typeof v === "number" ? formatMoney(String(v)) : String(v ?? ""), "CLV"]}
-          contentStyle={{
-            fontSize: 10,
-            fontFamily: "var(--font-mono, ui-monospace)",
-            borderColor: "hsl(var(--border))",
-            background: "hsl(var(--background))",
-          }}
+        {/* Transparent baseline raises the filled band from 0 up to lo */}
+        <Area
+          type="monotone"
+          dataKey="base"
+          stackId="clv"
+          fill="transparent"
+          stroke="none"
+          isAnimationActive={false}
         />
+        {/* Filled band from lo to hi — the actual uncertainty interval */}
+        <Area
+          type="monotone"
+          dataKey="band"
+          stackId="clv"
+          fill="hsl(var(--primary) / 0.15)"
+          stroke="hsl(var(--primary))"
+          strokeWidth={1}
+          isAnimationActive={false}
+        />
+        {/* Punto estimate marked as a dashed horizontal reference */}
         <ReferenceLine
           y={punto}
           strokeDasharray="3 3"
           stroke="hsl(var(--foreground))"
-          strokeOpacity={0.4}
-        />
-        <Area
-          type="monotone"
-          dataKey="est"
-          fill="hsl(var(--primary) / 0.12)"
-          stroke="hsl(var(--primary))"
-          strokeWidth={1.5}
-          dot={{ r: 3, fill: "hsl(var(--primary))" }}
+          strokeOpacity={0.6}
         />
       </AreaChart>
     </ResponsiveContainer>
@@ -101,9 +104,8 @@ interface Props {
 }
 
 export function FichaPredicciones({ clienteId }: Props) {
-  const { predicciones, isLoading } = usePredicciones(clienteId);
+  const { predicciones } = usePredicciones(clienteId);
 
-  if (isLoading && !predicciones) return null;
   if (!predicciones) return null;
 
   if (!predicciones.disponible) {
