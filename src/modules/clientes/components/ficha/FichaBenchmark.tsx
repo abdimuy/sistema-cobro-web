@@ -126,9 +126,9 @@ const METRICAS: MetricaConfig[] = [
   },
   {
     key: "credito",
-    label: "Crédito",
+    label: "Solvencia",
     subtitle: "score 0–100",
-    hint: "Score de riesgo crediticio (mayor = menor riesgo).",
+    hint: "Score de solvencia crediticia (mayor = mejor, más solvente).",
     formatValor: (v) => String(Math.round(v)),
     formatTick: (v) => String(v),
   },
@@ -221,9 +221,26 @@ interface Props {
 
 export function FichaBenchmark({ clienteId }: Props) {
   const [cohortBy, setCohortBy] = useState<CohortBy>("zona");
-  const { benchmark } = useBenchmark(clienteId, cohortBy);
+  const { benchmark, error } = useBenchmark(clienteId, cohortBy);
 
-  if (!benchmark) return null;
+  if (!benchmark) {
+    if (!error) return null;
+    return (
+      <section
+        className="border-b border-border/60 px-8 py-8"
+        aria-label="Benchmark de pares"
+      >
+        <div className="mb-4">
+          <h3 className="font-serif text-base font-normal text-foreground">
+            Benchmark
+          </h3>
+        </div>
+        <p className="font-mono text-[11px] italic text-muted-foreground/60">
+          Sin comparación
+        </p>
+      </section>
+    );
+  }
 
   if (!benchmark.disponible) {
     return (
@@ -265,6 +282,7 @@ export function FichaBenchmark({ clienteId }: Props) {
           {COHORT_OPTIONS.map((opt) => (
             <button
               key={opt.value}
+              type="button"
               onClick={() => setCohortBy(opt.value)}
               className={[
                 "rounded px-2 py-1 font-mono text-[10px] uppercase tracking-wide transition-colors",

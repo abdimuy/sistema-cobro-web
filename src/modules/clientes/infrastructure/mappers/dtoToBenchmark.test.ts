@@ -65,6 +65,11 @@ describe("dtoToBenchmark", () => {
     expect(b.cohortBy).toBe("segmento");
   });
 
+  it("defaults cohortBy to 'zona' for unknown cohort_by values", () => {
+    const b = dtoToBenchmark(buildValidDto({ cohort_by: "desconocido" }));
+    expect(b.cohortBy).toBe("zona");
+  });
+
   it("maps puntualidad as numeric metrica", () => {
     const b = dtoToBenchmark(buildValidDto());
     expect(b.puntualidad.aplica).toBe(true);

@@ -1,6 +1,14 @@
 import type { Benchmark, MetricaBenchmark, CohortBy } from "../../domain/entities/Benchmark";
 import type { BenchmarkDto, MetricaDto, MetricaMoneyDto } from "../http/dtos";
 
+const VALID_COHORT_BY: readonly CohortBy[] = ["zona", "segmento", "antiguedad"] as const;
+
+function parseCohortBy(raw: string): CohortBy {
+  return (VALID_COHORT_BY as readonly string[]).includes(raw)
+    ? (raw as CohortBy)
+    : "zona";
+}
+
 function mapMetrica(dto: MetricaDto): MetricaBenchmark {
   return {
     aplica: dto.aplica,
@@ -30,7 +38,7 @@ function mapMetricaMoney(dto: MetricaMoneyDto): MetricaBenchmark {
 export function dtoToBenchmark(dto: BenchmarkDto): Benchmark {
   return {
     disponible: dto.disponible,
-    cohortBy: dto.cohort_by as CohortBy,
+    cohortBy: parseCohortBy(dto.cohort_by),
     zona: dto.zona,
     n: dto.n,
     puntualidad: mapMetrica(dto.puntualidad),

@@ -103,10 +103,32 @@ interface Props {
   clienteId: number;
 }
 
-export function FichaPredicciones({ clienteId }: Props) {
-  const { predicciones } = usePredicciones(clienteId);
+const DIAS_CAP = 365;
 
-  if (!predicciones) return null;
+export function FichaPredicciones({ clienteId }: Props) {
+  const { predicciones, error } = usePredicciones(clienteId);
+
+  if (!predicciones) {
+    if (!error) return null;
+    return (
+      <section
+        className="border-b border-border/60 px-8 py-8"
+        aria-label="Predicciones bayesianas"
+      >
+        <div className="mb-4">
+          <h3 className="font-serif text-base font-normal text-foreground">
+            Predicciones
+          </h3>
+          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
+            modelo bayesiano · BG/NBD + Gamma-Gamma
+          </p>
+        </div>
+        <p className="font-mono text-[11px] italic text-muted-foreground/60">
+          Sin predicción
+        </p>
+      </section>
+    );
+  }
 
   if (!predicciones.disponible) {
     return (
@@ -131,6 +153,8 @@ export function FichaPredicciones({ clienteId }: Props) {
 
   const { pAlive, proximaCompraDias, clv, comprasEsperadas12m } = predicciones;
   const activeBand = deriveActiveBand(pAlive.punto);
+  const hiDiasLabel =
+    proximaCompraDias.hi > DIAS_CAP ? `>${DIAS_CAP}` : String(proximaCompraDias.hi);
 
   return (
     <section
@@ -185,18 +209,18 @@ export function FichaPredicciones({ clienteId }: Props) {
             </span>
           </p>
           <p className="font-mono text-[10px] tabular-nums text-muted-foreground/60">
-            Rango: {proximaCompraDias.lo}–{proximaCompraDias.hi} días
+            Rango: {proximaCompraDias.lo}–{hiDiasLabel} días
           </p>
           <p className="font-mono text-[10px] tabular-nums text-muted-foreground/60">
             Compras esperadas 12m: ~{comprasEsperadas12m.punto.toFixed(1)}
           </p>
         </Panel>
 
-        {/* ── CLV ── */}
+        {/* ── CLV proyectado ── */}
         <Panel
-          title="CLV estimado"
-          titleHint="Valor económico esperado del cliente en los próximos 24 meses (Gamma-Gamma)."
-          subtitle="valor 24 meses"
+          title="CLV proyectado"
+          titleHint="Valor económico proyectado del cliente en los próximos 24 meses, con intervalo de incertidumbre (Gamma-Gamma)."
+          subtitle="estimación con rango"
         >
           <p className="flex items-baseline justify-between gap-2">
             <span className="font-serif text-2xl font-normal text-foreground">

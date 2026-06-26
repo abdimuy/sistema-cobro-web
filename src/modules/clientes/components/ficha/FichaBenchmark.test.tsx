@@ -7,6 +7,7 @@ import {
   makeFakeBenchmark,
 } from "../../application/__tests__/fakeClientesPort";
 import type { Benchmark } from "../../domain/entities/Benchmark";
+import { DomainError } from "../../domain/errors";
 
 function wrapWith(port: FakeClientesPort) {
   return ({ children }: { children: React.ReactNode }) => (
@@ -73,7 +74,7 @@ describe("FichaBenchmark", () => {
       expect(screen.getByText("Puntualidad")).toBeInTheDocument(),
     );
     expect(screen.getByText("CLV")).toBeInTheDocument();
-    expect(screen.getByText("Crédito")).toBeInTheDocument();
+    expect(screen.getByText("Solvencia")).toBeInTheDocument();
     expect(screen.getByText("Recompra")).toBeInTheDocument();
   });
 
@@ -107,7 +108,7 @@ describe("FichaBenchmark", () => {
     render(<FichaBenchmark clienteId={1042} />, { wrapper: wrapWith(port) });
 
     await waitFor(() =>
-      expect(screen.getByText("Crédito")).toBeInTheDocument(),
+      expect(screen.getByText("Solvencia")).toBeInTheDocument(),
     );
     // valor = 78
     expect(screen.getByText("78")).toBeInTheDocument();
@@ -142,7 +143,7 @@ describe("FichaBenchmark", () => {
     render(<FichaBenchmark clienteId={1042} />, { wrapper: wrapWith(port) });
 
     await waitFor(() =>
-      expect(screen.getByText("Crédito")).toBeInTheDocument(),
+      expect(screen.getByText("Solvencia")).toBeInTheDocument(),
     );
     expect(screen.getByText("Muestra pequeña")).toBeInTheDocument();
   });
@@ -195,5 +196,19 @@ describe("FichaBenchmark", () => {
     );
     const zonaBtn = screen.getByRole("button", { name: "Zona" });
     expect(zonaBtn).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("shows 'Sin comparación' on fetch error", async () => {
+    const port = new FakeClientesPort();
+    port.throwOnNext.obtenerBenchmark = new DomainError(
+      "benchmark_no_disponible",
+      "sin conexión",
+    );
+    render(<FichaBenchmark clienteId={1042} />, { wrapper: wrapWith(port) });
+
+    await waitFor(() =>
+      expect(screen.getByText("Sin comparación")).toBeInTheDocument(),
+    );
+    expect(screen.getByText("Benchmark")).toBeInTheDocument();
   });
 });

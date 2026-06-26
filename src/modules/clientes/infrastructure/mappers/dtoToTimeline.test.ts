@@ -49,4 +49,8 @@ describe("dtoToTimeline", () => {
   it("returns [] when eventos is empty", () => {
     expect(dtoToTimeline({ eventos: [] })).toEqual([]);
   });
+
+  it("returns [] when eventos is absent (missing key)", () => {
+    expect(dtoToTimeline({} as TimelineDto)).toEqual([]);
+  });
 });

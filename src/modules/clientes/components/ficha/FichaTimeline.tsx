@@ -1,4 +1,5 @@
 import { useTimeline } from "../../presentation/hooks/useTimeline";
+import type { TipoEvento } from "../../domain/entities/Timeline";
 
 interface ColorConfig {
   bg: string;
@@ -8,7 +9,7 @@ interface ColorConfig {
   label: string;
 }
 
-const TIPO_CONFIG: Record<string, ColorConfig> = {
+const TIPO_CONFIG: Record<TipoEvento, ColorConfig> = {
   compra_credito: {
     bg: "bg-blue-500/10",
     text: "text-blue-600",
@@ -63,7 +64,7 @@ export function FichaTimeline({ clienteId }: Props) {
 
   if (isLoading) {
     return (
-      <section className="px-8 py-8" aria-label="Historial de movimientos">
+      <section className="border-b border-border/60 px-8 py-8" aria-label="Historial de movimientos">
         <h3 className="font-serif text-base font-normal text-foreground mb-4">
           Historial
         </h3>
@@ -76,7 +77,7 @@ export function FichaTimeline({ clienteId }: Props) {
 
   if (error) {
     return (
-      <section className="px-8 py-8" aria-label="Historial de movimientos">
+      <section className="border-b border-border/60 px-8 py-8" aria-label="Historial de movimientos">
         <h3 className="font-serif text-base font-normal text-foreground mb-4">
           Historial
         </h3>
@@ -86,7 +87,7 @@ export function FichaTimeline({ clienteId }: Props) {
   }
 
   return (
-    <section className="px-8 py-8" aria-label="Historial de movimientos">
+    <section className="border-b border-border/60 px-8 py-8" aria-label="Historial de movimientos">
       <h3 className="font-serif text-base font-normal text-foreground mb-6">
         Historial
       </h3>

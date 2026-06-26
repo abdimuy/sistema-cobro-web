@@ -7,6 +7,7 @@ import {
   makeFakePredicciones,
 } from "../../application/__tests__/fakeClientesPort";
 import type { Predicciones } from "../../domain/entities";
+import { DomainError } from "../../domain/errors";
 
 function wrapWith(port: FakeClientesPort) {
   return ({ children }: { children: React.ReactNode }) => (
@@ -74,7 +75,7 @@ describe("FichaPredicciones", () => {
     expect(screen.getByText(/21–64 días/)).toBeInTheDocument();
   });
 
-  it("renders CLV panel with formatted money", async () => {
+  it("renders CLV proyectado panel with formatted money", async () => {
     const port = new FakeClientesPort();
     port.prediccionesResponse = makeFakePredicciones({
       clv: { punto: 12450, lo: 6200, hi: 21800 },
@@ -82,7 +83,7 @@ describe("FichaPredicciones", () => {
     render(<FichaPredicciones clienteId={1042} />, { wrapper: wrapWith(port) });
 
     await waitFor(() =>
-      expect(screen.getByText("CLV estimado")).toBeInTheDocument(),
+      expect(screen.getByText("CLV proyectado")).toBeInTheDocument(),
     );
     expect(screen.getByText(/\$12[,.]?450/)).toBeInTheDocument();
   });
@@ -98,5 +99,45 @@ describe("FichaPredicciones", () => {
       expect(screen.getByText("P(activo)")).toBeInTheDocument(),
     );
     expect(screen.getAllByText(/61[–-]95%/).length).toBeGreaterThan(0);
+  });
+
+  it("shows 'Sin predicción' on fetch error", async () => {
+    const port = new FakeClientesPort();
+    port.throwOnNext.obtenerPredicciones = new DomainError(
+      "predicciones_no_disponibles",
+      "sin conexión",
+    );
+    render(<FichaPredicciones clienteId={1042} />, { wrapper: wrapWith(port) });
+
+    await waitFor(() =>
+      expect(screen.getByText("Sin predicción")).toBeInTheDocument(),
+    );
+    expect(screen.getByText("Predicciones")).toBeInTheDocument();
+  });
+
+  it("caps upper bound at >365 when hi exceeds a year", async () => {
+    const port = new FakeClientesPort();
+    port.prediccionesResponse = makeFakePredicciones({
+      proximaCompraDias: { punto: 90, lo: 45, hi: 1200 },
+    });
+    render(<FichaPredicciones clienteId={1042} />, { wrapper: wrapWith(port) });
+
+    await waitFor(() =>
+      expect(screen.getByText("Próxima compra")).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/45–>365 días/)).toBeInTheDocument();
+  });
+
+  it("shows exact hi when hi is within the year cap", async () => {
+    const port = new FakeClientesPort();
+    port.prediccionesResponse = makeFakePredicciones({
+      proximaCompraDias: { punto: 38, lo: 21, hi: 64 },
+    });
+    render(<FichaPredicciones clienteId={1042} />, { wrapper: wrapWith(port) });
+
+    await waitFor(() =>
+      expect(screen.getByText("Próxima compra")).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/21–64 días/)).toBeInTheDocument();
   });
 });

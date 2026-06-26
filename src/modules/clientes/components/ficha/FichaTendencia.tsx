@@ -43,7 +43,7 @@ interface Props {
 type SparkPoint = { v: number };
 
 export function FichaTendencia({ abonosPorMes, tendencia, isLoading = false }: Props) {
-  const data: SparkPoint[] = abonosPorMes.map((p) => ({ v: parseFloat(p.monto) }));
+  const data: SparkPoint[] = abonosPorMes.map((p) => ({ v: Number(p.monto) }));
   const cfg = TREND_CONFIG[tendencia.direccion];
 
   // Require at least 2 points for a meaningful sparkline

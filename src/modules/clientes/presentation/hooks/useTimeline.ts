@@ -15,7 +15,7 @@ export function useTimeline(clienteId: number): UseTimelineReturn {
   const port = useClientesPort();
 
   const [timeline, setTimeline] = useState<EventoTimeline[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<DomainError | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
