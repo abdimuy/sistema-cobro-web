@@ -1,5 +1,5 @@
 import type { AxiosInstance } from "axios";
-import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle, Predicciones, Benchmark, CohortBy } from "../../domain/entities";
+import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle, Predicciones, Benchmark, CohortBy, EventoTimeline } from "../../domain/entities";
 import type { ClientesPort, FichaDateRange } from "../../application/ports/ClientesPort";
 import type {
   BuscarClientesInput,
@@ -19,6 +19,7 @@ import { dtoToRitmoPago } from "../mappers/dtoToRitmoPago";
 import { dtoToPagoDetalle } from "../mappers/dtoToPagoDetalle";
 import { dtoToPredicciones } from "../mappers/dtoToPredicciones";
 import { dtoToBenchmark } from "../mappers/dtoToBenchmark";
+import { dtoToTimeline } from "../mappers/dtoToTimeline";
 import { apperrorToDomainError } from "../mappers/errorMapper";
 import type {
   ListResponseDTO,
@@ -31,6 +32,7 @@ import type {
   PagoDetalleDTO,
   PrediccionesDto,
   BenchmarkDto,
+  TimelineDto,
 } from "./dtos";
 
 const CLIENTES_BASE = "/clientes";
@@ -220,6 +222,18 @@ export class HttpClientesAdapter implements ClientesPort {
         { params: { cohort_by: cohortBy }, signal },
       );
       return dtoToBenchmark(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async obtenerTimeline(clienteId: number, signal?: AbortSignal): Promise<EventoTimeline[]> {
+    try {
+      const { data } = await this.client.get<TimelineDto>(
+        `${CLIENTES_BASE}/${clienteId}/timeline`,
+        { signal },
+      );
+      return dtoToTimeline(data);
     } catch (e) {
       throw apperrorToDomainError(e);
     }

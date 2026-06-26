@@ -19,6 +19,7 @@ import { FichaRitmoPago } from "./FichaRitmoPago";
 import { FichaSaludStrip } from "./FichaSaludStrip";
 import { FichaPredicciones } from "./FichaPredicciones";
 import { FichaBenchmark } from "./FichaBenchmark";
+import { FichaTimeline } from "./FichaTimeline";
 import { ReporteModal } from "./ReporteModal";
 
 // Tab deep-link param: ?tab=resumen|analisis|pagos|productos
@@ -149,6 +150,7 @@ export function ClienteFicha({ clienteId }: Props) {
               onPagoClick={setSelectedPagoId}
               pulso={ficha.pulso}
             />
+            <FichaTimeline clienteId={clienteId} />
           </TabsContent>
 
           {/* Tab 4 — Productos: historial de ventas */}

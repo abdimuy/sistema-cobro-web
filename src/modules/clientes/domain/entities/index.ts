@@ -17,3 +17,4 @@ export { validateEventoTipo } from "./RitmoPago";
 export type { PagoDetalle } from "./PagoDetalle";
 export type { Predicciones, IntervaloEstimado } from "./Predicciones";
 export type { Benchmark, MetricaBenchmark, CohortBy } from "./Benchmark";
+export type { EventoTimeline, TipoEvento } from "./Timeline";

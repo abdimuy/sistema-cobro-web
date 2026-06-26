@@ -11,6 +11,7 @@ import type {
   Predicciones,
   Benchmark,
   CohortBy,
+  EventoTimeline,
 } from "../../domain/entities";
 import type { ClientesPort, FichaDateRange } from "../ports/ClientesPort";
 import type {
@@ -44,6 +45,7 @@ export class FakeClientesPort implements ClientesPort {
   }> = [];
   predicionesCalls: Array<{ clienteId: number; signal?: AbortSignal }> = [];
   benchmarkCalls: Array<{ clienteId: number; cohortBy: CohortBy; signal?: AbortSignal }> = [];
+  timelineCalls: Array<{ clienteId: number; signal?: AbortSignal }> = [];
 
   buscarResponse: BuscarClientesOutput | (() => BuscarClientesOutput) = {
     items: [],
@@ -70,6 +72,7 @@ export class FakeClientesPort implements ClientesPort {
     makeFakePagoDetalle();
   prediccionesResponse: Predicciones | (() => Predicciones) = makeFakePredicciones();
   benchmarkResponse: Benchmark | (() => Benchmark) = makeFakeBenchmark();
+  timelineResponse: EventoTimeline[] | (() => EventoTimeline[]) = makeFakeTimeline();
 
   // When set, the next call to the matching method throws this error.
   throwOnNext: Partial<Record<keyof ClientesPort, Error>> = {};
@@ -162,6 +165,16 @@ export class FakeClientesPort implements ClientesPort {
     const e = this.takeThrow("obtenerBenchmark");
     if (e) throw e;
     return resolve(this.benchmarkResponse);
+  }
+
+  async obtenerTimeline(
+    clienteId: number,
+    signal?: AbortSignal,
+  ): Promise<EventoTimeline[]> {
+    this.timelineCalls.push({ clienteId, signal });
+    const e = this.takeThrow("obtenerTimeline");
+    if (e) throw e;
+    return resolve(this.timelineResponse);
   }
 
   descargarReporteCalls: Array<{
@@ -504,6 +517,15 @@ export function makeFakePredicciones(
     draws: 2000,
   };
   return { ...base, ...overrides };
+}
+
+export function makeFakeTimeline(overrides: EventoTimeline[] = []): EventoTimeline[] {
+  if (overrides.length > 0) return overrides;
+  return [
+    { fecha: new Date("2026-05-12T00:00:00.000Z"), tipo: "compra_credito", monto: 8500, etiqueta: "A-1234", refId: 55012 },
+    { fecha: new Date("2026-05-05T00:00:00.000Z"), tipo: "pago", monto: 750, etiqueta: "Abono", refId: 99021 },
+    { fecha: new Date("2026-04-20T00:00:00.000Z"), tipo: "compra_contado", monto: 1200, etiqueta: "A-1190", refId: 55000 },
+  ];
 }
 
 export function makeFakeBenchmark(

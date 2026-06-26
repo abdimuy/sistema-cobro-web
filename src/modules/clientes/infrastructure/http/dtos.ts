@@ -360,3 +360,17 @@ export type BenchmarkDto = {
   credito: MetricaDto;
   recompra: MetricaDto;
 };
+
+// ─── GET /clientes/{id}/timeline ─────────────────────────────────────────────
+
+export type EventoTimelineDto = {
+  fecha: string;     // RFC3339 UTC
+  tipo: string;      // "compra_credito" | "compra_contado" | "pago"
+  monto: string;     // decimal as string
+  etiqueta: string;
+  ref_id: number;
+};
+
+export type TimelineDto = {
+  eventos: EventoTimelineDto[];
+};
