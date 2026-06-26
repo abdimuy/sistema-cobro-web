@@ -17,6 +17,7 @@ import { FichaLecturaAnalista } from "./FichaLecturaAnalista";
 import { FichaVentasList } from "./FichaVentasList";
 import { FichaRitmoPago } from "./FichaRitmoPago";
 import { FichaSaludStrip } from "./FichaSaludStrip";
+import { FichaPredicciones } from "./FichaPredicciones";
 import { ReporteModal } from "./ReporteModal";
 
 // Tab deep-link param: ?tab=resumen|analisis|pagos|productos
@@ -134,6 +135,7 @@ export function ClienteFicha({ clienteId }: Props) {
           {/* Tab 2 — Análisis & predicción: tres scores de inteligencia */}
           <TabsContent value="analisis">
             <FichaInteligenciaScores pulso={ficha.pulso} />
+            <FichaPredicciones clienteId={clienteId} />
           </TabsContent>
 
           {/* Tab 3 — Pagos & solvencia: heatmap/timeline de pagos */}

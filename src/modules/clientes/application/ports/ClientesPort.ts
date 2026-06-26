@@ -1,4 +1,4 @@
-import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle } from "../../domain/entities";
+import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle, Predicciones } from "../../domain/entities";
 import type {
   BuscarClientesInput,
   BuscarClientesOutput,
@@ -55,4 +55,8 @@ export interface ClientesPort {
     ventaIds?: number[],
     signal?: AbortSignal,
   ): Promise<Blob>;
+  obtenerPredicciones(
+    clienteId: number,
+    signal?: AbortSignal,
+  ): Promise<Predicciones>;
 }

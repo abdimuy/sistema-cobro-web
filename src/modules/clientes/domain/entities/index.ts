@@ -15,3 +15,4 @@ export type { VentaDetalle, ContratoCredito } from "./VentaDetalle";
 export type { RitmoPago, SemanaRitmo, PagoRitmo, EventoRitmo, EventoTipo, ResumenRitmo } from "./RitmoPago";
 export { validateEventoTipo } from "./RitmoPago";
 export type { PagoDetalle } from "./PagoDetalle";
+export type { Predicciones, IntervaloEstimado } from "./Predicciones";

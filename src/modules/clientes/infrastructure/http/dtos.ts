@@ -300,3 +300,26 @@ export type RitmoPagoDTO = {
   eventos: EventoRitmoDTO[];
   resumen: ResumenRitmoDTO;
 };
+
+// ─── GET /clientes/{id}/predicciones ─────────────────────────────────────────
+
+export type IntervaloDto = {
+  punto: number;
+  lo: number;
+  hi: number;
+};
+
+export type IntervaloMoneyDto = {
+  punto: string;
+  lo: string;
+  hi: string;
+};
+
+export type PrediccionesDto = {
+  disponible: boolean;
+  p_alive: IntervaloDto;
+  compras_esperadas_12m: IntervaloDto;
+  clv: IntervaloMoneyDto;
+  proxima_compra_dias: IntervaloDto;
+  draws: number;
+};

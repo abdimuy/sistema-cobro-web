@@ -8,6 +8,7 @@ import type {
   PagoRitmo,
   RitmoPago,
   PagoDetalle,
+  Predicciones,
 } from "../../domain/entities";
 import type { ClientesPort, FichaDateRange } from "../ports/ClientesPort";
 import type {
@@ -39,6 +40,7 @@ export class FakeClientesPort implements ClientesPort {
     input: ObtenerPagoDetalleInput;
     signal?: AbortSignal;
   }> = [];
+  predicionesCalls: Array<{ clienteId: number; signal?: AbortSignal }> = [];
 
   buscarResponse: BuscarClientesOutput | (() => BuscarClientesOutput) = {
     items: [],
@@ -63,6 +65,7 @@ export class FakeClientesPort implements ClientesPort {
   ritmoResponse: RitmoPago | (() => RitmoPago) = makeFakeRitmoPago();
   obtenerPagoDetalleResponse: PagoDetalle | (() => PagoDetalle) =
     makeFakePagoDetalle();
+  prediccionesResponse: Predicciones | (() => Predicciones) = makeFakePredicciones();
 
   // When set, the next call to the matching method throws this error.
   throwOnNext: Partial<Record<keyof ClientesPort, Error>> = {};
@@ -134,6 +137,16 @@ export class FakeClientesPort implements ClientesPort {
     const e = this.takeThrow("obtenerPagoDetalle");
     if (e) throw e;
     return resolve(this.obtenerPagoDetalleResponse);
+  }
+
+  async obtenerPredicciones(
+    clienteId: number,
+    signal?: AbortSignal,
+  ): Promise<Predicciones> {
+    this.predicionesCalls.push({ clienteId, signal });
+    const e = this.takeThrow("obtenerPredicciones");
+    if (e) throw e;
+    return resolve(this.prediccionesResponse);
   }
 
   descargarReporteCalls: Array<{
@@ -460,6 +473,20 @@ export function makeFakeRitmoPago(overrides: Partial<RitmoPago> = {}): RitmoPago
       constanciaPct: "75.00",
       saldoActual: "5950.00",
     },
+  };
+  return { ...base, ...overrides };
+}
+
+export function makeFakePredicciones(
+  overrides: Partial<Predicciones> = {},
+): Predicciones {
+  const base: Predicciones = {
+    disponible: true,
+    pAlive: { punto: 0.82, lo: 0.61, hi: 0.95 },
+    comprasEsperadas12m: { punto: 3.4, lo: 1.8, hi: 5.1 },
+    clv: { punto: 12450, lo: 6200, hi: 21800 },
+    proximaCompraDias: { punto: 38, lo: 21, hi: 64 },
+    draws: 2000,
   };
   return { ...base, ...overrides };
 }

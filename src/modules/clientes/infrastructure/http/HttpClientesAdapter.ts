@@ -1,5 +1,5 @@
 import type { AxiosInstance } from "axios";
-import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle } from "../../domain/entities";
+import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle, Predicciones } from "../../domain/entities";
 import type { ClientesPort, FichaDateRange } from "../../application/ports/ClientesPort";
 import type {
   BuscarClientesInput,
@@ -17,6 +17,7 @@ import { dtoToVentaCliente } from "../mappers/dtoToVentaCliente";
 import { dtoToVentaDetalle } from "../mappers/dtoToVentaDetalle";
 import { dtoToRitmoPago } from "../mappers/dtoToRitmoPago";
 import { dtoToPagoDetalle } from "../mappers/dtoToPagoDetalle";
+import { dtoToPredicciones } from "../mappers/dtoToPredicciones";
 import { apperrorToDomainError } from "../mappers/errorMapper";
 import type {
   ListResponseDTO,
@@ -27,6 +28,7 @@ import type {
   RefrescarBusquedaResponseDTO,
   RitmoPagoDTO,
   PagoDetalleDTO,
+  PrediccionesDto,
 } from "./dtos";
 
 const CLIENTES_BASE = "/clientes";
@@ -185,6 +187,21 @@ export class HttpClientesAdapter implements ClientesPort {
       );
 
       return dtoToPagoDetalle(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async obtenerPredicciones(
+    clienteId: number,
+    signal?: AbortSignal,
+  ): Promise<Predicciones> {
+    try {
+      const { data } = await this.client.get<PrediccionesDto>(
+        `${CLIENTES_BASE}/${clienteId}/predicciones`,
+        { signal },
+      );
+      return dtoToPredicciones(data);
     } catch (e) {
       throw apperrorToDomainError(e);
     }
