@@ -21,6 +21,7 @@ import Winback from "./modules/winback/Winback";
 import { Clientes } from "./modules/clientes/Clientes";
 import ClienteFichaPage from "./modules/clientes/ClienteFichaPage";
 import { Rutas } from "./modules/rutas/Rutas";
+import { Cartera } from "./modules/cartera/Cartera";
 
 // Auth Components
 import LoginPage from "./components/auth/LoginPage";
@@ -127,6 +128,10 @@ function App() {
 
               <Route path="/rutas" element={
                 <ProtectedRoute requiredModule="RUTAS"><Rutas /></ProtectedRoute>
+              } />
+
+              <Route path="/cartera" element={
+                <ProtectedRoute requiredModule="CARTERA"><Cartera /></ProtectedRoute>
               } />
 
               <Route path="/settings" element={

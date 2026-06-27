@@ -6,5 +6,6 @@ export const desktopModules = [
   { key: 'INVENTARIO', label: 'Inventario Camionetas' },
   { key: 'USUARIOS', label: 'Usuarios' },
   { key: 'FAILED_INTENTS', label: 'Ventas Fallidas' },
-  { key: 'WINBACK_ANALYTICS', label: 'Winback' }
+  { key: 'WINBACK_ANALYTICS', label: 'Winback' },
+  { key: 'CARTERA', label: 'Cartera' }
 ];
