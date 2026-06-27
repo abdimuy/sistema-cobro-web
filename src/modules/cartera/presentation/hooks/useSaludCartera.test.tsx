@@ -8,6 +8,7 @@ import {
   makeFakeSaludCartera,
 } from "../../application/__tests__/fakeCarteraPort";
 import { DomainError } from "../../domain/errors";
+import type { SaludCartera } from "../../domain/entities";
 
 function wrapWith(port: FakeCarteraPort) {
   return ({ children }: { children: React.ReactNode }) => (
@@ -85,5 +86,25 @@ describe("useSaludCartera", () => {
     act(() => result.current.refresh());
     await waitFor(() => expect(port.saludCalls.length).toBeGreaterThanOrEqual(2));
     expect(port.saludCalls[1].filters.zona).toBe("ZONA_NORTE");
+  });
+
+  it("aborts the in-flight request on unmount", async () => {
+    const port = new FakeCarteraPort();
+    // Never-resolving response keeps the request in-flight
+    port.saludResponse = (() =>
+      new Promise<SaludCartera>(() => {})) as unknown as SaludCartera;
+
+    const { unmount } = renderHook(() => useSaludCartera(), {
+      wrapper: wrapWith(port),
+    });
+
+    // Wait for the call to register so signal is available
+    await waitFor(() => expect(port.saludCalls).toHaveLength(1));
+    const { signal } = port.saludCalls[0];
+    expect(signal).toBeDefined();
+    expect(signal!.aborted).toBe(false);
+
+    unmount();
+    expect(signal!.aborted).toBe(true);
   });
 });

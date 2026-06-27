@@ -20,31 +20,31 @@ describe("CarteraScreen", () => {
     port.saludResponse = makeFakeSaludCartera();
   });
 
-  it("renders the screen title", () => {
+  it("renders the screen title", async () => {
     renderScreen(port);
-    expect(screen.getByText("Cartera")).toBeInTheDocument();
+    expect(await screen.findByText("Cartera")).toBeInTheDocument();
   });
 
-  it("renders the subtitle", () => {
+  it("renders the subtitle", async () => {
     renderScreen(port);
     expect(
-      screen.getByText(/salud del portafolio/i),
+      await screen.findByText(/salud del portafolio/i),
     ).toBeInTheDocument();
   });
 
-  it("renders the zona filter", () => {
+  it("renders the zona filter", async () => {
     renderScreen(port);
-    expect(screen.getByText("Zona")).toBeInTheDocument();
+    expect(await screen.findByText("Zona")).toBeInTheDocument();
   });
 
-  it("renders the cobrador filter", () => {
+  it("renders the cobrador filter", async () => {
     renderScreen(port);
-    expect(screen.getByText("Cobrador")).toBeInTheDocument();
+    expect(await screen.findByText("Cobrador")).toBeInTheDocument();
   });
 
-  it("renders the periodo filter", () => {
+  it("renders the periodo filter", async () => {
     renderScreen(port);
-    expect(screen.getByText("Periodo")).toBeInTheDocument();
+    expect(await screen.findByText("Periodo")).toBeInTheDocument();
   });
 
   it("shows the empty state placeholder after loading", async () => {

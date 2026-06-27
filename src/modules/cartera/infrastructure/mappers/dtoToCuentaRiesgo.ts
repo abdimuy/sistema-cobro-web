@@ -1,15 +1,6 @@
-import { DomainError } from "../../domain/errors";
 import type { CuentaRiesgo } from "../../domain/entities/CuentaRiesgo";
 import type { CuentaRiesgoDTO } from "../http/dtos";
-
-function parseDate(raw: string, field: string): Date | null {
-  if (raw === "") return null;
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) {
-    throw new DomainError(`${field}_invalida`, `${field} no es un timestamp válido`);
-  }
-  return d;
-}
+import { parseDate } from "./lib/parseDate";
 
 export function dtoToCuentaRiesgo(dto: CuentaRiesgoDTO): CuentaRiesgo {
   return {

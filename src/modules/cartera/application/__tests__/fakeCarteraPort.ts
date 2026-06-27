@@ -154,7 +154,7 @@ export function makeFakeCuentaRiesgo(
     estadoPago: "EN_MORA",
     saldo: "15000.00",
     diasAtrasoProm: 45,
-    pctPagosATiempo: "0.60",
+    pctPagosATiempo: "60.00",
     cadenciaDias: 30,
     fechaUltimoPago: new Date("2025-10-01T00:00:00Z"),
     fechaProxPago: new Date("2025-11-01T00:00:00Z"),
