@@ -3,11 +3,14 @@ import { Panel } from "@/modules/clientes/components/ficha/lib/Panel";
 import { useSaludCartera } from "../presentation/hooks/useSaludCartera";
 import { useAging } from "../presentation/hooks/useAging";
 import { useRollRate } from "../presentation/hooks/useRollRate";
+import { useCosechas } from "../presentation/hooks/useCosechas";
 import { useRankingCobradores } from "../presentation/hooks/useRankingCobradores";
 import { useCuentasRiesgo } from "../presentation/hooks/useCuentasRiesgo";
 import CarteraFilters from "./CarteraFilters";
 import { CarteraKpiHero } from "./CarteraKpiHero";
 import { CarteraAging } from "./CarteraAging";
+import { CarteraCosechas } from "./CarteraCosechas";
+import { CarteraRollRate } from "./CarteraRollRate";
 import { CarteraAlerts } from "./CarteraAlerts";
 import { DeterioroChip } from "./DeterioroChip";
 import { CobradorRanking } from "./CobradorRanking";
@@ -25,6 +28,7 @@ export function CarteraScreen() {
   const { salud, isLoading, error } = useSaludCartera(filters);
   const { buckets, isLoading: agingLoading } = useAging(filters);
   const { rollRate } = useRollRate(filters);
+  const { cosechas, isLoading: cosechasVizLoading } = useCosechas(filters);
   const { cobradores, isLoading: rankingLoading, error: rankingError } = useRankingCobradores(filters);
   const { cuentas, isLoading: cuentasLoading, error: cuentasError } = useCuentasRiesgo();
 
@@ -71,6 +75,14 @@ export function CarteraScreen() {
 
           <Panel title="Antigüedad de saldos" subtitle="Saldo por bucket de mora">
             <CarteraAging buckets={buckets} isLoading={agingLoading} />
+          </Panel>
+
+          <Panel title="Cosechas" subtitle="Distribución por antigüedad de cohorte">
+            <CarteraCosechas cosechas={cosechas} isLoading={cosechasVizLoading} />
+          </Panel>
+
+          <Panel title="Roll-rate" subtitle="Migración entre cortes">
+            <CarteraRollRate rollRate={rollRate} isLoading={false} />
           </Panel>
         </div>
       )}

@@ -71,18 +71,22 @@ describe("CarteraScreen", () => {
 
   it("renders the deterioration chip", async () => {
     renderScreen(port);
-    expect(await screen.findByText(/deterioro/i)).toBeInTheDocument();
+    // Both DeterioroChip and CarteraRollRate panel show "Deterioro"; assert ≥1 match.
+    const matches = await screen.findAllByText(/deterioro/i);
+    expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 
   it("does not show 'Sin datos' while aging is still loading", async () => {
     const slowPort = new FakeCarteraPort();
     slowPort.saludResponse = makeFakeSaludCartera();
     slowPort.rollRateResponse = makeFakeRollRate();
-    // Aging never resolves — simulates in-flight concurrent fetch.
+    // Aging and cosechas never resolve — simulates in-flight concurrent fetches.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     slowPort.obtenerAging = () => new Promise<any>(() => {});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    slowPort.obtenerCosechas = () => new Promise<any>(() => {});
     renderScreen(slowPort);
-    // Wait for salud to render (aging is still in-flight).
+    // Wait for salud to render (aging + cosechas are still in-flight).
     await screen.findByText("PAR");
     expect(screen.queryByText(/sin datos/i)).not.toBeInTheDocument();
   });
