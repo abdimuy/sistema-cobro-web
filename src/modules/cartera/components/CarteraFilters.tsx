@@ -11,12 +11,14 @@ import { Label } from "@/components/ui/label";
 
 const ALL = "__all__";
 
+export type FilterOption = { value: string; label: string };
+
 interface CarteraFiltersProps {
   zona?: string;
   cobrador?: string;
   periodo?: string;
-  zonaOptions: string[];
-  cobradorOptions: string[];
+  zonaOptions: FilterOption[];
+  cobradorOptions: FilterOption[];
   onZonaChange: (v: string | undefined) => void;
   onCobradorChange: (v: string | undefined) => void;
   onPeriodoChange: (v: string | undefined) => void;
@@ -62,8 +64,8 @@ const CarteraFilters: React.FC<CarteraFiltersProps> = ({
           <SelectContent>
             <SelectItem value={ALL}>Todas</SelectItem>
             {zonaOptions.map((z) => (
-              <SelectItem key={z} value={z}>
-                {z}
+              <SelectItem key={z.value} value={z.value}>
+                {z.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -82,8 +84,8 @@ const CarteraFilters: React.FC<CarteraFiltersProps> = ({
           <SelectContent>
             <SelectItem value={ALL}>Todos</SelectItem>
             {cobradorOptions.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
+              <SelectItem key={c.value} value={c.value}>
+                {c.label}
               </SelectItem>
             ))}
           </SelectContent>

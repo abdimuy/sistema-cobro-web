@@ -9,6 +9,7 @@ import type { CobradorPerformance, CuentaRiesgo } from "../../domain/entities";
 function makeCobrador(overrides: Partial<CobradorPerformance> = {}): CobradorPerformance {
   return {
     cobradorId: 1,
+    cobradorNombre: "",
     zonaClienteId: 10,
     cei: "0.85",
     par: "0.12",

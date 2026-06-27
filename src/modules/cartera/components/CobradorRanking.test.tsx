@@ -52,6 +52,22 @@ describe("CobradorRanking", () => {
     expect(redDot).not.toBeNull();
   });
 
+  it("renders cobrador_nombre when provided", () => {
+    const cobradores = [
+      makeFakeCobradorPerformance({ cobradorId: 5, cobradorNombre: "GARCIA LOPEZ" }),
+    ];
+    render(<CobradorRanking cobradores={cobradores} />);
+    expect(screen.getByText("GARCIA LOPEZ")).toBeInTheDocument();
+  });
+
+  it("falls back to Cobrador #<id> when cobradorNombre is empty", () => {
+    const cobradores = [
+      makeFakeCobradorPerformance({ cobradorId: 7, cobradorNombre: "" }),
+    ];
+    render(<CobradorRanking cobradores={cobradores} />);
+    expect(screen.getByText("Cobrador #7")).toBeInTheDocument();
+  });
+
   it("renders empty state when no cobradores", () => {
     render(<CobradorRanking cobradores={[]} />);
     expect(screen.getByText("Sin cobradores")).toBeInTheDocument();

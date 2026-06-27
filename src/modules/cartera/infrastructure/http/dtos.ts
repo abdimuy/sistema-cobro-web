@@ -43,6 +43,7 @@ export type CosechasResponseDTO = {
 
 export type CobradorPerformanceDTO = {
   cobrador_id: number;
+  cobrador_nombre: string;
   zona_cliente_id: number;
   cei: string;
   par: string;

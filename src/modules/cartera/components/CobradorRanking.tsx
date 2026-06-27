@@ -9,8 +9,9 @@ function SemDot({ tone }: { tone: { dot: string; text: string } }) {
   return <span className={cn("inline-block w-1.5 h-1.5 rounded-full shrink-0 mr-1", tone.dot)} />;
 }
 
-function cobradorName(id: number): string {
-  return id === 0 ? "Sin cobrador" : `Cobrador #${id}`;
+function cobradorLabel(c: CobradorPerformance): string {
+  if (c.cobradorId === 0) return "Sin cobrador";
+  return c.cobradorNombre || `Cobrador #${c.cobradorId}`;
 }
 
 const COLUMNS: { key: CobradorSortKey | null; label: string }[] = [
@@ -76,7 +77,7 @@ export function CobradorRanking({
             const parTone = semaphoreTone(parLevel(c.par));
             return (
               <tr key={c.cobradorId} className="border-b border-border/20 hover:bg-muted/30">
-                <td className="px-3 py-2 font-mono text-xs">{cobradorName(c.cobradorId)}</td>
+                <td className="px-3 py-2 font-mono text-xs">{cobradorLabel(c)}</td>
                 <td className={cn("px-3 py-2 font-mono text-xs tabular-nums", ceiTone.text)}>
                   <SemDot tone={ceiTone} />
                   {formatRatioPct(c.cei)}

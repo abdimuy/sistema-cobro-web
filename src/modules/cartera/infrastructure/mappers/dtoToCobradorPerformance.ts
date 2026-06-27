@@ -4,6 +4,7 @@ import type { CobradorPerformanceDTO } from "../http/dtos";
 export function dtoToCobradorPerformance(dto: CobradorPerformanceDTO): CobradorPerformance {
   return {
     cobradorId: dto.cobrador_id,
+    cobradorNombre: dto.cobrador_nombre,
     zonaClienteId: dto.zona_cliente_id,
     cei: dto.cei,
     par: dto.par,

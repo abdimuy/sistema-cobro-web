@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Panel } from "@/modules/clientes/components/ficha/lib/Panel";
+import useGetZonasCliente from "@/modules/user/useGetZonaCliente";
+import type { FilterOption } from "./CarteraFilters";
 import { useSaludCartera } from "../presentation/hooks/useSaludCartera";
 import { useAging } from "../presentation/hooks/useAging";
 import { useRollRate } from "../presentation/hooks/useRollRate";
@@ -26,11 +28,37 @@ export function CarteraScreen() {
 
   const filters = { zona, cobrador, periodo };
   const { salud, isLoading, error } = useSaludCartera(filters);
+  const { zonasCliente } = useGetZonasCliente();
   const { buckets, isLoading: agingLoading } = useAging(filters);
   const { rollRate, isLoading: rollRateLoading } = useRollRate(filters);
   const { cosechas, isLoading: cosechasVizLoading } = useCosechas(filters);
   const { cobradores, isLoading: rankingLoading, error: rankingError } = useRankingCobradores(filters);
   const { cuentas, isLoading: cuentasLoading, error: cuentasError } = useCuentasRiesgo();
+
+  // Zona options — id as value (sent to backend), name as label (shown to user)
+  const zonaOptions = useMemo<FilterOption[]>(
+    () => zonasCliente.map((z) => ({ value: String(z.ZONA_CLIENTE_ID), label: z.ZONA_CLIENTE })),
+    [zonasCliente],
+  );
+
+  // Cobrador options — derived from ranking; persisted via ref so selecting a
+  // cobrador (which narrows the list server-side) doesn't collapse the dropdown
+  const cobradorOptionsRef = useRef<FilterOption[]>([]);
+  const cobradorOptions = useMemo<FilterOption[]>(() => {
+    if (cobrador === undefined) {
+      const seen = new Set<string>();
+      const opts: FilterOption[] = [];
+      for (const c of cobradores) {
+        if (c.cobradorId === 0) continue;
+        const v = String(c.cobradorId);
+        if (seen.has(v)) continue;
+        seen.add(v);
+        opts.push({ value: v, label: c.cobradorNombre || `Cobrador #${c.cobradorId}` });
+      }
+      cobradorOptionsRef.current = opts;
+    }
+    return cobradorOptionsRef.current;
+  }, [cobradores, cobrador]);
 
   return (
     <div className="space-y-6 p-6">
@@ -49,8 +77,8 @@ export function CarteraScreen() {
         zona={zona}
         cobrador={cobrador}
         periodo={periodo}
-        zonaOptions={[]}
-        cobradorOptions={[]}
+        zonaOptions={zonaOptions}
+        cobradorOptions={cobradorOptions}
         onZonaChange={setZona}
         onCobradorChange={setCobrador}
         onPeriodoChange={setPeriodo}

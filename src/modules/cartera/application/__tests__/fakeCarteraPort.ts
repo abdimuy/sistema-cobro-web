@@ -130,6 +130,7 @@ export function makeFakeCobradorPerformance(
 ): CobradorPerformance {
   const base: CobradorPerformance = {
     cobradorId: 1,
+    cobradorNombre: "",
     zonaClienteId: 10,
     cei: "0.85",
     par: "0.12",
