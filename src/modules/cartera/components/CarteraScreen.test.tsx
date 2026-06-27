@@ -1,8 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { CarteraProvider } from "../presentation/context/CarteraContext";
 import { CarteraScreen } from "./CarteraScreen";
-import { FakeCarteraPort, makeFakeSaludCartera } from "../application/__tests__/fakeCarteraPort";
+import {
+  FakeCarteraPort,
+  makeFakeSaludCartera,
+  makeFakeAgingBucket,
+  makeFakeRollRate,
+} from "../application/__tests__/fakeCarteraPort";
 
 function renderScreen(port: FakeCarteraPort) {
   return render(
@@ -18,6 +23,8 @@ describe("CarteraScreen", () => {
   beforeEach(() => {
     port = new FakeCarteraPort();
     port.saludResponse = makeFakeSaludCartera();
+    port.agingResponse = [makeFakeAgingBucket({ bucket: "0-30" })];
+    port.rollRateResponse = makeFakeRollRate();
   });
 
   it("renders the screen title", async () => {
@@ -27,9 +34,7 @@ describe("CarteraScreen", () => {
 
   it("renders the subtitle", async () => {
     renderScreen(port);
-    expect(
-      await screen.findByText(/salud del portafolio/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/salud del portafolio/i)).toBeInTheDocument();
   });
 
   it("renders the zona filter", async () => {
@@ -47,10 +52,19 @@ describe("CarteraScreen", () => {
     expect(await screen.findByText("Periodo")).toBeInTheDocument();
   });
 
-  it("shows the empty state placeholder after loading", async () => {
+  it("renders the KPI hero once salud loads", async () => {
     renderScreen(port);
-    await waitFor(() =>
-      expect(screen.getByText(/próximamente/i)).toBeInTheDocument(),
-    );
+    expect(await screen.findByText("PAR")).toBeInTheDocument();
+    expect(screen.getByText("Tasa de cobranza")).toBeInTheDocument();
+  });
+
+  it("renders the aging panel title", async () => {
+    renderScreen(port);
+    expect(await screen.findByText("Antigüedad de saldos")).toBeInTheDocument();
+  });
+
+  it("renders the deterioration chip", async () => {
+    renderScreen(port);
+    expect(await screen.findByText(/deterioro/i)).toBeInTheDocument();
   });
 });
