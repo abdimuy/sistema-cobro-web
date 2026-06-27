@@ -73,8 +73,17 @@ function AgingTooltip({ active, payload }: TooltipProps) {
   );
 }
 
-export function CarteraAging({ buckets }: { buckets: AgingBucket[] }) {
+export function CarteraAging({
+  buckets,
+  isLoading = false,
+}: {
+  buckets: AgingBucket[];
+  isLoading?: boolean;
+}) {
   if (buckets.length === 0) {
+    if (isLoading) {
+      return <div className="h-48 animate-pulse rounded-md bg-muted" />;
+    }
     return (
       <p className="font-mono text-[11px] text-muted-foreground">Sin datos</p>
     );

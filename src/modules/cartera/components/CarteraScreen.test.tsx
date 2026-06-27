@@ -67,4 +67,17 @@ describe("CarteraScreen", () => {
     renderScreen(port);
     expect(await screen.findByText(/deterioro/i)).toBeInTheDocument();
   });
+
+  it("does not show 'Sin datos' while aging is still loading", async () => {
+    const slowPort = new FakeCarteraPort();
+    slowPort.saludResponse = makeFakeSaludCartera();
+    slowPort.rollRateResponse = makeFakeRollRate();
+    // Aging never resolves — simulates in-flight concurrent fetch.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    slowPort.obtenerAging = () => new Promise<any>(() => {});
+    renderScreen(slowPort);
+    // Wait for salud to render (aging is still in-flight).
+    await screen.findByText("PAR");
+    expect(screen.queryByText(/sin datos/i)).not.toBeInTheDocument();
+  });
 });

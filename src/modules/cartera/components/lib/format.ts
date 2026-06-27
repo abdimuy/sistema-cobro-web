@@ -17,13 +17,15 @@ export function formatMoney(raw: string): string {
 }
 
 /**
- * Format a ratio string already in the 0–1 range as a percentage
- * (e.g. "0.15" → "15%"). Used for PAR, CEI and margen real proxy.
+ * Format a ratio string already in the 0–1 range as a percentage with up to
+ * 2 decimal places and no trailing zeros (e.g. "0.1523" → "15.23%",
+ * "0.15" → "15%", "0.1" → "10%"). Used for PAR, CEI and margen real proxy.
  */
 export function formatRatioPct(raw: string): string {
   const n = Number(raw);
   if (!Number.isFinite(n)) return raw;
-  return `${Math.round(n * 100)}%`;
+  const pct = (n * 100).toFixed(2).replace(/\.?0+$/, "");
+  return `${pct}%`;
 }
 
 /** Format a signed ratio as a percentage with sign (e.g. 0.08 → "+8%"). */

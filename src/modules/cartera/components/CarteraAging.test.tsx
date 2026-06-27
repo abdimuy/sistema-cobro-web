@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { CarteraAging } from "./CarteraAging";
 import { makeFakeAgingBucket } from "../application/__tests__/fakeCarteraPort";
+import { AGING_BUCKET_ORDER } from "./lib/carteraUx";
 
 const buckets = [
   makeFakeAgingBucket({ bucket: "0-30", saldo: "50000.00", conteo: 20 }),
@@ -22,5 +23,20 @@ describe("CarteraAging", () => {
   it("shows an empty state when there are no buckets", () => {
     render(<CarteraAging buckets={[]} />);
     expect(screen.getByText(/sin datos/i)).toBeInTheDocument();
+  });
+
+  it("shows a loading skeleton instead of 'Sin datos' while fetching", () => {
+    render(<CarteraAging buckets={[]} isLoading={true} />);
+    expect(screen.queryByText(/sin datos/i)).not.toBeInTheDocument();
+  });
+
+  it("renders all four aging bucket labels when all buckets are present", () => {
+    const allBuckets = AGING_BUCKET_ORDER.map((bucket, i) =>
+      makeFakeAgingBucket({ bucket, saldo: String((i + 1) * 10000), conteo: i + 1 }),
+    );
+    render(<CarteraAging buckets={allBuckets} />);
+    for (const label of AGING_BUCKET_ORDER) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
   });
 });

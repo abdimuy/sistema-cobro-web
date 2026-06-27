@@ -24,6 +24,16 @@ describe("CarteraKpiHero", () => {
     expect(screen.getByText(/\$500,000/)).toBeInTheDocument();
   });
 
+  it("preserves sub-percent decimal precision for 4-decimal ratios", () => {
+    render(
+      <CarteraKpiHero
+        salud={makeFakeSaludCartera({ par: "0.1523", ceiRate: "0.8750" })}
+      />,
+    );
+    expect(screen.getByText("15.23%")).toBeInTheDocument();
+    expect(screen.getByText("87.5%")).toBeInTheDocument();
+  });
+
   it("applies the red semáforo when PAR is high", () => {
     render(<CarteraKpiHero salud={makeFakeSaludCartera({ par: "0.30" })} />);
     expect(screen.getByTestId("kpi-dot-red")).toBeInTheDocument();

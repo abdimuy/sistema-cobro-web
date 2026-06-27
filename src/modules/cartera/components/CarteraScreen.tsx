@@ -19,7 +19,7 @@ export function CarteraScreen() {
 
   const filters = { zona, cobrador, periodo };
   const { salud, isLoading, error } = useSaludCartera(filters);
-  const { buckets } = useAging(filters);
+  const { buckets, isLoading: agingLoading } = useAging(filters);
   const { rollRate } = useRollRate(filters);
 
   return (
@@ -64,7 +64,7 @@ export function CarteraScreen() {
           <CarteraKpiHero salud={salud} isLoading={isLoading} />
 
           <Panel title="Antigüedad de saldos" subtitle="Saldo por bucket de mora">
-            <CarteraAging buckets={buckets} />
+            <CarteraAging buckets={buckets} isLoading={agingLoading} />
           </Panel>
         </div>
       )}
