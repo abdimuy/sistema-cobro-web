@@ -27,7 +27,7 @@ export function CarteraScreen() {
   const filters = { zona, cobrador, periodo };
   const { salud, isLoading, error } = useSaludCartera(filters);
   const { buckets, isLoading: agingLoading } = useAging(filters);
-  const { rollRate } = useRollRate(filters);
+  const { rollRate, isLoading: rollRateLoading } = useRollRate(filters);
   const { cosechas, isLoading: cosechasVizLoading } = useCosechas(filters);
   const { cobradores, isLoading: rankingLoading, error: rankingError } = useRankingCobradores(filters);
   const { cuentas, isLoading: cuentasLoading, error: cuentasError } = useCuentasRiesgo();
@@ -82,7 +82,7 @@ export function CarteraScreen() {
           </Panel>
 
           <Panel title="Roll-rate" subtitle="Migración entre cortes">
-            <CarteraRollRate rollRate={rollRate} isLoading={false} />
+            <CarteraRollRate rollRate={rollRate} isLoading={rollRateLoading} />
           </Panel>
         </div>
       )}

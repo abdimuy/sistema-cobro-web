@@ -22,4 +22,10 @@ describe("cohortMonthToLabel", () => {
     // (24323 % 12) + 1 = 11 + 1 = 12
     expect(cohortMonthToLabel(24324)).toBe("Dic 2026");
   });
+
+  it("converts 24325 to Ene 2027 (year rollover)", () => {
+    // 24325 = 2027*12 + 1 → Ene 2027
+    // floor(24324/12) = 2027, (24324 % 12) + 1 = 0 + 1 = 1
+    expect(cohortMonthToLabel(24325)).toBe("Ene 2027");
+  });
 });

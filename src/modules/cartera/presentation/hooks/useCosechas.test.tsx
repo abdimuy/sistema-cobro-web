@@ -59,6 +59,20 @@ describe("useCosechas", () => {
     expect(result.current.cosechas).toHaveLength(0);
   });
 
+  it("exposes isLoading:true while port has not resolved (Sin datos stays hidden)", async () => {
+    const port = new FakeCarteraPort();
+    port.cosechasResponse = (() =>
+      new Promise<Cosecha[]>(() => {})) as unknown as Cosecha[];
+
+    const { result } = renderHook(() => useCosechas(), { wrapper: wrapWith(port) });
+
+    await waitFor(() => expect(port.cosechasCalls).toHaveLength(1));
+    // While in flight: isLoading is true, cosechas is empty
+    // → CarteraCosechas renders skeleton (cosechas.length===0 && isLoading), not "Sin datos"
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.cosechas).toHaveLength(0);
+  });
+
   it("aborts in-flight request on unmount", async () => {
     const port = new FakeCarteraPort();
     port.cosechasResponse = (() =>
