@@ -28,7 +28,7 @@ function makeCuenta(overrides: Partial<CuentaRiesgo> = {}): CuentaRiesgo {
     zona: "ZONA_NORTE",
     tierRiesgo: "EN_RIESGO",
     segmento: "DORMIDO_VALIOSO",
-    estadoPago: "EN_MORA",
+    estadoPago: "ATRASADO",
     saldo: "15000.00",
     diasAtrasoProm: 45,
     pctPagosATiempo: "60.00",
@@ -68,6 +68,19 @@ describe("sortCobradores", () => {
     const result = sortCobradores(rows, null, "asc");
     expect(result).not.toBe(rows);
     expect(result.map((r) => r.cobradorId)).toEqual([5, 3]);
+  });
+
+  it("sorts saldoTotal numerically, not lexicographically", () => {
+    // Lexicographic order: "100000.00" < "20000.00" < "9000.00"
+    // Numeric order:        9000 < 20000 < 100000
+    // This test proves Number()-based sort, not string sort.
+    const rows = [
+      makeCobrador({ cobradorId: 1, saldoTotal: "9000.00" }),
+      makeCobrador({ cobradorId: 2, saldoTotal: "100000.00" }),
+      makeCobrador({ cobradorId: 3, saldoTotal: "20000.00" }),
+    ];
+    const result = sortCobradores(rows, "saldoTotal", "asc");
+    expect(result.map((r) => r.cobradorId)).toEqual([1, 3, 2]);
   });
 });
 

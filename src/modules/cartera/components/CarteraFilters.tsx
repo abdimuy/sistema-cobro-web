@@ -49,7 +49,7 @@ const CarteraFilters: React.FC<CarteraFiltersProps> = ({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div data-testid="cartera-filters" className="flex flex-wrap items-center gap-3">
       {/* Zona filter */}
       <div className="flex flex-col gap-1">
         <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">

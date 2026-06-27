@@ -44,7 +44,7 @@ export function CobradorRanking({
 
   const sorted = sortCobradores(cobradores, sortKey, sortDir);
 
-  if (cobradores.length === 0) {
+  if (cobradores.length === 0 && !isLoading) {
     return <p className="font-mono text-[11px] text-muted-foreground">Sin cobradores</p>;
   }
 

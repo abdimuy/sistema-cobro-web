@@ -71,6 +71,7 @@ export function CarteraKpiHero({
 
   return (
     <div
+      data-testid="cartera-kpi-hero"
       className={cn(
         "rounded-md border border-border/60",
         isLoading && "opacity-50 transition-opacity",

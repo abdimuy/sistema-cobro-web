@@ -56,4 +56,9 @@ describe("CobradorRanking", () => {
     render(<CobradorRanking cobradores={[]} />);
     expect(screen.getByText("Sin cobradores")).toBeInTheDocument();
   });
+
+  it("does not show 'Sin cobradores' while isLoading is true", () => {
+    render(<CobradorRanking cobradores={[]} isLoading={true} />);
+    expect(screen.queryByText("Sin cobradores")).not.toBeInTheDocument();
+  });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { CarteraProvider } from "../presentation/context/CarteraContext";
 import { CarteraScreen } from "./CarteraScreen";
 import {
@@ -44,7 +44,10 @@ describe("CarteraScreen", () => {
 
   it("renders the cobrador filter", async () => {
     renderScreen(port);
-    expect(await screen.findByText("Cobrador")).toBeInTheDocument();
+    // "Cobrador" also appears as a column header in CobradorRanking while loading;
+    // scope to the filter bar to avoid a multi-match error.
+    const filterBar = await screen.findByTestId("cartera-filters");
+    expect(within(filterBar).getByText("Cobrador")).toBeInTheDocument();
   });
 
   it("renders the periodo filter", async () => {
@@ -54,8 +57,11 @@ describe("CarteraScreen", () => {
 
   it("renders the KPI hero once salud loads", async () => {
     renderScreen(port);
-    expect(await screen.findByText("PAR")).toBeInTheDocument();
-    expect(screen.getByText("Tasa de cobranza")).toBeInTheDocument();
+    // "PAR" also appears as a column header in CobradorRanking while loading;
+    // scope to the KPI hero to avoid a stale-element error.
+    const kpiHero = await screen.findByTestId("cartera-kpi-hero");
+    expect(within(kpiHero).getByText("PAR")).toBeInTheDocument();
+    expect(within(kpiHero).getByText("Tasa de cobranza")).toBeInTheDocument();
   });
 
   it("renders the aging panel title", async () => {
