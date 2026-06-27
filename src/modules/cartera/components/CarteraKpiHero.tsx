@@ -64,7 +64,7 @@ export function CarteraKpiHero({
     },
     {
       label: "Margen real",
-      value: formatRatioPct(salud.margenRealProxy),
+      value: formatMoney(salud.margenRealProxy),
       level: "neutral",
     },
   ];

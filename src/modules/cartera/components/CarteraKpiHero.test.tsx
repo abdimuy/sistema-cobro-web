@@ -24,6 +24,20 @@ describe("CarteraKpiHero", () => {
     expect(screen.getByText(/\$500,000/)).toBeInTheDocument();
   });
 
+  it("renders Margen real as money, not a percentage", () => {
+    render(
+      <CarteraKpiHero
+        salud={makeFakeSaludCartera({ margenRealProxy: "63360.00" })}
+      />,
+    );
+    // Must show currency-formatted value
+    expect(screen.getByText(/63,360/)).toBeInTheDocument();
+    // Must NOT show a percentage sign for the margen KPI
+    const margenLabel = screen.getByText("Margen real");
+    const kpiCell = margenLabel.closest("div[class]")!;
+    expect(kpiCell.textContent).not.toMatch(/%/);
+  });
+
   it("preserves sub-percent decimal precision for 4-decimal ratios", () => {
     render(
       <CarteraKpiHero

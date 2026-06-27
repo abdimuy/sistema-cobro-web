@@ -8,12 +8,12 @@ function makeDto(overrides: Partial<CuentaRiesgoDTO> = {}): CuentaRiesgoDTO {
     cliente_id: 1001,
     nombre: "MUEBLES HERNANDEZ SA",
     zona: "ZONA_NORTE",
-    tier_riesgo: "alto",
+    tier_riesgo: "EN_RIESGO",
     segmento: "DORMIDO_VALIOSO",
-    estado_pago: "EN_MORA",
+    estado_pago: "MOROSO",
     saldo: "15000.00",
     dias_atraso_prom: 45,
-    pct_pagos_a_tiempo: "0.60",
+    pct_pagos_a_tiempo: "60.00",
     cadencia_dias: 30,
     fecha_ultimo_pago: "2025-10-01T00:00:00Z",
     fecha_prox_pago: "2025-11-01T00:00:00Z",
@@ -27,12 +27,12 @@ describe("dtoToCuentaRiesgo", () => {
     expect(entity.clienteId).toBe(1001);
     expect(entity.nombre).toBe("MUEBLES HERNANDEZ SA");
     expect(entity.zona).toBe("ZONA_NORTE");
-    expect(entity.tierRiesgo).toBe("alto");
+    expect(entity.tierRiesgo).toBe("EN_RIESGO");
     expect(entity.segmento).toBe("DORMIDO_VALIOSO");
-    expect(entity.estadoPago).toBe("EN_MORA");
+    expect(entity.estadoPago).toBe("MOROSO");
     expect(entity.saldo).toBe("15000.00");
     expect(entity.diasAtrasoProm).toBe(45);
-    expect(entity.pctPagosATiempo).toBe("0.60");
+    expect(entity.pctPagosATiempo).toBe("60.00");
     expect(entity.cadenciaDias).toBe(30);
     expect(entity.fechaUltimoPago).toBeInstanceOf(Date);
     expect(entity.fechaProxPago).toBeInstanceOf(Date);

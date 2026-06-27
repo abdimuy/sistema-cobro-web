@@ -96,7 +96,7 @@ export function makeFakeSaludCartera(
     importeColectado: "120000.00",
     cuentasTotal: 200,
     cuentasEnMora: 30,
-    margenRealProxy: "0.52",
+    margenRealProxy: "63360.00",
   };
   return { ...base, ...overrides };
 }
@@ -149,9 +149,9 @@ export function makeFakeCuentaRiesgo(
     clienteId: 1001,
     nombre: "MUEBLES HERNANDEZ SA",
     zona: "ZONA_NORTE",
-    tierRiesgo: "alto",
+    tierRiesgo: "EN_RIESGO",
     segmento: "DORMIDO_VALIOSO",
-    estadoPago: "EN_MORA",
+    estadoPago: "MOROSO",
     saldo: "15000.00",
     diasAtrasoProm: 45,
     pctPagosATiempo: "60.00",
