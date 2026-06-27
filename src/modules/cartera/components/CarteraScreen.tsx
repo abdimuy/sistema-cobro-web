@@ -3,11 +3,15 @@ import { Panel } from "@/modules/clientes/components/ficha/lib/Panel";
 import { useSaludCartera } from "../presentation/hooks/useSaludCartera";
 import { useAging } from "../presentation/hooks/useAging";
 import { useRollRate } from "../presentation/hooks/useRollRate";
+import { useRankingCobradores } from "../presentation/hooks/useRankingCobradores";
+import { useCuentasRiesgo } from "../presentation/hooks/useCuentasRiesgo";
 import CarteraFilters from "./CarteraFilters";
 import { CarteraKpiHero } from "./CarteraKpiHero";
 import { CarteraAging } from "./CarteraAging";
 import { CarteraAlerts } from "./CarteraAlerts";
 import { DeterioroChip } from "./DeterioroChip";
+import { CobradorRanking } from "./CobradorRanking";
+import { CuentasRiesgo } from "./CuentasRiesgo";
 
 // CarteraScreen is the orchestrator for the cartera module. It owns filter
 // state and composes the Resumen section: KPI hero, deterioration indicator,
@@ -21,6 +25,8 @@ export function CarteraScreen() {
   const { salud, isLoading, error } = useSaludCartera(filters);
   const { buckets, isLoading: agingLoading } = useAging(filters);
   const { rollRate } = useRollRate(filters);
+  const { cobradores, isLoading: rankingLoading, error: rankingError } = useRankingCobradores(filters);
+  const { cuentas, isLoading: cuentasLoading, error: cuentasError } = useCuentasRiesgo();
 
   return (
     <div className="space-y-6 p-6">
@@ -68,6 +74,24 @@ export function CarteraScreen() {
           </Panel>
         </div>
       )}
+
+      <Panel title="Desempeño por cobrador" subtitle="CEI, PAR y cobertura">
+        {rankingError && (
+          <p className="font-mono text-[12px] text-destructive" role="alert">
+            {rankingError.message}
+          </p>
+        )}
+        <CobradorRanking cobradores={cobradores} isLoading={rankingLoading} />
+      </Panel>
+
+      <Panel title="Cuentas en riesgo" subtitle="Portafolio completo">
+        {cuentasError && (
+          <p className="font-mono text-[12px] text-destructive" role="alert">
+            {cuentasError.message}
+          </p>
+        )}
+        <CuentasRiesgo cuentas={cuentas} isLoading={cuentasLoading} />
+      </Panel>
     </div>
   );
 }
