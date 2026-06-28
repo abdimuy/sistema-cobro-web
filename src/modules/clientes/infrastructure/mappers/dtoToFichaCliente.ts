@@ -144,7 +144,11 @@ export function dtoToFichaCliente(dto: FichaDTO): FichaCliente {
     tendencia: mapTendencia(dto.series.tendencia),
   };
 
-  const pulso: Pulso | null = dto.pulso !== null ? mapPulso(dto.pulso) : null;
+  // `!= null` (loose) cubre tanto null como undefined: cuando el cliente no
+  // tiene pulso materializado el backend OMITE el campo (undefined), no envía
+  // null. Con `!== null` se llamaba mapPulso(undefined) y reventaba en
+  // dto.segmento ("undefined is not an object").
+  const pulso: Pulso | null = dto.pulso != null ? mapPulso(dto.pulso) : null;
 
   const ubicacion: UbicacionCliente = {
     lat: dto.ubicacion.lat,

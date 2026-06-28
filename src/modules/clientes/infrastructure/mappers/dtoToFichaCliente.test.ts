@@ -199,6 +199,13 @@ describe("dtoToFichaCliente", () => {
     expect(ficha.pulso).toBeNull();
   });
 
+  it("sets pulso to null when backend omits the field (undefined)", () => {
+    const dto = buildValidDTO();
+    delete (dto as { pulso?: unknown }).pulso;
+    const ficha = dtoToFichaCliente(dto);
+    expect(ficha.pulso).toBeNull();
+  });
+
   it("throws DomainError on invalid pulso segmento", () => {
     const dto = buildValidDTO();
     dto.pulso!.segmento = "SEGMENTO_FICTICIO";
