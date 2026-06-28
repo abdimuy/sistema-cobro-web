@@ -1,9 +1,14 @@
 import { ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MapSimple from "@/components/MapSimple";
+import useGetZonasCliente from "@/hooks/useGetZonasCliente";
 import { VentaV2 } from "@/services/api/ventaV2Types";
 
-const fields = (venta: VentaV2): Array<{ label: string; value: string | null }> => [
+const fields = (
+  venta: VentaV2,
+  zonaNombre: string | null,
+): Array<{ label: string; value: string | null }> => [
+  { label: "Zona", value: zonaNombre },
   { label: "Calle", value: venta.direccion.calle || null },
   { label: "Número", value: venta.direccion.numero_exterior },
   { label: "Colonia", value: venta.direccion.colonia || null },
@@ -13,6 +18,11 @@ const fields = (venta: VentaV2): Array<{ label: string; value: string | null }> 
 ];
 
 export const VentaUbicacionTab = ({ venta }: { venta: VentaV2 }) => {
+  const { getZonaById } = useGetZonasCliente();
+  const zonaId = venta.direccion.zona_cliente_id;
+  const zonaNombre =
+    zonaId != null ? (getZonaById(zonaId)?.ZONA_CLIENTE ?? `Zona ${zonaId}`) : null;
+
   const hasGPS = venta.gps.latitud !== 0 || venta.gps.longitud !== 0;
   const mapsUrl = hasGPS
     ? `https://www.google.com/maps?q=${venta.gps.latitud},${venta.gps.longitud}`
@@ -26,7 +36,7 @@ export const VentaUbicacionTab = ({ venta }: { venta: VentaV2 }) => {
           Dirección
         </h3>
         <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
-          {fields(venta).map((f) => (
+          {fields(venta, zonaNombre).map((f) => (
             <div key={f.label}>
               <dt className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 {f.label}
