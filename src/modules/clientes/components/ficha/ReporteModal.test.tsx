@@ -24,6 +24,7 @@ function renderModal(port: FakeClientesPort, ventas: VentaCliente[]) {
         open
         onClose={vi.fn()}
         clienteId={1042}
+        nombreCliente="Minerva Lopez"
         ventas={ventas}
         hasMore={false}
         loadMore={vi.fn()}
@@ -61,5 +62,19 @@ describe("ReporteModal", () => {
 
     await waitFor(() => expect(port.descargarReporteCalls).toHaveLength(1));
     expect(port.descargarReporteCalls[0].ventaIds).toEqual([2]);
+  });
+
+  it("switches to the embedded preview after generating", async () => {
+    const user = userEvent.setup();
+    const port = new FakeClientesPort();
+    renderModal(port, twoVentas());
+
+    await user.click(screen.getByText("Generar PDF (2)"));
+
+    // The selection footer is replaced by the preview + action bar.
+    await waitFor(() => expect(screen.getByTitle("Reporte")).toBeInTheDocument());
+    expect(screen.getByText("Imprimir")).toBeInTheDocument();
+    expect(screen.getByText("Guardar como")).toBeInTheDocument();
+    expect(screen.queryByText(/Generar PDF/)).not.toBeInTheDocument();
   });
 });

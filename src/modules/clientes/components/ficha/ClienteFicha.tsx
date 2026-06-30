@@ -190,6 +190,7 @@ export function ClienteFicha({ clienteId }: Props) {
           open={reporteOpen}
           onClose={() => setReporteOpen(false)}
           clienteId={clienteId}
+          nombreCliente={ficha?.nombre ?? "cliente"}
           ventas={ventasState.ventas}
           hasMore={ventasState.hasMore}
           loadMore={ventasState.loadMore}
