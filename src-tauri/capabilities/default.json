@@ -17,6 +17,13 @@
     "autostart:allow-disable",
     "autostart:allow-is-enabled",
     "updater:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    "dialog:default",
+    "dialog:allow-save",
+    "fs:default",
+    {
+      "identifier": "fs:allow-write-file",
+      "allow": [{ "path": "**" }]
+    }
   ]
 }
