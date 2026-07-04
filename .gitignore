@@ -23,3 +23,6 @@ release
 *.njsproj
 *.sln
 *.sw?
+
+# SDD scratch (subagent-driven-development)
+.superpowers/
