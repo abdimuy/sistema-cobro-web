@@ -5,11 +5,12 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 
-import useGetVentasLocales from "@/hooks/useGetVentasLocales";
 import useGetAlmacenes from "@/hooks/useGetAlmacenes";
 import useGetZonasCliente from "@/hooks/useGetZonasCliente";
 import useGetVendedores from "@/hooks/useGetVendedores";
 import { VentaDetalleModal } from "./components/detalle";
+import { VentasListContainer } from "./presentation/composition/VentasListContainer";
+import { useBuscarVentas } from "./presentation/hooks/useBuscarVentas";
 import {
   VentasSearchBar,
   VentasFilters,
@@ -45,6 +46,14 @@ import {
 import { VentasViewSwitcher } from "./components/VentasViewSwitcher";
 
 export default function VentasLocales() {
+  return (
+    <VentasListContainer>
+      <VentasLocalesScreen />
+    </VentasListContainer>
+  );
+}
+
+function VentasLocalesScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Modal state
@@ -118,7 +127,7 @@ export default function VentasLocales() {
     updateSort,
     loadMore,
     refetch,
-  } = useGetVentasLocales();
+  } = useBuscarVentas();
 
   const { almacenes, getAlmacenById } = useGetAlmacenes();
   const { zonas } = useGetZonasCliente();

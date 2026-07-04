@@ -1,6 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
-import { URL_API, URL_API_V2 } from "../../constants/api";
-import { auth } from "../../../firebase";
+import { URL_API } from "../../constants/api";
 
 const BASE_URL = URL_API
 
@@ -17,7 +16,7 @@ interface ComboV2 { id: string; nombre: string; precio_anual: string; precio_cor
 interface VendedorV2 { id: string; usuario_id: string; email: string; nombre: string }
 interface ImagenV2 { id: string; storage_kind: string; storage_key: string; mime: string; size_bytes: number; descripcion: string | null; created_at: string; updated_at: string }
 
-interface VentaV2DTO {
+export interface VentaV2DTO {
   id: string;
   cliente: ClienteSnapshotV2;
   direccion: DireccionV2;
@@ -46,7 +45,7 @@ interface VentaV2DTO {
   cancelacion?: { at: string; by: string; reason: string } | null;
 }
 
-interface ListV2Response<T> { items: T[]; next_cursor?: string }
+export interface ListV2Response<T> { items: T[]; next_cursor?: string }
 
 const numOrUndef = (s: string | null | undefined): number | undefined => {
   if (s == null || s === "") return undefined;
@@ -54,7 +53,7 @@ const numOrUndef = (s: string | null | undefined): number | undefined => {
   return Number.isFinite(n) ? n : undefined;
 };
 
-const adaptVentaV2ToLocal = (v: VentaV2DTO): VentaLocal => {
+export const adaptVentaV2ToLocal = (v: VentaV2DTO): VentaLocal => {
   const firstProd = v.productos[0];
   const dia = v.dia_cobranza?.semana ?? (v.dia_cobranza?.mes != null ? String(v.dia_cobranza.mes) : undefined);
   return {
@@ -113,11 +112,6 @@ const adaptVentaV2ToLocal = (v: VentaV2DTO): VentaLocal => {
       NOMBRE_VENDEDOR: ve.nombre,
     })),
   };
-};
-
-const authHeaders = async (): Promise<Record<string, string>> => {
-  const token = await auth.currentUser?.getIdToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
 export interface VendedorVenta {
@@ -287,47 +281,15 @@ export interface ResumenVentas {
   VENTAS_PENDIENTES: number;
 }
 
-export const getVentasLocales = async (
-  params?: VentasParams
-): Promise<VentasResponse["body"]> => {
-  // V2: hits the Go API at /v2/ventas. Maps the nested VentaDTO into the flat
-  // VentaLocal shape the UI already consumes, so screens didn't change.
-  // Note: many UI filters (text search, almacenId, userEmail, price range,
-  // sortBy) don't have direct Go API equivalents. Add client-side filtering
-  // or extend the Go endpoint when needed.
-  const goParams: Record<string, unknown> = {};
-  if (params?.fechaInicio) goParams.desde = params.fechaInicio;
-  if (params?.fechaFin) goParams.hasta = params.fechaFin;
-  if (params?.tipoVenta) goParams.tipo_venta = params.tipoVenta;
-  if (params?.situacion) goParams.situacion = params.situacion;
-  if (params?.sincronizacion) goParams.sincronizacion = params.sincronizacion;
-  if (params?.incluirCanceladas) goParams.incluir_canceladas = true;
-  if (params?.cursor) goParams.cursor = params.cursor;
-  if (params?.limit) goParams.limit = params.limit;
-
-  const headers = await authHeaders();
-  const response = await axios.get<ListV2Response<VentaV2DTO>>(
-    `${URL_API_V2}/v2/ventas`,
-    { params: goParams, headers }
-  );
-
-  const data = response.data.items.map(adaptVentaV2ToLocal);
-  return {
-    data,
-    pagination: {
-      hasNextPage: !!response.data.next_cursor,
-      hasPreviousPage: false,
-      nextCursor: response.data.next_cursor ?? null,
-      previousCursor: null,
-      limit: data.length,
-    },
-    filters: {
-      applied: goParams,
-      sortBy: "FECHA_VENTA",
-      sortOrder: "desc",
-    },
-  };
-};
+// NOTE: the previous getVentasLocales() function lived here and hit
+// GET /v2/ventas directly, but silently dropped most UI filters (search,
+// zonaClienteId, precioMin/Max, sortBy, ...) because it only mapped 8 of the
+// ~20 params the screen collects. It has been replaced by the hex search
+// module in `src/modules/ventasLocales/{application,infrastructure,
+// presentation}` — see HttpVentasListAdapter + useBuscarVentas, which map
+// every backend-supported param and propagate the AbortSignal. VentasParams,
+// VentaLocal, adaptVentaV2ToLocal, VentaV2DTO and ListV2Response stay here —
+// they're still used by the new module and by the legacy functions below.
 
 export const getVentaLocalCompleta = async (ventaId: string): Promise<VentaCompleta> => {
   const options: AxiosRequestConfig = {
