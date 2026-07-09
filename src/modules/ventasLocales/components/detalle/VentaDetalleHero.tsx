@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import { VentaV2 } from "@/services/api/ventaV2Types";
+import { estatusClienteInfo } from "./estatusCliente";
 
 interface Props {
   venta: VentaV2;
@@ -42,6 +43,10 @@ export const VentaDetalleHero = ({ venta }: Props) => {
   const fecha = dayjs(venta.fecha_venta).format("DD MMM YYYY · HH:mm");
   const totalLabel = venta.tipo_venta === "CONTADO" ? "Precio contado" : "Precio anual";
   const totalRaw = venta.tipo_venta === "CONTADO" ? venta.montos.contado : venta.montos.anual;
+  const estatusInfo =
+    venta.cliente.cliente_id != null
+      ? estatusClienteInfo(venta.estatus_cliente_microsip)
+      : null;
 
   return (
     <header className="px-8 pt-10 pb-8">
@@ -53,11 +58,18 @@ export const VentaDetalleHero = ({ venta }: Props) => {
           <h1 className="font-serif text-[32px] font-normal leading-[1.1] tracking-tight text-foreground">
             {venta.cliente.nombre}
           </h1>
-          {(direccionResumen(venta) || venta.cliente.cliente_id == null) && (
+          {(direccionResumen(venta) || venta.cliente.cliente_id == null || estatusInfo) && (
             <p className="text-sm text-muted-foreground">
               {venta.cliente.cliente_id == null && (
                 <span className="mr-2 inline-flex items-center rounded-full bg-chart-4/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-chart-4">
                   Cliente nuevo
+                </span>
+              )}
+              {estatusInfo && (
+                <span
+                  className={`mr-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${estatusInfo.pillClass}`}
+                >
+                  {estatusInfo.label}
                 </span>
               )}
               {direccionResumen(venta)}

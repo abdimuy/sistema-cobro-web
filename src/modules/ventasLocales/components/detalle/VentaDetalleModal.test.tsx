@@ -115,3 +115,51 @@ describe("VentaDetalleModal — zona mismatch banner", () => {
     expect(screen.queryByTestId("zona-mismatch-banner")).not.toBeInTheDocument();
   });
 });
+
+describe("VentaDetalleModal — estatus cliente banner", () => {
+  it("renders the banner when estatus_cliente_microsip is V", () => {
+    mockUseVentaV2.mockReturnValue({
+      venta: makeVenta({ estatus_cliente_microsip: "V" }),
+      loading: false,
+      error: null,
+      refetch: vi.fn().mockResolvedValue(undefined),
+    });
+    render(<VentaDetalleModal ventaId="11111111-1111-1111-1111-111111111111" onClose={() => {}} />);
+    expect(screen.getByText("Cliente vetado")).toBeInTheDocument();
+  });
+
+  it("renders the banner when estatus_cliente_microsip is C", () => {
+    mockUseVentaV2.mockReturnValue({
+      venta: makeVenta({ estatus_cliente_microsip: "C" }),
+      loading: false,
+      error: null,
+      refetch: vi.fn().mockResolvedValue(undefined),
+    });
+    render(<VentaDetalleModal ventaId="11111111-1111-1111-1111-111111111111" onClose={() => {}} />);
+    expect(screen.getByText("Cliente cancelado")).toBeInTheDocument();
+  });
+
+  it("does not render the banner when estatus_cliente_microsip is A", () => {
+    mockUseVentaV2.mockReturnValue({
+      venta: makeVenta({ estatus_cliente_microsip: "A" }),
+      loading: false,
+      error: null,
+      refetch: vi.fn().mockResolvedValue(undefined),
+    });
+    render(<VentaDetalleModal ventaId="11111111-1111-1111-1111-111111111111" onClose={() => {}} />);
+    expect(screen.queryByText("Cliente vetado")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cliente cancelado")).not.toBeInTheDocument();
+  });
+
+  it("does not render the banner when estatus_cliente_microsip is absent", () => {
+    mockUseVentaV2.mockReturnValue({
+      venta: makeVenta(),
+      loading: false,
+      error: null,
+      refetch: vi.fn().mockResolvedValue(undefined),
+    });
+    render(<VentaDetalleModal ventaId="11111111-1111-1111-1111-111111111111" onClose={() => {}} />);
+    expect(screen.queryByText("Cliente vetado")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cliente cancelado")).not.toBeInTheDocument();
+  });
+});

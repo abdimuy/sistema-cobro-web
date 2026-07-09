@@ -26,6 +26,7 @@ import VentaImagenesGrid from "./VentaImagenesGrid";
 import VentaAuditoriaTab from "./VentaAuditoriaTab";
 import VentaCanceladaBanner from "./VentaCanceladaBanner";
 import ZonaMismatchBanner from "./ZonaMismatchBanner";
+import EstatusClienteBanner from "./EstatusClienteBanner";
 import VentaDetalleSkeleton from "./VentaDetalleSkeleton";
 
 interface Props {
@@ -140,6 +141,10 @@ export const VentaDetalleModal = ({ ventaId, onClose }: Props) => {
                   ventaZonaId={venta.direccion.zona_cliente_id}
                   microsipZonaId={venta.zona_cliente_microsip_id}
                 />
+              )}
+              {(venta.estatus_cliente_microsip === "V" ||
+                venta.estatus_cliente_microsip === "C") && (
+                <EstatusClienteBanner estatus={venta.estatus_cliente_microsip} />
               )}
 
               <VentaDetalleHero venta={venta} />

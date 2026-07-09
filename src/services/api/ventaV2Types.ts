@@ -48,6 +48,7 @@ export interface VentaV2 {
   updated_by_nombre?: string;
   zona_mismatch?: boolean;
   zona_cliente_microsip_id?: number | null;
+  estatus_cliente_microsip?: string | null;
 }
 
 export const ventaV2Http: AxiosInstance = axios.create({
