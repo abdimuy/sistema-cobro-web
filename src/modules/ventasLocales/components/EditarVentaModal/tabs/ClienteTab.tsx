@@ -1,10 +1,9 @@
 import { useMemo } from "react";
-import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CampoInline } from "../piezas/CampoInline";
 import { SeleccionarZonaCombobox } from "../piezas/SeleccionarZonaCombobox";
+import { SeleccionarClienteMicrosipCombobox } from "../piezas/SeleccionarClienteMicrosipCombobox";
 import useGetZonasCliente from "@/hooks/useGetZonasCliente";
 import type { ClienteFormData, GPSFormData, ValidationError } from "../../../presentation/hooks/useVentaEditState";
 
@@ -82,31 +81,10 @@ export const ClienteTab = ({ data, gps, errors, onUpdate, onUpdateGps }: Props) 
             <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
               Cliente Microsip
             </p>
-            {data.clienteID !== null ? (
-              <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-xs">
-                <span className="font-mono text-[11px]">{data.clienteID}</span>
-                <button
-                  type="button"
-                  onClick={() => onUpdate("clienteID", null)}
-                  aria-label="Desvincular"
-                  className="text-muted-foreground hover:text-destructive"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            ) : (
-              <div className="flex items-center gap-2">
-                <p className="text-[11px] text-muted-foreground">Sin vincular</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled
-                  className="h-6 text-[10px] px-2"
-                >
-                  Vincular cliente (próximamente)
-                </Button>
-              </div>
-            )}
+            <SeleccionarClienteMicrosipCombobox
+              value={data.clienteID}
+              onChange={(id) => onUpdate("clienteID", id)}
+            />
           </div>
         </div>
       </div>
