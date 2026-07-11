@@ -84,6 +84,7 @@ export const ClienteTab = ({ data, gps, errors, onUpdate, onUpdateGps }: Props) 
             <SeleccionarClienteMicrosipCombobox
               value={data.clienteID}
               onChange={(id) => onUpdate("clienteID", id)}
+              fallbackName={data.nombreCliente}
             />
           </div>
         </div>

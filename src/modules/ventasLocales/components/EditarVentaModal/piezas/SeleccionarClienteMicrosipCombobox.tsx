@@ -15,6 +15,11 @@ import { useBuscarClientesMicrosip } from "./useBuscarClientesMicrosip";
 interface Props {
   value: number | null;
   onChange: (clienteId: number | null) => void;
+  // fallbackName is shown on the trigger when a clienteID is already linked
+  // (loaded from the venta) but the user hasn't searched a client this session,
+  // so no in-session Cliente object is cached. Pass the venta's own client name
+  // here so the trigger reads "NOMBRE #id" instead of a bare "Cliente #id".
+  fallbackName?: string;
 }
 
 const saldoFormatter = new Intl.NumberFormat("es-MX", {
@@ -33,7 +38,7 @@ function formatSaldo(saldo: string): string | null {
 // clientes directory). Async twin of SeleccionarZonaCombobox: shouldFilter
 // is off on <Command> and the query drives useBuscarClientesMicrosip
 // (debounced, stale-request-safe) instead of filtering an in-memory list.
-export const SeleccionarClienteMicrosipCombobox = ({ value, onChange }: Props) => {
+export const SeleccionarClienteMicrosipCombobox = ({ value, onChange, fallbackName }: Props) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   // Cache of the last picked Cliente so the trigger can show a name instead
@@ -75,7 +80,7 @@ export const SeleccionarClienteMicrosipCombobox = ({ value, onChange }: Props) =
                 "Vincular cliente Microsip"
               ) : (
                 <>
-                  {selected?.nombre ?? "Cliente"}
+                  {selected?.nombre ?? (fallbackName?.trim() || "Cliente")}
                   <span className="ml-1.5 font-mono text-[11px] text-muted-foreground">
                     #{value}
                   </span>

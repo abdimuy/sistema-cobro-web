@@ -37,6 +37,20 @@ describe("SeleccionarClienteMicrosipCombobox", () => {
     expect(screen.getByLabelText("Desvincular cliente")).toBeInTheDocument();
   });
 
+  it("shows the fallbackName + #id when linked with a name from the venta (no session lookup)", () => {
+    render(
+      <SeleccionarClienteMicrosipCombobox
+        value={2655626}
+        onChange={vi.fn()}
+        fallbackName="JUAN PÉREZ GARCÍA"
+      />,
+    );
+    expect(screen.getByText("JUAN PÉREZ GARCÍA")).toBeInTheDocument();
+    expect(screen.getByText("#2655626")).toBeInTheDocument();
+    // The bare "Cliente" placeholder must NOT appear once we have a name.
+    expect(screen.queryByText("Cliente")).not.toBeInTheDocument();
+  });
+
   it("typing in the search box drives the hook with the current query", async () => {
     const user = userEvent.setup();
     render(<SeleccionarClienteMicrosipCombobox value={null} onChange={vi.fn()} />);
