@@ -79,6 +79,17 @@ export const VentaDetalleModal = ({ ventaId, onClose }: Props) => {
           "border-border/80 bg-background shadow-2xl",
           "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-2 data-[state=open]:duration-300"
         )}
+        // The image lightbox is portaled to <body> (outside this dialog), so a
+        // click on its backdrop would otherwise register as an interaction
+        // outside the dialog and close it. Ignore interactions that originate
+        // inside the lightbox layer so it can close on its own without taking
+        // the venta modal with it.
+        onInteractOutside={(event) => {
+          const target = event.target as Element | null;
+          if (target?.closest?.("[data-lightbox]")) {
+            event.preventDefault();
+          }
+        }}
       >
         <DialogTitle className="sr-only">Detalle de venta</DialogTitle>
 

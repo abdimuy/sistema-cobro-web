@@ -81,7 +81,11 @@ export const VentaImagenLightbox = ({ ventaId, imagenes, initialIndex, onClose }
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        // Capture phase + stopPropagation so the venta's Radix Dialog (which
+        // also closes on Escape) never sees it — Escape closes only the
+        // lightbox, not the modal underneath.
         e.preventDefault();
+        e.stopPropagation();
         onClose();
       } else if (e.key === "ArrowRight") next();
       else if (e.key === "ArrowLeft") prev();
@@ -91,8 +95,8 @@ export const VentaImagenLightbox = ({ ventaId, imagenes, initialIndex, onClose }
       else if (e.key === "l" || e.key === "L") rotL();
       else if (e.key === "0") reset();
     };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
+    document.addEventListener("keydown", handler, true);
+    return () => document.removeEventListener("keydown", handler, true);
   }, [next, prev, onClose, imgEl, rotation]);
 
   useEffect(() => {
@@ -121,9 +125,20 @@ export const VentaImagenLightbox = ({ ventaId, imagenes, initialIndex, onClose }
 
   return (
     <div
+      // data-lightbox marks this layer so the venta's Radix DialogContent can
+      // ignore interactions here (see VentaDetalleModal onInteractOutside): the
+      // lightbox is portaled to <body>, outside the dialog, so without this a
+      // click on its backdrop would be treated as "outside" and close the venta
+      // modal underneath.
+      data-lightbox=""
       className="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in-0"
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
+      // Click on the empty backdrop (not the image or a toolbar) closes only
+      // the lightbox.
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 backdrop-blur">
         <Tool onClick={() => setZoom((z) => Math.max(z - 0.2, 0.1))} title="Zoom out (-)">
