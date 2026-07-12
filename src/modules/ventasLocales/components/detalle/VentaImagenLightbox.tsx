@@ -150,7 +150,11 @@ export const VentaImagenLightbox = ({ ventaId, imagenes, initialIndex, onClose }
       // can ignore interactions here (belt-and-suspenders with the capture-phase
       // pointerdown guard above; see VentaDetalleModal onInteractOutside).
       data-lightbox=""
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in-0"
+      // pointer-events-auto is REQUIRED: the venta's Radix Dialog is modal, so
+      // it sets `pointer-events: none` on everything outside its content (incl.
+      // this body-portaled overlay). Without this the lightbox would render on
+      // top but never receive clicks — they'd pass through to the modal below.
+      className="pointer-events-auto fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in-0"
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       // Click on the empty backdrop (not the image or a toolbar) closes only
