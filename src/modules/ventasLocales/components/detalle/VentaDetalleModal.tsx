@@ -85,7 +85,10 @@ export const VentaDetalleModal = ({ ventaId, onClose }: Props) => {
         // inside the lightbox layer so it can close on its own without taking
         // the venta modal with it.
         onInteractOutside={(event) => {
-          const target = event.target as Element | null;
+          // NB: on a Radix interact-outside event, `event.target` is the
+          // dialog layer itself — the actually-clicked element lives on
+          // `event.detail.originalEvent.target`.
+          const target = event.detail.originalEvent.target as Element | null;
           if (target?.closest?.("[data-lightbox]")) {
             event.preventDefault();
           }
