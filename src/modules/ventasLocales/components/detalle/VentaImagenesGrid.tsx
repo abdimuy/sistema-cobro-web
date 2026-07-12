@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { ImageIcon } from "lucide-react";
 import AuthenticatedImage from "./AuthenticatedImage";
 import VentaImagenLightbox from "./VentaImagenLightbox";
@@ -45,14 +46,23 @@ export const VentaImagenesGrid = ({ ventaId, imagenes }: Props) => {
         ))}
       </div>
 
-      {openIndex !== null && (
-        <VentaImagenLightbox
-          ventaId={ventaId}
-          imagenes={imagenes}
-          initialIndex={openIndex}
-          onClose={() => setOpenIndex(null)}
-        />
-      )}
+      {/* Portaled to <body>: the lightbox uses `position: fixed inset-0`, but
+          the venta detail lives inside a Radix DialogContent whose
+          `translate-x/y-[-50%]` transform makes it the containing block for any
+          descendant `fixed` element — so rendered in place the "fullscreen"
+          viewer would be trapped inside (and clipped by) the modal box. The
+          portal moves it out of the transformed subtree so it covers the real
+          viewport. */}
+      {openIndex !== null &&
+        createPortal(
+          <VentaImagenLightbox
+            ventaId={ventaId}
+            imagenes={imagenes}
+            initialIndex={openIndex}
+            onClose={() => setOpenIndex(null)}
+          />,
+          document.body,
+        )}
     </>
   );
 };
