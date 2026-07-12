@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -37,6 +37,26 @@ export const VentaImagenLightbox = ({ ventaId, imagenes, initialIndex, onClose }
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // The lightbox is portaled to <body>, outside the venta's Radix
+  // DialogContent. Radix's dismissable layer listens for `pointerdown` on
+  // document (bubble phase) and closes the dialog on any pointerdown outside
+  // its content — which now includes this whole overlay. Intercept those
+  // pointerdowns in the CAPTURE phase (runs before Radix's bubble listener) and
+  // stop propagation so Radix never sees them: the venta modal stays open while
+  // the lightbox is up. Drag (mousedown) and clicks are separate events, so
+  // this doesn't affect the lightbox's own interactions.
+  useEffect(() => {
+    const stop = (e: PointerEvent) => {
+      const root = rootRef.current;
+      if (root && e.target instanceof Node && root.contains(e.target)) {
+        e.stopPropagation();
+      }
+    };
+    document.addEventListener("pointerdown", stop, true);
+    return () => document.removeEventListener("pointerdown", stop, true);
+  }, []);
 
   const next = useCallback(
     () => setIndex((i) => (i + 1) % imagenes.length),
@@ -125,11 +145,10 @@ export const VentaImagenLightbox = ({ ventaId, imagenes, initialIndex, onClose }
 
   return (
     <div
-      // data-lightbox marks this layer so the venta's Radix DialogContent can
-      // ignore interactions here (see VentaDetalleModal onInteractOutside): the
-      // lightbox is portaled to <body>, outside the dialog, so without this a
-      // click on its backdrop would be treated as "outside" and close the venta
-      // modal underneath.
+      ref={rootRef}
+      // data-lightbox also marks this layer so the venta's Radix DialogContent
+      // can ignore interactions here (belt-and-suspenders with the capture-phase
+      // pointerdown guard above; see VentaDetalleModal onInteractOutside).
       data-lightbox=""
       className="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in-0"
       onMouseMove={onMouseMove}
