@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { toast } from "sonner";
 
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -262,6 +263,50 @@ describe("VendedoresScreen", () => {
     await waitFor(() => expect(port.eliminarVendedorCalls).toHaveLength(1));
     expect(port.eliminarVendedorCalls[0].usuarioId).toBe("uid-maria");
     await waitFor(() => expect(screen.queryByText("Vendedor 1")).not.toBeInTheDocument());
+  });
+
+  it("Quitar que falla: el panel cierra (optimista) pero la fila conserva el mapeo real y se notifica el error", async () => {
+    const user = userEvent.setup();
+    const port = new FakeConfiguracionPort();
+    port.listarVendedoresResponse = [
+      makeFakeVendedorAsignacion({
+        usuarioId: "uid-maria",
+        nombre: "MARIA FERNANDA TORRES OCHOA",
+        estado: "3/3",
+        mapping: {
+          v1: { listaId: 301, nombre: "MARIA TORRES V1" },
+          v2: { listaId: 302, nombre: "MARIA TORRES V2" },
+          v3: { listaId: 303, nombre: "MARIA TORRES V3" },
+        },
+      }),
+    ];
+    port.listarOpcionesResponse = [];
+    port.throwOnNext.eliminarVendedor = new Error("network_error");
+
+    renderScreen(port);
+    await waitFor(() => expect(screen.getByText("MARIA FERNANDA TORRES OCHOA")).toBeInTheDocument());
+    await openPanel(user, "MARIA FERNANDA TORRES OCHOA");
+
+    await user.click(screen.getByRole("button", { name: "Quitar" }));
+    const dialog = await screen.findByRole("alertdialog");
+    await user.click(within(dialog).getByRole("button", { name: "Quitar" }));
+
+    // Optimistic close: the panel closes immediately even though eliminar
+    // ultimately fails (this is the reviewer-accepted trade-off).
+    await waitFor(() => expect(screen.queryByText("Vendedor 1")).not.toBeInTheDocument());
+    await waitFor(() => expect(port.eliminarVendedorCalls).toHaveLength(1));
+
+    // No refresh ran (the port call threw before onSuccess), so the row must
+    // keep showing the TRUE, un-deleted mapping — never a stale cleared row.
+    expect(screen.getByRole("img", { name: "3 de 3 asignados" })).toBeInTheDocument();
+    expect(screen.queryAllByText("Sin asignar").find((el) => el.tagName === "SPAN")).toBeUndefined();
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "No se pudo eliminar la asignación",
+        expect.objectContaining({ description: "network_error" }),
+      ),
+    );
   });
 
   it("anti-resurrección: reopening after Quitar+refresh shows the cleared mapping and Guardar stays disabled", async () => {

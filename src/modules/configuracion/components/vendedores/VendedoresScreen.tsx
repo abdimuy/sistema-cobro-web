@@ -27,16 +27,24 @@ function VendedorRow({ vendedor, onOpen }: { vendedor: VendedorAsignacion; onOpe
       ariaLabel={`Editar mapeo de vendedor de ${vendedor.nombre || vendedor.email}`}
     >
       <TableCell className="px-3 py-0 align-middle">
-        <div className="flex flex-col justify-center overflow-hidden">
-          <span className="truncate text-sm font-medium text-foreground">
+        <div className="flex min-w-0 flex-col justify-center overflow-hidden">
+          <span
+            className="min-w-0 truncate text-sm font-medium text-foreground"
+            title={vendedor.nombre || "Sin nombre"}
+          >
             {vendedor.nombre || "Sin nombre"}
           </span>
-          <span className="truncate font-mono text-[11px] text-muted-foreground/70">{vendedor.email}</span>
+          <span
+            className="min-w-0 truncate font-mono text-[11px] text-muted-foreground/70"
+            title={vendedor.email}
+          >
+            {vendedor.email}
+          </span>
         </div>
       </TableCell>
       <TableCell className="px-3 py-0 align-middle">
         <span
-          className={`block truncate text-sm ${resuelto ? "text-foreground" : "text-muted-foreground"}`}
+          className={`block max-w-full truncate text-sm ${resuelto ? "text-foreground" : "text-muted-foreground"}`}
           title={resuelto ?? undefined}
         >
           {resuelto ?? "Sin asignar"}
@@ -129,25 +137,25 @@ export function VendedoresScreen() {
       )}
 
       <div className="overflow-x-auto rounded-lg border border-border/60 bg-card">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow className="border-border/60 hover:bg-transparent">
-              <TableHead className="h-9 bg-muted/30 px-3">
+              <TableHead className="h-9 w-[34%] bg-muted/30 px-3">
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Usuario
                 </span>
               </TableHead>
-              <TableHead className="h-9 bg-muted/30 px-3">
+              <TableHead className="h-9 w-[46%] bg-muted/30 px-3">
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Vendedor Microsip
                 </span>
               </TableHead>
-              <TableHead className="h-9 bg-muted/30 px-3">
+              <TableHead className="h-9 w-28 bg-muted/30 px-3">
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Mapeo
                 </span>
               </TableHead>
-              <TableHead className="h-9 w-8 bg-muted/30 px-3" />
+              <TableHead className="h-9 w-12 bg-muted/30 px-3" />
             </TableRow>
           </TableHeader>
           <TableBody>

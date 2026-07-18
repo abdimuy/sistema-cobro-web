@@ -29,7 +29,7 @@ export function ConfigRowShell({ onOpen, ariaLabel, children }: Props) {
       className="h-14 cursor-pointer border-border/40 transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
     >
       {children}
-      <TableCell className="w-8 px-3 py-0 align-middle">
+      <TableCell className="w-12 px-3 py-0 align-middle">
         <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground/40" aria-hidden="true" />
       </TableCell>
     </TableRow>

@@ -27,11 +27,16 @@ function ZonaCajaRow({ zona, onOpen }: { zona: ZonaCajaAsignacion; onOpen: () =>
   return (
     <ConfigRowShell onOpen={onOpen} ariaLabel={`Editar configuración de zona ${zona.zonaNombre}`}>
       <TableCell className="px-3 py-0 align-middle">
-        <span className="block truncate text-sm font-medium text-foreground">{zona.zonaNombre}</span>
+        <span
+          className="block max-w-full truncate text-sm font-medium text-foreground"
+          title={zona.zonaNombre}
+        >
+          {zona.zonaNombre}
+        </span>
       </TableCell>
       <TableCell className="px-3 py-0 align-middle">
         <span
-          className={`block truncate text-sm ${sinAsignar ? "text-muted-foreground" : "text-foreground"}`}
+          className={`block max-w-full truncate text-sm ${sinAsignar ? "text-muted-foreground" : "text-foreground"}`}
           title={resumen}
         >
           {resumen}
@@ -118,25 +123,25 @@ export function ZonasCajasScreen() {
       )}
 
       <div className="overflow-x-auto rounded-lg border border-border/60 bg-card">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow className="border-border/60 hover:bg-transparent">
-              <TableHead className="h-9 bg-muted/30 px-3">
+              <TableHead className="h-9 w-[22%] bg-muted/30 px-3">
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Zona
                 </span>
               </TableHead>
-              <TableHead className="h-9 bg-muted/30 px-3">
+              <TableHead className="h-9 w-[58%] bg-muted/30 px-3">
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Asignación
                 </span>
               </TableHead>
-              <TableHead className="h-9 bg-muted/30 px-3">
+              <TableHead className="h-9 w-28 bg-muted/30 px-3">
                 <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Mapeo
                 </span>
               </TableHead>
-              <TableHead className="h-9 w-8 bg-muted/30 px-3" />
+              <TableHead className="h-9 w-12 bg-muted/30 px-3" />
             </TableRow>
           </TableHeader>
           <TableBody>
