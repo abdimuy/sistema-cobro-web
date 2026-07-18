@@ -22,6 +22,7 @@ import { Clientes } from "./modules/clientes/Clientes";
 import ClienteFichaPage from "./modules/clientes/ClienteFichaPage";
 import { Rutas } from "./modules/rutas/Rutas";
 import { Cartera } from "./modules/cartera/Cartera";
+import { Configuracion } from "./modules/configuracion/Configuracion";
 
 // Auth Components
 import LoginPage from "./components/auth/LoginPage";
@@ -143,6 +144,12 @@ function App() {
               <Route path="/create-user" element={
                 <ProtectedRoute requiredModule="USUARIOS" requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
                   <CreateUser />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/configuracion" element={
+                <ProtectedRoute requiredModule="CONFIGURACION" requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
+                  <Configuracion />
                 </ProtectedRoute>
               } />
             </Route>

@@ -1,6 +1,6 @@
 import { ModuleConfig } from '../types/auth';
 import { ROLES } from './roles';
-import { Home, BarChart3, ShoppingCart, Shield, Truck, Package, Users, AlertTriangle, Sparkles, Contact, Route, TrendingUp } from 'lucide-react';
+import { Home, BarChart3, ShoppingCart, Shield, Truck, Package, Users, AlertTriangle, Sparkles, Contact, Route, TrendingUp, SlidersHorizontal } from 'lucide-react';
 
 export const DESKTOP_MODULES: ModuleConfig[] = [
   {
@@ -88,6 +88,14 @@ export const DESKTOP_MODULES: ModuleConfig[] = [
     path: '/cartera',
     icon: TrendingUp,
     color: 'blue'
+  },
+  {
+    key: 'CONFIGURACION',
+    label: 'Configuración',
+    path: '/configuracion',
+    icon: SlidersHorizontal,
+    color: 'blue',
+    requiredRole: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
   }
 ];
 
@@ -107,11 +115,12 @@ export const ROUTE_TO_MODULE: Record<string, string> = {
   '/winback': 'WINBACK_ANALYTICS',
   '/clientes': 'CLIENTES',
   '/rutas': 'RUTAS',
-  '/cartera': 'CARTERA'
+  '/cartera': 'CARTERA',
+  '/configuracion': 'CONFIGURACION'
 };
 
 // Módulos que requieren permisos especiales
-export const PROTECTED_MODULES = ['USUARIOS', 'FAILED_INTENTS', 'WINBACK_ANALYTICS', 'CLIENTES', 'RUTAS', 'CARTERA'];
+export const PROTECTED_MODULES = ['USUARIOS', 'FAILED_INTENTS', 'WINBACK_ANALYTICS', 'CLIENTES', 'RUTAS', 'CARTERA', 'CONFIGURACION'];
 
 // Módulos siempre accesibles (para usuarios autenticados)
 export const PUBLIC_MODULES = ['HOME'];
