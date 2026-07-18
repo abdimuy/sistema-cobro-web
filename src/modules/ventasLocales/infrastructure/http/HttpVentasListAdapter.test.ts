@@ -79,8 +79,8 @@ describe("HttpVentasListAdapter.buscarVentas query params", () => {
       vendedor_email: "maria.ramirez@muebleriamsp.mx",
       precio_min: 1000,
       precio_max: 20000,
-      desde: "2026-01-01",
-      hasta: "2026-06-30",
+      desde: "2026-01-01T00:00:00Z",
+      hasta: "2026-07-01T00:00:00Z",
       incluir_canceladas: true,
       sort_by: "fecha_venta",
       sort_order: "desc",
@@ -88,6 +88,34 @@ describe("HttpVentasListAdapter.buscarVentas query params", () => {
       limit: 50,
     });
     expect(config.signal).toBeUndefined();
+  });
+
+  it("convierte el rango de fechas a RFC3339 UTC con cota superior exclusiva", async () => {
+    // Regresión: el front mandaba date-only (2026-07-20) y el backend exige
+    // RFC3339 → 422. Ahora desde = inicio del día y hasta = inicio del día
+    // SIGUIENTE, para incluir el día final (FECHA_VENTA < hasta).
+    const { client, get } = makeStubClient();
+    const adapter = new HttpVentasListAdapter(client);
+
+    await adapter.buscarVentas({
+      fechaInicio: "2026-07-17",
+      fechaFin: "2026-07-20",
+    });
+
+    const [, config] = get.mock.calls[0];
+    expect(config.params.desde).toBe("2026-07-17T00:00:00Z");
+    expect(config.params.hasta).toBe("2026-07-21T00:00:00Z");
+  });
+
+  it("no manda desde/hasta cuando no hay fechas", async () => {
+    const { client, get } = makeStubClient();
+    const adapter = new HttpVentasListAdapter(client);
+
+    await adapter.buscarVentas({ search: "x" });
+
+    const [, config] = get.mock.calls[0];
+    expect("desde" in config.params).toBe(false);
+    expect("hasta" in config.params).toBe(false);
   });
 
   it("omits undefined/unsupported fields — this guards the dropped-params bug", async () => {

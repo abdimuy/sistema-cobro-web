@@ -1,4 +1,5 @@
 import type { AxiosInstance } from "axios";
+import { addDays, parseISO } from "date-fns";
 import type { VentasListPort } from "../../application/ports/VentasListPort";
 import type { BuscarVentasInput } from "../../application/dto/BuscarVentasInput";
 import type { BuscarVentasOutput } from "../../application/dto/BuscarVentasOutput";
@@ -35,8 +36,20 @@ export class HttpVentasListAdapter implements VentasListPort {
       if (input.vendedorEmail !== undefined) params.vendedor_email = input.vendedorEmail;
       if (input.precioMin !== undefined) params.precio_min = input.precioMin;
       if (input.precioMax !== undefined) params.precio_max = input.precioMax;
-      if (input.fechaInicio !== undefined) params.desde = input.fechaInicio;
-      if (input.fechaFin !== undefined) params.hasta = input.fechaFin;
+      // El backend exige RFC3339 estricto y trata desde/hasta como
+      // [desde, hasta): FECHA_VENTA >= desde (inclusivo) y < hasta (exclusivo).
+      // El front manda fechas date-only (yyyy-MM-dd); convertimos a límites UTC.
+      // Nota: los bordes son UTC (consistente con el contrato fecha_venta
+      // RFC3339 UTC del proyecto); es una aproximación aceptable.
+      if (input.fechaInicio !== undefined) {
+        params.desde = `${input.fechaInicio}T00:00:00Z`;
+      }
+      if (input.fechaFin !== undefined) {
+        // Inicio del día siguiente a fechaFin: así el día fechaFin queda
+        // incluido bajo la cota superior exclusiva.
+        const finExclusivo = addDays(parseISO(`${input.fechaFin}T00:00:00Z`), 1);
+        params.hasta = finExclusivo.toISOString().replace(/\.\d{3}Z$/, "Z");
+      }
       if (input.incluirCanceladas !== undefined) params.incluir_canceladas = input.incluirCanceladas;
       if (input.sortBy !== undefined) params.sort_by = input.sortBy;
       if (input.sortOrder !== undefined) params.sort_order = input.sortOrder;

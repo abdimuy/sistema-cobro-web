@@ -248,14 +248,23 @@ function proyectarVentaAFormData(dominioVenta: Venta): EditarVentaFormData {
 
 // ─── diff helpers ─────────────────────────────────────────────────────────────
 
+// clienteDiffers cubre SOLO la identidad del cliente (nombre/teléfono/aval/
+// referencia/clienteID) — lo que viaja por el PATCH /cliente. La dirección va
+// por el header PATCH, así que su detección de cambios vive en direccionDiffers.
 function clienteDiffers(form: ClienteFormData, v: Venta): boolean {
   const c = v.cliente;
-  const d = v.direccion;
   if (form.nombreCliente !== c.nombre.value) return true;
   if (form.telefono !== (c.telefono !== null ? c.telefono.value : "")) return true;
   if (form.aval !== (c.aval ?? "")) return true;
   if (form.referencia !== (c.referencia ?? "")) return true;
   if (form.clienteID !== c.clienteID) return true;
+  return false;
+}
+
+// direccionDiffers cubre la dirección, que se persiste por el header PATCH
+// (no por /cliente). Se enruta junto a headerDiffers.
+function direccionDiffers(form: ClienteFormData, v: Venta): boolean {
+  const d = v.direccion;
   if (form.calle !== d.calle) return true;
   if (form.numeroExterior !== (d.numeroExterior ?? "")) return true;
   if (form.colonia !== d.colonia) return true;
@@ -453,7 +462,9 @@ export function useVentaEditState(venta: VentaV2) {
 
   const isDirty = useMemo(() => {
     const clienteChanged = clienteDiffers(formData.cliente, dominioVenta);
-    const headerChanged = headerDiffers(formData.financiero, formData.gps, dominioVenta);
+    const headerChanged =
+      headerDiffers(formData.financiero, formData.gps, dominioVenta) ||
+      direccionDiffers(formData.cliente, dominioVenta);
     const productosChanged = productosDiffers(formData.productos, dominioVenta);
     const vendedoresChanged = vendedoresDiffers(formData.vendedores, dominioVenta);
     const combosChanged = combosDiffers(formData.combos, dominioVenta);
@@ -798,7 +809,10 @@ export function useVentaEditState(venta: VentaV2) {
     // ── header cambios ───────────────────────────────────────────────────────
     let headerCambios: HeaderCambios | undefined;
 
-    if (headerDiffers(formData.financiero, formData.gps, dominioVenta)) {
+    if (
+      headerDiffers(formData.financiero, formData.gps, dominioVenta) ||
+      direccionDiffers(formData.cliente, dominioVenta)
+    ) {
       const direccionResult = Direccion.create({
         calle: formData.cliente.calle,
         numeroExterior: formData.cliente.numeroExterior || null,
