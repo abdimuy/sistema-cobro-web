@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -29,6 +29,22 @@ function slotsFromMapping(vendedor: VendedorAsignacion): AsignarVendedorSlots {
     l2: vendedor.mapping.v2?.listaId ?? null,
     l3: vendedor.mapping.v3?.listaId ?? null,
   };
+}
+
+// Derived-value key for the fields that actually determine a row's local
+// edit state. Rows are keyed by the stable usuarioId, so React reuses the
+// same VendedorRow instance across list refreshes — comparing THIS key
+// (not the `vendedor` object identity) lets the row resync only when its
+// own mapping/estado genuinely changed, without wiping an admin's
+// in-progress identity pick on an unrelated refresh that happens to
+// produce a new (but value-equal) vendedor object.
+function mappingKeyOf(vendedor: VendedorAsignacion): string {
+  return [
+    vendedor.mapping.v1?.listaId ?? "-",
+    vendedor.mapping.v2?.listaId ?? "-",
+    vendedor.mapping.v3?.listaId ?? "-",
+    vendedor.estado,
+  ].join("|");
 }
 
 function EstadoBadge({ estado }: { estado: string }) {
@@ -82,6 +98,20 @@ function VendedorRow({
   const [slots, setSlots] = useState<AsignarVendedorSlots>(() => slotsFromMapping(vendedor));
   const [identidad, setIdentidad] = useState<IdentidadMicrosip | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const mappingKey = mappingKeyOf(vendedor);
+
+  // Resync local edit state whenever THIS row's mapping/estado actually
+  // changes — e.g. Quitar → eliminar() → refresh() clears the mapping,
+  // and this must win over stale local slots so Guardar can't silently
+  // re-PUT the ids just removed. Keyed on mappingKey (derived values),
+  // not `vendedor` itself, so an unrelated refresh that leaves this
+  // row's values unchanged does not clobber an in-progress pick.
+  useEffect(() => {
+    setSlots(slotsFromMapping(vendedor));
+    setIdentidad(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mappingKey]);
 
   const handleSelectIdentidad = (id: IdentidadMicrosip) => {
     setIdentidad(id);
