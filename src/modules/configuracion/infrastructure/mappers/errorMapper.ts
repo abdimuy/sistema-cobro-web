@@ -11,6 +11,11 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   vendedor_lista_id_no_pertenece:
     "el identificador de vendedor seleccionado no existe en Microsip",
   usuario_no_existe: "el usuario ya no existe",
+  zona_no_existe: "la zona seleccionada ya no existe",
+  caja_no_existe: "la caja seleccionada no existe en Microsip",
+  cajero_no_existe: "el cajero seleccionado no existe en Microsip",
+  vendedor_no_existe: "el vendedor seleccionado no existe en Microsip",
+  cobrador_no_existe: "el cobrador seleccionado no existe en Microsip",
 };
 
 export function apperrorToDomainError(err: unknown): DomainError {

@@ -43,6 +43,41 @@ describe("apperrorToDomainError (configuracion)", () => {
     expect(domainError.message).toBe("el usuario ya no existe");
   });
 
+  it("mapea zona_no_existe a un mensaje amigable", () => {
+    const err = makeAxiosError(422, { code: "zona_no_existe", message: "no existe" });
+    const domainError = apperrorToDomainError(err);
+    expect(domainError.code).toBe("zona_no_existe");
+    expect(domainError.message).toBe("la zona seleccionada ya no existe");
+  });
+
+  it("mapea caja_no_existe a un mensaje amigable", () => {
+    const err = makeAxiosError(422, { code: "caja_no_existe", message: "no existe" });
+    const domainError = apperrorToDomainError(err);
+    expect(domainError.code).toBe("caja_no_existe");
+    expect(domainError.message).toBe("la caja seleccionada no existe en Microsip");
+  });
+
+  it("mapea cajero_no_existe a un mensaje amigable", () => {
+    const err = makeAxiosError(422, { code: "cajero_no_existe", message: "no existe" });
+    const domainError = apperrorToDomainError(err);
+    expect(domainError.code).toBe("cajero_no_existe");
+    expect(domainError.message).toBe("el cajero seleccionado no existe en Microsip");
+  });
+
+  it("mapea vendedor_no_existe a un mensaje amigable", () => {
+    const err = makeAxiosError(422, { code: "vendedor_no_existe", message: "no existe" });
+    const domainError = apperrorToDomainError(err);
+    expect(domainError.code).toBe("vendedor_no_existe");
+    expect(domainError.message).toBe("el vendedor seleccionado no existe en Microsip");
+  });
+
+  it("mapea cobrador_no_existe a un mensaje amigable", () => {
+    const err = makeAxiosError(422, { code: "cobrador_no_existe", message: "no existe" });
+    const domainError = apperrorToDomainError(err);
+    expect(domainError.code).toBe("cobrador_no_existe");
+    expect(domainError.message).toBe("el cobrador seleccionado no existe en Microsip");
+  });
+
   it("usa el message del backend cuando el code no tiene traducción amigable", () => {
     const err = makeAxiosError(500, { code: "error_inesperado", message: "fallo interno" });
     const domainError = apperrorToDomainError(err);

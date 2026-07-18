@@ -1,8 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VendedoresScreen } from "./vendedores/VendedoresScreen";
+import { ZonasCajasScreen } from "./zonasCajas/ZonasCajasScreen";
 
-// ConfiguracionShell hosts the Configuración area's tabs. "Zonas y cajas"
-// is a placeholder — task 5 fills it in.
+// ConfiguracionShell hosts the Configuración area's tabs.
 export function ConfiguracionShell() {
   return (
     <div className="space-y-6 p-6">
@@ -24,11 +24,7 @@ export function ConfiguracionShell() {
           <VendedoresScreen />
         </TabsContent>
         <TabsContent value="zonas-cajas">
-          <div className="rounded-lg border border-dashed border-border/60 p-10 text-center">
-            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              Próximamente
-            </p>
-          </div>
+          <ZonasCajasScreen />
         </TabsContent>
       </Tabs>
     </div>

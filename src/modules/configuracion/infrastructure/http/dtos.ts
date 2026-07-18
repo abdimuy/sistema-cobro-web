@@ -48,3 +48,50 @@ export type AsignarVendedorBodyDTO = {
 export type AsignarVendedorResponseDTO = {
   item: VendedorAsignacionDTO;
 };
+
+// CatalogoRefDTO matches a Microsip catalog reference (caja, cajero,
+// vendedor, cobrador, zona) as returned by the zonas-cajas endpoints.
+export type CatalogoRefDTO = {
+  id: number;
+  nombre: string;
+};
+
+// ZonaCajaAsignacionDTO matches one item of GET /v2/config/zonas-cajas.
+// A null ref means that slot is unassigned.
+export type ZonaCajaAsignacionDTO = {
+  zona_cliente_id: number;
+  zona_nombre: string;
+  caja: CatalogoRefDTO | null;
+  cajero: CatalogoRefDTO | null;
+  vendedor: CatalogoRefDTO | null;
+  cobrador: CatalogoRefDTO | null;
+};
+
+export type ZonasCajasListResponseDTO = {
+  items: ZonaCajaAsignacionDTO[];
+};
+
+// OpcionesZonasCajasDTO matches GET /v2/config/zonas-cajas/opciones — the
+// 5 Microsip catalogs used to populate the screen's selects.
+export type OpcionesZonasCajasDTO = {
+  zonas: CatalogoRefDTO[];
+  cajas: CatalogoRefDTO[];
+  cajeros: CatalogoRefDTO[];
+  vendedores: CatalogoRefDTO[];
+  cobradores: CatalogoRefDTO[];
+};
+
+// AsignarZonaCajaBodyDTO is the PUT /v2/config/zonas-cajas/{zonaClienteId}
+// body. Unlike vendedores, every field is required at the wire level: the
+// backing columns are NOT NULL, so leaving a slot unassigned means sending
+// the -1 sentinel explicitly, never omitting the field.
+export type AsignarZonaCajaBodyDTO = {
+  caja_id: number;
+  cajero_id: number;
+  vendedor_id: number;
+  cobrador_id: number;
+};
+
+export type AsignarZonaCajaResponseDTO = {
+  item: ZonaCajaAsignacionDTO;
+};

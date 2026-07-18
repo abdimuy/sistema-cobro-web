@@ -1,17 +1,29 @@
 import type { AxiosInstance } from "axios";
 import type {
   AsignarVendedorInput,
+  AsignarZonaCajaInput,
   ConfiguracionPort,
 } from "../../application/ports/ConfiguracionPort";
-import type { IdentidadMicrosip, VendedorAsignacion } from "../../domain/entities";
+import type {
+  IdentidadMicrosip,
+  OpcionesZonasCajas,
+  VendedorAsignacion,
+  ZonaCajaAsignacion,
+} from "../../domain/entities";
 import type {
   AsignarVendedorResponseDTO,
+  AsignarZonaCajaResponseDTO,
   OpcionesVendedorResponseDTO,
+  OpcionesZonasCajasDTO,
   VendedoresListResponseDTO,
+  ZonasCajasListResponseDTO,
 } from "./dtos";
 import { dtoToVendedorAsignacion } from "../mappers/dtoToVendedorAsignacion";
 import { dtoToIdentidadMicrosip } from "../mappers/dtoToIdentidadMicrosip";
 import { domainToAsignarBody } from "../mappers/domainToAsignarBody";
+import { dtoToZonaCajaAsignacion } from "../mappers/dtoToZonaCajaAsignacion";
+import { dtoToOpcionesZonasCajas } from "../mappers/dtoToOpcionesZonasCajas";
+import { domainToAsignarZonaCajaBody } from "../mappers/domainToAsignarZonaCajaBody";
 import { apperrorToDomainError } from "../mappers/errorMapper";
 
 // HttpConfiguracionAdapter is the production implementation of
@@ -69,6 +81,47 @@ export class HttpConfiguracionAdapter implements ConfiguracionPort {
         `/config/vendedores/${encodeURIComponent(usuarioId)}`,
         { signal },
       );
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async listarZonasCajas(signal?: AbortSignal): Promise<ZonaCajaAsignacion[]> {
+    try {
+      const { data } = await this.client.get<ZonasCajasListResponseDTO>(
+        "/config/zonas-cajas",
+        { signal },
+      );
+      return data.items.map(dtoToZonaCajaAsignacion);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async listarOpcionesZonasCajas(signal?: AbortSignal): Promise<OpcionesZonasCajas> {
+    try {
+      const { data } = await this.client.get<OpcionesZonasCajasDTO>(
+        "/config/zonas-cajas/opciones",
+        { signal },
+      );
+      return dtoToOpcionesZonasCajas(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async asignarZonaCaja(
+    input: AsignarZonaCajaInput,
+    signal?: AbortSignal,
+  ): Promise<ZonaCajaAsignacion> {
+    try {
+      const body = domainToAsignarZonaCajaBody(input);
+      const { data } = await this.client.put<AsignarZonaCajaResponseDTO>(
+        `/config/zonas-cajas/${encodeURIComponent(String(input.zonaClienteId))}`,
+        body,
+        { signal },
+      );
+      return dtoToZonaCajaAsignacion(data.item);
     } catch (e) {
       throw apperrorToDomainError(e);
     }
