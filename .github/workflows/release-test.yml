@@ -49,8 +49,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: v1.13.2-test.6
-          releaseName: 'Sistema Muebles San Pablo TEST v1.13.2-test.6'
+          tagName: v1.13.2-test.10
+          releaseName: 'Sistema Muebles San Pablo TEST v1.13.2-test.10'
           releaseBody: 'Build de PRUEBA (apidev/apidb). Instalable junto al de producción. NO publicar al canal de prod.'
           releaseDraft: true
           prerelease: true
