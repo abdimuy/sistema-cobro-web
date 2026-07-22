@@ -98,15 +98,29 @@ describe("ConversacionPanel", () => {
     expect(screen.queryByTestId("borrador-composer")).not.toBeInTheDocument();
   });
 
-  it("renders a briefing placeholder (not the composer) when the conversation is escalada", () => {
+  it("renders the amber briefing (not the composer) when the conversation is escalada, with an amber state pill", () => {
     const detalle = makeFakeConversacionDetalle({
       conversacion: {
         ...makeFakeConversacionDetalle().conversacion,
         estado: "escalado",
       },
+      decisiones: [
+        {
+          intencion: "duda sobre una posible deuda",
+          confianza: 92,
+          senales: ["deuda"],
+          accion: "escalar",
+          borrador: "",
+          evidencia: [],
+          razonEscalamiento: "mención de deuda = sensible",
+          resultado: "escalado",
+          createdAt: "2026-07-21T10:14:00Z",
+        },
+      ],
     });
     renderPanel({ detalle });
     expect(screen.queryByTestId("borrador-composer")).not.toBeInTheDocument();
-    expect(screen.getByText(/fue escalada/)).toBeInTheDocument();
+    expect(screen.getByTestId("briefing-escalada")).toBeInTheDocument();
+    expect(screen.getByText("Escalada")).toHaveClass("bandeja-state-escalada");
   });
 });

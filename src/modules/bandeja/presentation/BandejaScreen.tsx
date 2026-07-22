@@ -6,6 +6,7 @@ import { useConversacion } from "./hooks/useConversacion";
 import { ColaPanel } from "../components/cola/ColaPanel";
 import { ConversacionPanel } from "../components/conversacion/ConversacionPanel";
 import { FichaPanel } from "../components/ficha/FichaPanel";
+import { SimularEntranteControl } from "../components/comunes/SimularEntranteControl";
 
 // BandejaScreen is the 3-column shell for the operator inbox (queue /
 // conversation / ficha). It owns the two data hooks (useCola, useConversacion)
@@ -33,7 +34,10 @@ export function BandejaScreen() {
 
   return (
     <div className="bandeja-root bandeja-shell">
-      <div className="bandeja-top">Reactivación · Bandeja</div>
+      <div className="bandeja-top">
+        <span>Reactivación · Bandeja</span>
+        <SimularEntranteControl onDone={onDone} />
+      </div>
 
       <div className="bandeja-cols">
         <div className="bandeja-col bandeja-col-queue">

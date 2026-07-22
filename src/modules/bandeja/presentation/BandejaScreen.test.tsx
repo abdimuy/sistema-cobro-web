@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import axios from "axios";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 
 import { server } from "../../../test/msw/server";
-import { bandejaHandlers } from "../../../test/msw/handlers/bandeja";
+import { bandejaHandlers, BANDEJA_BASE } from "../../../test/msw/handlers/bandeja";
 
 import { BandejaProvider } from "./context/BandejaContext";
 import { HttpBandejaAdapter } from "../infrastructure/http/HttpBandejaAdapter";
@@ -12,6 +13,7 @@ import { BandejaScreen } from "./BandejaScreen";
 import type {
   ConversacionDetalleResponseDTO,
   ConversacionResumenDTO,
+  DecisionResultDTO,
 } from "../infrastructure/http/dtos";
 
 const TEST_BASE = "http://api.test/v2";
@@ -134,5 +136,123 @@ describe("BandejaScreen integration", () => {
     await waitFor(() => expect(aprobarClienteId).toBe(1001));
     await waitFor(() => expect(listCalls).toBeGreaterThan(listCallsBefore));
     await waitFor(() => expect(detalleCalls).toBeGreaterThan(detalleCallsBefore));
+  });
+
+  it("simular entrante with a buy signal → the targeted conversation escalates → selecting it shows the briefing (not a composer)", async () => {
+    const CLIENTE_ID = 2002;
+
+    let resumen: ConversacionResumenDTO = {
+      cliente_id: CLIENTE_ID,
+      nombre: "OSCAR MORALES",
+      segmento: "por_liquidar_hueco",
+      estado: "conversando",
+      asignado_a: "",
+      updated_at: "2026-07-21T09:00:00Z",
+      ultimo_mensaje: "",
+      ultima_decision: null,
+    };
+
+    let detalle: ConversacionDetalleResponseDTO = {
+      conversacion: {
+        cliente_id: CLIENTE_ID,
+        nombre: "OSCAR MORALES",
+        segmento: "por_liquidar_hueco",
+        telefono: "+52 238 000 9911",
+        estado: "conversando",
+        asignado_a: "",
+        contexto_nota: "",
+        banderas: [],
+        resumen_memoria: "",
+        created_at: "2026-07-21T09:00:00Z",
+        updated_at: "2026-07-21T09:00:00Z",
+      },
+      turnos: [],
+      decisiones: [],
+    };
+
+    server.use(
+      http.get(BANDEJA_BASE, () => HttpResponse.json({ items: [resumen] })),
+      http.get(`${BANDEJA_BASE}/:id`, ({ params }) => {
+        if (Number(params.id) !== CLIENTE_ID) {
+          return HttpResponse.json(
+            { code: "reactivacion_conversacion_no_encontrada", message: "no encontrada" },
+            { status: 404 },
+          );
+        }
+        return HttpResponse.json(detalle);
+      }),
+      http.post(`${BANDEJA_BASE}/:id/mensaje-entrante`, async ({ request }) => {
+        const body = (await request.json()) as { mensaje: string };
+        const nowIso = "2026-07-21T09:05:00Z";
+        const decisionDTO: DecisionResultDTO = {
+          intencion: "señal de compra",
+          confianza: 90,
+          senales: ["senal_compra"],
+          accion: "escalar",
+          borrador: "",
+          evidencia: [],
+          razon_escalamiento: "señal de compra directa",
+          resultado: "escalado",
+          escalada: true,
+        };
+
+        resumen = {
+          ...resumen,
+          estado: "escalado",
+          ultimo_mensaje: body.mensaje,
+          ultima_decision: {
+            intencion: decisionDTO.intencion,
+            confianza: decisionDTO.confianza,
+            accion: decisionDTO.accion,
+            resultado: decisionDTO.resultado,
+            razon_escalamiento: decisionDTO.razon_escalamiento,
+          },
+        };
+        detalle = {
+          ...detalle,
+          conversacion: { ...detalle.conversacion, estado: "escalado" },
+          turnos: [
+            ...detalle.turnos,
+            { direccion: "entrante", autor: "cliente", cuerpo: body.mensaje, mensaje_ref: "", created_at: nowIso },
+          ],
+          decisiones: [
+            ...detalle.decisiones,
+            {
+              intencion: decisionDTO.intencion,
+              confianza: decisionDTO.confianza,
+              senales: decisionDTO.senales,
+              accion: decisionDTO.accion,
+              borrador: decisionDTO.borrador,
+              evidencia: decisionDTO.evidencia,
+              razon_escalamiento: decisionDTO.razon_escalamiento,
+              resultado: decisionDTO.resultado,
+              created_at: nowIso,
+            },
+          ],
+        };
+
+        return HttpResponse.json(decisionDTO);
+      }),
+    );
+
+    const user = userEvent.setup();
+    setupScreen();
+
+    await waitFor(() => expect(screen.getByText("OSCAR MORALES")).toBeInTheDocument());
+    await user.click(screen.getByTestId(`queue-item-${CLIENTE_ID}`));
+    await waitFor(() => expect(screen.getByText(/238 ••• 9911/)).toBeInTheDocument());
+    expect(screen.queryByTestId("briefing-escalada")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "🧪 Simular entrante" }));
+    await user.type(screen.getByLabelText("Cliente ID a simular"), String(CLIENTE_ID));
+    await user.type(
+      screen.getByLabelText("Mensaje a simular"),
+      "ya me decidí, quiero comprar el comedor",
+    );
+    await user.click(screen.getByRole("button", { name: "Simular entrante" }));
+
+    await waitFor(() => expect(screen.getByTestId("briefing-escalada")).toBeInTheDocument());
+    expect(screen.queryByTestId("borrador-composer")).not.toBeInTheDocument();
+    expect(screen.getByText("señal de compra directa")).toBeInTheDocument();
   });
 });

@@ -1,0 +1,63 @@
+/* SimularEntranteControl — a subtle dev/demo strip in the top bar. Scoped
+   by the `bandeja-` prefix; consumes the CSS custom properties from
+   ../../presentation/bandeja.tokens.css via inheritance. Deliberately quiet
+   (a tool, not a primary surface) — no accent color of its own. */
+
+.bandeja-simcontrol {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bandeja-simcontrol-toggle {
+  background: transparent;
+  border: 1px solid var(--bd);
+  color: var(--tx3);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bandeja-simcontrol-toggle:hover {
+  color: var(--tx2);
+  border-color: var(--bd2);
+}
+
+.bandeja-simcontrol-toggle[aria-expanded="true"] {
+  color: var(--tx2);
+  border-color: var(--bd2);
+  background: var(--s2);
+}
+
+.bandeja-simcontrol-body {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bandeja-simcontrol-body input {
+  background: var(--bg);
+  color: var(--tx);
+  border: 1px solid var(--bd2);
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.bandeja-simcontrol-body input[type="number"] {
+  width: 84px;
+}
+
+.bandeja-simcontrol-body input[type="text"] {
+  width: 220px;
+}
+
+.bandeja-simcontrol-body button {
+  font-size: 12px;
+  padding: 6px 12px;
+}

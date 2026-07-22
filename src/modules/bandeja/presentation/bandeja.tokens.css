@@ -26,6 +26,7 @@
   --aitint: rgba(124, 58, 237, 0.08);
   --ok: #059669;
   --warn: #b45309;
+  --warn-ink: #ffffff;
   --dng: #dc2626;
   --r-chip: 6px;
   --r-card: 10px;
@@ -63,6 +64,7 @@
   --aitint: rgba(167, 139, 250, 0.1);
   --ok: #34d399;
   --warn: #fbbf24;
+  --warn-ink: #1a1400;
   --dng: #f87171;
 }
 

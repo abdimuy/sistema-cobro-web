@@ -5,6 +5,7 @@ import { estadoLabel, modoConversacion, segmentoLabel } from "../../domain/helpe
 import { initials, maskTelefono } from "../lib/format";
 import { Hilo } from "./Hilo";
 import { BorradorComposer } from "./BorradorComposer";
+import { BriefingEscalada } from "./BriefingEscalada";
 
 export type ConversacionPanelProps = {
   detalle: ConversacionDetalle | null;
@@ -18,8 +19,8 @@ export type ConversacionPanelProps = {
 
 // ConversacionPanel is the middle column: the thread plus, when the newest
 // decision is an un-actioned draft (modoConversacion === 'borrador'), the
-// violet AI composer. The escalated case ('briefing') is a placeholder here
-// — Task 5 replaces it with the full briefing view.
+// violet AI composer, or — once the conversación is escalated
+// (modoConversacion === 'briefing') — the amber BriefingEscalada.
 export function ConversacionPanel({ detalle, loading, error, onDone }: ConversacionPanelProps) {
   if (error) {
     return (
@@ -59,7 +60,11 @@ export function ConversacionPanel({ detalle, loading, error, onDone }: Conversac
             {segmentoLabel(conversacion.segmento)} · {maskTelefono(conversacion.telefono)}
           </div>
         </div>
-        <div className="bandeja-state">{estadoLabel(conversacion.estado)}</div>
+        <div
+          className={`bandeja-state${conversacion.estado === "escalado" ? " bandeja-state-escalada" : ""}`}
+        >
+          {estadoLabel(conversacion.estado)}
+        </div>
       </div>
 
       <Hilo turnos={turnos} />
@@ -69,11 +74,7 @@ export function ConversacionPanel({ detalle, loading, error, onDone }: Conversac
       )}
 
       {modo === "briefing" && (
-        <div className="bandeja-draft-wrap">
-          <p className="bandeja-empty">
-            Esta conversación fue escalada — la vista de briefing llega en la siguiente entrega.
-          </p>
-        </div>
+        <BriefingEscalada clienteId={conversacion.clienteId} detalle={detalle} onDone={onDone} />
       )}
     </>
   );
