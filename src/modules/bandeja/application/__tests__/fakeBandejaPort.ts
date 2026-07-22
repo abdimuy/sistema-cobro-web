@@ -110,7 +110,7 @@ export function makeFakeConversacionResumen(
     ultimoMensaje: "¿qué tienen de comedores?",
     ultimaDecision: {
       intencion: "señal_compra",
-      confianza: 0.88,
+      confianza: 88,
       accion: "ofrecer_comedor",
       resultado: "pendiente",
       razonEscalamiento: "",
@@ -147,7 +147,7 @@ export function makeFakeDecisionResult(
 ): DecisionResult {
   const base: DecisionResult = {
     intencion: "señal_compra",
-    confianza: 0.88,
+    confianza: 88,
     senales: [],
     accion: "ofrecer_comedor",
     borrador: "borrador de prueba",

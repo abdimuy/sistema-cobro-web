@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ConversacionResumen } from "../../domain/entities";
 import { DomainError } from "../../domain/errors";
 import { useBandeja } from "../context/BandejaContext";
+import { listarCola } from "../../application/usecases/listarCola";
 import { toDomainError } from "./lib/toDomainError";
 
 // Queue rows go stale quickly (an operator's colleague can claim/answer a
@@ -40,8 +41,7 @@ export function useCola(): UseColaReturn {
 
       setLoading(true);
       setError(null);
-      port
-        .listarCola(undefined, ctrl.signal)
+      listarCola(port, undefined, ctrl.signal)
         .then((result) => {
           if (ctrl.signal.aborted || cancelled) return;
           setItems(result);

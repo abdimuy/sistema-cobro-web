@@ -8,6 +8,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useBandeja } from "../../presentation/context/BandejaContext";
 import { toDomainError } from "../../presentation/hooks/lib/toDomainError";
+import { simularMensajeEntrante } from "../../application/usecases/simularMensajeEntrante";
 import { humanizeSnake } from "../lib/format";
 
 export type SimularEntranteControlProps = {
@@ -44,7 +45,7 @@ export function SimularEntranteControl({ onDone }: SimularEntranteControlProps) 
     if (!valido || sending) return;
     setSending(true);
     try {
-      const result = await port.simularEntrante(clienteId, mensaje.trim());
+      const result = await simularMensajeEntrante(port, clienteId, mensaje.trim());
       const accionTxt = humanizeSnake(result.accion) || "sin acción";
       toast.success(result.escalada ? "Mensaje simulado — se escaló" : "Mensaje simulado", {
         description: `Acción: ${accionTxt}`,

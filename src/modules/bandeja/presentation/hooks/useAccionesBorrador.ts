@@ -2,7 +2,10 @@ import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useBandeja } from "../context/BandejaContext";
 import { toDomainError } from "./lib/toDomainError";
-import type { DecisionResult } from "../../domain/entities";
+import { aprobarBorrador } from "../../application/usecases/aprobarBorrador";
+import { editarBorrador } from "../../application/usecases/editarBorrador";
+import { dictarMensaje } from "../../application/usecases/dictarMensaje";
+import { escalarConversacion } from "../../application/usecases/escalarConversacion";
 
 export type EstadoAccionesBorrador = "idle" | "enviando" | "hecho" | "error";
 
@@ -12,15 +15,14 @@ export type UseAccionesBorradorReturn = {
   editar: (texto: string) => Promise<void>;
   dictar: (intencion: string) => Promise<{ borrador: string } | null>;
   escalar: (asignadoA: string) => Promise<void>;
-  simular: (mensaje: string) => Promise<DecisionResult | null>;
 };
 
 // useAccionesBorrador drives the composer's mutations for one cliente's
-// draft: aprobar/editar/dictar/escalar/simular. Every action funnels
-// through runAccion so the state machine (idle → enviando → hecho|error),
-// the onDone refetch and the toast are handled once. enviandoRef (not
-// state) guards double-submit — a state read inside the callback would be
-// stale on the very re-render a fast double-click races against.
+// draft: aprobar/editar/dictar/escalar. Every action funnels through
+// runAccion so the state machine (idle → enviando → hecho|error), the
+// onDone refetch and the toast are handled once. enviandoRef (not state)
+// guards double-submit — a state read inside the callback would be stale
+// on the very re-render a fast double-click races against.
 export function useAccionesBorrador(
   clienteId: number | null,
   onDone: () => void,
@@ -58,13 +60,17 @@ export function useAccionesBorrador(
   );
 
   const aprobar = useCallback(async () => {
-    await runAccion((id) => port.aprobar(id), "Mensaje aprobado y enviado", "No se pudo aprobar el mensaje");
+    await runAccion(
+      (id) => aprobarBorrador(port, id),
+      "Mensaje aprobado y enviado",
+      "No se pudo aprobar el mensaje",
+    );
   }, [runAccion, port]);
 
   const editar = useCallback(
     async (texto: string) => {
       await runAccion(
-        (id) => port.editar(id, texto),
+        (id) => editarBorrador(port, id, texto),
         "Mensaje editado y enviado",
         "No se pudo enviar el mensaje editado",
       );
@@ -75,7 +81,7 @@ export function useAccionesBorrador(
   const dictar = useCallback(
     async (intencion: string) => {
       return runAccion(
-        (id) => port.dictar(id, intencion),
+        (id) => dictarMensaje(port, id, intencion),
         "Nuevo borrador generado",
         "No se pudo generar el borrador",
       );
@@ -86,7 +92,7 @@ export function useAccionesBorrador(
   const escalar = useCallback(
     async (asignadoA: string) => {
       await runAccion(
-        (id) => port.escalar(id, asignadoA),
+        (id) => escalarConversacion(port, id, asignadoA),
         "Conversación escalada",
         "No se pudo escalar la conversación",
       );
@@ -94,16 +100,5 @@ export function useAccionesBorrador(
     [runAccion, port],
   );
 
-  const simular = useCallback(
-    async (mensaje: string) => {
-      return runAccion(
-        (id) => port.simularEntrante(id, mensaje),
-        "Mensaje simulado",
-        "No se pudo simular el mensaje entrante",
-      );
-    },
-    [runAccion, port],
-  );
-
-  return { estado, aprobar, editar, dictar, escalar, simular };
+  return { estado, aprobar, editar, dictar, escalar };
 }

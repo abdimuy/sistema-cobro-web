@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ConversacionDetalle } from "../../domain/entities";
 import { DomainError } from "../../domain/errors";
 import { useBandeja } from "../context/BandejaContext";
+import { obtenerConversacion } from "../../application/usecases/obtenerConversacion";
 import { toDomainError } from "./lib/toDomainError";
 
 export type UseConversacionReturn = {
@@ -41,8 +42,7 @@ export function useConversacion(clienteId: number | null): UseConversacionReturn
 
     setLoading(true);
     setError(null);
-    port
-      .obtenerConversacion(clienteId, ctrl.signal)
+    obtenerConversacion(port, clienteId, ctrl.signal)
       .then((result) => {
         if (ctrl.signal.aborted) return;
         setDetalle(result);
