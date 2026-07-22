@@ -1,0 +1,159 @@
+/* Queue column styles (mockup `.col.queue` block) — scoped by the
+   `bandeja-` prefix so nothing here leaks past `.bandeja-root`. Consumes
+   the CSS custom properties defined in ../../presentation/bandeja.tokens.css
+   (imported once by BandejaScreen); we rely on cascade/inheritance rather
+   than re-declaring them here. */
+
+.bandeja-qsec {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--tx3);
+  margin: 12px 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bandeja-qsec:first-child {
+  margin-top: 4px;
+}
+
+.bandeja-qsec-badge {
+  background: rgba(251, 191, 36, 0.16);
+  color: var(--warn);
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+.bandeja-qitem {
+  width: 100%;
+  text-align: left;
+  background: var(--s2);
+  border: 1px solid var(--bd);
+  border-radius: var(--r-card);
+  padding: 11px 12px;
+  margin-bottom: 9px;
+  cursor: pointer;
+  transition: 0.12s;
+  font-family: inherit;
+  color: inherit;
+}
+
+.bandeja-qitem:hover {
+  background: var(--s3);
+  border-color: var(--bd2);
+}
+
+.bandeja-qitem:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 1px;
+}
+
+.bandeja-qitem-active {
+  border-color: var(--acc);
+  box-shadow:
+    0 0 0 1px var(--acc) inset,
+    0 0 22px -8px var(--acc);
+}
+
+.bandeja-qitem-r1 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+}
+
+.bandeja-qitem-nm {
+  font-weight: 600;
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bandeja-qitem-r2 {
+  font-size: 12px;
+  color: var(--tx2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bandeja-qitem-time {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--tx3);
+  flex: none;
+}
+
+.bandeja-chip {
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex: none;
+}
+
+.bandeja-chip-rl {
+  background: rgba(52, 211, 153, 0.14);
+  color: var(--ok);
+}
+
+.bandeja-chip-pl {
+  background: rgba(251, 191, 36, 0.14);
+  color: var(--warn);
+}
+
+.bandeja-tag {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.bandeja-tag-buy {
+  color: var(--ok);
+}
+
+.bandeja-tag-esc {
+  color: var(--warn);
+}
+
+.bandeja-tag-low {
+  color: var(--ai);
+}
+
+.bandeja-conf-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+
+.bandeja-conf-dot-hi {
+  background: var(--ok);
+}
+
+.bandeja-conf-dot-lo {
+  background: transparent;
+  border: 1.5px dashed var(--warn);
+}
+
+.bandeja-empty,
+.bandeja-loading {
+  color: var(--tx3);
+  font-size: 12.5px;
+  padding: 16px 4px;
+}
+
+.bandeja-error {
+  color: var(--dng);
+  font-size: 12.5px;
+  padding: 16px 4px;
+}

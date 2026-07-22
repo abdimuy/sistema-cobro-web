@@ -1,0 +1,301 @@
+/* Conversation column styles (mockup `.col.conv` block: conv-head, thread,
+   bubbles, and the violet AI-draft composer). Scoped by the `bandeja-`
+   prefix; consumes the CSS custom properties from
+   ../../presentation/bandeja.tokens.css via inheritance. */
+
+.bandeja-conv-head {
+  flex: none;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--bd);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bandeja-av {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--s3);
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  color: var(--tx2);
+  flex: none;
+}
+
+.bandeja-conv-head-nm {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.bandeja-conv-head-sub {
+  font-size: 12px;
+  color: var(--tx2);
+}
+
+.bandeja-state {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--tx2);
+  background: var(--s2);
+  border: 1px solid var(--bd);
+  padding: 5px 11px;
+  border-radius: 999px;
+  flex: none;
+}
+
+.bandeja-thread {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bandeja-daysep {
+  align-self: center;
+  font-size: 11px;
+  color: var(--tx3);
+  background: var(--s2);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.bandeja-bub {
+  max-width: 70%;
+  padding: 10px 13px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  position: relative;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bandeja-bub-t {
+  font-size: 10px;
+  color: var(--tx3);
+  margin-top: 5px;
+}
+
+.bandeja-bub-in {
+  align-self: flex-start;
+  background: var(--s2);
+  border: 1px solid var(--bd);
+  border-top-left-radius: 5px;
+}
+
+.bandeja-bub-out {
+  align-self: flex-end;
+  background: rgba(59, 130, 246, 0.16);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-top-right-radius: 5px;
+}
+
+/* ── AI draft composer ── */
+
+.bandeja-draft-wrap {
+  flex: none;
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--bd);
+  background: linear-gradient(0deg, var(--s1), transparent);
+}
+
+.bandeja-draft {
+  background: var(--s2);
+  border: 1px solid var(--bd2);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  position: relative;
+}
+
+.bandeja-draft::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--ai), var(--ai2));
+  box-shadow: 0 0 16px -1px var(--ai);
+}
+
+.bandeja-draft-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px 8px;
+}
+
+.bandeja-draft-lbl {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ai);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.2px;
+}
+
+.bandeja-draft-conf {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--tx2);
+  background: var(--bg);
+  border: 1px solid var(--bd);
+  padding: 3px 9px;
+  border-radius: 999px;
+  cursor: help;
+}
+
+.bandeja-conf-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+
+.bandeja-conf-dot-hi {
+  background: var(--ok);
+}
+
+.bandeja-conf-dot-lo {
+  background: transparent;
+  border: 1.5px dashed var(--warn);
+}
+
+.bandeja-draft-body {
+  padding: 0 14px 12px;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bandeja-draft-why {
+  margin: 0 14px 12px;
+  border-top: 1px solid var(--bd);
+  padding-top: 10px;
+}
+
+.bandeja-draft-why-q {
+  font-size: 11px;
+  color: var(--tx2);
+  margin-bottom: 7px;
+}
+
+.bandeja-draft-why-q b {
+  color: var(--tx);
+}
+
+.bandeja-ev {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.bandeja-evchip {
+  font-size: 11px;
+  color: var(--tx2);
+  background: var(--bg);
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  padding: 3px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bandeja-evchip-k {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ai);
+}
+
+.bandeja-acts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  background: var(--bg);
+  border-top: 1px solid var(--bd);
+  flex-wrap: wrap;
+}
+
+.bandeja-btn {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 15px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: inherit;
+}
+
+.bandeja-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.bandeja-btn-primary {
+  background: var(--acc);
+  color: #fff;
+}
+
+.bandeja-btn-primary:hover:not(:disabled) {
+  background: var(--acc2);
+}
+
+.bandeja-btn-ghost {
+  background: transparent;
+  border-color: var(--bd2);
+  color: var(--tx2);
+  font-weight: 500;
+}
+
+.bandeja-btn-ghost:hover:not(:disabled) {
+  color: var(--tx);
+  border-color: var(--tx3);
+}
+
+.bandeja-acts-esc {
+  margin-left: auto;
+}
+
+.bandeja-draft-edit textarea,
+.bandeja-draft-dictar input {
+  width: 100%;
+  background: var(--bg);
+  color: var(--tx);
+  border: 1px solid var(--bd2);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-family: inherit;
+  font-size: 13.5px;
+  resize: vertical;
+}
+
+.bandeja-draft-edit,
+.bandeja-draft-dictar {
+  padding: 0 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bandeja-draft-dictar-row {
+  display: flex;
+  gap: 8px;
+}
+
+.bandeja-draft-dictar-row input {
+  flex: 1;
+}
