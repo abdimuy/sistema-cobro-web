@@ -23,6 +23,7 @@ import ClienteFichaPage from "./modules/clientes/ClienteFichaPage";
 import { Rutas } from "./modules/rutas/Rutas";
 import { Cartera } from "./modules/cartera/Cartera";
 import { Configuracion } from "./modules/configuracion/Configuracion";
+import { Bandeja } from "./modules/bandeja/Bandeja";
 
 // Auth Components
 import LoginPage from "./components/auth/LoginPage";
@@ -150,6 +151,12 @@ function App() {
               <Route path="/configuracion" element={
                 <ProtectedRoute requiredModule="CONFIGURACION" requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
                   <Configuracion />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/bandeja" element={
+                <ProtectedRoute requiredModule="BANDEJA" requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
+                  <Bandeja />
                 </ProtectedRoute>
               } />
             </Route>
