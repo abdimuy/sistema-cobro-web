@@ -1,9 +1,18 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/context/AuthContext";
+import { UsuariosRolesContainer } from "@/modules/usuariosRoles/presentation/composition/UsuariosRolesContainer";
+import { UsuariosRolesScreen } from "@/modules/usuariosRoles/components/UsuariosRolesScreen";
 import { VendedoresScreen } from "./vendedores/VendedoresScreen";
 import { ZonasCajasScreen } from "./zonasCajas/ZonasCajasScreen";
 
-// ConfiguracionShell hosts the Configuración area's tabs.
+// ConfiguracionShell hosts the Configuración area's tabs. "Usuarios y roles"
+// is gated on isSuperAdmin() — role management is stricter than the
+// ADMIN-level access the rest of Configuración allows — both the trigger and
+// the content are hidden for non-super-admins.
 export function ConfiguracionShell() {
+  const { isSuperAdmin } = useAuth();
+  const mostrarUsuariosRoles = isSuperAdmin();
+
   return (
     <div className="space-y-6 p-6">
       <div>
@@ -19,6 +28,7 @@ export function ConfiguracionShell() {
         <TabsList>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="zonas-cajas">Zonas y cajas</TabsTrigger>
+          {mostrarUsuariosRoles && <TabsTrigger value="usuarios-roles">Usuarios y roles</TabsTrigger>}
         </TabsList>
         <TabsContent value="vendedores">
           <VendedoresScreen />
@@ -26,6 +36,13 @@ export function ConfiguracionShell() {
         <TabsContent value="zonas-cajas">
           <ZonasCajasScreen />
         </TabsContent>
+        {mostrarUsuariosRoles && (
+          <TabsContent value="usuarios-roles">
+            <UsuariosRolesContainer>
+              <UsuariosRolesScreen />
+            </UsuariosRolesContainer>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
