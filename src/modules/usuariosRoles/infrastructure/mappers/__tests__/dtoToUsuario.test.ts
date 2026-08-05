@@ -63,6 +63,25 @@ describe("dtoToUsuario", () => {
     );
   });
 
+  it("lanza DomainError malformed_response si nombre está vacío (consistente con dtoToRol)", () => {
+    expect(() => dtoToUsuario(buildValidDTO({ nombre: "" }))).toThrowError(
+      expect.objectContaining({ code: "malformed_response" }),
+    );
+  });
+
+  it("lanza DomainError malformed_response si nombre es solo espacios", () => {
+    expect(() => dtoToUsuario(buildValidDTO({ nombre: "   " }))).toThrowError(
+      expect.objectContaining({ code: "malformed_response" }),
+    );
+  });
+
+  it("lanza DomainError malformed_response si nombre no es string", () => {
+    const dto = buildValidDTO({ nombre: null as unknown as string });
+    expect(() => dtoToUsuario(dto)).toThrowError(
+      expect.objectContaining({ code: "malformed_response" }),
+    );
+  });
+
   it("DomainError hereda de Error", () => {
     expect(() => dtoToUsuario(buildValidDTO({ id: "" }))).toThrow(DomainError);
   });

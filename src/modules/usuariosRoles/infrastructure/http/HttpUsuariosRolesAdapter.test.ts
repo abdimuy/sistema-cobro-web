@@ -303,19 +303,48 @@ describe("HttpUsuariosRolesAdapter", () => {
     expect(result).toHaveLength(2);
   });
 
+  it("listarUsuarios: un next_cursor repetido corta el loop (backstop de repetición, no solo el tope de 100)", async () => {
+    const { client, get } = makeStubClient();
+    get.mockResolvedValue({
+      data: {
+        items: [makeUsuarioDTO()],
+        next_cursor: "cursor-fijo",
+      } satisfies ListResponseDTO<UsuarioResponseDTO>,
+    });
+    const adapter = new HttpUsuariosRolesAdapter(client);
+
+    const result = await adapter.listarUsuarios();
+
+    // El backend nunca debería repetir next_cursor, pero si lo hiciera el
+    // adaptador debe detectar la repetición y cortar de inmediato — no
+    // seguir pidiendo hasta el tope defensivo de páginas.
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(get).toHaveBeenNthCalledWith(2, "/usuarios", {
+      params: { after: "cursor-fijo" },
+      signal: undefined,
+    });
+    expect(result).toHaveLength(2);
+  });
+
+  // Los mocks de error de aquí en adelante usan la forma REAL del Problem
+  // plano de internal/platform/response (chi, no Huma): `code`/`detail` en
+  // el nivel superior, sin `message` ni envoltura `errors[].message`.
   it("wrappea errores de GET (listarUsuarios) en DomainError con el code del backend", async () => {
     const { client, get } = makeStubClient();
     get.mockRejectedValue(
       Object.assign(new Error("Request failed with status code 403"), {
         isAxiosError: true,
-        response: { status: 403, data: { code: "forbidden", message: "forbidden" } },
+        response: {
+          status: 403,
+          data: { type: "about:blank", title: "Forbidden", status: 403, code: "permission_denied", detail: "permiso denegado" },
+        },
       }),
     );
     const adapter = new HttpUsuariosRolesAdapter(client);
 
     await expect(adapter.listarUsuarios()).rejects.toMatchObject({
       name: "DomainError",
-      code: "forbidden",
+      code: "permission_denied",
     });
   });
 
@@ -324,7 +353,10 @@ describe("HttpUsuariosRolesAdapter", () => {
     post.mockRejectedValue(
       Object.assign(new Error("Request failed with status code 409"), {
         isAxiosError: true,
-        response: { status: 409, data: { code: "rol_ya_existe", message: "ya existe" } },
+        response: {
+          status: 409,
+          data: { type: "about:blank", title: "Conflict", status: 409, code: "rol_ya_existe", detail: "ya existe un rol con ese nombre" },
+        },
       }),
     );
     const adapter = new HttpUsuariosRolesAdapter(client);
@@ -340,7 +372,10 @@ describe("HttpUsuariosRolesAdapter", () => {
     del.mockRejectedValue(
       Object.assign(new Error("Request failed with status code 403"), {
         isAxiosError: true,
-        response: { status: 403, data: { code: "rol_inmutable", message: "inmutable" } },
+        response: {
+          status: 403,
+          data: { type: "about:blank", title: "Forbidden", status: 403, code: "rol_inmutable", detail: "no se puede modificar un rol inmutable" },
+        },
       }),
     );
     const adapter = new HttpUsuariosRolesAdapter(client);
@@ -356,7 +391,10 @@ describe("HttpUsuariosRolesAdapter", () => {
     patch.mockRejectedValue(
       Object.assign(new Error("Request failed with status code 404"), {
         isAxiosError: true,
-        response: { status: 404, data: { code: "rol_not_found", message: "no encontrado" } },
+        response: {
+          status: 404,
+          data: { type: "about:blank", title: "Not Found", status: 404, code: "rol_not_found", detail: "rol no encontrado" },
+        },
       }),
     );
     const adapter = new HttpUsuariosRolesAdapter(client);

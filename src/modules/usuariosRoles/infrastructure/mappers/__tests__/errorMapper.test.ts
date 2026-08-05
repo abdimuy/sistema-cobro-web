@@ -2,23 +2,24 @@ import { describe, it, expect } from "vitest";
 import { apperrorToDomainError } from "../errorMapper";
 import { DomainError } from "../../../domain/errors";
 
-// Mirrors the REAL msp-api response shape (huma.ErrorModel), as produced by
-// internal/config/infra/confighttp/auth.go mapAppError:
-//   huma.NewError(status, ae.Message, &huma.ErrorDetail{Message: "code=" + ae.Code})
-// which Huma serializes as:
-//   { title: <generic http.StatusText>, status, detail: <ae.Message, Spanish>,
-//     errors: [ { message: "code=<ae.Code>" } ] }
-// There is NEVER a top-level `code` or `message` field.
-function makeHumaAxiosError(status: number, detail: string, code: string) {
+// Mirrors the REAL msp-api response shape for internal/auth (chi +
+// internal/platform/response — NOT Huma): a flat RFC 9457 Problem Details
+// document with top-level `code`/`detail`, per
+// internal/platform/response/response.go `Problem`:
+//   { type, title, status, detail?, instance?, code?, request_id?, errors?, fields? }
+// There is NO nested `errors[].message` "code=<x>" envelope and NO
+// top-level `message` field.
+function makeAxiosError(status: number, code: string, detail: string) {
   return Object.assign(new Error("Request failed"), {
     isAxiosError: true,
     response: {
       status,
       data: {
+        type: "about:blank",
         title: statusText(status),
         status,
         detail,
-        errors: [{ message: `code=${code}` }],
+        code,
       },
     },
   });
@@ -41,72 +42,68 @@ describe("apperrorToDomainError (usuariosRoles)", () => {
     expect(apperrorToDomainError(original)).toBe(original);
   });
 
-  it("mapea forbidden a un mensaje amigable", () => {
-    const err = makeHumaAxiosError(403, "permiso denegado", "forbidden");
+  it("mapea permission_denied (código real de authz.go) a un mensaje amigable — regresión Problem plano", () => {
+    const err = makeAxiosError(403, "permission_denied", "permiso denegado");
     const domainError = apperrorToDomainError(err);
-    expect(domainError.code).toBe("forbidden");
+    expect(domainError.code).toBe("permission_denied");
     expect(domainError.message).toBe(
       "no tienes permisos para administrar usuarios y roles",
     );
   });
 
   it("mapea rol_not_found a un mensaje amigable", () => {
-    const err = makeHumaAxiosError(404, "rol no encontrado", "rol_not_found");
+    const err = makeAxiosError(404, "rol_not_found", "rol no encontrado");
     const domainError = apperrorToDomainError(err);
     expect(domainError.code).toBe("rol_not_found");
     expect(domainError.message).toBe("el rol ya no existe");
   });
 
   it("mapea rol_inmutable a un mensaje amigable", () => {
-    const err = makeHumaAxiosError(
-      403,
-      "no se puede modificar un rol inmutable",
-      "rol_inmutable",
-    );
+    const err = makeAxiosError(403, "rol_inmutable", "no se puede modificar un rol inmutable");
     const domainError = apperrorToDomainError(err);
     expect(domainError.code).toBe("rol_inmutable");
     expect(domainError.message).toBe("no se puede modificar un rol inmutable");
   });
 
   it("mapea rol_ya_existe a un mensaje amigable", () => {
-    const err = makeHumaAxiosError(409, "ya existe un rol con ese nombre", "rol_ya_existe");
+    const err = makeAxiosError(409, "rol_ya_existe", "ya existe un rol con ese nombre");
     const domainError = apperrorToDomainError(err);
     expect(domainError.code).toBe("rol_ya_existe");
     expect(domainError.message).toBe("ya existe un rol con ese nombre");
   });
 
   it("mapea usuario_not_found a un mensaje amigable", () => {
-    const err = makeHumaAxiosError(404, "usuario no encontrado", "usuario_not_found");
+    const err = makeAxiosError(404, "usuario_not_found", "usuario no encontrado");
     const domainError = apperrorToDomainError(err);
     expect(domainError.code).toBe("usuario_not_found");
     expect(domainError.message).toBe("el usuario ya no existe");
   });
 
   it("mapea permiso_not_found a un mensaje amigable", () => {
-    const err = makeHumaAxiosError(404, "permiso no encontrado", "permiso_not_found");
+    const err = makeAxiosError(404, "permiso_not_found", "permiso no encontrado");
     const domainError = apperrorToDomainError(err);
     expect(domainError.code).toBe("permiso_not_found");
     expect(domainError.message).toBe("el permiso ya no existe");
   });
 
   it("usa el detail del backend cuando el code no tiene traducción amigable", () => {
-    const err = makeHumaAxiosError(500, "fallo interno inesperado", "error_inesperado");
+    const err = makeAxiosError(500, "internal_error", "ocurrió un error interno");
     const domainError = apperrorToDomainError(err);
-    expect(domainError.code).toBe("error_inesperado");
-    expect(domainError.message).toBe("fallo interno inesperado");
+    expect(domainError.code).toBe("internal_error");
+    expect(domainError.message).toBe("ocurrió un error interno");
   });
 
-  it("cae al status HTTP cuando la respuesta no trae errors[] (forma inesperada)", () => {
+  it("cae al title cuando la respuesta no trae detail", () => {
     const err = Object.assign(new Error("Request failed"), {
       isAxiosError: true,
       response: {
         status: 500,
-        data: { title: "Internal Server Error", status: 500, detail: "algo salió mal" },
+        data: { type: "about:blank", title: "Internal Server Error", status: 500 },
       },
     });
     const domainError = apperrorToDomainError(err);
     expect(domainError.code).toBe("http_500");
-    expect(domainError.message).toBe("algo salió mal");
+    expect(domainError.message).toBe("Internal Server Error");
   });
 
   it("envuelve un Error genérico como error_inesperado", () => {

@@ -24,7 +24,7 @@ export function dtoToUsuario(dto: UsuarioResponseDTO): Usuario {
       "respuesta del servidor con formato inválido",
     );
   }
-  if (typeof dto.nombre !== "string") {
+  if (typeof dto.nombre !== "string" || dto.nombre.trim() === "") {
     throw new DomainError(
       "malformed_response",
       "respuesta del servidor con formato inválido",

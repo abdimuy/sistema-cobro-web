@@ -196,15 +196,21 @@ export class HttpUsuariosRolesAdapter implements UsuariosRolesPort {
   // endpoints in this module never expose pagination to the caller — the
   // catalogs involved (usuarios, roles, permisos) are all small enough that
   // "return everything" is the right contract for the port.
+  //
+  // Backstop: a well-behaved backend always advances the cursor, but a bug
+  // (or a mock in a test) could echo the same `next_cursor` back forever.
+  // We stop as soon as the cursor repeats, and cap iterations defensively
+  // so a single bad page can never hang the caller.
   private async fetchAllPages<TDto, TDomain>(
     path: string,
     mapper: (dto: TDto) => TDomain,
     signal?: AbortSignal,
   ): Promise<TDomain[]> {
+    const MAX_PAGES = 100;
     const results: TDomain[] = [];
     let after: string | undefined;
 
-    do {
+    for (let page = 0; page < MAX_PAGES; page++) {
       const params: Record<string, string> | undefined = after
         ? { after }
         : undefined;
@@ -213,8 +219,11 @@ export class HttpUsuariosRolesAdapter implements UsuariosRolesPort {
         signal,
       });
       results.push(...data.items.map(mapper));
-      after = data.next_cursor || undefined;
-    } while (after);
+
+      const nextAfter = data.next_cursor || undefined;
+      if (!nextAfter || nextAfter === after) break;
+      after = nextAfter;
+    }
 
     return results;
   }
