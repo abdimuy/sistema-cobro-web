@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Sistema Muebles San Pablo TEST",
-  "version": "1.13.2-test.10",
+  "version": "1.13.2-test.11",
   "identifier": "com.muebles-san-pablo.sistema.test",
   "build": {
     "beforeBuildCommand": "npm run build -- --mode test"
@@ -37,7 +37,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/abdimuy/sistema-cobro-web/releases/download/v1.13.2-test.10/latest.json"
+        "https://github.com/abdimuy/sistema-cobro-web/releases/download/v1.13.2-test.11/latest.json"
       ]
     }
   }
