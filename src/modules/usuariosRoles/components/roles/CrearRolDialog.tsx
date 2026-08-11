@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,16 +20,19 @@ export function CrearRolDialog({ open, onOpenChange, saving, onCrear }: Props) {
   const [nombre, setNombre] = useState("");
   const [description, setDescription] = useState("");
 
-  const handleOpenChange = (next: boolean) => {
-    if (next) {
+  // Reset the form every time the dialog opens. Opening is driven externally
+  // (setCrearOpen(true) in RolesTab), which bypasses Radix's onOpenChange, so
+  // resetting there would never fire and the previous rol's values would leak
+  // into the next "Nuevo rol" (e.g. "Vendedor" + "Cobrador" → "VendedorCobrador").
+  useEffect(() => {
+    if (open) {
       setNombre("");
       setDescription("");
     }
-    onOpenChange(next);
-  };
+  }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="font-serif text-xl font-normal">Nuevo rol</DialogTitle>
@@ -55,7 +58,7 @@ export function CrearRolDialog({ open, onOpenChange, saving, onCrear }: Props) {
           </div>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" disabled={saving} onClick={() => handleOpenChange(false)}>
+          <Button type="button" variant="outline" disabled={saving} onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
           <Button
