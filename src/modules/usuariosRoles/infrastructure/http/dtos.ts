@@ -2,7 +2,8 @@
 // dto.go). snake_case to match backend JSON.
 export interface UsuarioResponseDTO {
   id: string;
-  firebase_uid: string;
+  // Vacío/null/ausente para usuarios de MSP_USUARIOS sin vínculo a Firebase Auth.
+  firebase_uid?: string | null;
   email: string;
   nombre: string;
   telefono?: string | null;

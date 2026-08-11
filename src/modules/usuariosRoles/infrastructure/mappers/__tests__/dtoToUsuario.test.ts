@@ -40,10 +40,24 @@ describe("dtoToUsuario", () => {
     );
   });
 
-  it("lanza DomainError malformed_response si firebase_uid falta", () => {
+  it("mapea firebaseUid a '' si firebase_uid falta (usuario sin vínculo Firebase)", () => {
     const dto = buildValidDTO();
-    // @ts-expect-error simulating a malformed backend response
     delete dto.firebase_uid;
+    expect(dtoToUsuario(dto).firebaseUid).toBe("");
+  });
+
+  it("mapea firebaseUid a '' si firebase_uid es null", () => {
+    const dto = buildValidDTO({ firebase_uid: null });
+    expect(dtoToUsuario(dto).firebaseUid).toBe("");
+  });
+
+  it("mapea firebaseUid a '' si firebase_uid es cadena vacía", () => {
+    const dto = buildValidDTO({ firebase_uid: "" });
+    expect(dtoToUsuario(dto).firebaseUid).toBe("");
+  });
+
+  it("lanza DomainError malformed_response si firebase_uid tiene tipo inválido", () => {
+    const dto = buildValidDTO({ firebase_uid: 123 as unknown as string });
     expect(() => dtoToUsuario(dto)).toThrowError(
       expect.objectContaining({ code: "malformed_response" }),
     );

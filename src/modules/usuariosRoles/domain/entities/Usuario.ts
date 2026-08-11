@@ -4,6 +4,8 @@
 // assignments.
 export interface Usuario {
   id: string;
+  // "" cuando el usuario no está vinculado a Firebase Auth (alta por SQL o
+  // aún sin invitar). El anti-lockout trata "" como "sin coincidencia".
   firebaseUid: string;
   email: string;
   nombre: string;
