@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,8 +53,33 @@ export function RolPanel({ rol, onCambio, onEliminado }: Props) {
     setDescription(rol.description ?? "");
   }, [rol.nombre, rol.description]);
 
-  const { saving: savingPermiso, asignar, quitar } = useEditarPermisosRol(cargarPermisos);
+  // No refetch-on-toggle: reloading the whole list would swap it for the
+  // Skeleton on every click, collapsing the panel and resetting the scroll to
+  // the top. Instead each toggle updates local state optimistically and only
+  // reverts that single permiso if the mutation fails.
+  const { asignar, quitar } = useEditarPermisosRol();
   const { saving: savingCrud, renombrar, eliminar } = useCrudRol(onCambio);
+
+  // Per-codigo mutation queue. Toggling different permisos runs in parallel
+  // (fast, no clicks lost), but repeated toggles of the SAME permiso are
+  // chained so the server applies them in click order — otherwise a rapid
+  // on→off could race and the asignar could land after the quitar, leaving
+  // the permiso stuck on. Last click wins.
+  const colas = useRef<Map<string, Promise<unknown>>>(new Map());
+
+  const togglePermiso = (permiso: Permiso, next: boolean) => {
+    if (rol.inmutable) return;
+    const add = (prev: Permiso[]) => (prev.some((p) => p.codigo === permiso.codigo) ? prev : [...prev, permiso]);
+    const remove = (prev: Permiso[]) => prev.filter((p) => p.codigo !== permiso.codigo);
+    setMisPermisos(next ? add : remove);
+    const anterior = colas.current.get(permiso.codigo) ?? Promise.resolve();
+    const siguiente = anterior
+      .then(() => (next ? asignar : quitar)(rol.id, permiso.codigo))
+      .then((ok) => {
+        if (!ok) setMisPermisos(next ? remove : add);
+      });
+    colas.current.set(permiso.codigo, siguiente);
+  };
 
   const categorias = agruparPermisosPorCategoria([...catalogo]);
   const isDirty = nombre.trim() !== rol.nombre || (description.trim() || null) !== (rol.description ?? null);
@@ -133,12 +158,8 @@ export function RolPanel({ rol, onCambio, onEliminado }: Props) {
                         <Checkbox
                           id={inputId}
                           checked={checked}
-                          disabled={rol.inmutable || savingPermiso}
-                          onCheckedChange={(next) => {
-                            if (rol.inmutable) return;
-                            if (next) void asignar(rol.id, permiso.codigo);
-                            else void quitar(rol.id, permiso.codigo);
-                          }}
+                          disabled={rol.inmutable}
+                          onCheckedChange={(next) => togglePermiso(permiso, next === true)}
                         />
                         <Label
                           htmlFor={inputId}
