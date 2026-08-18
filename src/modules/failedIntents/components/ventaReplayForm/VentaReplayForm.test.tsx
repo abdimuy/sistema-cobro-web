@@ -28,6 +28,18 @@ vi.mock("@/hooks/useGetZonasCliente", () => ({
   }),
 }));
 
+vi.mock("@/hooks/useGetCiudades", () => ({
+  __esModule: true,
+  default: () => ({
+    ciudades: [
+      { ciudadId: 1, ciudad: "AGUASCALIENTES", estadoId: 1, estado: "AGUASCALIENTES" },
+    ],
+    loading: false,
+    error: null,
+    refetch: async () => {},
+  }),
+}));
+
 vi.mock("@/hooks/useGetVendedores", () => ({
   __esModule: true,
   default: () => ({

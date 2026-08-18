@@ -3,8 +3,10 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { CampoInline } from "../piezas/CampoInline";
 import { SeleccionarZonaCombobox } from "../piezas/SeleccionarZonaCombobox";
+import { SeleccionarCiudadCombobox } from "../piezas/SeleccionarCiudadCombobox";
 import { SeleccionarClienteMicrosipCombobox } from "../piezas/SeleccionarClienteMicrosipCombobox";
 import useGetZonasCliente from "@/hooks/useGetZonasCliente";
+import useGetCiudades from "@/hooks/useGetCiudades";
 import type { ClienteFormData, GPSFormData, ValidationError } from "../../../presentation/hooks/useVentaEditState";
 
 const getFieldError = (errors: ValidationError[], field: string): string | undefined =>
@@ -35,6 +37,12 @@ export const ClienteTab = ({ data, gps, errors, onUpdate, onUpdateGps }: Props) 
   const zonasCombobox = useMemo(
     () => zonas.map((z) => ({ id: z.ZONA_CLIENTE_ID, nombre: z.ZONA_CLIENTE })),
     [zonas],
+  );
+
+  const { ciudades, loading: cargandoCiudades } = useGetCiudades();
+  const ciudadesCombobox = useMemo(
+    () => ciudades.map((c) => ({ id: c.ciudadId, nombre: c.ciudad, estado: c.estado })),
+    [ciudades],
   );
 
   return (
@@ -125,9 +133,11 @@ export const ClienteTab = ({ data, gps, errors, onUpdate, onUpdateGps }: Props) 
               />
             </CampoInline>
             <CampoInline label="Ciudad" obligatorio>
-              <Input
+              <SeleccionarCiudadCombobox
                 value={data.ciudad}
-                onChange={(e) => onUpdate("ciudad", e.target.value.toUpperCase())}
+                onChange={(next) => onUpdate("ciudad", next)}
+                ciudades={ciudadesCombobox}
+                cargando={cargandoCiudades}
               />
             </CampoInline>
           </div>
