@@ -111,7 +111,7 @@ function App() {
                 <ProtectedRoute requiredModule="INVENTARIO"><InventarioDetalle /></ProtectedRoute>
               } />
 
-              {/* Rutas de Administración - Solo Admin y Super Admin */}
+              {/* Se conceden por interruptor (MODULOS_DESKTOP), sin ser admin */}
               <Route path="/failed-intents" element={
                 <ProtectedRoute requiredModule="FAILED_INTENTS"><FailedIntents /></ProtectedRoute>
               } />
@@ -155,9 +155,7 @@ function App() {
               } />
 
               <Route path="/bandeja" element={
-                <ProtectedRoute requiredModule="BANDEJA" requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
-                  <Bandeja />
-                </ProtectedRoute>
+                <ProtectedRoute requiredModule="BANDEJA"><Bandeja /></ProtectedRoute>
               } />
             </Route>
 

@@ -9,8 +9,9 @@ import { doc, getDoc, onSnapshot, updateDoc, Timestamp } from 'firebase/firestor
 import { auth, db } from '../../firebase';
 import { AuthContextType, AuthState, UserData } from '../types/auth';
 import { USERS_COLLECTION } from '../constants/collections';
-import { ROLES, ROLE_PERMISSIONS } from '../constants/roles';
+import { ROLES } from '../constants/roles';
 import { DESKTOP_MODULES } from '../constants/modules';
+import { canUserAccessModule } from '../utils/permissions';
 import { getDeviceFingerprint, DeviceInfo } from '../utils/deviceFingerprint';
 import { APP_VERSION } from '../constants/version';
 
@@ -192,47 +193,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setState(prev => ({ ...prev, error: null }));
   };
 
-  // Verificar si tiene permiso para un módulo específico
+  // Verificar si tiene permiso para un módulo específico.
+  // La regla vive en utils/permissions para que el menú lateral y el guardia de
+  // rutas usen exactamente la misma — incluido el respeto a `requiredRole`.
   const hasPermission = (moduleKey: string): boolean => {
-    if (!state.userData) return false;
-
-    const userRole = state.userData.ROL;
-    const roleConfig = ROLE_PERMISSIONS[userRole];
-
-    // Super admin tiene acceso a todo
-    if (userRole === ROLES.SUPER_ADMIN) {
-      return true;
-    }
-
-    // Admin tiene acceso a todos los módulos desktop
-    if (userRole === ROLES.ADMIN && roleConfig.canAccessAllModules) {
-      return true;
-    }
-
-    // Supervisor tiene módulos específicos
-    if (userRole === ROLES.SUPERVISOR) {
-      return roleConfig.allowedModules.includes(moduleKey);
-    }
-
-    // Operador usa permisos personalizados
-    if (userRole === ROLES.OPERADOR) {
-      return state.userData.MODULOS_DESKTOP?.includes(moduleKey) || false;
-    }
-
-    // Viewer solo lectura (implementar lógica específica si es necesario)
-    if (userRole === ROLES.VIEWER) {
-      return state.userData.MODULOS_DESKTOP?.includes(moduleKey) || false;
-    }
-
-    return false;
+    return canUserAccessModule(state.userData, moduleKey);
   };
 
   // Verificar si puede acceder a un módulo
   const canAccessModule = (moduleKey: string): boolean => {
     if (!state.isAuthenticated) return false;
-    
-    // HOME siempre es accesible para usuarios autenticados
-    if (moduleKey === 'HOME') return true;
 
     return hasPermission(moduleKey);
   };

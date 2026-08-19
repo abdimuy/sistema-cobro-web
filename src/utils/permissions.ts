@@ -12,7 +12,12 @@ export const hasRoleOrHigher = (userRole: RoleType, requiredRole: RoleType): boo
 };
 
 /**
- * Verifica si un usuario puede acceder a un módulo específico
+ * Regla única de acceso a un módulo del escritorio.
+ *
+ * Es la implementación canónica: `AuthContext` delega aquí para que el menú
+ * lateral y el guardia de rutas no puedan discrepar. Antes había dos copias y
+ * ya divergían — el menú ignoraba `requiredRole`, así que pintaba módulos que
+ * al hacer clic rebotaban a Inicio.
  */
 export const canUserAccessModule = (userData: UserData | null, moduleKey: string): boolean => {
   if (!userData) return false;
@@ -29,6 +34,14 @@ export const canUserAccessModule = (userData: UserData | null, moduleKey: string
   if (userRole === ROLES.SUPER_ADMIN) {
     return true;
   }
+
+  // Módulo reservado a ciertos roles: el interruptor por usuario no lo concede.
+  const moduleConfig = DESKTOP_MODULES.find(module => module.key === moduleKey);
+  if (moduleConfig?.requiredRole && moduleConfig.requiredRole.length > 0) {
+    return moduleConfig.requiredRole.includes(userRole);
+  }
+
+  if (!roleConfig) return false;
 
   // Admin tiene acceso a todos los módulos desktop
   if (userRole === ROLES.ADMIN && roleConfig.canAccessAllModules) {
@@ -64,7 +77,7 @@ export const getUserAccessibleModules = (userData: UserData | null): string[] =>
  */
 export const canManageUsers = (userData: UserData | null): boolean => {
   if (!userData) return false;
-  
+
   const roleConfig = ROLE_PERMISSIONS[userData.ROL];
   return roleConfig?.canManageUsers || false;
 };
@@ -74,9 +87,9 @@ export const canManageUsers = (userData: UserData | null): boolean => {
  */
 export const isReadOnlyUser = (userData: UserData | null): boolean => {
   if (!userData) return true;
-  
+
   const roleConfig = ROLE_PERMISSIONS[userData.ROL];
-  return roleConfig.readOnly;
+  return roleConfig?.readOnly ?? true;
 };
 
 /**
@@ -108,16 +121,8 @@ export const filterModulesByPermissions = (
   modules = DESKTOP_MODULES
 ) => {
   if (!userData) return [];
-  
-  return modules.filter(module => {
-    // Verificar si el módulo requiere roles específicos
-    if (module.requiredRole && module.requiredRole.length > 0) {
-      return module.requiredRole.includes(userData.ROL);
-    }
-    
-    // Verificar acceso general al módulo
-    return canUserAccessModule(userData, module.key);
-  });
+
+  return modules.filter(module => canUserAccessModule(userData, module.key));
 };
 
 /**

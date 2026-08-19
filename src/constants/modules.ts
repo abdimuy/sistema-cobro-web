@@ -2,6 +2,10 @@ import { ModuleConfig } from '../types/auth';
 import { ROLES } from './roles';
 import { Home, BarChart3, ShoppingCart, Shield, Truck, Package, Users, AlertTriangle, Sparkles, Contact, Route, TrendingUp, SlidersHorizontal, Inbox } from 'lucide-react';
 
+// `requiredRole` marca un módulo como reservado a esos roles: el interruptor por
+// usuario (MODULOS_DESKTOP) NO puede concederlo. Todo módulo sin `requiredRole`
+// se concede por interruptor desde la pantalla de usuarios. Es la única fuente
+// de verdad — la lista de interruptores se deriva de aquí (ver desktopModules.ts).
 export const DESKTOP_MODULES: ModuleConfig[] = [
   {
     key: 'HOME',
@@ -58,8 +62,7 @@ export const DESKTOP_MODULES: ModuleConfig[] = [
     label: 'Ventas Fallidas',
     path: '/failed-intents',
     icon: AlertTriangle,
-    color: 'red',
-    requiredRole: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    color: 'red'
   },
   {
     key: 'WINBACK_ANALYTICS',
@@ -102,8 +105,7 @@ export const DESKTOP_MODULES: ModuleConfig[] = [
     label: 'Bandeja',
     path: '/bandeja',
     icon: Inbox,
-    color: 'blue',
-    requiredRole: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    color: 'blue'
   }
 ];
 
@@ -128,8 +130,10 @@ export const ROUTE_TO_MODULE: Record<string, string> = {
   '/bandeja': 'BANDEJA'
 };
 
-// Módulos que requieren permisos especiales
-export const PROTECTED_MODULES = ['USUARIOS', 'FAILED_INTENTS', 'WINBACK_ANALYTICS', 'CLIENTES', 'RUTAS', 'CARTERA', 'CONFIGURACION', 'BANDEJA'];
+// Módulos que exigen permiso explícito (todo lo que no es público)
+export const PROTECTED_MODULES = DESKTOP_MODULES
+  .filter(module => module.key !== 'HOME')
+  .map(module => module.key);
 
 // Módulos siempre accesibles (para usuarios autenticados)
 export const PUBLIC_MODULES = ['HOME'];
