@@ -57,6 +57,12 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    /* Fase de la venta (columna Fase de Ventas Locales). El verdín dice
+       "llegó a Microsip" y el ámbar dice "detenida" — es el único ámbar de la
+       tabla, y no hay rojo. Como el resto de los tokens del proyecto guardan
+       sólo los canales HSL: se usan como hsl(var(--fase-aplicada)). */
+    --fase-aplicada: 170 45% 34%; /* #2F7D70 */
+    --fase-detenida: 35 69% 39%; /* #A9701F */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -91,6 +97,8 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --fase-aplicada: 169 41% 53%; /* #56B9A6 */
+    --fase-detenida: 33 56% 52%; /* #C98A3E */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

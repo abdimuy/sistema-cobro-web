@@ -24,6 +24,7 @@ export const COLUMN_GROUPS: ColumnGroup[] = [
 ];
 
 export type ColumnId =
+  | "fase"
   | "id"
   | "cliente"
   | "telefono"
@@ -80,21 +81,16 @@ export interface ColumnDef {
 }
 
 export const COLUMNS: ColumnDef[] = [
+  // El ORDEN de este arreglo es el orden por omisión de la tabla: la vista
+  // arranca con las columnas `defaultVisible` en la secuencia en que aparecen
+  // aquí. Hoy: Fase, Cliente, Fecha, Ciudad, Zona, Vendedor, Teléfono, Tipo,
+  // Total, Situación, Folio Microsip.
   {
-    id: "id",
-    label: "ID",
+    id: "fase",
+    label: "Fase",
     defaultVisible: true,
-    width: "w-[90px]",
-    group: "Identificación",
-  },
-  {
-    id: "fecha",
-    label: "Fecha",
-    defaultVisible: true,
-    sortable: true,
-    sortKey: "fechaVenta",
-    width: "w-[150px]",
-    group: "Identificación",
+    width: "w-[186px]",
+    group: "Estado",
   },
   {
     id: "cliente",
@@ -106,11 +102,74 @@ export const COLUMNS: ColumnDef[] = [
     group: "Cliente",
   },
   {
+    id: "fecha",
+    label: "Fecha",
+    defaultVisible: true,
+    sortable: true,
+    sortKey: "fechaVenta",
+    width: "w-[150px]",
+    group: "Identificación",
+  },
+  {
+    id: "ciudad",
+    label: "Ciudad",
+    defaultVisible: true,
+    sortable: true,
+    sortKey: "ciudad",
+    width: "w-[130px]",
+    group: "Ubicación",
+  },
+  {
+    id: "zona",
+    label: "Zona",
+    defaultVisible: true,
+    width: "w-[70px]",
+    group: "Ubicación",
+  },
+  {
+    id: "vendedor",
+    label: "Vendedor",
+    defaultVisible: true,
+    width: "w-[140px]",
+    group: "Otros",
+  },
+  {
     id: "telefono",
     label: "Teléfono",
     defaultVisible: true,
     width: "w-[100px]",
     group: "Cliente",
+  },
+  {
+    id: "tipo",
+    label: "Tipo",
+    defaultVisible: true,
+    sortable: true,
+    sortKey: "tipoVenta",
+    width: "w-[90px]",
+    group: "Plan",
+  },
+  {
+    id: "total",
+    label: "Total",
+    defaultVisible: true,
+    sortable: true,
+    sortKey: "precioTotal",
+    align: "right",
+    width: "w-[110px]",
+    group: "Montos",
+  },
+  { id: "situacion", label: "Situación", defaultVisible: true, width: "w-[110px]", group: "Estado" as ColumnGroup },
+  { id: "microsipFolio", label: "Folio Microsip", defaultVisible: true, width: "w-[130px]", group: "Microsip" as ColumnGroup },
+
+  // ─── Fuera de la vista por omisión (siguen en el selector) ─────────────────
+  // El ID es un UUID: no se lee de un vistazo y ocupa una columna entera.
+  {
+    id: "id",
+    label: "ID",
+    defaultVisible: false,
+    width: "w-[90px]",
+    group: "Identificación",
   },
   {
     id: "direccion",
@@ -127,15 +186,6 @@ export const COLUMNS: ColumnDef[] = [
     group: "Ubicación",
   },
   {
-    id: "ciudad",
-    label: "Ciudad",
-    defaultVisible: true,
-    sortable: true,
-    sortKey: "ciudad",
-    width: "w-[130px]",
-    group: "Ubicación",
-  },
-  {
     id: "poblacion",
     label: "Población",
     defaultVisible: false,
@@ -143,19 +193,9 @@ export const COLUMNS: ColumnDef[] = [
     group: "Ubicación",
   },
   {
-    id: "total",
-    label: "Total",
-    defaultVisible: true,
-    sortable: true,
-    sortKey: "precioTotal",
-    align: "right",
-    width: "w-[110px]",
-    group: "Montos",
-  },
-  {
     id: "montoCorto",
     label: "Corto plazo",
-    defaultVisible: true,
+    defaultVisible: false,
     align: "right",
     width: "w-[110px]",
     group: "Montos",
@@ -177,34 +217,11 @@ export const COLUMNS: ColumnDef[] = [
     group: "Montos",
   },
   {
-    id: "tipo",
-    label: "Tipo",
-    defaultVisible: true,
-    sortable: true,
-    sortKey: "tipoVenta",
-    width: "w-[90px]",
-    group: "Plan",
-  },
-  {
     id: "frecuencia",
     label: "Frecuencia",
-    defaultVisible: true,
+    defaultVisible: false,
     width: "w-[110px]",
     group: "Plan",
-  },
-  {
-    id: "zona",
-    label: "Zona",
-    defaultVisible: true,
-    width: "w-[70px]",
-    group: "Ubicación",
-  },
-  {
-    id: "vendedor",
-    label: "Vendedor",
-    defaultVisible: false,
-    width: "w-[140px]",
-    group: "Otros",
   },
   {
     id: "creador",
@@ -227,12 +244,11 @@ export const COLUMNS: ColumnDef[] = [
     width: "w-[120px]",
     group: "Plan",
   },
-  // Estado del workflow
-  { id: "situacion", label: "Situación", defaultVisible: true, width: "w-[110px]", group: "Estado" as ColumnGroup },
-  { id: "sincronizacion", label: "Sincronización", defaultVisible: true, width: "w-[130px]", group: "Estado" as ColumnGroup },
+  // Estado del workflow. `sincronizacion` sale de la vista por omisión: el
+  // cuarto arco de la columna Fase ya dice si la venta llegó a Microsip.
+  { id: "sincronizacion", label: "Sincronización", defaultVisible: false, width: "w-[130px]", group: "Estado" as ColumnGroup },
   { id: "estado", label: "Estado", defaultVisible: false, width: "w-[90px]", group: "Estado" as ColumnGroup },
   // Microsip
-  { id: "microsipFolio", label: "Folio Microsip", defaultVisible: true, width: "w-[130px]", group: "Microsip" as ColumnGroup },
   { id: "microsipDoctoPvId", label: "Docto PV ID", defaultVisible: false, align: "right" as const, width: "w-[110px]", group: "Microsip" as ColumnGroup },
   { id: "microsipAplicadaAt", label: "Aplicada en", defaultVisible: false, width: "w-[150px]", group: "Microsip" as ColumnGroup },
   // Montos / plan extra
@@ -266,7 +282,9 @@ export const DEFAULT_VISIBLE_COLUMNS: ColumnId[] = COLUMNS
   .filter((col) => col.defaultVisible)
   .map((col) => col.id);
 
-const STORAGE_KEY = "ventas-visible-columns-v2";
+// v3: la vista por omisión cambió (entra Fase, sale Sincronización). Subir la
+// llave es lo que hace que el cambio llegue a quien ya tenía columnas guardadas.
+const STORAGE_KEY = "ventas-visible-columns-v3";
 const WIDTHS_STORAGE_KEY = "ventas-column-widths";
 
 export function loadVisibleColumns(): ColumnId[] {
@@ -299,6 +317,7 @@ export function saveVisibleColumns(columns: ColumnId[]): void {
 
 // Default widths in pixels
 export const DEFAULT_COLUMN_WIDTHS: Record<ColumnId, number> = {
+  fase: 186,
   id: 90,
   cliente: 180,
   telefono: 100,
@@ -405,7 +424,10 @@ export function saveDensity(d: Density): void {
 // ─── Pinned columns ──────────────────────────────────────────────────────────
 
 export const MAX_PINNED = 2;
-const PINNED_STORAGE_KEY = "ventas-pinned-columns";
+const PINNED_STORAGE_KEY = "ventas-pinned-columns-v2";
+
+/** Fase se ancla y va ANTES de cliente en el grupo de columnas fijas. */
+export const DEFAULT_PINNED_COLUMNS: ColumnId[] = ["fase", "cliente"];
 
 export function loadPinnedColumns(): ColumnId[] {
   try {
@@ -419,7 +441,7 @@ export function loadPinnedColumns(): ColumnId[] {
   } catch {
     /* ignore */
   }
-  return [];
+  return [...DEFAULT_PINNED_COLUMNS];
 }
 
 export function savePinnedColumns(pinned: ColumnId[]): void {

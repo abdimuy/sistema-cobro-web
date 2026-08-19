@@ -19,9 +19,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { VentaLocal } from "@/services/api/getVentasLocales";
-import { ColumnId, ColumnWidths, COLUMNS } from "./columns";
+import { ColumnId, ColumnWidths, COLUMNS, Density } from "./columns";
+import { FaseCell } from "./FaseCell";
 import { formatCurrency, formatPhone, copyToClipboard } from "./utils";
 import { cn } from "@/lib/utils";
+import { rowBackground } from "@/lib/rowBackground";
 
 const formatDate = (iso: string): string => dayjs(iso).format("DD/MM/YYYY HH:mm");
 
@@ -52,6 +54,10 @@ interface VentasTableRowProps {
   columnWidths: ColumnWidths;
   onViewDetails: () => void;
   getAlmacenName: (id: number) => string;
+  /** Fila par de la tabla (cebra). Lo decide la tabla, no el CSS. */
+  zebra?: boolean;
+  /** La densidad la manda la tabla: en compacta la columna Fase se pliega. */
+  density?: Density;
 }
 
 export function VentasTableRow({
@@ -62,8 +68,15 @@ export function VentasTableRow({
   columnWidths,
   onViewDetails,
   getAlmacenName,
+  zebra = false,
+  density = "normal",
 }: VentasTableRowProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [hovered, setHovered] = useState(false);
+
+  // Un solo color para el <tr> y para las celdas ancladas: así coinciden en los
+  // tres estados (normal, cebra, hover) y la columna fija no se queda apagada.
+  const background = rowBackground(zebra, hovered);
 
   const handleCopy = async (text: string, field: string) => {
     const success = await copyToClipboard(text);
@@ -100,7 +113,7 @@ export function VentasTableRow({
           position: "sticky",
           left: pinnedOffsets[columnId] ?? 0,
           zIndex: 1,
-          background: "inherit",
+          background,
           boxShadow: isLastPinned
             ? "6px 0 8px -4px rgba(0,0,0,0.08)"
             : "1px 0 0 0 var(--border)",
@@ -108,6 +121,13 @@ export function VentasTableRow({
       : { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` };
 
     switch (columnId) {
+      case "fase":
+        return (
+          <TableCell className={cn(alignClass, "overflow-hidden")} style={cellStyle}>
+            <FaseCell venta={venta} compact={density === "compact"} />
+          </TableCell>
+        );
+
       case "id":
         return (
           <TableCell className={alignClass} style={cellStyle}>
@@ -305,9 +325,11 @@ export function VentasTableRow({
       case "creador":
         return (
           <TableCell className={alignClass} style={cellStyle}>
-            <span className="text-xs text-muted-foreground truncate block" title={venta.USER_EMAIL}>
-              {venta.USER_EMAIL?.split("@")[0] || "—"}
-            </span>
+            <UsuarioCelda
+              nombre={venta.CREATED_BY_NOMBRE}
+              id={venta.CREATED_BY}
+              respaldo={venta.USER_EMAIL?.split("@")[0]}
+            />
           </TableCell>
         );
 
@@ -539,7 +561,7 @@ export function VentasTableRow({
       case "updatedBy":
         return (
           <TableCell className={alignClass} style={cellStyle}>
-            <span className="font-mono text-[10px] text-muted-foreground truncate block" title={venta.UPDATED_BY}>{venta.UPDATED_BY ? venta.UPDATED_BY.slice(0, 8) : "—"}</span>
+            <UsuarioCelda nombre={venta.UPDATED_BY_NOMBRE} id={venta.UPDATED_BY} />
           </TableCell>
         );
 
@@ -553,7 +575,7 @@ export function VentasTableRow({
       case "aprobadoBy":
         return (
           <TableCell className={alignClass} style={cellStyle}>
-            <span className="font-mono text-[10px] text-muted-foreground truncate block" title={venta.APROBADO_BY ?? undefined}>{venta.APROBADO_BY ? venta.APROBADO_BY.slice(0, 8) : "—"}</span>
+            <UsuarioCelda nombre={venta.APROBADO_BY_NOMBRE} id={venta.APROBADO_BY} />
           </TableCell>
         );
 
@@ -567,7 +589,7 @@ export function VentasTableRow({
       case "canceladoBy":
         return (
           <TableCell className={alignClass} style={cellStyle}>
-            <span className="font-mono text-[10px] text-muted-foreground truncate block" title={venta.CANCELADO_BY ?? undefined}>{venta.CANCELADO_BY ? venta.CANCELADO_BY.slice(0, 8) : "—"}</span>
+            <UsuarioCelda nombre={venta.CANCELADO_BY_NOMBRE} id={venta.CANCELADO_BY} />
           </TableCell>
         );
 
@@ -585,7 +607,10 @@ export function VentasTableRow({
 
   return (
     <TableRow
-      className="group cursor-pointer transition-colors hover:bg-muted/50"
+      className="group cursor-pointer transition-colors"
+      style={{ background }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onClick={onViewDetails}
     >
       {/* Dynamic columns */}
@@ -635,5 +660,46 @@ export function VentasTableRow({
         </DropdownMenu>
       </TableCell>
     </TableRow>
+  );
+}
+
+/**
+ * Un usuario en la tabla: el NOMBRE si el API lo manda, y el UUID recortado
+ * como respaldo cuando no viene. El UUID no se lee, pero es mejor que nada
+ * cuando la venta es anterior a que el API resolviera nombres.
+ */
+function UsuarioCelda({
+  nombre,
+  id,
+  respaldo,
+}: {
+  nombre?: string | null;
+  id?: string | null;
+  respaldo?: string | null;
+}) {
+  const limpio = nombre?.trim();
+  if (limpio) {
+    return (
+      <span className="text-xs text-foreground truncate block" title={limpio}>
+        {limpio}
+      </span>
+    );
+  }
+
+  if (id) {
+    return (
+      <span
+        className="font-mono text-[10px] text-muted-foreground truncate block"
+        title={id}
+      >
+        {id.slice(0, 8)}
+      </span>
+    );
+  }
+
+  return (
+    <span className="text-xs text-muted-foreground truncate block" title={respaldo ?? undefined}>
+      {respaldo || "—"}
+    </span>
   );
 }

@@ -122,7 +122,7 @@ describe("useBuscarVentas", () => {
       fechaFin: "2026-06-30",
       incluirCanceladas: true,
       almacenId: 11058, // unsupported — must not reach the use case
-      vendedorEmails: "maria.ramirez@muebleriamsp.mx", // unsupported per pinned contract — must not reach the use case
+      vendedorEmails: "maria.ramirez@muebleriamsp.mx", // se mapea a vendedorEmail (singular) del contrato
       sortBy: "nombreCliente",
       sortOrder: "asc",
       limit: 25,
@@ -148,10 +148,47 @@ describe("useBuscarVentas", () => {
       sortBy: "nombre_cliente",
       sortOrder: "asc",
       limit: 25,
+      vendedorEmail: "maria.ramirez@muebleriamsp.mx",
     });
     expect(sent).not.toHaveProperty("almacenId");
-    expect(sent).not.toHaveProperty("vendedorEmail");
     expect(sent).not.toHaveProperty("vendedorEmails");
+  });
+
+  // El filtro de vendedor no filtraba nada, y el síntoma exacto era que NO salía
+  // ninguna petición: `vendedorEmails` no estaba en el arreglo de dependencias
+  // del efecto, así que elegir vendedor actualizaba el estado sin refetch.
+  it("dispara una nueva búsqueda al elegir vendedor, y le pasa el email al caso de uso", async () => {
+    const port = new FakeVentasListPort();
+    port.buscarResponse = { items: [], nextCursor: "" };
+
+    const { result } = renderHook(() => useBuscarVentas(), { wrapper: wrapWith(port) });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(port.buscarCalls).toHaveLength(1);
+    expect(port.buscarCalls[0].input).not.toHaveProperty("vendedorEmail");
+
+    act(() => result.current.setParams({ vendedorEmails: "maria.ramirez@muebleriamsp.mx" }));
+
+    await waitFor(() => expect(port.buscarCalls).toHaveLength(2));
+    expect(port.buscarCalls[1].input.vendedorEmail).toBe("maria.ramirez@muebleriamsp.mx");
+  });
+
+  it("vuelve a buscar sin el filtro al regresar a \"Todos los vendedores\"", async () => {
+    const port = new FakeVentasListPort();
+    port.buscarResponse = { items: [], nextCursor: "" };
+
+    const { result } = renderHook(
+      () => useBuscarVentas({ vendedorEmails: "maria.ramirez@muebleriamsp.mx" }),
+      { wrapper: wrapWith(port) },
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(port.buscarCalls[0].input.vendedorEmail).toBe("maria.ramirez@muebleriamsp.mx");
+
+    act(() => result.current.setParams({ vendedorEmails: undefined }));
+
+    await waitFor(() => expect(port.buscarCalls).toHaveLength(2));
+    expect(port.buscarCalls[1].input).not.toHaveProperty("vendedorEmail");
   });
 
   it("drops sortBy when the legacy value has no backend equivalent (ciudad, tipoVenta)", async () => {

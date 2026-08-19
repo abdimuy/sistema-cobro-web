@@ -215,7 +215,10 @@ export function VentasTable({
           position: "sticky",
           left: pinnedOffsets[columnId] ?? 0,
           zIndex: 11,
-          background: "var(--card)",
+          // `var(--card)` a secas no es un color: la variable guarda sólo los
+          // canales HSL, así que la declaración se descartaba y el encabezado
+          // anclado quedaba transparente.
+          background: "hsl(var(--card))",
         }
       : { width: `${width}px`, minWidth: `${width}px` };
 
@@ -266,7 +269,7 @@ export function VentasTable({
     <>
       <Table
         ref={scrollContainerRef}
-        className="bg-card block overflow-auto h-[calc(100vh-170px)] [&_th]:border-r [&_th]:border-border [&_th:last-child]:border-r-0 [&_th]:py-1.5 [&_td]:border-r [&_td]:border-border [&_td:last-child]:border-r-0 [&_td]:py-0.5 [&_tbody_tr:nth-child(even)]:bg-muted"
+        className="bg-card block overflow-auto h-[calc(100vh-170px)] [&_th]:border-r [&_th]:border-border [&_th:last-child]:border-r-0 [&_th]:py-1.5 [&_td]:border-r [&_td]:border-border [&_td:last-child]:border-r-0 [&_td]:py-0.5"
         style={{ tableLayout: "fixed" }}
       >
         <TableHeader className="sticky top-0 z-10 bg-card">
@@ -285,9 +288,10 @@ export function VentasTable({
             density === "comfortable" && "[&_tr]:h-[52px] [&_td]:py-2"
           )}
         >
-          {ventas.map((venta) => (
+          {ventas.map((venta, index) => (
             <VentasTableRow
               key={venta.LOCAL_SALE_ID}
+              zebra={index % 2 === 1}
               venta={venta}
               visibleColumns={orderedColumns}
               pinnedColumns={pinnedColumns}
@@ -295,6 +299,7 @@ export function VentasTable({
               columnWidths={columnWidths}
               onViewDetails={() => onViewDetails(venta.LOCAL_SALE_ID)}
               getAlmacenName={getAlmacenName}
+              density={density}
             />
           ))}
           {/* Infinite scroll trigger inside table */}

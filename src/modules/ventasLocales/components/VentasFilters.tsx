@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   Calendar as CalendarIcon,
-  Store,
   CreditCard,
   MapPin,
   Filter,
@@ -32,14 +31,12 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { VentasParams, VendedorOption } from "@/services/api/getVentasLocales";
-import { Almacen } from "@/hooks/useGetAlmacenes";
 import { ZonaCliente } from "@/services/api/getZonasCliente";
 import { cn } from "@/lib/utils";
 
 interface VentasFiltersProps {
   params: VentasParams;
   onParamsChange: (params: Partial<VentasParams>) => void;
-  almacenes: Almacen[];
   zonas: ZonaCliente[];
   vendedores: VendedorOption[];
   className?: string;
@@ -48,7 +45,6 @@ interface VentasFiltersProps {
 export function VentasFilters({
   params,
   onParamsChange,
-  almacenes,
   zonas,
   vendedores,
   className,
@@ -63,7 +59,6 @@ export function VentasFilters({
     params.tipoVenta,
     params.situacion,
     params.sincronizacion,
-    params.almacenId,
     params.zonaClienteId,
     params.vendedorEmails,
     params.precioMin,
@@ -77,7 +72,6 @@ export function VentasFilters({
       tipoVenta: undefined,
       situacion: undefined,
       sincronizacion: undefined,
-      almacenId: undefined,
       zonaClienteId: undefined,
       vendedorEmails: undefined,
       precioMin: undefined,
@@ -273,34 +267,6 @@ export function VentasFilters({
                   <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value="pendiente">Pendiente</SelectItem>
                   <SelectItem value="aplicada">Aplicada</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Almacén */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <Store className="h-3 w-3" />
-                Almacén
-              </Label>
-              <Select
-                value={params.almacenId?.toString() || "all"}
-                onValueChange={(v) =>
-                  onParamsChange({
-                    almacenId: v === "all" ? undefined : parseInt(v),
-                  })
-                }
-              >
-                <SelectTrigger className="h-8 text-sm">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los almacenes</SelectItem>
-                  {almacenes.map((a) => (
-                    <SelectItem key={a.ALMACEN_ID} value={a.ALMACEN_ID.toString()}>
-                      {a.ALMACEN}
-                    </SelectItem>
-                  ))}
                 </SelectContent>
               </Select>
             </div>

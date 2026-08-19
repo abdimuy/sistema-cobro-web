@@ -6,7 +6,7 @@ const BASE_URL = URL_API
 // ─── V2 (Go API) ───────────────────────────────────────────────────────────
 
 interface ClienteSnapshotV2 { cliente_id: number | null; nombre: string; telefono: string | null; aval: string | null; referencia: string | null }
-interface DireccionV2 { calle: string; numero_exterior: string | null; colonia: string; poblacion: string; ciudad: string; zona_cliente_id: number | null }
+interface DireccionV2 { calle: string; numero_exterior: string | null; colonia: string; poblacion: string; ciudad: string; zona_cliente_id: number | null; zona_cliente?: string | null }
 interface GPSV2 { latitud: number; longitud: number }
 interface MontosV2 { anual: string; corto_plazo: string; contado: string }
 interface PlanCreditoV2 { plazo_meses: number; enganche: string; parcialidad: string; frec_pago: string }
@@ -41,8 +41,20 @@ export interface VentaV2DTO {
   updated_at: string;
   created_by?: string;
   updated_by?: string;
-  aprobacion?: { at: string; by: string } | null;
-  cancelacion?: { at: string; by: string; reason: string } | null;
+  /** Nombres de usuario que manda el API junto al UUID. Opcionales: una venta
+   *  vieja o un API sin desplegar sólo traen el UUID. */
+  created_by_nombre?: string | null;
+  updated_by_nombre?: string | null;
+  aprobacion?: { at: string; by: string; by_nombre?: string | null } | null;
+  cancelacion?: { at: string; by: string; by_nombre?: string | null; reason: string } | null;
+  /** Momento en que la venta entró a su fase actual (RFC3339 UTC). Opcional:
+   *  las ventas anteriores a la bitácora no lo traen. */
+  fase_desde?: string | null;
+  /** Fase más alta que la venta alcanzó JAMÁS (1..4), derivada de la bitácora
+   *  real de eventos. Es el MÁXIMO HISTÓRICO, no la fase actual: una venta
+   *  aprobada y luego regresada a borrador trae 3 aunque hoy esté en 1.
+   *  Opcional: las ventas anteriores a la bitácora no lo traen. */
+  fase_alcanzada?: number | null;
 }
 
 export interface ListV2Response<T> { items: T[]; next_cursor?: string }
@@ -82,7 +94,10 @@ export const adaptVentaV2ToLocal = (v: VentaV2DTO): VentaLocal => {
     CIUDAD: v.direccion.ciudad,
     TIPO_VENTA: v.tipo_venta,
     ZONA_CLIENTE_ID: v.direccion.zona_cliente_id ?? undefined,
-    ZONA_CLIENTE: undefined,
+    // El nombre de la zona lo manda el API dentro de `direccion`. Si todavía no
+    // viene (API sin desplegar), la columna muestra "—" y no se resuelve contra
+    // el catálogo local a propósito.
+    ZONA_CLIENTE: v.direccion.zona_cliente ?? undefined,
     ENVIADO: true,
     SITUACION: v.situacion as VentaLocal["SITUACION"],
     SINCRONIZACION: v.sincronizacion as VentaLocal["SINCRONIZACION"],
@@ -98,11 +113,17 @@ export const adaptVentaV2ToLocal = (v: VentaV2DTO): VentaLocal => {
     UPDATED_AT: v.updated_at,
     CREATED_BY: v.created_by,
     UPDATED_BY: v.updated_by,
+    CREATED_BY_NOMBRE: v.created_by_nombre ?? undefined,
+    UPDATED_BY_NOMBRE: v.updated_by_nombre ?? undefined,
     APROBADO_AT: v.aprobacion?.at ?? null,
     APROBADO_BY: v.aprobacion?.by ?? null,
+    APROBADO_BY_NOMBRE: v.aprobacion?.by_nombre ?? undefined,
     CANCELADO_AT: v.cancelacion?.at ?? null,
     CANCELADO_BY: v.cancelacion?.by ?? null,
+    CANCELADO_BY_NOMBRE: v.cancelacion?.by_nombre ?? undefined,
     CANCEL_REASON: v.cancelacion?.reason ?? null,
+    FASE_DESDE: v.fase_desde ?? undefined,
+    FASE_ALCANZADA: v.fase_alcanzada ?? undefined,
     PRODUCTOS_COUNT: v.productos.length,
     COMBOS_COUNT: v.combos.length,
     IMAGENES_COUNT: v.imagenes.length,
@@ -163,11 +184,24 @@ export interface VentaLocal {
   UPDATED_AT?: string;
   CREATED_BY?: string;
   UPDATED_BY?: string;
+  CREATED_BY_NOMBRE?: string;
+  UPDATED_BY_NOMBRE?: string;
   APROBADO_AT?: string | null;
   APROBADO_BY?: string | null;
+  APROBADO_BY_NOMBRE?: string;
   CANCELADO_AT?: string | null;
   CANCELADO_BY?: string | null;
+  CANCELADO_BY_NOMBRE?: string;
   CANCEL_REASON?: string | null;
+  /** Momento en que entró a su fase actual (RFC3339 UTC). Sin esto la columna
+   *  Fase omite el segundo renglón y no marca detenida: no se sustituye por
+   *  UPDATED_AT, que cualquier edición mueve. */
+  FASE_DESDE?: string;
+  /** Fase más alta que alcanzó jamás (1..4), según la bitácora. MÁXIMO
+   *  HISTÓRICO, no la fase actual: una venta regresada a borrador puede traer
+   *  3 estando hoy en 1. La columna Fase la usa sólo para dibujar el avance
+   *  que conservan las salidas del carril (cancelada / eliminada). */
+  FASE_ALCANZADA?: number;
   PRODUCTOS_COUNT?: number;
   COMBOS_COUNT?: number;
   IMAGENES_COUNT?: number;

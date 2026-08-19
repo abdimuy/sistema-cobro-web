@@ -129,7 +129,9 @@ function VentasLocalesScreen() {
     refetch,
   } = useBuscarVentas();
 
-  const { almacenes, getAlmacenById } = useGetAlmacenes();
+  // `almacenes` ya no se usa: el filtro de almacén se quitó (el API no filtra
+  // por almacén). `getAlmacenById` sigue alimentando la COLUMNA de la tabla.
+  const { getAlmacenById } = useGetAlmacenes();
   const { zonas } = useGetZonasCliente();
   const { vendedores: vendedoresOptions } = useGetVendedores();
 
@@ -157,7 +159,6 @@ function VentasLocalesScreen() {
       fechaInicio: undefined,
       fechaFin: undefined,
       tipoVenta: undefined,
-      almacenId: undefined,
       zonaClienteId: undefined,
       vendedorEmails: undefined,
       precioMin: undefined,
@@ -306,7 +307,6 @@ function VentasLocalesScreen() {
       params.fechaInicio ||
       params.fechaFin ||
       params.tipoVenta ||
-      params.almacenId ||
       params.zonaClienteId ||
       params.vendedorEmails ||
       params.precioMin ||
@@ -359,7 +359,6 @@ function VentasLocalesScreen() {
               <VentasFilters
                 params={params}
                 onParamsChange={setParams}
-                almacenes={almacenes}
                 zonas={zonas}
                 vendedores={vendedoresOptions}
               />

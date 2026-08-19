@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { rowBackground } from "@/lib/rowBackground";
 import { Cliente } from "../domain/entities";
 import { ColumnId, ColumnWidths } from "./columns";
 import ScoreBadge from "./badges/ScoreBadge";
@@ -19,6 +21,8 @@ interface ClientesTableRowProps {
   pinnedOffsets?: Partial<Record<ColumnId, number>>;
   columnWidths: ColumnWidths;
   onRowClick: () => void;
+  /** Fila par de la tabla (cebra). Lo decide la tabla, no el CSS. */
+  zebra?: boolean;
 }
 
 function renderCell(cliente: Cliente, columnId: ColumnId): React.ReactNode {
@@ -131,10 +135,20 @@ export function ClientesTableRow({
   pinnedOffsets = {},
   columnWidths,
   onRowClick,
+  zebra = false,
 }: ClientesTableRowProps) {
+  const [hovered, setHovered] = useState(false);
+
+  // Un solo color para el <tr> y para las celdas ancladas: así coinciden en los
+  // tres estados (normal, cebra, hover) y la columna fija no se queda apagada.
+  const background = rowBackground(zebra, hovered);
+
   return (
     <TableRow
-      className="group cursor-pointer transition-colors hover:bg-muted/50"
+      className="group cursor-pointer transition-colors"
+      style={{ background }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onClick={onRowClick}
     >
       {visibleColumns.map((columnId) => {
@@ -151,7 +165,7 @@ export function ClientesTableRow({
               position: "sticky",
               left: pinnedOffsets[columnId] ?? 0,
               zIndex: 1,
-              background: "var(--card)",
+              background,
             }
           : { width: `${width}px`, minWidth: `${width}px` };
 

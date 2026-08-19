@@ -55,14 +55,20 @@ function toBuscarVentasInput(params: VentasParams, cursor?: string): BuscarVenta
     ...(params.fechaInicio !== undefined && { fechaInicio: params.fechaInicio }),
     ...(params.fechaFin !== undefined && { fechaFin: params.fechaFin }),
     ...(params.incluirCanceladas !== undefined && { incluirCanceladas: params.incluirCanceladas }),
+    // La UI guarda el filtro como `vendedorEmails` (plural) aunque el selector
+    // es de un solo vendedor; el contrato del backend es `vendedor_email`.
+    ...(params.vendedorEmails !== undefined && { vendedorEmail: params.vendedorEmails }),
     ...(sortBy !== undefined && { sortBy }),
     ...(params.sortOrder !== undefined && { sortOrder: params.sortOrder }),
     ...(cursor !== undefined && { cursor }),
     ...(params.limit !== undefined && { limit: params.limit }),
-    // almacenId, vendedorEmails, enviado, includeTotal and the per-field text
-    // filters (nombreCliente/telefono/direccion/ciudad/colonia/poblacion) have
-    // no backend equivalent (subsumed by `search`, or simply unsupported) and
-    // are intentionally never forwarded.
+    // almacenId, enviado, includeTotal and the per-field text filters
+    // (nombreCliente/telefono/direccion/ciudad/colonia/poblacion) have no
+    // backend equivalent (subsumed by `search`, or simply unsupported) and are
+    // intentionally never forwarded.
+    //
+    // OJO: `vendedorEmails` SÍ tiene equivalente (`vendedor_email`) y antes se
+    // descartaba aquí — el filtro de vendedor de la pantalla no hacía nada.
   };
 }
 
@@ -108,6 +114,7 @@ export function useBuscarVentas(initialParams?: Partial<VentasParams>): UseVenta
     fechaInicio,
     fechaFin,
     incluirCanceladas,
+    vendedorEmails,
     sortBy,
     sortOrder,
     limit,
@@ -152,6 +159,7 @@ export function useBuscarVentas(initialParams?: Partial<VentasParams>): UseVenta
     fechaInicio,
     fechaFin,
     incluirCanceladas,
+    vendedorEmails,
     sortBy,
     sortOrder,
     limit,
