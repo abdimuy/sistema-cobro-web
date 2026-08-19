@@ -4,12 +4,13 @@ import "dayjs/locale/es";
 import { Check, Eye, FileEdit, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VentaV2 } from "@/services/api/ventaV2Types";
+import { FASE_PALETA, type FasePaleta, type FasePaletaKey } from "../fasePaleta";
 
 dayjs.extend(relativeTime);
 dayjs.locale("es");
 
 type NodeState = "done" | "active" | "future" | "applied";
-type StepKey = "borrador" | "revisada" | "aprobada" | "aplicada";
+type StepKey = FasePaletaKey;
 
 interface Step {
   key: StepKey;
@@ -19,55 +20,13 @@ interface Step {
   activeHint: string;
 }
 
-interface Palette {
-  // Filled circle (done state)
-  bg: string;
-  // Outline + icon + label color (active state)
-  fg: string;
-  // Border color for active outline
-  border: string;
-  // Halo ring color
-  halo: string;
-  // Connector color when this step is the destination and we've reached it
-  rail: string;
-  // Tiny uppercase label color in the detail panel
-  caption: string;
-}
-
-const palette: Record<StepKey, Palette> = {
-  borrador: {
-    bg: "bg-muted-foreground",
-    fg: "text-foreground",
-    border: "border-muted-foreground",
-    halo: "ring-muted-foreground/15",
-    rail: "bg-muted-foreground/70",
-    caption: "text-foreground",
-  },
-  revisada: {
-    bg: "bg-amber-500",
-    fg: "text-amber-600 dark:text-amber-400",
-    border: "border-amber-500 dark:border-amber-400",
-    halo: "ring-amber-500/15",
-    rail: "bg-amber-500/70",
-    caption: "text-amber-700 dark:text-amber-400",
-  },
-  aprobada: {
-    bg: "bg-sky-500",
-    fg: "text-sky-600 dark:text-sky-400",
-    border: "border-sky-500 dark:border-sky-400",
-    halo: "ring-sky-500/15",
-    rail: "bg-sky-500/70",
-    caption: "text-sky-700 dark:text-sky-400",
-  },
-  aplicada: {
-    bg: "bg-emerald-500",
-    fg: "text-emerald-600 dark:text-emerald-400",
-    border: "border-emerald-500 dark:border-emerald-400",
-    halo: "ring-emerald-500/15",
-    rail: "bg-emerald-500/70",
-    caption: "text-emerald-700 dark:text-emerald-400",
-  },
-};
+/**
+ * El lenguaje de color vive en `../fasePaleta` — lo comparte con el anillo de
+ * la columna Fase. Aquí sólo se consume: si el azul de "aprobada" cambia,
+ * cambia en los dos a la vez.
+ */
+const palette = FASE_PALETA;
+type Palette = FasePaleta;
 
 const stepIndex = (venta: VentaV2): number => {
   if (venta.sincronizacion === "aplicada") return 3;
@@ -266,7 +225,12 @@ const ActiveDetail = ({ step, palette: p }: { step: Step; palette: Palette }) =>
 
 const AppliedDetail = ({ venta }: { venta: VentaV2 }) => (
   <div>
-    <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
+    <p
+      className={cn(
+        "text-[10px] font-medium uppercase tracking-[0.16em]",
+        palette.aplicada.caption
+      )}
+    >
       Completada
     </p>
     <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">

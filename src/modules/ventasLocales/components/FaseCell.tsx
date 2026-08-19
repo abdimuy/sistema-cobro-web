@@ -7,6 +7,7 @@ import { useVentaEventos } from "../presentation/hooks/useVentaEventos";
 import { FaseAnillo } from "./FaseAnillo";
 import { deriveFase, fechaCorta, type Fase } from "./fase";
 import { faseHitos } from "./faseHitos";
+import { trazoDeFase } from "./fasePaleta";
 
 /** El cursor tiene que detenerse: pasar por encima no dispara la petición. */
 const RETARDO_HOVER_MS = 180;
@@ -86,9 +87,10 @@ export function FaseCell({ venta, compact = false }: Props) {
         onFocus={abrir}
         onBlur={cerrar}
         onKeyDown={alTeclear}
-        className="flex min-w-0 items-center gap-2.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+        className="flex min-w-0 items-center gap-2 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
       >
-        <FaseAnillo fase={fase} size={compact ? 18 : 28} />
+        <FaseAnillo fase={fase} size={compact ? 18 : 26} />
+        <FaseCifra fase={fase} />
         <div className="flex min-w-0 flex-col gap-px">
           <span
             className={cn(
@@ -103,7 +105,9 @@ export function FaseCell({ venta, compact = false }: Props) {
             {compact && fase.metaCompacta && (
               <span
                 data-testid="fase-meta-compacta"
-                className="ml-1.5 text-[10px] tabular-nums text-fase-detenida"
+                // Mismo criterio que el 2º renglón en densidad normal: detenida
+                // se dice con peso y brillo, no con un hue que ya es de una fase.
+                className="ml-1.5 text-[10px] font-medium tabular-nums text-foreground"
               >
                 {fase.metaCompacta}
               </span>
@@ -114,7 +118,10 @@ export function FaseCell({ venta, compact = false }: Props) {
               data-testid="fase-meta"
               className={cn(
                 "truncate font-mono text-[10.5px] leading-tight tabular-nums",
-                fase.detenida ? "text-fase-detenida" : "text-muted-foreground"
+                // Detenida ya no se dice con un color: el ámbar que usaba es
+                // el de la fase *revisada*. Se dice con contraste de peso y
+                // brillo, que no le roba el hue a ninguna fase.
+                fase.detenida ? "font-medium text-foreground" : "text-muted-foreground"
               )}
             >
               {fase.meta}
@@ -136,6 +143,35 @@ export function FaseCell({ venta, compact = false }: Props) {
           document.body
         )}
     </>
+  );
+}
+
+/**
+ * La cifra de la fase, fuera del anillo.
+ *
+ * Adentro era ilegible a 26 px: un dígito centrado en un aro de ese tamaño se
+ * lee como mancha. Aquí va monoespaciada y con cifras tabulares, en un
+ * ancho fijo alineado a la derecha para que los nombres de todas las filas
+ * arranquen en el mismo eje. Las salidas del carril (cancelada / eliminada) no
+ * tienen número: llevan la raya em, atenuada.
+ *
+ * COLOR. Sale de `trazoDeFase`, la misma función que pinta el anillo: cifra y
+ * aro son el mismo dato dicho dos veces y no pueden discrepar de tono. Estar
+ * detenida NO lo cambia — eso se ve en la pista punteada del anillo y en el
+ * peso del segundo renglón.
+ */
+function FaseCifra({ fase }: { fase: Fase }) {
+  return (
+    <span
+      data-testid="fase-cifra"
+      aria-hidden="true"
+      className={cn(
+        "w-2 flex-none text-right font-mono text-[12px] font-semibold leading-none tabular-nums",
+        trazoDeFase(fase)
+      )}
+    >
+      {fase.numero ?? "—"}
+    </span>
   );
 }
 
@@ -182,7 +218,7 @@ function FaseHitosLista({
   fase: Fase;
 }) {
   // El último hito con fecha es donde la venta se quedó: de ahí sale la línea
-  // punteada en ámbar cuando está detenida.
+  // punteada cuando está detenida.
   let ultimoAlcanzado = -1;
   hitos.forEach((h, i) => {
     if (h.fecha !== null) ultimoAlcanzado = i;
@@ -211,7 +247,8 @@ function FaseHitosLista({
                   className={cn(
                     "absolute bottom-[-6px] top-3 w-px",
                     detenidaAqui
-                      ? "bg-[linear-gradient(hsl(var(--fase-detenida))_50%,transparent_0)] bg-[length:1px_4px]"
+                      ? // Lo punteado ya es la señal: el color se queda en el borde.
+                        "bg-[linear-gradient(hsl(var(--border))_50%,transparent_0)] bg-[length:1px_4px]"
                       : "bg-border"
                   )}
                 />
@@ -228,7 +265,7 @@ function FaseHitosLista({
             <span
               className={cn(
                 "pt-px font-mono text-[11px] tabular-nums",
-                detenidaAqui ? "text-fase-detenida" : "text-muted-foreground"
+                detenidaAqui ? "font-medium text-foreground" : "text-muted-foreground"
               )}
             >
               {hito.fecha ? fechaCorta(hito.fecha.toISOString()) : "—"}
