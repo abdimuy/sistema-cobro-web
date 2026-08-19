@@ -195,7 +195,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Verificar si tiene permiso para un módulo específico.
   // La regla vive en utils/permissions para que el menú lateral y el guardia de
-  // rutas usen exactamente la misma — incluido el respeto a `requiredRole`.
+  // rutas usen exactamente la misma: manda MODULOS_DESKTOP.
   const hasPermission = (moduleKey: string): boolean => {
     return canUserAccessModule(state.userData, moduleKey);
   };

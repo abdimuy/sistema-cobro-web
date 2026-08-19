@@ -16,49 +16,29 @@ export const hasRoleOrHigher = (userRole: RoleType, requiredRole: RoleType): boo
  *
  * Es la implementación canónica: `AuthContext` delega aquí para que el menú
  * lateral y el guardia de rutas no puedan discrepar. Antes había dos copias y
- * ya divergían — el menú ignoraba `requiredRole`, así que pintaba módulos que
- * al hacer clic rebotaban a Inicio.
+ * ya divergían — el menú pintaba módulos que al hacer clic rebotaban a Inicio.
+ *
+ * La regla es una sola: manda la lista de interruptores del usuario
+ * (`MODULOS_DESKTOP`). No hay acceso por rol. Las dos únicas excepciones son
+ * Inicio, que es la pantalla de aterrizaje y nunca se oculta, y `SUPER_ADMIN`,
+ * que conserva acceso total como anti-bloqueo: es lo único que evita que
+ * alguien se deje fuera del sistema sin poder volver a entrar a arreglarlo.
  */
 export const canUserAccessModule = (userData: UserData | null, moduleKey: string): boolean => {
   if (!userData) return false;
 
-  // Módulos públicos siempre son accesibles
+  // Módulos públicos (Inicio) siempre son accesibles
   if (PUBLIC_MODULES.includes(moduleKey)) {
     return true;
   }
 
-  const userRole = userData.ROL;
-  const roleConfig = ROLE_PERMISSIONS[userRole];
-
-  // Super admin tiene acceso a todo
-  if (userRole === ROLES.SUPER_ADMIN) {
+  // Anti-bloqueo: super admin ve todo aunque tenga la lista vacía
+  if (userData.ROL === ROLES.SUPER_ADMIN) {
     return true;
   }
 
-  // Módulo reservado a ciertos roles: el interruptor por usuario no lo concede.
-  const moduleConfig = DESKTOP_MODULES.find(module => module.key === moduleKey);
-  if (moduleConfig?.requiredRole && moduleConfig.requiredRole.length > 0) {
-    return moduleConfig.requiredRole.includes(userRole);
-  }
-
-  if (!roleConfig) return false;
-
-  // Admin tiene acceso a todos los módulos desktop
-  if (userRole === ROLES.ADMIN && roleConfig.canAccessAllModules) {
-    return true;
-  }
-
-  // Supervisor tiene módulos específicos definidos en el rol
-  if (userRole === ROLES.SUPERVISOR) {
-    return roleConfig.allowedModules.includes(moduleKey);
-  }
-
-  // Operador y Viewer usan permisos personalizados
-  if (userRole === ROLES.OPERADOR || userRole === ROLES.VIEWER) {
-    return userData.MODULOS_DESKTOP?.includes(moduleKey) || false;
-  }
-
-  return false;
+  // Cualquier otro rol: sólo lo que traiga encendido en su lista
+  return userData.MODULOS_DESKTOP?.includes(moduleKey) ?? false;
 };
 
 /**

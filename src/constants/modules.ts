@@ -1,11 +1,11 @@
 import { ModuleConfig } from '../types/auth';
-import { ROLES } from './roles';
 import { Home, BarChart3, ShoppingCart, Shield, Truck, Package, Users, AlertTriangle, Sparkles, Contact, Route, TrendingUp, SlidersHorizontal, Inbox } from 'lucide-react';
 
-// `requiredRole` marca un módulo como reservado a esos roles: el interruptor por
-// usuario (MODULOS_DESKTOP) NO puede concederlo. Todo módulo sin `requiredRole`
-// se concede por interruptor desde la pantalla de usuarios. Es la única fuente
-// de verdad — la lista de interruptores se deriva de aquí (ver desktopModules.ts).
+// Registro único de las pantallas del escritorio. Toda pantalla que no sea
+// pública (Inicio) se concede por interruptor por usuario (MODULOS_DESKTOP)
+// desde la pantalla de usuarios; no hay módulos reservados por rol. Es la
+// única fuente de verdad — la lista de interruptores se deriva de aquí (ver
+// desktopModules.ts).
 export const DESKTOP_MODULES: ModuleConfig[] = [
   {
     key: 'HOME',
@@ -54,8 +54,7 @@ export const DESKTOP_MODULES: ModuleConfig[] = [
     label: 'Usuarios',
     path: '/settings',
     icon: Users,
-    color: 'blue',
-    requiredRole: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    color: 'blue'
   },
   {
     key: 'FAILED_INTENTS',
@@ -97,8 +96,7 @@ export const DESKTOP_MODULES: ModuleConfig[] = [
     label: 'Configuración',
     path: '/configuracion',
     icon: SlidersHorizontal,
-    color: 'blue',
-    requiredRole: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    color: 'blue'
   },
   {
     key: 'BANDEJA',

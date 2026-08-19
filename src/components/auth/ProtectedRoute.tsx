@@ -8,16 +8,14 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAuth?: boolean;
   requiredModule?: string;
-  requiredRole?: string[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireAuth = true,
   requiredModule,
-  requiredRole = [],
 }) => {
-  const { isAuthenticated, loading, userData } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const { canAccessRoute } = usePermissions();
   const location = useLocation();
 
@@ -31,14 +29,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Verificar rol específico si se requiere
-  if (requiredRole.length > 0 && userData) {
-    const hasRequiredRole = requiredRole.includes(userData.ROL);
-    if (!hasRequiredRole) {
-      return <Navigate to="/" replace />;
-    }
-  }
-
+  // No hay puerta por rol: el acceso lo decide el interruptor del módulo
+  // (MODULOS_DESKTOP), con SUPER_ADMIN como única excepción anti-bloqueo.
   // Verificar acceso al módulo específico
   if (requiredModule) {
     const hasAccess = canAccessRoute(location.pathname);

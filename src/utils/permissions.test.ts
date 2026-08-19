@@ -27,17 +27,47 @@ describe("canUserAccessModule", () => {
     expect(canUserAccessModule(operador, "CLIENTES")).toBe(false);
   });
 
-  it("no deja que el interruptor conceda un módulo reservado por rol", () => {
-    const operador = usuario(ROLES.OPERADOR, ["USUARIOS", "CONFIGURACION"]);
+  it("el interruptor concede Usuarios y Configuración a un operador", () => {
+    const conUsuarios = usuario(ROLES.OPERADOR, ["USUARIOS"]);
+    const conConfiguracion = usuario(ROLES.OPERADOR, ["CONFIGURACION"]);
 
-    expect(canUserAccessModule(operador, "USUARIOS")).toBe(false);
-    expect(canUserAccessModule(operador, "CONFIGURACION")).toBe(false);
+    expect(canUserAccessModule(conUsuarios, "USUARIOS")).toBe(true);
+    expect(canUserAccessModule(conUsuarios, "CONFIGURACION")).toBe(false);
+    expect(canUserAccessModule(conConfiguracion, "CONFIGURACION")).toBe(true);
+    expect(canUserAccessModule(conConfiguracion, "USUARIOS")).toBe(false);
   });
 
-  it("mantiene los módulos reservados para admin y super admin", () => {
-    expect(canUserAccessModule(usuario(ROLES.ADMIN), "CONFIGURACION")).toBe(true);
-    expect(canUserAccessModule(usuario(ROLES.SUPER_ADMIN), "CONFIGURACION")).toBe(true);
-    expect(canUserAccessModule(usuario(ROLES.SUPER_ADMIN), "USUARIOS")).toBe(true);
+  it("sin interruptor, un admin ya no ve nada más que Inicio", () => {
+    const admin = usuario(ROLES.ADMIN);
+
+    expect(canUserAccessModule(admin, "HOME")).toBe(true);
+    for (const modulo of DESKTOP_MODULES.filter((m) => m.key !== "HOME")) {
+      expect(canUserAccessModule(admin, modulo.key)).toBe(false);
+    }
+  });
+
+  it("el admin ve exactamente lo que trae encendido, ni más ni menos", () => {
+    const admin = usuario(ROLES.ADMIN, ["CARTERA"]);
+
+    expect(canUserAccessModule(admin, "CARTERA")).toBe(true);
+    expect(canUserAccessModule(admin, "USUARIOS")).toBe(false);
+  });
+
+  it("el supervisor ya no hereda SALES/VENTAS_LOCALES/GARANTIAS por su rol", () => {
+    const supervisor = usuario(ROLES.SUPERVISOR, ["BANDEJA"]);
+
+    expect(canUserAccessModule(supervisor, "SALES")).toBe(false);
+    expect(canUserAccessModule(supervisor, "VENTAS_LOCALES")).toBe(false);
+    expect(canUserAccessModule(supervisor, "GARANTIAS")).toBe(false);
+    expect(canUserAccessModule(supervisor, "BANDEJA")).toBe(true);
+  });
+
+  it("anti-bloqueo: el super admin ve todo aunque tenga la lista vacía", () => {
+    const superAdmin = usuario(ROLES.SUPER_ADMIN);
+
+    for (const modulo of DESKTOP_MODULES) {
+      expect(canUserAccessModule(superAdmin, modulo.key)).toBe(true);
+    }
   });
 
   it("deja Inicio abierto a cualquier usuario autenticado y niega todo sin usuario", () => {
@@ -45,18 +75,20 @@ describe("canUserAccessModule", () => {
     expect(canUserAccessModule(null, "HOME")).toBe(false);
   });
 
-  it("niega todo cuando el usuario no tiene ROL — es el caso que da pantalla vacía", () => {
+  it("niega todo cuando el usuario no tiene ROL, salvo Inicio", () => {
     const sinRol = { ...usuario(ROLES.OPERADOR, ["BANDEJA"]), ROL: undefined as unknown as UserData["ROL"] };
 
-    expect(canUserAccessModule(sinRol, "BANDEJA")).toBe(false);
+    // Sin ROL la lista sigue mandando: el rol ya no es un camino de acceso.
+    expect(canUserAccessModule(sinRol, "BANDEJA")).toBe(true);
+    expect(canUserAccessModule(sinRol, "CLIENTES")).toBe(false);
     expect(canUserAccessModule(sinRol, "HOME")).toBe(true);
   });
 
-  it("respeta los módulos fijos del supervisor", () => {
-    const supervisor = usuario(ROLES.SUPERVISOR, ["BANDEJA"]);
+  it("niega cuando MODULOS_DESKTOP no viene en el documento", () => {
+    const sinLista: UserData = { ID: "u2", EMAIL: "x@muebleriamsp.mx", ROL: ROLES.OPERADOR };
 
-    expect(canUserAccessModule(supervisor, "SALES")).toBe(true);
-    expect(canUserAccessModule(supervisor, "BANDEJA")).toBe(false);
+    expect(canUserAccessModule(sinLista, "BANDEJA")).toBe(false);
+    expect(canUserAccessModule(sinLista, "HOME")).toBe(true);
   });
 });
 
@@ -66,11 +98,14 @@ describe("filterModulesByPermissions", () => {
 
     const claves = filterModulesByPermissions(operador).map((m) => m.key);
 
-    expect(claves).toContain("HOME");
-    expect(claves).toContain("BANDEJA");
-    // CONFIGURACION está en su MODULOS_DESKTOP pero es reservado: si el menú lo
-    // pintara, al hacer clic el guardia de rutas lo regresaría a Inicio.
-    expect(claves).not.toContain("CONFIGURACION");
+    // El orden es el del registro DESKTOP_MODULES, no el de MODULOS_DESKTOP.
+    expect(claves).toEqual(["HOME", "CONFIGURACION", "BANDEJA"]);
+  });
+
+  it("al admin sin interruptores le deja sólo Inicio", () => {
+    const claves = filterModulesByPermissions(usuario(ROLES.ADMIN)).map((m) => m.key);
+
+    expect(claves).toEqual(["HOME"]);
   });
 });
 
@@ -79,24 +114,33 @@ describe("desktopModules (interruptores de la pantalla de usuarios)", () => {
     const claves = desktopModules.map((m) => m.key);
 
     expect(claves).toEqual(
-      expect.arrayContaining(["CLIENTES", "RUTAS", "BANDEJA", "CARTERA", "FAILED_INTENTS"]),
+      expect.arrayContaining([
+        "CLIENTES",
+        "RUTAS",
+        "BANDEJA",
+        "CARTERA",
+        "FAILED_INTENTS",
+        "USUARIOS",
+        "CONFIGURACION",
+      ]),
     );
   });
 
-  it("no ofrece interruptor para lo que el interruptor no puede conceder", () => {
-    const claves = desktopModules.map((m) => m.key);
-
-    expect(claves).not.toContain("HOME");
-    expect(claves).not.toContain("USUARIOS");
-    expect(claves).not.toContain("CONFIGURACION");
+  it("no ofrece interruptor para Inicio, que siempre está", () => {
+    expect(desktopModules.map((m) => m.key)).not.toContain("HOME");
   });
 
-  it("no vuelve a quedarse atrás: cubre todo módulo sin requiredRole salvo Inicio", () => {
-    const esperados = DESKTOP_MODULES
-      .filter((m) => m.key !== "HOME")
-      .filter((m) => !m.requiredRole?.length)
-      .map((m) => m.key);
+  it("cubre todas las pantallas salvo Inicio — hoy son 13", () => {
+    const esperados = DESKTOP_MODULES.filter((m) => m.key !== "HOME").map((m) => m.key);
 
     expect(desktopModules.map((m) => m.key)).toEqual(esperados);
+    expect(desktopModules).toHaveLength(13);
+  });
+
+  it("cada interruptor corresponde a un módulo que la regla puede conceder", () => {
+    for (const interruptor of desktopModules) {
+      const usuarioConEse = usuario(ROLES.OPERADOR, [interruptor.key]);
+      expect(canUserAccessModule(usuarioConEse, interruptor.key)).toBe(true);
+    }
   });
 });

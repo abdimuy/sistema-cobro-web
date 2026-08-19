@@ -50,5 +50,4 @@ export interface ModuleConfig {
   path: string;
   icon?: LucideIcon;
   color?: string;
-  requiredRole?: RoleType[];
 }

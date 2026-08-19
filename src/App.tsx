@@ -33,9 +33,6 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AppLayout } from "./components/AppLayout";
 
-// Constants
-import { ROLES } from "./constants/roles";
-
 function NavigationSetter() {
   const navigate = useNavigate();
   useEffect(() => { setNavigateRef(navigate); }, [navigate]);
@@ -137,19 +134,19 @@ function App() {
               } />
 
               <Route path="/settings" element={
-                <ProtectedRoute requiredModule="USUARIOS" requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
+                <ProtectedRoute requiredModule="USUARIOS">
                   <Settings />
                 </ProtectedRoute>
               } />
 
               <Route path="/create-user" element={
-                <ProtectedRoute requiredModule="USUARIOS" requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
+                <ProtectedRoute requiredModule="USUARIOS">
                   <CreateUser />
                 </ProtectedRoute>
               } />
 
               <Route path="/configuracion" element={
-                <ProtectedRoute requiredModule="CONFIGURACION" requiredRole={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
+                <ProtectedRoute requiredModule="CONFIGURACION">
                   <Configuracion />
                 </ProtectedRoute>
               } />

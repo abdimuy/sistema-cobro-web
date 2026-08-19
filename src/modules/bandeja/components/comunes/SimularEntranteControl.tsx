@@ -24,8 +24,8 @@ export type SimularEntranteControlProps = {
 // SimularEntranteControl is a dev/demo tool with no mockup equivalent — it
 // lets an operator manufacture an inbound WhatsApp message without a real
 // round-trip (e.g. to demo "buy signal → escalates" live). The whole
-// /bandeja route is already admin-only via ProtectedRoute, so this needs no
-// extra role check of its own. Kept visually subtle (a collapsible strip in
+// /bandeja route already requires the BANDEJA module switch via
+// ProtectedRoute, so this needs no extra check of its own. Kept visually subtle (a collapsible strip in
 // the top bar) — it's a tool, not a primary surface.
 export function SimularEntranteControl({ onDone }: SimularEntranteControlProps) {
   const { port } = useBandeja();

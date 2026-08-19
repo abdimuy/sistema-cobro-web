@@ -1,5 +1,5 @@
 import { useAuth } from './useAuth';
-import { DESKTOP_MODULES, ROUTE_TO_MODULE } from '../constants/modules';
+import { DESKTOP_MODULES, PROTECTED_MODULES, ROUTE_TO_MODULE } from '../constants/modules';
 import { ModuleConfig } from '../types/auth';
 
 export const usePermissions = () => {
@@ -34,13 +34,13 @@ export const usePermissions = () => {
     return firstModule?.path || '/';
   };
 
-  // Verificar si una ruta está protegida
+  // Verificar si una ruta está protegida: toda pantalla que no sea pública
+  // exige su interruptor en MODULOS_DESKTOP.
   const isProtectedRoute = (path: string): boolean => {
     const moduleKey = ROUTE_TO_MODULE[path];
     if (!moduleKey) return false;
-    
-    const moduleConfig = DESKTOP_MODULES.find(m => m.key === moduleKey);
-    return !!moduleConfig?.requiredRole;
+
+    return PROTECTED_MODULES.includes(moduleKey);
   };
 
   return {
