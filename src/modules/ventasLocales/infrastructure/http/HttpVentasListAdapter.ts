@@ -1,5 +1,4 @@
 import type { AxiosInstance } from "axios";
-import { addDays, parseISO } from "date-fns";
 import type { VentasListPort } from "../../application/ports/VentasListPort";
 import type { BuscarVentasInput } from "../../application/dto/BuscarVentasInput";
 import type { BuscarVentasOutput } from "../../application/dto/BuscarVentasOutput";
@@ -9,6 +8,7 @@ import {
   type ListV2Response,
 } from "../../../../services/api/getVentasLocales";
 import { mapAxiosError } from "../mappers/errorMapper";
+import { rangoDeDiasDeNegocio } from "@/utils/tiempoDeNegocio";
 
 const VENTAS_BASE = "/ventas";
 
@@ -38,17 +38,21 @@ export class HttpVentasListAdapter implements VentasListPort {
       if (input.precioMax !== undefined) params.precio_max = input.precioMax;
       // El backend exige RFC3339 estricto y trata desde/hasta como
       // [desde, hasta): FECHA_VENTA >= desde (inclusivo) y < hasta (exclusivo).
-      // El front manda fechas date-only (yyyy-MM-dd); convertimos a límites UTC.
-      // Nota: los bordes son UTC (consistente con el contrato fecha_venta
-      // RFC3339 UTC del proyecto); es una aproximación aceptable.
-      if (input.fechaInicio !== undefined) {
-        params.desde = `${input.fechaInicio}T00:00:00Z`;
-      }
-      if (input.fechaFin !== undefined) {
-        // Inicio del día siguiente a fechaFin: así el día fechaFin queda
-        // incluido bajo la cota superior exclusiva.
-        const finExclusivo = addDays(parseISO(`${input.fechaFin}T00:00:00Z`), 1);
-        params.hasta = finExclusivo.toISOString().replace(/\.\d{3}Z$/, "Z");
+      //
+      // El usuario elige DÍAS DE CALENDARIO en un picker; el API compara
+      // INSTANTES. Traducir entre las dos cosas es exactamente el trabajo de
+      // `rangoDeDiasDeNegocio`, anclado a la zona del negocio y no a la del
+      // navegador (docs/module-standards/DATETIME_HANDLING.md).
+      //
+      // Antes se mandaban medianoches UTC, que es medio día corrido: filtrar
+      // "20 ago" devolvía 5 ventas de 7 —las de 18:15 y 18:18 caían ya en el
+      // día UTC siguiente— y colaba las de la tarde-noche del día anterior.
+      if (input.fechaInicio !== undefined || input.fechaFin !== undefined) {
+        const primerDia = input.fechaInicio ?? input.fechaFin!;
+        const ultimoDia = input.fechaFin ?? input.fechaInicio!;
+        const rango = rangoDeDiasDeNegocio(primerDia, ultimoDia);
+        if (input.fechaInicio !== undefined) params.desde = rango.desde;
+        if (input.fechaFin !== undefined) params.hasta = rango.hasta;
       }
       if (input.incluirCanceladas !== undefined) params.incluir_canceladas = input.incluirCanceladas;
       if (input.sortBy !== undefined) params.sort_by = input.sortBy;
