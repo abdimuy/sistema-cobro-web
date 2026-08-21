@@ -1,6 +1,7 @@
 import type { FailedIntentRepoPort } from "../ports/FailedIntentRepoPort";
 import type { ListInput } from "../dto";
 import type { ListaAgrupadaOutput } from "../dto/ListaAgrupadaOutput";
+import type { FailedIntent } from "../../domain/entities";
 import { agrupar, type IntentoAgrupado } from "../../domain/entities";
 import { listarIntents } from "./listarIntents";
 
@@ -21,24 +22,33 @@ export async function listarIntentosAgrupados(
   signal?: AbortSignal,
 ): Promise<ListaAgrupadaOutput> {
   const page = await listarIntents(port, input, signal);
-  const grupos = agrupar(page.items);
-
-  const necesitanAccion: IntentoAgrupado[] = [];
-  const seReintentan: IntentoAgrupado[] = [];
-  for (const g of grupos) {
-    if (g.urgencia.necesitaAccion()) necesitanAccion.push(g);
-    else seReintentan.push(g);
-  }
-
-  porAntiguedad(necesitanAccion);
-  porAntiguedad(seReintentan);
-
   return {
-    necesitanAccion,
-    seReintentan,
+    ...agruparYPartir(page.items),
     nextCursor: page.nextCursor,
     hasMore: page.hasMore,
   };
+}
+
+// agruparYPartir es la mitad pura del caso de uso: agrupa y parte, sin tocar
+// el puerto.
+//
+// Está separada porque la pantalla NO puede llamar al caso de uso una vez por
+// página: un grupo puede quedar a caballo entre dos páginas —tres reintentos
+// en la primera y diez en la segunda— y agrupar por página diría "3 intentos"
+// y luego "10" en vez de "13". La pantalla acumula las filas planas y vuelve a
+// agrupar el total; el caso de uso sigue siendo la entrada de un solo tiro.
+export function agruparYPartir(
+  items: readonly FailedIntent[],
+): Pick<ListaAgrupadaOutput, "necesitanAccion" | "seReintentan"> {
+  const necesitanAccion: IntentoAgrupado[] = [];
+  const seReintentan: IntentoAgrupado[] = [];
+  for (const g of agrupar(items)) {
+    if (g.urgencia.necesitaAccion()) necesitanAccion.push(g);
+    else seReintentan.push(g);
+  }
+  porAntiguedad(necesitanAccion);
+  porAntiguedad(seReintentan);
+  return { necesitanAccion, seReintentan };
 }
 
 // porAntiguedad ordena in-place: primero el que lleva más tiempo esperando y,
