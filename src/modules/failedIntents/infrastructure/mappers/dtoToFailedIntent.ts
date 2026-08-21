@@ -8,6 +8,7 @@ import { HttpMethod, IntentStatus } from "../../domain/values";
 export type FailedIntentDTO = {
   id: string;
   received_at: string;
+  last_seen_at?: string | null;
   method: string;
   path: string;
   firebase_uid?: string;
@@ -43,6 +44,11 @@ export function dtoToFailedIntent(dto: FailedIntentDTO): FailedIntent {
     );
   }
 
+  // last_seen_at es opcional a propósito: un servidor anterior a la dedup no
+  // lo manda, y una fila vista una sola vez no lo tiene. En ambos casos el
+  // último intento ES receivedAt, y la pantalla lo resuelve así.
+  const lastSeenAt = fechaOpcional(dto.last_seen_at, "last_seen_at");
+
   let resolvedAt: Date | null = null;
   if (dto.resolved_at) {
     const d = new Date(dto.resolved_at);
@@ -58,6 +64,7 @@ export function dtoToFailedIntent(dto: FailedIntentDTO): FailedIntent {
   return {
     id: dto.id,
     receivedAt,
+    lastSeenAt,
     method,
     path: dto.path,
     firebaseUid: dto.firebase_uid ?? null,
@@ -77,4 +84,19 @@ export function dtoToFailedIntent(dto: FailedIntentDTO): FailedIntent {
     resolvedBy: dto.resolved_by ?? null,
     notes: dto.notes ?? null,
   };
+}
+
+// fechaOpcional parsea un timestamp que puede faltar. Una fecha presente pero
+// ilegible SÍ es un error: significa que el contrato cambió y callarlo dejaría
+// la pantalla mintiendo sobre cuándo pasó algo.
+function fechaOpcional(raw: string | null | undefined, campo: string): Date | null {
+  if (!raw) return null;
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) {
+    throw new DomainError(
+      `${campo}_invalido`,
+      `${campo} no es un timestamp válido: ${raw}`,
+    );
+  }
+  return d;
 }

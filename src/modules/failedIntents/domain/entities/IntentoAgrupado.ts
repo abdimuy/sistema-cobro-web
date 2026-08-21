@@ -143,6 +143,15 @@ function desdeGrupo(clave: string, grupo: readonly FailedIntent[]): IntentoAgrup
   const primero = ordenados[0];
   const ultimo = ordenados[ordenados.length - 1];
 
+  // El último intento no es la fecha de captura de la última fila: cuando el
+  // servidor deduplica, RECEIVED_AT se queda en el PRIMER intento y el último
+  // vive en LAST_SEEN_AT. Sin esto, una fila con trece reintentos diría "hace
+  // seis horas" cuando el último fue hace cuatro minutos.
+  const visto = ordenados.reduce(
+    (max, i) => Math.max(max, (i.lastSeenAt ?? i.receivedAt).getTime()),
+    0,
+  );
+
   const causa = Causa.desde(ultimo.errorCode, ultimo.httpStatus);
 
   // Cada fila representa su propia captura MÁS los reintentos que el servidor
@@ -162,7 +171,7 @@ function desdeGrupo(clave: string, grupo: readonly FailedIntent[]): IntentoAgrup
     titulo: causa.titulo(ultimo.errorMessage),
     intentos,
     primero: primero.receivedAt,
-    ultimo: ultimo.receivedAt,
+    ultimo: new Date(visto),
     estado: ultimo.status,
     tieneEvidencia: ordenados.some((i) => i.hasBlob),
   };

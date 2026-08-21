@@ -142,6 +142,7 @@ export function makeFakeIntent(overrides: Partial<FailedIntent> = {}): FailedInt
   const base: FailedIntent = {
     id: "11111111-1111-1111-1111-111111111111",
     receivedAt: new Date("2026-06-06T12:00:00.000Z"),
+    lastSeenAt: null,
     method: HttpMethod.create("POST") as HttpMethod,
     path: "/v2/ventas",
     firebaseUid: "fb-uid-test",

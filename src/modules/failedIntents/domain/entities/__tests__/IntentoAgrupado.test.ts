@@ -210,6 +210,34 @@ describe("agrupar", () => {
     expect(grupos[0].tieneEvidencia).toBe(true);
   });
 
+  it("el último intento sale de lastSeenAt, no de la fecha de captura", () => {
+    // Tras la dedup del servidor, RECEIVED_AT se queda en el PRIMER intento.
+    // Leer el último de ahí haría decir "hace seis horas" a una fila cuyo
+    // último reintento fue hace cuatro minutos.
+    const grupos = agrupar([
+      makeFakeIntent({
+        idempotencyKey: "k",
+        retryCount: 12,
+        receivedAt: new Date("2026-08-19T13:20:00.000Z"),
+        lastSeenAt: new Date("2026-08-19T19:16:00.000Z"),
+      }),
+    ]);
+
+    expect(grupos[0].primero.toISOString()).toBe("2026-08-19T13:20:00.000Z");
+    expect(grupos[0].ultimo.toISOString()).toBe("2026-08-19T19:16:00.000Z");
+  });
+
+  it("sin lastSeenAt —fila anterior a la dedup— el último es su propia captura", () => {
+    const grupos = agrupar([
+      makeFakeIntent({
+        idempotencyKey: "k",
+        lastSeenAt: null,
+        receivedAt: new Date("2026-08-19T13:20:00.000Z"),
+      }),
+    ]);
+    expect(grupos[0].ultimo.toISOString()).toBe("2026-08-19T13:20:00.000Z");
+  });
+
   it("cae de pie con la lista vacía", () => {
     expect(agrupar([])).toEqual([]);
   });
