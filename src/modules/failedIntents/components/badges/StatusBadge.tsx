@@ -12,7 +12,7 @@ import type { IntentStatus, IntentStatusValue } from "../../domain/values";
 //   • resolved_manual → blue   (operador lo resolvió por fuera del sistema)
 //
 // Naming convention: the badge labels are SHORT for the table row; the
-// long-form descriptions live in StatusFilter tab labels ("Resueltos por
+// long-form descriptions live in the console's filter chips ("Resueltos por
 // reintento", etc.). The badges still start with "Resuelto" for the two
 // closed-OK states so a quick scan groups them visually.
 const VARIANT_BY_STATUS: Record<

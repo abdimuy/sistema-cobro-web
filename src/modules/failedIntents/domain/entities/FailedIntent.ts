@@ -20,6 +20,10 @@ import type { IntentStatus, HttpMethod } from "../values";
 export type FailedIntent = {
   readonly id: string;
   readonly receivedAt: Date;
+  // lastSeenAt es el ÚLTIMO intento; receivedAt pasó a ser el PRIMERO cuando
+  // el servidor empezó a deduplicar por (path, idempotency-key). Es null en
+  // las filas anteriores a esa dedup y en las que sólo se han visto una vez.
+  readonly lastSeenAt: Date | null;
   readonly method: HttpMethod;
   readonly path: string;
   readonly firebaseUid: string | null;
