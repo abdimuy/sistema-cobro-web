@@ -79,8 +79,8 @@ describe("HttpVentasListAdapter.buscarVentas query params", () => {
       vendedor_email: "maria.ramirez@muebleriamsp.mx",
       precio_min: 1000,
       precio_max: 20000,
-      desde: "2026-01-01T00:00:00Z",
-      hasta: "2026-07-01T00:00:00Z",
+      desde: "2026-01-01T06:00:00Z",
+      hasta: "2026-07-01T06:00:00Z",
       incluir_canceladas: true,
       sort_by: "fecha_venta",
       sort_order: "desc",
@@ -103,8 +103,28 @@ describe("HttpVentasListAdapter.buscarVentas query params", () => {
     });
 
     const [, config] = get.mock.calls[0];
-    expect(config.params.desde).toBe("2026-07-17T00:00:00Z");
-    expect(config.params.hasta).toBe("2026-07-21T00:00:00Z");
+    expect(config.params.desde).toBe("2026-07-17T06:00:00Z");
+    expect(config.params.hasta).toBe("2026-07-21T06:00:00Z");
+  });
+
+  it("el día que pide el usuario es el día del NEGOCIO, no el día UTC", async () => {
+    // Regresión medida en producción el 2026-08-21: filtrando "20 ago - 20
+    // ago" para TAPIA salían 5 ventas y eran 7. Las dos que faltaban se
+    // capturaron a las 18:15 y 18:18 locales — pasadas las 18:00, un instante
+    // ya cae en el día UTC siguiente, y la ventana mandada las dejaba fuera.
+    const { client, get } = makeStubClient();
+    const adapter = new HttpVentasListAdapter(client);
+
+    await adapter.buscarVentas({ fechaInicio: "2026-08-20", fechaFin: "2026-08-20" });
+
+    const [, config] = get.mock.calls[0];
+    const desde = new Date(config.params.desde as string);
+    const hasta = new Date(config.params.hasta as string);
+    const ventaDeLas1815 = new Date("2026-08-21T00:15:31Z");
+    const ventaDeLas1815DelDiaAnterior = new Date("2026-08-20T00:15:31Z");
+
+    expect(ventaDeLas1815 >= desde && ventaDeLas1815 < hasta).toBe(true);
+    expect(ventaDeLas1815DelDiaAnterior < desde).toBe(true);
   });
 
   it("no manda desde/hasta cuando no hay fechas", async () => {
