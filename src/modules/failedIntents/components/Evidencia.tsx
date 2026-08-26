@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import type { BlobPart } from "../domain/entities";
-import { useBlobParts } from "../presentation/hooks/useBlobParts";
+import type { BlobPart, BlobPartsBundle } from "../domain/entities";
+import type { DomainError } from "../domain/errors";
+import { LINEA, SUPERFICIE_2, TEXTO_2 } from "./paleta";
 
 // Evidencia muestra lo que fotografió el vendedor. **Se ve, no se abre.**
 //
@@ -12,16 +13,38 @@ import { useBlobParts } from "../presentation/hooks/useBlobParts";
 // No hace falta backend nuevo. `getBlobParts` y `downloadBlobPart` ya existen
 // en el puerto y en el API (`GET /{id}/blob-parts` y `.../{index}/download`);
 // lo único que faltaba era pedirlos aquí.
-export function Evidencia({ intentId }: { intentId: string | null }) {
-  const { bundle, isLoading, error, downloadPart } = useBlobParts(intentId);
-
+//
+// **Se piden SÓLO con el panel abierto, y sólo para el renglón abierto.** Que
+// exista `blob-parts` no autoriza una petición por renglón del listado: ahí
+// serían veinte peticiones por página sobre el disco del servidor, y es
+// exactamente el N+1 que el resumen en la fila existe para evitar. Hay una
+// prueba que lo vigila: exige que abrir un renglón produzca EXACTAMENTE una
+// llamada a `blob-parts`.
+//
+// Por eso este componente ya no tiene el hook: lo tiene la pantalla, que
+// reparte el mismo resultado entre las fotos y el visor del cuerpo. Con un
+// hook aquí y otro allá serían dos peticiones por renglón abierto — el mismo
+// error, un nivel más abajo.
+export function Evidencia({
+  intentId,
+  bundle,
+  isLoading,
+  error,
+  downloadPart,
+}: {
+  intentId: string | null;
+  bundle: BlobPartsBundle | null;
+  isLoading: boolean;
+  error: DomainError | null;
+  downloadPart: (index: number) => Promise<Blob>;
+}) {
   if (!intentId) return null;
   if (isLoading) {
-    return <p className="text-[11.5px] text-zinc-500">Cargando evidencia…</p>;
+    return <p className={`text-[11.5px] ${TEXTO_2}`}>Cargando evidencia…</p>;
   }
   if (error) {
     return (
-      <p className="text-[11.5px] text-zinc-500" data-testid="evidencia-error">
+      <p className={`text-[11.5px] ${TEXTO_2}`} data-testid="evidencia-error">
         No se pudo leer la evidencia: {error.message}
       </p>
     );
@@ -30,7 +53,7 @@ export function Evidencia({ intentId }: { intentId: string | null }) {
   const imagenes = (bundle?.parts ?? []).filter(esImagen);
   if (imagenes.length === 0) {
     return (
-      <p className="text-[11.5px] text-zinc-500" data-testid="evidencia-vacia">
+      <p className={`text-[11.5px] ${TEXTO_2}`} data-testid="evidencia-vacia">
         Sin fotos capturadas
       </p>
     );
@@ -45,7 +68,7 @@ export function Evidencia({ intentId }: { intentId: string | null }) {
           <Miniatura key={parte.index} parte={parte} descargar={downloadPart} />
         ))}
       </div>
-      <p className="text-[11.5px] text-zinc-500 mt-[7px]">
+      <p className={`text-[11.5px] ${TEXTO_2} mt-[7px]`}>
         {imagenes.length} {imagenes.length === 1 ? "foto" : "fotos"} · {megas(bytes)}
       </p>
     </div>
@@ -89,13 +112,13 @@ function Miniatura({
 
   return (
     <figure
-      className="relative m-0 aspect-[3/4] overflow-hidden rounded-sm border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800"
+      className={`relative m-0 aspect-[3/4] overflow-hidden rounded-sm border ${LINEA} ${SUPERFICIE_2}`}
       data-testid={`evidencia-parte-${parte.index}`}
     >
       {url && !fallo ? (
         <img src={url} alt={etiqueta} className="w-full h-full object-cover" />
       ) : (
-        <span className="flex h-full items-center justify-center text-[10px] text-zinc-500 px-1 text-center">
+        <span className={`flex h-full items-center justify-center text-[10px] ${TEXTO_2} px-1 text-center`}>
           {fallo ? "No se pudo cargar" : "…"}
         </span>
       )}

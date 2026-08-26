@@ -1,4 +1,4 @@
-import type { FailedIntent } from "../../domain/entities";
+import type { FailedIntent, ResumenIntento } from "../../domain/entities";
 import { DomainError } from "../../domain/errors";
 import { HttpMethod, IntentStatus } from "../../domain/values";
 
@@ -27,6 +27,17 @@ export type FailedIntentDTO = {
   resolved_at?: string | null;
   resolved_by?: string | null;
   notes?: string;
+  modulo?: string;
+  resumen?: ResumenDTO | null;
+};
+
+// ResumenDTO es la forma del `resumen` que manda el listado. Todos sus campos
+// son opcionales porque el servidor los omite (`omitempty`) cuando no los pudo
+// extraer, y un campo ausente es un dato: significa "no lo sé", no "vacío".
+export type ResumenDTO = {
+  titulo?: string;
+  monto?: string;
+  referencia?: string;
 };
 
 export function dtoToFailedIntent(dto: FailedIntentDTO): FailedIntent {
@@ -83,7 +94,42 @@ export function dtoToFailedIntent(dto: FailedIntentDTO): FailedIntent {
     resolvedAt,
     resolvedBy: dto.resolved_by ?? null,
     notes: dto.notes ?? null,
+    modulo: textoOpcional(dto.modulo),
+    resumen: dtoAResumen(dto.resumen),
   };
+}
+
+// dtoAResumen convierte el resumen del servidor. Devuelve null cuando no viene
+// o cuando viene sin nada dentro: la pantalla distingue "no hay resumen" —y
+// entonces cae a leer el cuerpo— de "hay resumen y dice esto".
+export function dtoAResumen(dto: ResumenDTO | null | undefined): ResumenIntento | null {
+  if (!dto) return null;
+  const titulo = textoOpcional(dto.titulo);
+  const monto = montoOpcional(dto.monto);
+  const referencia = textoOpcional(dto.referencia);
+  if (titulo === null && monto === null && referencia === null) return null;
+  return { titulo, monto, referencia };
+}
+
+// montoOpcional parsea el monto, que viaja como CADENA decimal a propósito: el
+// contrato evita el float binario, y aquí se convierte una sola vez a número
+// SÓLO para mostrarlo. Nunca se opera con él.
+//
+// Un monto ilegible se descarta en silencio en vez de reventar el listado: la
+// fila sigue siendo evidencia útil sin su importe, y tirar la pantalla entera
+// por un adorno sería el peor intercambio posible.
+function montoOpcional(raw: string | undefined): number | null {
+  if (raw === undefined || raw.trim() === "") return null;
+  const n = Number.parseFloat(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+// textoOpcional normaliza ausente / vacío / puros espacios a null. El servidor
+// omite los campos vacíos, pero un cliente intermedio podría mandar "".
+function textoOpcional(raw: string | null | undefined): string | null {
+  if (raw === undefined || raw === null) return null;
+  const limpio = raw.trim();
+  return limpio === "" ? null : limpio;
 }
 
 // fechaOpcional parsea un timestamp que puede faltar. Una fecha presente pero

@@ -5,7 +5,7 @@ import type { IntentStatus, IntentStatusValue } from "../../domain/values";
 // Each status maps to a distinct color so the operator can scan a long
 // list and grok state at a glance. Colors mirror the operator mental
 // model:
-//   • new             → red    (pendiente, requiere acción)
+//   • new             → el acento de la pantalla (pendiente, requiere acción)
 //   • retried_ok      → green  (cerrado tras un replay exitoso)
 //   • retried_fail    → orange (último replay falló — puede volver a intentarse)
 //   • ignored         → muted  (cerrado intencionalmente sin reintento)
@@ -20,9 +20,12 @@ const VARIANT_BY_STATUS: Record<
   { label: string; className: string }
 > = {
   new: {
+    // Pendiente usa el ACENTO de la pantalla (`destructive`), no un rojo
+    // suelto: es el mismo color de la barra de la tarjeta y del veredicto del
+    // encabezado, y que sean el mismo es lo que hace que "esto necesita a una
+    // persona" se lea como una sola idea y no como tres avisos distintos.
     label: "Pendiente",
-    className:
-      "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300 dark:bg-red-500/15",
+    className: "border-destructive/30 bg-destructive/10 text-destructive",
   },
   retried_ok: {
     label: "Resuelto auto",
@@ -36,8 +39,7 @@ const VARIANT_BY_STATUS: Record<
   },
   ignored: {
     label: "Ignorado",
-    className:
-      "border-zinc-300/40 bg-zinc-200/40 text-zinc-600 dark:bg-zinc-700/40 dark:text-zinc-300",
+    className: "border-border bg-muted text-muted-foreground",
   },
   resolved_manual: {
     label: "Resuelto manual",

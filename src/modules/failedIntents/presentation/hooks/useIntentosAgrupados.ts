@@ -24,6 +24,7 @@ export type UseIntentosAgrupadosReturn = {
 // agrupar por página diría "3 intentos" y después "10" en vez de "13".
 export function useIntentosAgrupados(opts: {
   status?: IntentStatusValue;
+  modulo?: string;
   pageSize?: number;
 }): UseIntentosAgrupadosReturn {
   const lista = useFailedIntentsList(opts);

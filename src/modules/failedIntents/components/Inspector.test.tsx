@@ -6,12 +6,33 @@ import { Inspector } from "./Inspector";
 import { makeFakeIntent } from "../application/__tests__/fakeRepoPort";
 import { IntentStatus } from "../domain/values";
 
+// Las acciones ya NO viven detrás de una pestaña: el panel las muestra
+// siempre, porque la pestaña escondía el botón que la persona vino a apretar.
+//
+// El ayudante se conserva —vacío— para que las pruebas de abajo sigan diciendo
+// literalmente lo mismo que decían: lo que protegen es CUÁNDO cada acción está
+// habilitada, y ese contrato no cambió. Reescribirlas al quitar la pestaña
+// habría mezclado un cambio de presentación con un cambio de reglas.
 async function clickActionsTab() {
-  const user = userEvent.setup();
-  await user.click(screen.getByRole("tab", { name: /acciones/i }));
+  await Promise.resolve();
 }
 
+
 describe("Inspector", () => {
+  it("muestra las acciones sin tener que abrir una pestaña", () => {
+    render(
+      <Inspector
+        intent={makeFakeIntent()}
+        isLoading={false}
+        onAction={() => {}}
+        onClose={() => {}}
+      />,
+    );
+    // Sin un solo clic: el botón que la persona vino a apretar está a la vista.
+    expect(screen.getByTestId("action-reenviar-sin-cambios")).toBeVisible();
+    expect(screen.queryByRole("tab")).toBeNull();
+  });
+
   it("shows the placeholder when no intent is selected", () => {
     render(
       <Inspector

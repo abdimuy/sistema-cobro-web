@@ -7,6 +7,9 @@ import { DomainError } from "../../domain/errors";
 
 export type UseFailedIntentsListOptions = {
   status?: IntentStatusValue;
+  // modulo viaja al servidor como parámetro de la consulta. Cambiarlo reinicia
+  // el cursor, igual que cambiar el estado: son dos listas distintas.
+  modulo?: string;
   pageSize?: number;
 };
 
@@ -29,7 +32,7 @@ export function useFailedIntentsList(
   opts: UseFailedIntentsListOptions = {},
 ): UseFailedIntentsListReturn {
   const port = useFailedIntentsPort();
-  const { status, pageSize = 20 } = opts;
+  const { status, modulo, pageSize = 20 } = opts;
 
   const [items, setItems] = useState<ReadonlyArray<FailedIntent>>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -49,7 +52,7 @@ export function useFailedIntentsList(
 
     setIsLoading(true);
     setError(null);
-    listarIntents(port, { status, pageSize }, ctrl.signal)
+    listarIntents(port, { status, modulo, pageSize }, ctrl.signal)
       .then((out) => {
         if (ctrl.signal.aborted) return;
         setItems(out.items);
@@ -65,7 +68,7 @@ export function useFailedIntentsList(
       });
 
     return () => ctrl.abort();
-  }, [port, status, pageSize, tick]);
+  }, [port, status, modulo, pageSize, tick]);
 
   const loadNext = useCallback(() => {
     if (isLoading || !hasMore || !nextCursor) return;
@@ -74,7 +77,7 @@ export function useFailedIntentsList(
 
     setIsLoading(true);
     setError(null);
-    listarIntents(port, { status, pageSize, cursor: nextCursor }, ctrl.signal)
+    listarIntents(port, { status, modulo, pageSize, cursor: nextCursor }, ctrl.signal)
       .then((out) => {
         if (ctrl.signal.aborted) return;
         setItems((prev) => [...prev, ...out.items]);
@@ -88,7 +91,7 @@ export function useFailedIntentsList(
       .finally(() => {
         if (!ctrl.signal.aborted) setIsLoading(false);
       });
-  }, [port, status, pageSize, nextCursor, hasMore, isLoading]);
+  }, [port, status, modulo, pageSize, nextCursor, hasMore, isLoading]);
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 

@@ -161,6 +161,8 @@ export function makeFakeIntent(overrides: Partial<FailedIntent> = {}): FailedInt
     resolvedAt: null,
     resolvedBy: null,
     notes: null,
+    modulo: null,
+    resumen: null,
   };
   return { ...base, ...overrides };
 }

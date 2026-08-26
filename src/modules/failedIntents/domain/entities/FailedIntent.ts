@@ -1,4 +1,5 @@
 import type { IntentStatus, HttpMethod } from "../values";
+import type { ResumenIntento } from "./ResumenIntento";
 
 // FailedIntent is the read model of a captured POST /v2/ventas (or any
 // /v2/* path the capture middleware watches) that the backend persisted
@@ -42,4 +43,15 @@ export type FailedIntent = {
   readonly resolvedAt: Date | null;
   readonly resolvedBy: string | null;
   readonly notes: string | null;
+  // modulo es el dueño de la ruta, según el SERVIDOR ("ventas", "pagos"). Es
+  // null cuando el servidor no lo extrajo —un binario anterior a la migración
+  // 000061, o una fila que el janitor todavía no rellenó—; ahí la pantalla
+  // cae a `moduloDe(path)`.
+  //
+  // Que lo diga el servidor es lo que permite que un módulo nuevo aparezca en
+  // la pantalla sin tocar este código: basta registrar su extractor en el API.
+  readonly modulo: string | null;
+  // resumen es quién y cuánto. Null cuando el servidor no pudo extraerlo; ahí
+  // la pantalla cae a leer el cuerpo, que es lo que hacía antes.
+  readonly resumen: ResumenIntento | null;
 };

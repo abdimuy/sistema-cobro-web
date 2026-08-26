@@ -7,6 +7,7 @@ import type { IntentoAgrupado } from "../domain/entities";
 import type { IntentStatusValue } from "../domain/values";
 import { useIntentosAgrupados } from "../presentation/hooks/useIntentosAgrupados";
 import { useFailedIntentDetail } from "../presentation/hooks/useFailedIntentDetail";
+import { useBlobParts } from "../presentation/hooks/useBlobParts";
 import { useReplayAction } from "../presentation/hooks/useReplayAction";
 import { useResolverAction } from "../presentation/hooks/useResolverAction";
 
@@ -18,6 +19,7 @@ import { Evidencia } from "./Evidencia";
 import { ReplayWithSheet } from "./ReplayWithSheet";
 import { ConfirmarAccionDialog } from "./ConfirmarAccionDialog";
 import { avisoDe, type AccionMutante } from "./accionesCopy";
+import { LINEA, SUPERFICIE, TEXTO_2, ACENTO_TEXTO } from "./paleta";
 
 // FailedIntentsScreen es la consola de intentos fallidos.
 //
@@ -34,6 +36,13 @@ import { avisoDe, type AccionMutante } from "./accionesCopy";
 //   • **Ventas y pagos mezclados.** El módulo es una etiqueta de cada
 //     renglón; separarlos en pestañas obliga a mirar dos pantallas para
 //     contestar una sola pregunta.
+//   • **La estructura es la del mock; el color, el de la app.** La paleta
+//     cálida de papel del mock y sus titulares en serif NO se portaron: harían
+//     que esta pantalla desentonara al llegar navegando desde Ventas o
+//     Cartera. Lo que se conservó es la estructura, que es donde estaba su
+//     valor. Ver `paleta.ts`.
+//   • **El módulo se filtra en el SERVIDOR.** Los chips mandan `?modulo=`; ya
+//     no se recorta en memoria la página recibida.
 export function FailedIntentsScreen() {
   const [filtro, setFiltro] = useState<FiltroValue>("todo");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -43,29 +52,36 @@ export function FailedIntentsScreen() {
 
   const lista = useIntentosAgrupados({
     status: estadoDelFiltro(filtro),
+    modulo: moduloDelFiltro(filtro),
     pageSize: 50,
   });
   const detail = useFailedIntentDetail(selectedId);
+  // Las partes del cuerpo en disco se piden UNA vez por renglón abierto, aquí,
+  // y se reparten entre las fotos y el visor del cuerpo. Con un hook en cada
+  // componente serían dos peticiones por apertura — el mismo N+1 que la
+  // pantalla evita en el listado, un nivel más abajo.
+  //
+  // Sólo se piden cuando el intento abierto TIENE cuerpo en disco: pasarle
+  // null al hook lo deja inerte.
+  const partes = useBlobParts(detail.intent?.hasBlob ? selectedId : null);
   const replay = useReplayAction();
   const resolver = useResolverAction();
 
-  const necesitanAccion = useMemo(
-    () => porModulo(lista.necesitanAccion, filtro),
-    [lista.necesitanAccion, filtro],
-  );
-  const seReintentan = useMemo(
-    () => porModulo(lista.seReintentan, filtro),
-    [lista.seReintentan, filtro],
-  );
+  const necesitanAccion = lista.necesitanAccion;
+  const seReintentan = lista.seReintentan;
 
-  const conteos = useMemo(() => {
-    const todos = [...lista.necesitanAccion, ...lista.seReintentan];
-    return {
-      todo: todos.length,
-      ventas: todos.filter((i) => i.modulo === "ventas").length,
-      pagos: todos.filter((i) => i.modulo === "pagos").length,
-    };
-  }, [lista.necesitanAccion, lista.seReintentan]);
+  // Sólo el chip ACTIVO lleva número, y ese número es el de lo que la consulta
+  // acaba de devolver.
+  //
+  // Antes se contaban los tres —todo, ventas y pagos— sobre la misma página,
+  // porque el filtro de módulo se aplicaba en memoria. Ahora el filtro va al
+  // servidor, así que la página sólo contiene el módulo activo: poner un
+  // número en los otros chips sería inventarlo. Contarlos de verdad exige una
+  // consulta por chip, y eso es exactamente el N+1 que esta pantalla evita.
+  const conteos = useMemo(
+    () => ({ [filtro]: necesitanAccion.length + seReintentan.length }),
+    [filtro, necesitanAccion.length, seReintentan.length],
+  );
 
   useEffect(() => {
     if (lista.error) {
@@ -184,9 +200,17 @@ export function FailedIntentsScreen() {
 
   return (
     <div
-      className="flex flex-col h-full bg-[#FBF9F6] dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100"
+      className="flex flex-col h-full bg-background text-foreground"
       data-testid="failed-intents-screen"
     >
+      {/*
+        La rejilla del mock es `60px / 1fr / 372px`, pero esa primera columna
+        ES la barra que la app ya tiene —el propio mock la dibuja apagada y
+        anota "esta pantalla NO trae otra"—. Dibujarla aquí crearía la segunda
+        barra de navegación que el mock existe para evitar. Lo que sí se copia
+        es el ancho del panel de detalle y que la columna central sea la que
+        cede.
+      */}
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,372px)] flex-1 min-h-0">
         <main className="min-h-0 overflow-y-auto px-7 pt-6 pb-14 flex flex-col gap-7">
           <header className="flex flex-col gap-3.5">
@@ -195,11 +219,8 @@ export function FailedIntentsScreen() {
                 <h1 className="text-[26px] font-semibold tracking-tight">
                   Intentos fallidos
                 </h1>
-                <p
-                  className="text-[13.5px] text-zinc-600 dark:text-zinc-400"
-                  data-testid="veredicto"
-                >
-                  <b className="text-[#A33A2A] dark:text-[#E38B76] font-bold">
+                <p className={`text-[13.5px] ${TEXTO_2}`} data-testid="veredicto">
+                  <b className={`${ACENTO_TEXTO} font-bold`}>
                     {frase(
                       necesitanAccion.length,
                       "necesita que alguien actúe",
@@ -237,7 +258,7 @@ export function FailedIntentsScreen() {
               nota={String(necesitanAccion.length)}
             />
             {necesitanAccion.length === 0 ? (
-              <p className="text-[13px] text-zinc-500 px-1" data-testid="accion-vacia">
+              <p className={`text-[13px] ${TEXTO_2} px-1`} data-testid="accion-vacia">
                 Nada pendiente de una persona
               </p>
             ) : (
@@ -273,14 +294,14 @@ export function FailedIntentsScreen() {
               onClick={lista.loadNext}
               disabled={lista.isLoading}
               data-testid="cargar-mas"
-              className="self-start text-[12.5px] px-3 py-1.5 rounded-sm border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              className="self-start text-[12.5px] px-3 py-1.5 rounded-sm border border-input hover:bg-accent hover:text-accent-foreground"
             >
               {lista.isLoading ? "Cargando…" : "Cargar más"}
             </button>
           )}
         </main>
 
-        <aside className="min-h-0 overflow-y-auto border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+        <aside className={`min-h-0 overflow-y-auto border-l ${LINEA} ${SUPERFICIE}`}>
           <Inspector
             intent={detail.intent}
             isLoading={detail.isLoading}
@@ -294,15 +315,17 @@ export function FailedIntentsScreen() {
               else if (a === "replay-with") setAccion("reenviar_editado");
             }}
             onClose={() => setSelectedId(null)}
+            partesMultipart={partes.bundle?.parts}
+            evidencia={
+              <Evidencia
+                intentId={selectedId}
+                bundle={partes.bundle}
+                isLoading={partes.isLoading}
+                error={partes.error}
+                downloadPart={partes.downloadPart}
+              />
+            }
           />
-          {detail.intent?.hasBlob && (
-            <div className="px-5 pb-8">
-              <h4 className="text-[10.5px] uppercase tracking-widest text-zinc-500 font-medium mb-2.5">
-                Lo que fotografió el vendedor
-              </h4>
-              <Evidencia intentId={selectedId} />
-            </div>
-          )}
         </aside>
       </div>
 
@@ -335,11 +358,9 @@ export function FailedIntentsScreen() {
 function EncabezadoZona({ titulo, nota }: { titulo: string; nota: string }) {
   return (
     <div className="flex items-center gap-3 mb-3">
-      <h2 className="text-[11.5px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 m-0">
-        {titulo}
-      </h2>
-      <div aria-hidden="true" className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
-      <span className="text-[11.5px] text-zinc-500">{nota}</span>
+      <h2 className={`text-[11.5px] uppercase tracking-widest ${TEXTO_2} m-0`}>{titulo}</h2>
+      <div aria-hidden="true" className="flex-1 h-px bg-border" />
+      <span className={`text-[11.5px] ${TEXTO_2}`}>{nota}</span>
     </div>
   );
 }
@@ -349,10 +370,7 @@ function frase(n: number, singular: string, plural: string): string {
   return `${n} ${n === 1 ? singular : plural}`;
 }
 
-// estadoDelFiltro traduce el chip al filtro de estado del backend. Los chips
-// de módulo no filtran en el servidor —el módulo se deriva de la ruta y el
-// API no lo expone como parámetro—, así que se acotan en memoria; los de
-// estado sí, porque `status` es un parámetro real de la lista.
+// estadoDelFiltro traduce el chip al filtro de estado del backend.
 function estadoDelFiltro(filtro: FiltroValue): IntentStatusValue | undefined {
   switch (filtro) {
     case "resueltas":
@@ -364,13 +382,16 @@ function estadoDelFiltro(filtro: FiltroValue): IntentStatusValue | undefined {
   }
 }
 
-function porModulo(
-  intentos: ReadonlyArray<IntentoAgrupado>,
-  filtro: FiltroValue,
-): ReadonlyArray<IntentoAgrupado> {
-  if (filtro === "ventas") return intentos.filter((i) => i.modulo === "ventas");
-  if (filtro === "pagos") return intentos.filter((i) => i.modulo === "pagos");
-  return intentos;
+// moduloDelFiltro traduce el chip al parámetro `modulo` de la consulta.
+//
+// Desde la migración 000061 el módulo es una columna real e indexada, así que
+// esto es SQL y no un recorte en memoria. La diferencia se nota justo cuando
+// importa: con más de una página, filtrar en memoria mostraría sólo las ventas
+// que cupieron en la primera y nada avisaría de las demás.
+function moduloDelFiltro(filtro: FiltroValue): string | undefined {
+  if (filtro === "ventas") return "ventas";
+  if (filtro === "pagos") return "pagos";
+  return undefined;
 }
 
 function buscar(

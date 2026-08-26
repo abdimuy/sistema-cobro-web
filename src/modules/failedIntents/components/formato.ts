@@ -55,15 +55,25 @@ function diasDeDiferencia(fecha: Date, ahora: Date): number {
   return Math.round((b.getTime() - a.getTime()) / 86_400_000);
 }
 
-// etiquetaModulo es el texto en mayúsculas de la tarjeta y la columna
-// "Módulo". Singular: cada renglón es una venta o un pago.
-export function etiquetaModulo(modulo: "ventas" | "pagos" | "otro"): string {
-  switch (modulo) {
-    case "ventas":
-      return "Venta";
-    case "pagos":
-      return "Pago";
-    case "otro":
-      return "Otro";
-  }
+// ETIQUETAS_MODULO son los nombres bonitos de los módulos que hoy existen.
+// Singular: cada renglón es UNA venta o UN pago.
+const ETIQUETAS_MODULO: Record<string, string> = {
+  ventas: "Venta",
+  pagos: "Pago",
+  otro: "Otro",
+};
+
+// etiquetaModulo es el texto en mayúsculas de la tarjeta y la columna "Módulo".
+//
+// Acepta cualquier cadena y no una unión cerrada: el módulo lo manda el
+// servidor, y el día que el API aprenda a resumir uno nuevo debe aparecer aquí
+// SIN tocar el escritorio. Un módulo desconocido se muestra con su propio
+// nombre capitalizado —"Garantia"— que es mucho mejor que "Otro" y no exige un
+// despliegue del escritorio para leerse bien.
+export function etiquetaModulo(modulo: string): string {
+  const conocida = ETIQUETAS_MODULO[modulo];
+  if (conocida) return conocida;
+  const limpio = modulo.trim();
+  if (limpio === "") return "Otro";
+  return limpio.charAt(0).toUpperCase() + limpio.slice(1);
 }

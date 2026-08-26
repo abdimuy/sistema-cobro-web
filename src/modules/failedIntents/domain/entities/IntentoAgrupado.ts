@@ -21,9 +21,18 @@ import { Urgencia } from "./Urgencia";
 // ya está en la tabla llegó como filas separadas, y una fila sin clave no se
 // puede deduplicar del lado del servidor.
 
-const MODULOS = ["ventas", "pagos", "otro"] as const;
+// ModuloValue es una cadena libre a propósito, no una unión cerrada.
+//
+// El módulo lo dice el SERVIDOR, que lo saca del extractor registrado para la
+// ruta. Cerrar el tipo aquí obligaría a tocar el escritorio cada vez que el
+// API aprenda a resumir un módulo nuevo —que es justo lo que este diseño
+// existe para evitar—. Los tres conocidos se listan sólo para que la UI les dé
+// una etiqueta bonita; cualquier otro se muestra tal cual.
+export const MODULOS_CONOCIDOS = ["ventas", "pagos", "otro"] as const;
 
-export type ModuloValue = (typeof MODULOS)[number];
+export type ModuloConocido = (typeof MODULOS_CONOCIDOS)[number];
+
+export type ModuloValue = string;
 
 export type IntentoAgrupado = {
   // id del intento representativo: el MÁS RECIENTE del grupo. Es el que
@@ -34,12 +43,22 @@ export type IntentoAgrupado = {
   readonly clave: string;
   readonly modulo: ModuloValue;
   readonly path: string;
-  // quien y cuanto salen del cuerpo capturado. Son null cuando el cuerpo es
-  // multipart (vive en disco, no en la fila) o no tiene forma de venta: la
-  // tarjeta se degrada a mostrar el folio y el módulo en vez de inventar un
-  // nombre.
+  // quien y cuanto salen del RESUMEN que manda el servidor y, sólo si no hay
+  // resumen, del cuerpo capturado.
+  //
+  // Ese orden es el arreglo. Leer el cuerpo daba null SIEMPRE para una venta:
+  // una venta lleva fotos —o sea multipart— y en esa ruta el cuerpo no viene
+  // en la fila. De ahí las diecinueve tarjetas que decían "Sin nombre
+  // capturado".
+  //
+  // Siguen siendo null cuando no hay ni resumen ni cuerpo legible, y ahí la
+  // tarjeta se degrada a la referencia y el módulo. Nunca se inventa un
+  // nombre: esta pantalla existe para decidir si una venta entró o no.
   readonly quien: string | null;
   readonly cuanto: number | null;
+  // referencia es el ancla para buscar el trabajo en otro lado (el id de la
+  // venta, el del cliente en un pago). Sólo viene del resumen del servidor.
+  readonly referencia: string | null;
   readonly causa: Causa;
   readonly urgencia: Urgencia;
   readonly titulo: string;
@@ -50,8 +69,17 @@ export type IntentoAgrupado = {
   readonly tieneEvidencia: boolean;
 };
 
-// moduloDe deriva el módulo de la ruta capturada. No hay un campo en el
-// servidor que lo diga: la ruta ES el dato.
+// moduloDe deriva el módulo de la ruta capturada.
+//
+// Dejó de ser la fuente y pasó a ser el RESPALDO: desde la migración 000061 el
+// servidor manda `modulo` como columna propia, porque los chips filtran por él
+// y ese filtro tiene que ser SQL —filtrar en memoria sobre una página ya
+// recortada mostraría "las ventas que cupieron en los primeros veinte
+// renglones"—.
+//
+// Se conserva porque las filas capturadas antes de ese despliegue no lo traen
+// hasta que el janitor las rellena, y porque un módulo capturado sin extractor
+// registrado (visitas, hoy) nunca lo va a traer.
 export function moduloDe(path: string): ModuloValue {
   if (path.startsWith("/v2/ventas")) return "ventas";
   if (path.startsWith("/v2/cobranza") || path.startsWith("/v2/pagos")) return "pagos";
@@ -136,6 +164,44 @@ export function agrupar(intents: readonly FailedIntent[]): IntentoAgrupado[] {
   return salida;
 }
 
+// preferido resuelve un campo del grupo con la regla del degradado: primero el
+// resumen del servidor de CUALQUIERA de los intentos, y sólo si ninguno lo
+// trae, el respaldo leído del cuerpo.
+//
+// La preferencia es por FUENTE y no por intento a propósito. Un grupo puede
+// mezclar filas viejas (sin resumen) con una fila nueva que sí lo trae — es lo
+// que pasa mientras el janitor rellena—, y en ese caso el nombre real debe
+// ganarle al null del respaldo aunque venga de la fila menos reciente.
+//
+// Dentro de cada fuente se recorre del MÁS RECIENTE al más viejo: si dos filas
+// del grupo traen nombre, vale el del último cuerpo que capturó el vendedor,
+// que es el corregido.
+function preferido<T>(
+  ordenados: readonly FailedIntent[],
+  delResumen: (i: FailedIntent) => T | null,
+  delCuerpo: (i: FailedIntent) => T | null,
+): T | null {
+  for (let k = ordenados.length - 1; k >= 0; k--) {
+    const v = delResumen(ordenados[k]);
+    if (v !== null && v !== undefined) return v;
+  }
+  for (let k = ordenados.length - 1; k >= 0; k--) {
+    const v = delCuerpo(ordenados[k]);
+    if (v !== null && v !== undefined) return v;
+  }
+  return null;
+}
+
+// moduloDelGrupo prefiere el módulo que manda el servidor y cae a deducirlo de
+// la ruta. Igual que arriba: basta con que UNA fila del grupo lo traiga.
+function moduloDelGrupo(ordenados: readonly FailedIntent[]): ModuloValue {
+  for (let k = ordenados.length - 1; k >= 0; k--) {
+    const m = ordenados[k].modulo;
+    if (m) return m;
+  }
+  return moduloDe(ordenados[ordenados.length - 1].path);
+}
+
 function desdeGrupo(clave: string, grupo: readonly FailedIntent[]): IntentoAgrupado {
   const ordenados = [...grupo].sort(
     (a, b) => a.receivedAt.getTime() - b.receivedAt.getTime(),
@@ -162,10 +228,11 @@ function desdeGrupo(clave: string, grupo: readonly FailedIntent[]): IntentoAgrup
   return {
     id: ultimo.id,
     clave,
-    modulo: moduloDe(ultimo.path),
+    modulo: moduloDelGrupo(ordenados),
     path: ultimo.path,
-    quien: quienDe(ultimo.body) ?? quienDe(primero.body),
-    cuanto: cuantoDe(ultimo.body) ?? cuantoDe(primero.body),
+    quien: preferido(ordenados, (i) => i.resumen?.titulo ?? null, (i) => quienDe(i.body)),
+    cuanto: preferido(ordenados, (i) => i.resumen?.monto ?? null, (i) => cuantoDe(i.body)),
+    referencia: preferido(ordenados, (i) => i.resumen?.referencia ?? null, () => null),
     causa,
     urgencia: Urgencia.desde(causa),
     titulo: causa.titulo(ultimo.errorMessage),

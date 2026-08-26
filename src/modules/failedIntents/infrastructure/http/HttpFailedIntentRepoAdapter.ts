@@ -55,6 +55,7 @@ export class HttpFailedIntentRepoAdapter implements FailedIntentRepoPort {
     try {
       const params: Record<string, string | number> = {};
       if (input.status) params.status = input.status;
+      if (input.modulo) params.modulo = input.modulo;
       if (input.cursor) params.cursor = input.cursor;
       if (input.pageSize !== undefined) params.page_size = input.pageSize;
 

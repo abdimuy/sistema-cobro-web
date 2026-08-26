@@ -1,7 +1,4 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -17,13 +14,17 @@ import {
   Inbox,
   X,
   AlertCircle,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import type { FailedIntent } from "../domain/entities";
+import type { BlobPart, FailedIntent } from "../domain/entities";
+import { Causa, moduloDe } from "../domain/entities";
 import { StatusBadge } from "./badges/StatusBadge";
 import { IntentKindBadge } from "./badges/IntentKindBadge";
 import { BodyViewer } from "./BodyViewer";
+import { etiquetaModulo, pesos } from "./formato";
+import { ACENTO_FOCO, LINEA, SUPERFICIE_2, TEXTO_2 } from "./paleta";
 
 type InspectorAction = "replay" | "replay-with" | "resolve";
 
@@ -43,23 +44,53 @@ export type InspectorProps = {
   errorMessage?: string | null;
   onAction: (action: InspectorAction) => void;
   onClose: () => void;
+  // evidencia se inyecta desde la pantalla y se pinta ENTRE "qué pasó" y las
+  // acciones, que es donde la pone el mock.
+  //
+  // Va por props y no importada aquí porque el componente de evidencia pide
+  // sus partes por HTTP: dejarlo dentro del Inspector ataría el panel —que
+  // hoy se puede renderizar con un intento suelto en cualquier prueba— a un
+  // puerto vivo.
+  evidencia?: React.ReactNode;
+  // partesMultipart son las partes del cuerpo en disco, YA pedidas por la
+  // pantalla para pintar las fotos. Llegan por props para que abrir un renglón
+  // siga costando UNA sola petición de `blob-parts`.
+  //
+  // `undefined` significa "todavía no llegan"; un arreglo vacío, "llegaron y no
+  // hay partes". Son cosas distintas y el visor las distingue.
+  partesMultipart?: ReadonlyArray<BlobPart>;
 };
 
+// Inspector es el panel de detalle, y lo que cambió en él es QUÉ dice primero.
+//
+// Antes abría con `INTENT ID`, `REQUEST ID`, `IDEMPOTENCY-KEY` y `FIREBASE
+// UID`: cuatro UUID antes de cualquier dato que una persona reconozca. Quien
+// abre esta pantalla está preguntando "¿de quién es esta venta y qué le pasó?",
+// y ninguno de esos cuatro campos lo contesta.
+//
+// Ahora arriba va lo del mock —quién, cuánto, qué pasó, en qué estado quedó— y
+// los campos técnicos bajan a una sección plegada. **No se borran**: cuando
+// algo se atora de verdad son con lo que se rastrea, y la sección está a un
+// clic. Lo que se les quitó es el primer lugar, no el sitio.
+//
+// Las acciones dejaron de vivir detrás de una pestaña. Eran tres pestañas
+// —Info, Body, Acciones— para un panel que cabe en una columna: la pestaña
+// escondía el botón que la persona vino a apretar.
 export function Inspector({
   intent,
   isLoading,
   errorMessage,
   onAction,
   onClose,
+  evidencia,
+  partesMultipart,
 }: InspectorProps) {
   if (!intent && !isLoading) {
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-2 text-zinc-500">
+      <div className={`h-full flex flex-col items-center justify-center gap-2 ${TEXTO_2}`}>
         <Inbox className="h-10 w-10 opacity-30" />
         <p className="text-sm">Seleccioná un intento</p>
-        <p className="text-xs text-zinc-400">
-          El detalle aparece acá
-        </p>
+        <p className="text-xs opacity-70">El detalle aparece acá</p>
       </div>
     );
   }
@@ -74,72 +105,71 @@ export function Inspector({
     );
   }
 
+  // Sin `h-full` ni un ScrollArea propio: el panel entero es la columna que
+  // scrollea (el <aside> de la pantalla). Con los dos, el Inspector ocupaba
+  // toda la altura y empujaba la evidencia a un segundo scroll invisible —
+  // las fotos quedaban debajo de "Datos técnicos" y de un hueco vacío.
   return (
-    <div className="h-full flex flex-col">
-      <InspectorHeader intent={intent} onClose={onClose} />
+    <div className="flex flex-col">
+      <Encabezado intent={intent} onClose={onClose} />
 
       {errorMessage && (
-        <div className="mx-4 mb-3 rounded-md border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 px-3 py-2 text-xs text-red-700 dark:text-red-300 flex items-start gap-2">
+        <div className="mx-5 mb-3 rounded-sm border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive flex items-start gap-2">
           <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
-      <Tabs defaultValue="info" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="mx-4 self-start bg-transparent gap-1 h-auto p-0 mb-2">
-          <TabPill value="info" label="Info" />
-          <TabPill value="body" label="Body" />
-          <TabPill value="actions" label="Acciones" />
-        </TabsList>
-
-        <Separator className="mb-3" />
-
-        <ScrollArea className="flex-1">
-          <div className="px-4 pb-6">
-            <TabsContent value="info" className="m-0">
-              <InfoTab intent={intent} />
-            </TabsContent>
-            <TabsContent value="body" className="m-0">
-              <BodyViewer intent={intent} />
-            </TabsContent>
-            <TabsContent value="actions" className="m-0">
-              <ActionsTab intent={intent} onAction={onAction} />
-            </TabsContent>
+      <div className="px-5 pb-6 flex flex-col gap-6">
+        <DatosDelTrabajo intent={intent} />
+        {intent.hasBlob && evidencia && (
+          <div>
+            <Rotulo>Lo que fotografió el vendedor</Rotulo>
+            <div className="mt-2.5">{evidencia}</div>
           </div>
-        </ScrollArea>
-      </Tabs>
+        )}
+        <Acciones intent={intent} onAction={onAction} />
+        <DatosTecnicos intent={intent} partes={partesMultipart} />
+      </div>
     </div>
   );
 }
 
-function InspectorHeader({
-  intent,
-  onClose,
-}: {
-  intent: FailedIntent;
-  onClose: () => void;
-}) {
+// Encabezado abre con el nombre, no con el método y la ruta.
+//
+// El degradado es el mismo de la tarjeta: nombre → referencia → hueco
+// declarado. Nunca un nombre inventado.
+function Encabezado({ intent, onClose }: { intent: FailedIntent; onClose: () => void }) {
+  const modulo = intent.modulo ?? moduloDe(intent.path);
+  const titulo = intent.resumen?.titulo ?? null;
+  const referencia = intent.resumen?.referencia ?? null;
+
   return (
-    <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-3">
+    <div className="px-5 pt-5 pb-4 flex items-start justify-between gap-3">
       <div className="flex flex-col gap-1.5 min-w-0">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold tracking-tight font-mono text-zinc-900 dark:text-zinc-100">
-            {intent.method.value} {intent.path}
-          </h2>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <h4
+          className={`text-[10.5px] uppercase tracking-widest ${TEXTO_2} font-medium m-0`}
+          data-testid="inspector-rotulo"
+        >
+          {etiquetaModulo(modulo)} seleccionad{modulo === "pagos" ? "o" : "a"}
+        </h4>
+        <p
+          className={cn(
+            "text-[19px] font-semibold tracking-tight m-0",
+            !titulo && referencia && "font-mono",
+            !titulo && !referencia && TEXTO_2,
+          )}
+          data-testid="inspector-quien"
+        >
+          {titulo ?? referencia ?? "Sin nombre capturado"}
+        </p>
+        {titulo && referencia && (
+          <p className={`text-[12.5px] font-mono ${TEXTO_2} m-0`}>{referencia}</p>
+        )}
+        <div className="flex items-center gap-2 flex-wrap mt-1">
           <StatusBadge status={intent.status} />
           <IntentKindBadge hasBlob={intent.hasBlob} />
-          <code className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800/60 text-zinc-700 dark:text-zinc-300">
-            HTTP {intent.httpStatus}
-          </code>
-          {intent.errorCode && (
-            <span className="text-xs text-zinc-500">· {intent.errorCode}</span>
-          )}
         </div>
-        <p className="text-xs text-zinc-500">
-          {DATE_FMT.format(intent.receivedAt)}
-        </p>
       </div>
       <Button
         variant="ghost"
@@ -154,65 +184,113 @@ function InspectorHeader({
   );
 }
 
-function TabPill({ value, label }: { value: string; label: string }) {
+// DatosDelTrabajo es el bloque que el mock pone justo debajo del nombre: lo que
+// una persona necesita para decidir, en el orden en que lo pregunta.
+function DatosDelTrabajo({ intent }: { intent: FailedIntent }) {
+  const causa = Causa.desde(intent.errorCode, intent.httpStatus);
   return (
-    <TabsTrigger
-      value={value}
-      className="text-xs data-[state=active]:bg-zinc-900 data-[state=active]:text-zinc-50 dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900 rounded-full px-3 py-1"
-    >
-      {label}
-    </TabsTrigger>
-  );
-}
-
-function InfoTab({ intent }: { intent: FailedIntent }) {
-  return (
-    <div className="grid grid-cols-1 gap-3">
-      <InfoRow label="Intent ID" value={intent.id} copyable />
-      <InfoRow label="Request ID" value={intent.requestId} copyable />
-      {intent.idempotencyKey && (
-        <InfoRow
-          label="Idempotency-Key"
-          value={intent.idempotencyKey}
-          copyable
-        />
+    <div>
+      <Rotulo>Qué pasó</Rotulo>
+      <p className="text-[13.5px] mt-2 mb-3">{causa.titulo(intent.errorMessage)}</p>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-1.5 text-[13px]">
+        {intent.resumen?.monto != null && (
+          <Fila termino="Monto" valor={pesos(intent.resumen.monto)} numerico />
+        )}
+        <Fila termino="Reintentos" valor={String(intent.retryCount)} numerico />
+        <Fila termino="Primer intento" valor={DATE_FMT.format(intent.receivedAt)} />
+        {intent.lastSeenAt && (
+          <Fila termino="Último intento" valor={DATE_FMT.format(intent.lastSeenAt)} />
+        )}
+        {intent.resolvedAt && (
+          <Fila termino="Cerrado el" valor={DATE_FMT.format(intent.resolvedAt)} />
+        )}
+      </dl>
+      {intent.notes && (
+        <p className={`text-[12.5px] ${TEXTO_2} mt-3 whitespace-pre-wrap`}>{intent.notes}</p>
       )}
-      {intent.usuarioId && (
-        <InfoRow label="Vendedor (usuario_id)" value={intent.usuarioId} copyable />
-      )}
-      {intent.firebaseUid && (
-        <InfoRow label="Firebase UID" value={intent.firebaseUid} copyable />
-      )}
-      <InfoRow label="Reintentos" value={String(intent.retryCount)} />
-      {intent.errorMessage && (
-        <InfoRow label="Mensaje" value={intent.errorMessage} multiline />
-      )}
-      {intent.resolvedAt && (
-        <InfoRow
-          label="Resuelto el"
-          value={DATE_FMT.format(intent.resolvedAt)}
-        />
-      )}
-      {intent.notes && <InfoRow label="Notas" value={intent.notes} multiline />}
     </div>
   );
 }
 
-function InfoRow({
+function Fila({
+  termino,
+  valor,
+  numerico = false,
+}: {
+  termino: string;
+  valor: string;
+  numerico?: boolean;
+}) {
+  return (
+    <>
+      <dt className={TEXTO_2}>{termino}</dt>
+      <dd className={cn("m-0 text-right", numerico && "tabular-nums")}>{valor}</dd>
+    </>
+  );
+}
+
+function Rotulo({ children }: { children: React.ReactNode }) {
+  return (
+    <h4 className={`text-[10.5px] uppercase tracking-widest ${TEXTO_2} font-medium m-0`}>
+      {children}
+    </h4>
+  );
+}
+
+// DatosTecnicos es la sección plegada. Va en un <details> nativo a propósito:
+// se abre sin JavaScript y el buscador del navegador encuentra lo de adentro
+// aunque esté cerrado, que es justo lo que quiere quien está rastreando un
+// request-id en producción.
+function DatosTecnicos({
+  intent,
+  partes,
+}: {
+  intent: FailedIntent;
+  partes?: ReadonlyArray<BlobPart>;
+}) {
+  return (
+    <details className={`border-t ${LINEA} pt-4`} data-testid="datos-tecnicos">
+      <summary
+        className={`cursor-pointer list-none flex items-center gap-1.5 text-[10.5px] uppercase tracking-widest ${TEXTO_2} font-medium ${ACENTO_FOCO}`}
+      >
+        <ChevronRight className="h-3 w-3" aria-hidden="true" />
+        Datos técnicos
+      </summary>
+      <div className="mt-3 flex flex-col gap-2.5">
+        <Tecnico label="Petición" value={`${intent.method.value} ${intent.path}`} />
+        <Tecnico label="HTTP" value={`HTTP ${intent.httpStatus}`} />
+        {intent.errorCode && <Tecnico label="Código de error" value={intent.errorCode} />}
+        <Tecnico label="Intent ID" value={intent.id} copyable />
+        <Tecnico label="Request ID" value={intent.requestId} copyable />
+        {intent.idempotencyKey && (
+          <Tecnico label="Idempotency-Key" value={intent.idempotencyKey} copyable />
+        )}
+        {intent.usuarioId && (
+          <Tecnico label="Vendedor (usuario_id)" value={intent.usuarioId} copyable />
+        )}
+        {intent.firebaseUid && <Tecnico label="Firebase UID" value={intent.firebaseUid} copyable />}
+        {intent.modulo && <Tecnico label="Módulo (servidor)" value={intent.modulo} />}
+        <div className="mt-1">
+          <BodyViewer intent={intent} partes={partes} />
+        </div>
+      </div>
+    </details>
+  );
+}
+
+function Tecnico({
   label,
   value,
   copyable,
-  multiline,
 }: {
   label: string;
   value: string;
   copyable?: boolean;
-  multiline?: boolean;
 }) {
   return (
-    <div className="rounded-md border border-zinc-200/60 dark:border-zinc-800/60 px-3 py-2 bg-zinc-50/40 dark:bg-zinc-900/40">
+    <div className={`rounded-sm border ${LINEA} px-3 py-2 ${SUPERFICIE_2}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+        <span className={`text-[10px] uppercase tracking-wider ${TEXTO_2} font-medium`}>
           {label}
         </span>
         {copyable && (
@@ -227,20 +305,12 @@ function InfoRow({
           </Button>
         )}
       </div>
-      <p
-        className={cn(
-          "text-xs text-zinc-900 dark:text-zinc-100 mt-0.5 break-all",
-          copyable && "font-mono",
-          multiline && "whitespace-pre-wrap",
-        )}
-      >
-        {value}
-      </p>
+      <p className={cn("text-xs mt-0.5 break-all", copyable && "font-mono")}>{value}</p>
     </div>
   );
 }
 
-function ActionsTab({
+function Acciones({
   intent,
   onAction,
 }: {
@@ -264,9 +334,7 @@ function ActionsTab({
   // del admin" y un nuevo reenvío crearía data duplicada / no deseada.
   const status = intent.status.value;
   const closedSuccessfully =
-    status === "retried_ok" ||
-    status === "resolved_manual" ||
-    status === "ignored";
+    status === "retried_ok" || status === "resolved_manual" || status === "ignored";
   const replayDisabled = closedSuccessfully;
   const replayWithDisabled = closedSuccessfully;
   const resolveDisabled = intent.status.isTerminal();
@@ -274,40 +342,39 @@ function ActionsTab({
     "Este intento ya está cerrado — un nuevo reenvío crearía data duplicada";
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="space-y-2">
-        <ActionCard
-          icon={<RotateCw className="h-4 w-4" />}
-          title="Reenviar sin cambios"
-          description="Reenvía el body original con una nueva idempotency-key"
-          primary
-          disabled={replayDisabled}
-          onClick={() => onAction("replay")}
-          tooltip={replayDisabled ? closedTooltip : undefined}
-        />
-        <ActionCard
-          icon={<Pencil className="h-4 w-4" />}
-          title="Editar y reenviar"
-          description={
-            intent.hasBlob
-              ? "Editá las partes del multipart (campos + archivos) antes de reenviar"
-              : "Editá el body JSON antes de reenviar"
-          }
-          disabled={replayWithDisabled}
-          onClick={() => onAction("replay-with")}
-          tooltip={replayWithDisabled ? closedTooltip : undefined}
-        />
-        <ActionCard
-          icon={<CheckCircle2 className="h-4 w-4" />}
-          title="Marcar como resuelto"
-          description="Cerrar el intento sin reintentar"
-          disabled={resolveDisabled}
-          onClick={() => onAction("resolve")}
-          tooltip={
-            resolveDisabled
-              ? "Este intento ya está cerrado"
-              : undefined
-          }
-        />
+      <div>
+        <Rotulo>Qué se puede hacer</Rotulo>
+        <div className="space-y-2 mt-2.5">
+          <ActionCard
+            icon={<RotateCw className="h-4 w-4" />}
+            title="Reenviar sin cambios"
+            description="Reenvía el body original con una nueva idempotency-key"
+            primary
+            disabled={replayDisabled}
+            onClick={() => onAction("replay")}
+            tooltip={replayDisabled ? closedTooltip : undefined}
+          />
+          <ActionCard
+            icon={<Pencil className="h-4 w-4" />}
+            title="Editar y reenviar"
+            description={
+              intent.hasBlob
+                ? "Editá las partes del multipart (campos + archivos) antes de reenviar"
+                : "Editá el body JSON antes de reenviar"
+            }
+            disabled={replayWithDisabled}
+            onClick={() => onAction("replay-with")}
+            tooltip={replayWithDisabled ? closedTooltip : undefined}
+          />
+          <ActionCard
+            icon={<CheckCircle2 className="h-4 w-4" />}
+            title="Marcar como resuelto"
+            description="Cerrar el intento sin reintentar"
+            disabled={resolveDisabled}
+            onClick={() => onAction("resolve")}
+            tooltip={resolveDisabled ? "Este intento ya está cerrado" : undefined}
+          />
+        </div>
       </div>
     </TooltipProvider>
   );
@@ -337,33 +404,17 @@ function ActionCard({
       onClick={onClick}
       data-testid={`action-${title.toLowerCase().replace(/\s+/g, "-")}`}
       className={cn(
-        "w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-colors",
+        "w-full flex items-start gap-3 p-3 rounded-sm border text-left transition-colors",
         "disabled:opacity-50 disabled:cursor-not-allowed",
         primary
-          ? "border-zinc-900 dark:border-zinc-100 bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-300 dark:disabled:bg-zinc-700"
-          : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900/50",
+          ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+          : `${LINEA} hover:bg-accent hover:text-accent-foreground`,
       )}
     >
-      <span
-        className={cn(
-          "mt-0.5",
-          primary ? "" : "text-zinc-500",
-        )}
-      >
-        {icon}
-      </span>
+      <span className={cn("mt-0.5", primary ? "" : TEXTO_2)}>{icon}</span>
       <span className="flex flex-col gap-0.5 min-w-0">
         <span className="text-sm font-medium">{title}</span>
-        <span
-          className={cn(
-            "text-[11px]",
-            primary
-              ? "text-zinc-300 dark:text-zinc-600"
-              : "text-zinc-500",
-          )}
-        >
-          {description}
-        </span>
+        <span className={cn("text-[11px]", primary ? "opacity-70" : TEXTO_2)}>{description}</span>
       </span>
     </button>
   );
