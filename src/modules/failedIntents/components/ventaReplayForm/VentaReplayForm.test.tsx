@@ -51,11 +51,13 @@ vi.mock("@/hooks/useGetVendedores", () => ({
 
 import { VentaReplayForm } from "./VentaReplayForm";
 
-function makeValidBody(): Record<string, unknown> {
+// clienteId parametriza la ÚNICA variable que decide si el campo Nombre es
+// editable: la venta ligada a un cliente Microsip (número) o suelta (null).
+function makeValidBody(clienteId: number | null = 7): Record<string, unknown> {
   return {
     id: "11111111-1111-1111-1111-111111111111",
     cliente: {
-      cliente_id: 7,
+      cliente_id: clienteId,
       nombre: "CARLOS MENDEZ",
       telefono: "+524491234567",
       aval: null,
@@ -132,21 +134,54 @@ describe("VentaReplayForm", () => {
     expect(screen.queryByTestId("venta-replay-form-json-textarea")).toBeNull();
   });
 
-  it("emits onChange with the updated body when the operator edits the cliente nombre", async () => {
+  // El nombre y el cliente_id llegaron a derivar entre sí sin que nada avisara:
+  // se tecleaba sobre el nombre de una venta ya ligada y la venta terminaba
+  // aplicada a otra persona. La regla adoptada es que con cliente_id vinculado
+  // el nombre es de SÓLO LECTURA. Las dos ramas se prueban aquí porque el
+  // replay-with monta el mismo ClienteTab que el editor de ventas locales.
+
+  it("con cliente_id vinculado, el nombre del cliente es de sólo lectura y la UI lo comunica", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<VentaReplayForm initialBody={makeValidBody()} onChange={onChange} />);
+    render(<VentaReplayForm initialBody={makeValidBody(7)} onChange={onChange} />);
+
+    await user.click(screen.getByRole("tab", { name: /cliente/i }));
+    const nombreInput = await screen.findByDisplayValue("CARLOS MENDEZ");
+
+    // La UI no se limita a ignorar las teclas: el campo queda inerte y dice
+    // por qué, para que el operador sepa dónde se cambia de verdad.
+    expect(nombreInput).toBeDisabled();
+    expect(nombreInput).toHaveAttribute("title", "Se edita en Microsip");
+
+    // Y teclear encima no mueve el valor ni se filtra a ningún body emitido.
+    await user.click(nombreInput);
+    await user.keyboard(" X");
+    expect(nombreInput).toHaveValue("CARLOS MENDEZ");
+
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    for (const [body] of onChange.mock.calls) {
+      expect((body as { cliente: { nombre: string } }).cliente.nombre).toBe("CARLOS MENDEZ");
+    }
+  });
+
+  it("sin cliente_id, el operador sí edita el nombre y onChange emite el body actualizado", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<VentaReplayForm initialBody={makeValidBody(null)} onChange={onChange} />);
 
     // Switch to the Cliente tab so the input is mounted.
     await user.click(screen.getByRole("tab", { name: /cliente/i }));
     const nombreInput = await screen.findByDisplayValue("CARLOS MENDEZ");
+    expect(nombreInput).toBeEnabled();
+
     await user.click(nombreInput);
     await user.keyboard(" X");
 
-    await waitFor(() => expect(onChange).toHaveBeenCalled());
-    const calls = onChange.mock.calls;
-    const lastBody = calls[calls.length - 1]?.[0] as { cliente: { nombre: string } };
-    expect(lastBody.cliente.nombre).toBe("CARLOS MENDEZ X");
+    await waitFor(() => {
+      const calls = onChange.mock.calls;
+      const lastBody = calls[calls.length - 1]?.[0] as { cliente: { nombre: string } };
+      expect(lastBody.cliente.nombre).toBe("CARLOS MENDEZ X");
+    });
   });
 
   it("emits onChange with parsed body when the operator edits raw JSON", async () => {
