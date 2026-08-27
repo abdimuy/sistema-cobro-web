@@ -79,7 +79,7 @@ describe("VentaDetalleHero — estatus cliente badge", () => {
       />
     );
     expect(screen.queryByText("Activo")).not.toBeInTheDocument();
-    expect(screen.queryByText("Vetado")).not.toBeInTheDocument();
+    expect(screen.queryByText("Suspensión de ventas")).not.toBeInTheDocument();
   });
 
   it("does not show the estatus badge when estatus is unknown", () => {

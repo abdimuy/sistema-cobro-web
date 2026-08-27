@@ -125,7 +125,7 @@ describe("VentaDetalleModal — estatus cliente banner", () => {
       refetch: vi.fn().mockResolvedValue(undefined),
     });
     render(<VentaDetalleModal ventaId="11111111-1111-1111-1111-111111111111" onClose={() => {}} />);
-    expect(screen.getByText("Cliente vetado")).toBeInTheDocument();
+    expect(screen.getByText("Suspensión de ventas")).toBeInTheDocument();
   });
 
   it("renders the banner when estatus_cliente_microsip is C", () => {
@@ -136,7 +136,7 @@ describe("VentaDetalleModal — estatus cliente banner", () => {
       refetch: vi.fn().mockResolvedValue(undefined),
     });
     render(<VentaDetalleModal ventaId="11111111-1111-1111-1111-111111111111" onClose={() => {}} />);
-    expect(screen.getByText("Cliente cancelado")).toBeInTheDocument();
+    expect(screen.getByText("Suspensión de créditos")).toBeInTheDocument();
   });
 
   it("does not render the banner when estatus_cliente_microsip is A", () => {
@@ -147,8 +147,8 @@ describe("VentaDetalleModal — estatus cliente banner", () => {
       refetch: vi.fn().mockResolvedValue(undefined),
     });
     render(<VentaDetalleModal ventaId="11111111-1111-1111-1111-111111111111" onClose={() => {}} />);
-    expect(screen.queryByText("Cliente vetado")).not.toBeInTheDocument();
-    expect(screen.queryByText("Cliente cancelado")).not.toBeInTheDocument();
+    expect(screen.queryByText("Suspensión de ventas")).not.toBeInTheDocument();
+    expect(screen.queryByText("Suspensión de créditos")).not.toBeInTheDocument();
   });
 
   it("does not render the banner when estatus_cliente_microsip is absent", () => {
@@ -159,7 +159,7 @@ describe("VentaDetalleModal — estatus cliente banner", () => {
       refetch: vi.fn().mockResolvedValue(undefined),
     });
     render(<VentaDetalleModal ventaId="11111111-1111-1111-1111-111111111111" onClose={() => {}} />);
-    expect(screen.queryByText("Cliente vetado")).not.toBeInTheDocument();
-    expect(screen.queryByText("Cliente cancelado")).not.toBeInTheDocument();
+    expect(screen.queryByText("Suspensión de ventas")).not.toBeInTheDocument();
+    expect(screen.queryByText("Suspensión de créditos")).not.toBeInTheDocument();
   });
 });

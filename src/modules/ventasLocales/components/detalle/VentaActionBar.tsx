@@ -5,6 +5,7 @@ import { VentaV2 } from "@/services/api/ventaV2Types";
 import ConfirmActionDialog from "./ConfirmActionDialog";
 import CancelarVentaDialog from "./CancelarVentaDialog";
 import { useVentaActions } from "./useVentaActions";
+import { permiteAplicar } from "./estatusCliente";
 
 interface Props {
   venta: VentaV2;
@@ -33,6 +34,7 @@ export const VentaActionBar = ({ venta, onClose, onUpdated }: Props) => {
   const regresable =
     !aplicada &&
     (venta.situacion === "revisada" || venta.situacion === "aprobada");
+  const clientePermiteAplicar = permiteAplicar(venta.estatus_cliente_microsip);
 
   return (
     <>
@@ -94,7 +96,12 @@ export const VentaActionBar = ({ venta, onClose, onUpdated }: Props) => {
             <Button
               size="sm"
               onClick={() => setConfirm("aplicar")}
-              disabled={actions.isPending}
+              disabled={actions.isPending || !clientePermiteAplicar}
+              title={
+                clientePermiteAplicar
+                  ? undefined
+                  : "Cliente suspendido en Microsip"
+              }
               className="bg-emerald-600 text-white hover:bg-emerald-700"
             >
               {actions.pending === "aplicar" ? (

@@ -3,16 +3,16 @@ import { render, screen } from "@testing-library/react";
 import EstatusClienteBanner from "./EstatusClienteBanner";
 
 describe("EstatusClienteBanner", () => {
-  it("shows the vetado title and body for V", () => {
+  it("shows the title and blocking body for V", () => {
     render(<EstatusClienteBanner estatus="V" />);
-    expect(screen.getByText("Cliente vetado")).toBeInTheDocument();
-    expect(screen.getByText(/marcado como vetado en microsip/i)).toBeInTheDocument();
+    expect(screen.getByText("Suspensión de ventas")).toBeInTheDocument();
+    expect(screen.getByText("No se puede aplicar. Cámbialo en Microsip.")).toBeInTheDocument();
   });
 
-  it("shows the cancelado title and body for C", () => {
+  it("shows the title and blocking body for C", () => {
     render(<EstatusClienteBanner estatus="C" />);
-    expect(screen.getByText("Cliente cancelado")).toBeInTheDocument();
-    expect(screen.getByText(/marcado como cancelado en microsip/i)).toBeInTheDocument();
+    expect(screen.getByText("Suspensión de créditos")).toBeInTheDocument();
+    expect(screen.getByText("No se puede aplicar. Cámbialo en Microsip.")).toBeInTheDocument();
   });
 
   it("renders nothing for A", () => {
