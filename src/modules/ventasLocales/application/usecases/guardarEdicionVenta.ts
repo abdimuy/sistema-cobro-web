@@ -5,8 +5,7 @@ import type { Venta } from "../../domain/entities/Venta";
 import { DomainError } from "../../domain/errors";
 import { actualizarClienteVenta } from "./actualizarClienteVenta";
 import { actualizarHeaderVenta } from "./actualizarHeaderVenta";
-import { reemplazarCombosVenta } from "./reemplazarCombosVenta";
-import { reemplazarProductosVenta } from "./reemplazarProductosVenta";
+import { reemplazarLineasVenta } from "./reemplazarLineasVenta";
 import { reemplazarVendedoresVenta } from "./reemplazarVendedoresVenta";
 import { adjuntarImagenVenta } from "./adjuntarImagenVenta";
 import { eliminarImagenVenta } from "./eliminarImagenVenta";
@@ -67,37 +66,30 @@ export async function guardarEdicionVenta(
     pasosExitosos.push("header");
   }
 
-  // 3. Combos BEFORE productos (productos may reference comboID)
-  if (input.cambios.combos !== undefined) {
+  // 3. Líneas — combos y productos en UNA sola petición.
+  //
+  // Antes eran dos pasos, "combos primero porque los productos referencian
+  // comboID". Ese orden no puede funcionar cuando se borra un combo y se crea
+  // otro: el combo nuevo no cubre a los productos viejos, y al revés los
+  // productos nuevos apuntan a un combo inexistente. El API valida ahora las
+  // referencias contra el estado final de las dos colecciones.
+  if (input.cambios.lineas !== undefined) {
+    const lineas = input.cambios.lineas;
     const out = await runStep(() =>
-      reemplazarCombosVenta(deps, {
+      reemplazarLineasVenta(deps, {
         ventaID: venta.id,
-        combos: input.cambios.combos!,
+        combos: lineas.combos,
+        productos: lineas.productos,
       }),
     );
     if (isStepError(out)) {
-      return { ventaActualizada: venta, pasosExitosos, errorParcial: { paso: "combos", error: out.__error } };
+      return { ventaActualizada: venta, pasosExitosos, errorParcial: { paso: "lineas", error: out.__error } };
     }
     venta = out;
-    pasosExitosos.push("combos");
+    pasosExitosos.push("lineas");
   }
 
-  // 4. Productos
-  if (input.cambios.productos !== undefined) {
-    const out = await runStep(() =>
-      reemplazarProductosVenta(deps, {
-        ventaID: venta.id,
-        productos: input.cambios.productos!,
-      }),
-    );
-    if (isStepError(out)) {
-      return { ventaActualizada: venta, pasosExitosos, errorParcial: { paso: "productos", error: out.__error } };
-    }
-    venta = out;
-    pasosExitosos.push("productos");
-  }
-
-  // 4.5 Vendedores
+  // 4. Vendedores
   if (input.cambios.vendedores !== undefined) {
     const out = await runStep(() =>
       reemplazarVendedoresVenta(deps, {

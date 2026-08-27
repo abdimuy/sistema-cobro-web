@@ -4,8 +4,7 @@ import type { DomainError } from "../../domain/errors";
 export type PasoEdicion =
   | "cliente"
   | "header"
-  | "combos"
-  | "productos"
+  | "lineas"
   | "vendedores"
   | "eliminar_imagen"
   | "adjuntar_imagen";

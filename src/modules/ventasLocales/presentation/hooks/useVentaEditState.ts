@@ -19,7 +19,7 @@ import type { FrecPago } from "../../domain/values/PlanCredito";
 import { DiaCobranza } from "../../domain/values/DiaCobranza";
 import type { DiaCobranza as DiaCobranzaVO } from "../../domain/values/DiaCobranza";
 import type { EdicionVentaInput } from "../../application/dto/EdicionVentaInput";
-import type { HeaderCambios } from "../../application/dto/EdicionVentaInput";
+import type { HeaderCambios, LineasCambios } from "../../application/dto/EdicionVentaInput";
 
 // ============================================================================
 // Form data types (defined here — the source of truth for the presentation
@@ -74,6 +74,10 @@ export type ProductoFormData = {
   almacenDestinoID: number | null; // null when comboID != null
   isNew?: boolean;
   isDeleted?: boolean;
+  // Transitorio, sólo del formulario: marca que este producto se borró EN
+  // CASCADA al quitar su combo. Sirve para devolver exactamente esos —y no
+  // los que el usuario ya había borrado a mano— si el combo se restaura.
+  deletedByCombo?: boolean;
 };
 
 export type VendedorFormData = {
@@ -125,6 +129,31 @@ export type ValidationError = { field: string; message: string };
 // Private helpers — not exported
 // ============================================================================
 
+type ParAlmacenes = { origen: number; destino: number };
+
+// parMasFrecuente devuelve el par (origen, destino) que más se repite, o null
+// si la lista viene vacía.
+function parMasFrecuente(pares: ReadonlyArray<ParAlmacenes>): AlmacenesFormData | null {
+  if (pares.length === 0) return null;
+  const freq = new Map<string, { par: ParAlmacenes; count: number }>();
+  for (const par of pares) {
+    const key = `${par.origen}-${par.destino}`;
+    const existing = freq.get(key);
+    if (existing) {
+      existing.count++;
+    } else {
+      freq.set(key, { par, count: 1 });
+    }
+  }
+  let best: { par: ParAlmacenes; count: number } | null = null;
+  for (const entry of freq.values()) {
+    if (best === null || entry.count > best.count) best = entry;
+  }
+  return best === null
+    ? null
+    : { almacenOrigenID: best.par.origen, almacenDestinoID: best.par.destino };
+}
+
 function proyectarVentaAFormData(dominioVenta: Venta): EditarVentaFormData {
   const c = dominioVenta.cliente;
   const d = dominioVenta.direccion;
@@ -174,6 +203,7 @@ function proyectarVentaAFormData(dominioVenta: Venta): EditarVentaFormData {
     almacenDestinoID: p.almacenes !== null ? p.almacenes.destinoID : null,
     isNew: false,
     isDeleted: false,
+    deletedByCombo: false,
   }));
 
   const vendedores: VendedorFormData[] = dominioVenta.vendedores.map((v) => ({
@@ -208,29 +238,25 @@ function proyectarVentaAFormData(dominioVenta: Venta): EditarVentaFormData {
     isDeleted: false,
   }));
 
-  // Pick most-common (origen, destino) pair from non-combo productos
-  const plainProductos = dominioVenta.productos.filter((p) => p.comboID === null && p.almacenes !== null);
-  let almacenes: AlmacenesFormData = { almacenOrigenID: 0, almacenDestinoID: 0 };
-  if (plainProductos.length > 0) {
-    // Frequency map
-    const freq = new Map<string, { origen: number; destino: number; count: number }>();
-    for (const p of plainProductos) {
-      const key = `${p.almacenes!.origenID}-${p.almacenes!.destinoID}`;
-      const existing = freq.get(key);
-      if (existing) {
-        existing.count++;
-      } else {
-        freq.set(key, { origen: p.almacenes!.origenID, destino: p.almacenes!.destinoID, count: 1 });
-      }
-    }
-    let best = { origen: 0, destino: 0, count: 0 };
-    for (const entry of freq.values()) {
-      if (entry.count > best.count) {
-        best = entry;
-      }
-    }
-    almacenes = { almacenOrigenID: best.origen, almacenDestinoID: best.destino };
-  }
+  // Par (origen, destino) por defecto para los paneles de "agregar". Sale del
+  // producto suelto más frecuente y, si la venta es 100 % combos y no hay
+  // ninguno, del combo más frecuente.
+  //
+  // Sin ese respaldo la venta toda-de-combos se quedaba en {0, 0}: el panel de
+  // agregar combo recibía un catálogo vacío, el guardado moría con "los ids de
+  // almacén deben ser enteros positivos" y ningún campo se marcaba en rojo,
+  // porque el selector de almacén de la tabla está deshabilitado a propósito
+  // (el traspaso ya se hizo).
+  const paresProductos = dominioVenta.productos
+    .filter((p) => p.comboID === null && p.almacenes !== null)
+    .map((p) => ({ origen: p.almacenes!.origenID, destino: p.almacenes!.destinoID }));
+  const paresCombos = dominioVenta.combos.map((c) => ({
+    origen: c.almacenes.origenID,
+    destino: c.almacenes.destinoID,
+  }));
+  const almacenes: AlmacenesFormData =
+    parMasFrecuente(paresProductos) ?? parMasFrecuente(paresCombos) ??
+    { almacenOrigenID: 0, almacenDestinoID: 0 };
 
   return {
     ventaID: dominioVenta.id,
@@ -427,17 +453,81 @@ function validateFormData(formData: EditarVentaFormData): ValidationError[] {
     }
   }
 
-  // productos — at least one active, and each must have valid cantidad
+  // combos — cantidad, los tres precios y los almacenes.
+  //
+  // Antes no se validaba NADA de combos, así que los bordes rojos de
+  // CombosTableInline eran código muerto: una cantidad negativa no se marcaba
+  // y sólo reventaba al guardar.
+  const activeCombos = formData.combos.filter((c) => !c.isDeleted);
+  for (const c of activeCombos) {
+    const cantResult = Cantidad.create(c.cantidad);
+    if (cantResult instanceof DomainError) {
+      errors.push({ field: `combos[${c.id}].cantidad`, message: cantResult.message });
+    }
+    const anualResult = Monto.create(c.precioAnual);
+    if (anualResult instanceof DomainError) {
+      errors.push({ field: `combos[${c.id}].precioAnual`, message: anualResult.message });
+    }
+    const cortoResult = Monto.create(c.precioCortoPlazo);
+    if (cortoResult instanceof DomainError) {
+      errors.push({ field: `combos[${c.id}].precioCortoPlazo`, message: cortoResult.message });
+    }
+    const contadoResult = Monto.create(c.precioContado);
+    if (contadoResult instanceof DomainError) {
+      errors.push({ field: `combos[${c.id}].precioContado`, message: contadoResult.message });
+    }
+    const almResult = AlmacenesPair.create(c.almacenOrigenID, c.almacenDestinoID);
+    if (almResult instanceof DomainError) {
+      errors.push({ field: `combos[${c.id}].almacenes`, message: almResult.message });
+    }
+  }
+
+  // productos — at least one active; cantidad, precios y la referencia al
+  // combo. Los campos van indexados por id, que es como los busca la tabla:
+  // con el índice, el borde rojo nunca se pintaba.
   const activeProductos = formData.productos.filter((p) => !p.isDeleted);
   if (activeProductos.length === 0) {
     errors.push({ field: "productos", message: "debe haber al menos un producto activo" });
   }
-  activeProductos.forEach((p, i) => {
+  const combosVigentes = new Set(activeCombos.map((c) => c.id));
+  for (const p of activeProductos) {
     const cantResult = Cantidad.create(p.cantidad);
     if (cantResult instanceof DomainError) {
-      errors.push({ field: `productos[${i}].cantidad`, message: cantResult.message });
+      errors.push({ field: `productos[${p.id}].cantidad`, message: cantResult.message });
     }
-  });
+    const anualResult = Monto.create(p.precioAnual);
+    if (anualResult instanceof DomainError) {
+      errors.push({ field: `productos[${p.id}].precioAnual`, message: anualResult.message });
+    }
+    const cortoResult = Monto.create(p.precioCortoPlazo);
+    if (cortoResult instanceof DomainError) {
+      errors.push({ field: `productos[${p.id}].precioCortoPlazo`, message: cortoResult.message });
+    }
+    const contadoResult = Monto.create(p.precioContado);
+    if (contadoResult instanceof DomainError) {
+      errors.push({ field: `productos[${p.id}].precioContado`, message: contadoResult.message });
+    }
+    // Mismo invariante que el 422 del servidor
+    // (producto_combo_referencia_invalida), verificado antes de salir a la red.
+    if (p.comboID !== null && !combosVigentes.has(p.comboID)) {
+      errors.push({
+        field: `productos[${p.id}].combo`,
+        message: "el combo del producto ya no existe en la venta",
+      });
+    }
+    // Los almacenes del producto suelto se validaban en getInput pero NO aquí:
+    // el pie decía "sin errores", el botón quedaba habilitado y el guardado
+    // moría con un aviso genérico. El del combo sí se valida; éste faltaba.
+    if (p.comboID === null) {
+      const almResult = AlmacenesPair.create(
+        p.almacenOrigenID ?? 0,
+        p.almacenDestinoID ?? 0,
+      );
+      if (almResult instanceof DomainError) {
+        errors.push({ field: `productos[${p.id}].almacenes`, message: almResult.message });
+      }
+    }
+  }
 
   return errors;
 }
@@ -541,6 +631,7 @@ export function useVentaEditState(venta: VentaV2) {
             id: crypto.randomUUID(),
             isNew: true,
             isDeleted: false,
+            deletedByCombo: false,
           },
         ],
       }));
@@ -681,13 +772,22 @@ export function useVentaEditState(venta: VentaV2) {
     [],
   );
 
+  // Al quitar un combo, sus productos se van con él (decisión del dueño).
+  // Antes esto sólo tocaba `prev.combos` y dejaba productos huérfanos
+  // apuntando a un combo ausente — exactamente el 422 que se llevó doce
+  // intentos a MSP_FAILED_INTENTS. El servidor no confía en el cliente y
+  // sigue rechazándolos: la cascada es responsabilidad de esta pantalla.
   const removeCombo = useCallback((index: number) => {
     setFormData((prev) => {
       const c = prev.combos[index];
+      if (c === undefined) return prev;
       if (c.isNew) {
+        // Un combo que nunca llegó al servidor desaparece del formulario, y
+        // sus productos con él: sólo pudieron nacer dentro de este combo.
         return {
           ...prev,
           combos: prev.combos.filter((_, i) => i !== index),
+          productos: prev.productos.filter((p) => p.comboID !== c.id),
         };
       }
       return {
@@ -695,17 +795,33 @@ export function useVentaEditState(venta: VentaV2) {
         combos: prev.combos.map((cb, i) =>
           i === index ? { ...cb, isDeleted: true } : cb,
         ),
+        productos: prev.productos.map((p) =>
+          p.comboID === c.id && !p.isDeleted
+            ? { ...p, isDeleted: true, deletedByCombo: true }
+            : p,
+        ),
       };
     });
   }, []);
 
+  // Restaurar el combo devuelve SÓLO los productos que cayeron por la
+  // cascada; los que el usuario había borrado a mano siguen borrados.
   const restoreCombo = useCallback((index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      combos: prev.combos.map((c, i) =>
-        i === index ? { ...c, isDeleted: false } : c,
-      ),
-    }));
+    setFormData((prev) => {
+      const c = prev.combos[index];
+      if (c === undefined) return prev;
+      return {
+        ...prev,
+        combos: prev.combos.map((cb, i) =>
+          i === index ? { ...cb, isDeleted: false } : cb,
+        ),
+        productos: prev.productos.map((p) =>
+          p.comboID === c.id && p.deletedByCombo
+            ? { ...p, isDeleted: false, deletedByCombo: false }
+            : p,
+        ),
+      };
+    });
   }, []);
 
   // ── imagenes ───────────────────────────────────────────────────────────────
@@ -923,14 +1039,52 @@ export function useVentaEditState(venta: VentaV2) {
       }
     }
 
-    // ── productos cambios ────────────────────────────────────────────────────
-    let productosVOs: ReadonlyArray<Producto> | undefined;
+    // ── líneas: combos + productos ───────────────────────────────────────────
+    //
+    // Van SIEMPRE juntos. PUT /v2/ventas/{id}/lineas reemplaza las dos
+    // colecciones en una sola transacción y valida las referencias
+    // producto→combo contra el estado final, así que si cambió cualquiera de
+    // las dos se manda el estado final de AMBAS.
+    let lineasCambios: LineasCambios | undefined;
 
-    if (productosDiffers(formData.productos, dominioVenta)) {
-      const built: Producto[] = [];
-      const activeProductos = formData.productos.filter((p) => !p.isDeleted);
+    if (
+      productosDiffers(formData.productos, dominioVenta) ||
+      combosDiffers(formData.combos, dominioVenta)
+    ) {
+      // El API rechaza un cuerpo sin productos con 422 venta_productos_vacios.
+      // validateFormData ya lo marcaba y la pantalla deshabilita el guardado,
+      // pero getInput devolvía ok con `productos: []`: los dos guardas tienen
+      // que decir lo mismo, porque getInput es el último antes de la red.
+      if (formData.productos.filter((x) => !x.isDeleted).length === 0) {
+        validationErrors.push({
+          field: "productos",
+          message: "debe haber al menos un producto activo",
+        });
+      }
 
-      for (const p of activeProductos) {
+      const combosBuilt: Combo[] = [];
+      for (const c of formData.combos.filter((x) => !x.isDeleted)) {
+        const cantR = Cantidad.create(c.cantidad);
+        if (cantR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].cantidad`, message: cantR.message }); continue; }
+        const paR = Monto.create(c.precioAnual);
+        if (paR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].precioAnual`, message: paR.message }); continue; }
+        const pcpR = Monto.create(c.precioCortoPlazo);
+        if (pcpR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].precioCortoPlazo`, message: pcpR.message }); continue; }
+        const pctR = Monto.create(c.precioContado);
+        if (pctR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].precioContado`, message: pctR.message }); continue; }
+        const almR = AlmacenesPair.create(c.almacenOrigenID, c.almacenDestinoID);
+        if (almR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].almacenes`, message: almR.message }); continue; }
+        combosBuilt.push(Combo.create({
+          id: c.id, nombre: c.nombre,
+          precioAnual: paR, precioCorto: pcpR, precioContado: pctR,
+          cantidad: cantR, almacenes: almR,
+        }));
+      }
+
+      const combosVigentes = new Set(combosBuilt.map((c) => c.id));
+      const productosBuilt: Producto[] = [];
+
+      for (const p of formData.productos.filter((x) => !x.isDeleted)) {
         const cantResult = Cantidad.create(p.cantidad);
         if (cantResult instanceof DomainError) {
           validationErrors.push({ field: `productos[${p.id}].cantidad`, message: cantResult.message });
@@ -955,9 +1109,27 @@ export function useVentaEditState(venta: VentaV2) {
           continue;
         }
 
+        // Un producto no puede salir apuntando a un combo que no viaja en el
+        // mismo cuerpo: el servidor lo rechaza con 422
+        // producto_combo_referencia_invalida.
+        if (p.comboID !== null && !combosVigentes.has(p.comboID)) {
+          validationErrors.push({
+            field: `productos[${p.id}].combo`,
+            message: "el combo del producto ya no existe en la venta",
+          });
+          continue;
+        }
+
+        // Mismo cálculo que validateFormData: un suelto sin par válido (o con
+        // uno de los dos en null) da el mismo campo y el mismo mensaje que el
+        // borde rojo de la tabla, no un `producto_combo_xor_almacenes_invalido`
+        // que nadie sabe leer.
         let almacenesVO: AlmacenesPair | null = null;
-        if (p.comboID === null && p.almacenOrigenID !== null && p.almacenDestinoID !== null) {
-          const almResult = AlmacenesPair.create(p.almacenOrigenID, p.almacenDestinoID);
+        if (p.comboID === null) {
+          const almResult = AlmacenesPair.create(
+            p.almacenOrigenID ?? 0,
+            p.almacenDestinoID ?? 0,
+          );
           if (almResult instanceof DomainError) {
             validationErrors.push({ field: `productos[${p.id}].almacenes`, message: almResult.message });
             continue;
@@ -982,11 +1154,11 @@ export function useVentaEditState(venta: VentaV2) {
           continue;
         }
 
-        built.push(productoResult);
+        productosBuilt.push(productoResult);
       }
 
       if (validationErrors.length === 0) {
-        productosVOs = built;
+        lineasCambios = { combos: combosBuilt, productos: productosBuilt };
       }
     }
 
@@ -1004,33 +1176,6 @@ export function useVentaEditState(venta: VentaV2) {
         }));
       }
       vendedoresVOs = built;
-    }
-
-    // ── combos cambios ────────────────────────────────────────────────────────
-    let combosVOs: ReadonlyArray<Combo> | undefined;
-    if (combosDiffers(formData.combos, dominioVenta)) {
-      const built: Combo[] = [];
-      const active = formData.combos.filter((p) => !p.isDeleted);
-      for (const c of active) {
-        const cantR = Cantidad.create(c.cantidad);
-        if (cantR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].cantidad`, message: cantR.message }); continue; }
-        const paR = Monto.create(c.precioAnual);
-        if (paR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].precioAnual`, message: paR.message }); continue; }
-        const pcpR = Monto.create(c.precioCortoPlazo);
-        if (pcpR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].precioCortoPlazo`, message: pcpR.message }); continue; }
-        const pctR = Monto.create(c.precioContado);
-        if (pctR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].precioContado`, message: pctR.message }); continue; }
-        const almR = AlmacenesPair.create(c.almacenOrigenID, c.almacenDestinoID);
-        if (almR instanceof DomainError) { validationErrors.push({ field: `combos[${c.id}].almacenes`, message: almR.message }); continue; }
-        built.push(Combo.create({
-          id: c.id, nombre: c.nombre,
-          precioAnual: paR, precioCorto: pcpR, precioContado: pctR,
-          cantidad: cantR, almacenes: almR,
-        }));
-      }
-      if (validationErrors.length === 0) {
-        combosVOs = built;
-      }
     }
 
     if (validationErrors.length > 0) {
@@ -1060,9 +1205,8 @@ export function useVentaEditState(venta: VentaV2) {
       cambios: {
         ...(clienteSnapshot !== undefined ? { cliente: clienteSnapshot } : {}),
         ...(headerCambios !== undefined ? { header: headerCambios } : {}),
-        ...(productosVOs !== undefined ? { productos: productosVOs } : {}),
+        ...(lineasCambios !== undefined ? { lineas: lineasCambios } : {}),
         ...(vendedoresVOs !== undefined ? { vendedores: vendedoresVOs } : {}),
-        ...(combosVOs !== undefined ? { combos: combosVOs } : {}),
         imagenesNuevas,
         imagenesAEliminar,
       },

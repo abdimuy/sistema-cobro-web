@@ -14,15 +14,18 @@ import { CantidadInput } from "./CantidadInput";
 import { SeleccionarAlmacenCombobox } from "./SeleccionarAlmacenCombobox";
 import type {
   ProductoFormData,
-  ComboFormData,
   ValidationError,
 } from "../../../presentation/hooks/useVentaEditState";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ProductosTableInlineProps {
+  /**
+   * Lista COMPLETA de productos de la venta. Aquí sólo se pintan los sueltos
+   * (los de combo viven anidados bajo su combo en CombosTableInline), pero el
+   * índice que reciben los callbacks es el global en formData.
+   */
   productos: ProductoFormData[];
-  combos: ComboFormData[];
   almacenes: ReadonlyArray<{ id: number; nombre: string }>;
   errors: ValidationError[];
   onUpdate: (
@@ -38,31 +41,22 @@ interface ProductosTableInlineProps {
 
 export const ProductosTableInline = ({
   productos,
-  combos,
   almacenes,
   errors,
   onUpdate,
   onRemove,
   onRestore,
 }: ProductosTableInlineProps) => {
-  const combosById = Object.fromEntries(combos.map((c) => [c.id, c]));
+  // Sólo los sueltos, conservando el índice global de formData.
+  const filas = productos
+    .map((p, index) => ({ p, index }))
+    .filter(({ p }) => p.comboID === null);
 
-  const hasAnyActive = productos.some((p) => !p.isDeleted);
-
-  if (productos.length === 0) {
+  if (filas.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border/60 bg-card py-12 text-muted-foreground">
         <Package className="h-8 w-8" />
-        <p className="text-sm">Sin productos. Agregá al menos uno.</p>
-      </div>
-    );
-  }
-
-  if (!hasAnyActive && productos.every((p) => p.isDeleted)) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border/60 bg-card py-12 text-muted-foreground">
-        <Package className="h-8 w-8" />
-        <p className="text-sm">Sin productos. Agregá al menos uno.</p>
+        <p className="text-sm">Sin productos sueltos.</p>
       </div>
     );
   }
@@ -87,9 +81,6 @@ export const ProductosTableInline = ({
             <TableHead className="w-28 text-right text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Contado
             </TableHead>
-            <TableHead className="w-24 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Combo
-            </TableHead>
             <TableHead className="w-56 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Almacenes
             </TableHead>
@@ -97,7 +88,7 @@ export const ProductosTableInline = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {productos.map((p, index) => {
+          {filas.map(({ p, index }) => {
             const cantidadError = errors.find(
               (e) => e.field === `productos[${p.id}].cantidad`,
             );
@@ -170,34 +161,17 @@ export const ProductosTableInline = ({
                   />
                 </TableCell>
 
-                {/* Combo */}
-                <TableCell>
-                  {p.comboID !== null ? (
-                    <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[10px] font-medium">
-                      {combosById[p.comboID]?.nombre ?? "Combo"}
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-
                 {/* Almacenes */}
                 <TableCell>
-                  {p.comboID === null ? (
-                    <div className="flex flex-col gap-1">
-                      <SeleccionarAlmacenCombobox
-                        value={p.almacenOrigenID}
-                        onChange={(v) => onUpdate(index, "almacenOrigenID", v)}
-                        almacenes={almacenes}
-                        placeholder="Origen"
-                        disabled
-                      />
-                    </div>
-                  ) : (
-                    <span className="text-[11px] text-muted-foreground">
-                      Hereda combo
-                    </span>
-                  )}
+                  <div className="flex flex-col gap-1">
+                    <SeleccionarAlmacenCombobox
+                      value={p.almacenOrigenID}
+                      onChange={(v) => onUpdate(index, "almacenOrigenID", v)}
+                      almacenes={almacenes}
+                      placeholder="Origen"
+                      disabled
+                    />
+                  </div>
                 </TableCell>
 
                 {/* Acciones */}

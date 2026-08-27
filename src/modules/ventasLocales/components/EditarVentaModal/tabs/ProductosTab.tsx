@@ -5,6 +5,7 @@ import { SeleccionarAlmacenCombobox } from "../piezas/SeleccionarAlmacenCombobox
 import { ProductosTableInline } from "../piezas/ProductosTableInline";
 import { CombosTableInline } from "../piezas/CombosTableInline";
 import { AgregarProductoPanel } from "../panels/AgregarProductoPanel";
+import type { ComboDestino } from "../panels/AgregarProductoPanel";
 import { AgregarComboPanel } from "../panels/AgregarComboPanel";
 import useGetAlmacenes from "@/hooks/useGetAlmacenes";
 import type {
@@ -74,6 +75,8 @@ export const ProductosTab = ({
 }: ProductosTabProps) => {
   const [showAddProductoPanel, setShowAddProductoPanel] = useState(false);
   const [showAddComboPanel, setShowAddComboPanel] = useState(false);
+  // Combo al que apunta el alta de producto. null = producto suelto.
+  const [comboDestino, setComboDestino] = useState<ComboDestino | null>(null);
 
   // Only show almacenes config section if there's at least one active non-combo producto
   const hasActivePlainProducto = productos.some(
@@ -82,6 +85,20 @@ export const ProductosTab = ({
 
   const hasNoActiveProductos =
     productos.filter((p) => !p.isDeleted).length === 0;
+
+  const abrirAltaDeProducto = (combo: ComboFormData | null) => {
+    setComboDestino(
+      combo === null
+        ? null
+        : {
+            id: combo.id,
+            nombre: combo.nombre,
+            almacenOrigenID: combo.almacenOrigenID,
+            almacenDestinoID: combo.almacenDestinoID,
+          },
+    );
+    setShowAddProductoPanel(true);
+  };
 
   const { almacenes: almacenesCatalog } = useGetAlmacenes();
   const almacenesList = useMemo(
@@ -136,11 +153,16 @@ export const ProductosTab = ({
         <div className="px-5 py-5">
           <CombosTableInline
             combos={combos}
+            productos={productos}
             almacenes={almacenesList}
             errors={errors}
             onUpdate={onUpdateCombo}
             onRemove={onRemoveCombo}
             onRestore={onRestoreCombo}
+            onUpdateProducto={onUpdateProducto}
+            onRemoveProducto={onRemoveProducto}
+            onRestoreProducto={onRestoreProducto}
+            onAgregarProducto={(combo) => abrirAltaDeProducto(combo)}
           />
         </div>
       </div>
@@ -154,7 +176,7 @@ export const ProductosTab = ({
               size="sm"
               variant="ghost"
               className="h-7 text-[12px]"
-              onClick={() => setShowAddProductoPanel(true)}
+              onClick={() => abrirAltaDeProducto(null)}
             >
               + Agregar producto
             </Button>
@@ -168,7 +190,6 @@ export const ProductosTab = ({
           )}
           <ProductosTableInline
             productos={productos}
-            combos={combos}
             almacenes={almacenesList}
             errors={errors}
             onUpdate={onUpdateProducto}
@@ -181,18 +202,24 @@ export const ProductosTab = ({
       {/* Side-panels */}
       <AgregarProductoPanel
         open={showAddProductoPanel}
-        onOpenChange={setShowAddProductoPanel}
+        onOpenChange={(open) => {
+          setShowAddProductoPanel(open);
+          if (!open) setComboDestino(null);
+        }}
         almacenes={almacenes}
+        combo={comboDestino}
         productosExistentes={productos}
         onAgregar={(p) => {
           onAddProducto(p);
           setShowAddProductoPanel(false);
+          setComboDestino(null);
         }}
       />
       <AgregarComboPanel
         open={showAddComboPanel}
         onOpenChange={setShowAddComboPanel}
         almacenesDefault={almacenes}
+        almacenes={almacenesList}
         onAgregar={(c) => {
           onAddCombo(c);
           setShowAddComboPanel(false);

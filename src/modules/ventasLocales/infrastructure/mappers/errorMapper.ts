@@ -30,11 +30,17 @@ export function mapAxiosError(err: unknown): DomainError {
 }
 
 function extractCodeFromHuma(data: Record<string, unknown> | undefined): string | null {
-  // Huma errors: { errors: [ { message: "code: human message" } ] }
+  // El servidor (internal/ventas/infra/venthttp/auth.go, mapAppError) manda el
+  // código de dominio en el detalle como `code=<codigo>`, con el mensaje en
+  // español en `detail`. La forma vieja `codigo: mensaje` se sigue aceptando.
   if (!data || !Array.isArray(data.errors)) return null;
   for (const e of data.errors) {
     if (e && typeof e === "object" && typeof (e as { message?: unknown }).message === "string") {
       const m = (e as { message: string }).message;
+      if (m.startsWith("code=")) {
+        const code = m.slice("code=".length).trim();
+        if (/^[a-z0-9_]+$/.test(code)) return code;
+      }
       const colonIdx = m.indexOf(":");
       if (colonIdx > 0 && /^[a-z_]+$/.test(m.slice(0, colonIdx))) {
         return m.slice(0, colonIdx);

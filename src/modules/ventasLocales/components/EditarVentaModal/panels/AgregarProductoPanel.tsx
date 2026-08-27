@@ -12,10 +12,23 @@ import type {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+/**
+ * Combo destino cuando el alta se dispara DESDE un combo. Sin él, el panel
+ * agrega productos sueltos, como siempre.
+ */
+export interface ComboDestino {
+  id: string;
+  nombre: string;
+  almacenOrigenID: number;
+  almacenDestinoID: number;
+}
+
 interface AgregarProductoPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   almacenes: AlmacenesFormData;
+  /** Cuando viene, el producto nace DENTRO de este combo. */
+  combo?: ComboDestino | null;
   productosExistentes: ProductoFormData[];
   onAgregar: (p: Omit<ProductoFormData, "id" | "isNew" | "isDeleted">) => void;
 }
@@ -106,13 +119,19 @@ export const AgregarProductoPanel = ({
   open,
   onOpenChange,
   almacenes,
+  combo = null,
   productosExistentes,
   onAgregar,
 }: AgregarProductoPanelProps) => {
   const [search, setSearch] = useState("");
 
+  // Dentro de un combo, el catálogo sale del almacén del combo; fuera, del
+  // par por defecto de la venta.
+  const almacenOrigenID = combo !== null ? combo.almacenOrigenID : almacenes.almacenOrigenID;
+  const almacenDestinoID = combo !== null ? combo.almacenDestinoID : almacenes.almacenDestinoID;
+
   const { articulos, loading, error } = useGetAlmacenById(
-    open && almacenes.almacenOrigenID > 0 ? almacenes.almacenOrigenID : null,
+    open && almacenOrigenID > 0 ? almacenOrigenID : null,
   );
 
   const productosExistentesIds = useMemo(
@@ -147,16 +166,19 @@ export const AgregarProductoPanel = ({
       precioAnual: precios.precioAnual,
       precioCortoPlazo: precios.precioCortoPlazo,
       precioContado: precios.precioContado,
-      comboID: null,
-      almacenOrigenID: almacenes.almacenOrigenID,
-      almacenDestinoID: almacenes.almacenDestinoID,
+      // Un producto de combo hereda los almacenes del combo: van en null, y
+      // el que manda es comboID. Antes esto era `comboID: null` fijo, así que
+      // meter un producto DENTRO de un combo era imposible.
+      comboID: combo !== null ? combo.id : null,
+      almacenOrigenID: combo !== null ? null : almacenOrigenID,
+      almacenDestinoID: combo !== null ? null : almacenDestinoID,
     });
     setSearch("");
   };
 
   if (!open) return null;
 
-  const noAlmacen = almacenes.almacenOrigenID === 0;
+  const noAlmacen = almacenOrigenID === 0;
 
   return (
     <>
@@ -178,7 +200,12 @@ export const AgregarProductoPanel = ({
       >
         {/* Header */}
         <header className="flex items-center justify-between border-b border-border/60 px-5 py-3">
-          <h3 className="font-serif text-lg font-normal">Agregar producto</h3>
+          <div>
+            <h3 className="font-serif text-lg font-normal">Agregar producto</h3>
+            {combo !== null && (
+              <p className="text-[11px] text-muted-foreground">En {combo.nombre}</p>
+            )}
+          </div>
           <Button
             variant="ghost"
             size="icon"

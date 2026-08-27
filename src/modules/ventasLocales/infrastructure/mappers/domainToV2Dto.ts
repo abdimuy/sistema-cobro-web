@@ -3,7 +3,7 @@
  * The body interfaces below mirror the Go server DTOs in
  * internal/ventas/infra/venthttp/dto.go.
  */
-import type { HeaderInput, ClienteInput, ProductosInput, CombosInput, VendedoresInput } from "../../application/ports/VentaEditPort";
+import type { HeaderInput, ClienteInput, LineasInput, VendedoresInput } from "../../application/ports/VentaEditPort";
 
 // ---------------------------------------------------------------------------
 // Body type definitions (mirrors Go DTOs)
@@ -76,10 +76,6 @@ export type ProductoDTOBody = {
   almacen_destino_id: number | null;
 };
 
-/** PUT /v2/ventas/{id}/productos */
-export type ReemplazarProductosBody = {
-  productos: ProductoDTOBody[];
-};
 
 export type ComboDTOBody = {
   id: string;
@@ -92,9 +88,10 @@ export type ComboDTOBody = {
   almacen_destino_id: number;
 };
 
-/** PUT /v2/ventas/{id}/combos */
-export type ReemplazarCombosBody = {
+/** PUT /v2/ventas/{id}/lineas — las dos colecciones, un solo cuerpo. */
+export type ReemplazarLineasBody = {
   combos: ComboDTOBody[];
+  productos: ProductoDTOBody[];
 };
 
 export type VendedorDTOBody = {
@@ -173,43 +170,31 @@ export function toActualizarClienteBody(input: ClienteInput): ActualizarClienteB
   };
 }
 
-export function toReemplazarProductosBody(input: ProductosInput): ReemplazarProductosBody {
-  const productos: ProductoDTOBody[] = input.productos.map((p) => {
-    if (p.comboID !== null) {
-      // Part of a combo — almacenes are null
-      return {
-        id: p.id,
-        articulo_id: p.articuloID,
-        articulo: p.articulo,
-        cantidad: p.cantidad.toV2String(),
-        precio_anual: p.precioAnual.toV2String(),
-        precio_corto: p.precioCorto.toV2String(),
-        precio_contado: p.precioContado.toV2String(),
-        combo_id: p.comboID,
-        almacen_origen_id: null,
-        almacen_destino_id: null,
-      };
-    }
-    // Not in a combo — almacenes are set
-    return {
-      id: p.id,
-      articulo_id: p.articuloID,
-      articulo: p.articulo,
-      cantidad: p.cantidad.toV2String(),
-      precio_anual: p.precioAnual.toV2String(),
-      precio_corto: p.precioCorto.toV2String(),
-      precio_contado: p.precioContado.toV2String(),
-      combo_id: null,
-      almacen_origen_id: p.almacenes!.origenID,
-      almacen_destino_id: p.almacenes!.destinoID,
-    };
-  });
-
-  return { productos };
+function toProductoDTOBody(p: LineasInput["productos"][number]): ProductoDTOBody {
+  const base = {
+    id: p.id,
+    articulo_id: p.articuloID,
+    articulo: p.articulo,
+    cantidad: p.cantidad.toV2String(),
+    precio_anual: p.precioAnual.toV2String(),
+    precio_corto: p.precioCorto.toV2String(),
+    precio_contado: p.precioContado.toV2String(),
+  };
+  if (p.comboID !== null) {
+    // Parte de un combo: hereda los almacenes del combo, así que van en null.
+    return { ...base, combo_id: p.comboID, almacen_origen_id: null, almacen_destino_id: null };
+  }
+  // Producto suelto: la entidad garantiza que almacenes no es null.
+  return {
+    ...base,
+    combo_id: null,
+    almacen_origen_id: p.almacenes!.origenID,
+    almacen_destino_id: p.almacenes!.destinoID,
+  };
 }
 
-export function toReemplazarCombosBody(input: CombosInput): ReemplazarCombosBody {
-  const combos: ComboDTOBody[] = input.combos.map((c) => ({
+function toComboDTOBody(c: LineasInput["combos"][number]): ComboDTOBody {
+  return {
     id: c.id,
     nombre: c.nombre,
     precio_anual: c.precioAnual.toV2String(),
@@ -218,9 +203,14 @@ export function toReemplazarCombosBody(input: CombosInput): ReemplazarCombosBody
     cantidad: c.cantidad.toV2String(),
     almacen_origen_id: c.almacenes.origenID,
     almacen_destino_id: c.almacenes.destinoID,
-  }));
+  };
+}
 
-  return { combos };
+export function toReemplazarLineasBody(input: LineasInput): ReemplazarLineasBody {
+  return {
+    combos: input.combos.map(toComboDTOBody),
+    productos: input.productos.map(toProductoDTOBody),
+  };
 }
 
 export function toReemplazarVendedoresBody(input: VendedoresInput): ReemplazarVendedoresBody {

@@ -20,13 +20,20 @@ export type HeaderCambios = {
   nota: string | null;
 };
 
+// LineasCambios viaja SIEMPRE completo: aunque sólo cambie un producto, el
+// cuerpo de PUT /lineas reemplaza las dos colecciones, así que la capa de
+// presentación manda el estado final de ambas o ninguna.
+export type LineasCambios = {
+  combos: ReadonlyArray<Combo>;
+  productos: ReadonlyArray<Producto>;
+};
+
 export type EdicionVentaInput = {
   ventaActual: Venta;
   cambios: {
     cliente?: ClienteSnapshot;
     header?: HeaderCambios;
-    productos?: ReadonlyArray<Producto>;
-    combos?: ReadonlyArray<Combo>;
+    lineas?: LineasCambios;
     vendedores?: ReadonlyArray<Vendedor>;
     imagenesNuevas: ReadonlyArray<ImagenNueva>;    // empty array = none
     imagenesAEliminar: ReadonlyArray<string>;      // server IDs to delete; empty = none

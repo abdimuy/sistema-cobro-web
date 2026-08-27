@@ -124,19 +124,19 @@ export const PlanTab = ({
         <SubCardHeader title="Montos" />
         <div className="px-5 py-5">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <CampoInline label="Anual" helper="Suma de productos">
+            <CampoInline label="Anual" helper="Suma de líneas">
               <p className="font-mono text-sm tabular-nums text-foreground">
                 {fmtMoney(preciosCalculados.anual)}
               </p>
             </CampoInline>
 
-            <CampoInline label="Corto plazo" helper="Suma de productos">
+            <CampoInline label="Corto plazo" helper="Suma de líneas">
               <p className="font-mono text-sm tabular-nums text-foreground">
                 {fmtMoney(preciosCalculados.cortoPlazo)}
               </p>
             </CampoInline>
 
-            <CampoInline label="Contado" helper="Suma de productos">
+            <CampoInline label="Contado" helper="Suma de líneas">
               <p className="font-mono text-sm tabular-nums text-foreground">
                 {fmtMoney(preciosCalculados.contado)}
               </p>

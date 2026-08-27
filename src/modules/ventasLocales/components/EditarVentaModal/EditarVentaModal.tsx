@@ -13,6 +13,7 @@ import { useVentaEditState } from "../../presentation/hooks/useVentaEditState";
 import { useGuardarEdicionVenta } from "../../presentation/hooks/useGuardarEdicionVenta";
 import type { PasoEdicion } from "../../application/dto/EdicionVentaResult";
 import { computeDiffSummary } from "./shell/computeDiffSummary";
+import type { DiffSummary } from "./shell/computeDiffSummary";
 import { Vendedor } from "../../domain/entities/Vendedor";
 import { apiClient } from "../../infrastructure/http/apiClient";
 
@@ -45,8 +46,7 @@ type TabId = "resumen" | "cliente" | "plan" | "productos" | "vendedores" | "imag
 const PASO_LABELS: Record<PasoEdicion, string> = {
   cliente: "cliente",
   header: "datos generales",
-  combos: "combos",
-  productos: "productos",
+  lineas: "productos y combos",
   vendedores: "vendedores",
   eliminar_imagen: "eliminar imagen",
   adjuntar_imagen: "subir imagen",
@@ -145,28 +145,46 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
     [formData.cliente.clienteID, venta.cliente.cliente_id, venta.nombre_cliente_microsip],
   );
 
-  const totalAnualCalculado = useMemo(
-    () =>
-      formData.productos
-        .filter((p) => !p.isDeleted)
-        .reduce((sum, p) => sum + p.precioAnual * p.cantidad, 0),
-    [formData.productos],
-  );
-
+  // Los tres totales de línea salen de la MISMA regla que el servidor aplica al
+  // guardar (internal/ventas/domain/venta.go, recomputarMontos): los productos
+  // de un combo NO suman por su cuenta —su valor vive en el precio del combo—
+  // y el combo suma una vez, por su cantidad.
+  //
+  // Aquí se sumaban todos los productos, hijos de combo incluidos, y no se
+  // sumaba ningún combo. Con un combo con descuento (15,000 con partes que
+  // valen 18,500) la pantalla decía 20,900 donde la venta quedaba en 17,400, y
+  // ahora que los hijos del combo se editan en esta misma pantalla, tocar uno
+  // movía un número que el servidor nunca iba a guardar.
   const preciosCalculados = useMemo(() => {
-    const active = formData.productos.filter((p) => !p.isDeleted);
+    const sueltos = formData.productos.filter((p) => !p.isDeleted && p.comboID === null);
+    const combos = formData.combos.filter((c) => !c.isDeleted);
+    const suma = (
+      precioProducto: (p: (typeof sueltos)[number]) => number,
+      precioCombo: (c: (typeof combos)[number]) => number,
+    ): number =>
+      sueltos.reduce((s, p) => s + precioProducto(p) * p.cantidad, 0) +
+      combos.reduce((s, c) => s + precioCombo(c) * c.cantidad, 0);
+
     return {
-      anual: active.reduce((s, p) => s + p.precioAnual * p.cantidad, 0),
-      cortoPlazo: active.reduce((s, p) => s + p.precioCortoPlazo * p.cantidad, 0),
-      contado: active.reduce((s, p) => s + p.precioContado * p.cantidad, 0),
+      anual: suma((p) => p.precioAnual, (c) => c.precioAnual),
+      cortoPlazo: suma((p) => p.precioCortoPlazo, (c) => c.precioCortoPlazo),
+      contado: suma((p) => p.precioContado, (c) => c.precioContado),
     };
-  }, [formData.productos]);
+  }, [formData.productos, formData.combos]);
+
+  const totalAnualCalculado = preciosCalculados.anual;
 
   // ── Cambios count (one per section + per imagen) ────────────────────────────
 
+  const diffSummary = useMemo(
+    () => computeDiffSummary(formData, ventaOriginal),
+    [formData, ventaOriginal],
+  );
+
+  const diffSections = useMemo(() => buildDiffSections(diffSummary), [diffSummary]);
+
   const cambiosCount = useMemo(() => {
     let count = 0;
-    const diffSections = buildDiffSections(formData, venta);
     for (const s of diffSections) {
       if (s.differs) count++;
     }
@@ -184,14 +202,7 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
       count = count - 1 + imagenesNuevas + imagenesEliminar;
     }
     return count;
-  }, [formData, venta]);
-
-  const diffSections = useMemo(() => buildDiffSections(formData, venta), [formData, venta]);
-
-  const diffSummary = useMemo(
-    () => computeDiffSummary(formData, ventaOriginal),
-    [formData, ventaOriginal],
-  );
+  }, [diffSections, formData.imagenes]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -445,82 +456,25 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
 
 export default EditarVentaModal;
 
-// ─── Diff helpers (used for ResumenTab) ───────────────────────────────────────
+// ─── Diff helpers (used for ResumenTab y el contador del pie) ─────────────────
 
-import type { EditarVentaFormData } from "../../presentation/hooks/useVentaEditState";
-
+// Las secciones salen del MISMO cálculo que el popover de revisión
+// (computeDiffSummary), que compara campo por campo contra la venta original.
+//
+// Antes vivía aquí una segunda familia de checks que sólo miraba altas, bajas
+// y el conteo de filas: editar el nombre o el precio de un combo —o el precio
+// de un producto— dejaba el pie diciendo "Sin cambios" mientras el botón de
+// guardar sí se habilitaba.
 function buildDiffSections(
-  formData: EditarVentaFormData,
-  venta: VentaV2,
+  diffSummary: DiffSummary,
 ): Array<{ label: string; differs: boolean }> {
-  // We use direct field comparison to determine section changes
-  const clienteChanged = checkClienteDiffers(formData, venta);
-  const planChanged = checkHeaderDiffers(formData, venta);
-  const productosChanged = checkProductosDiffers(formData, venta);
-  const vendedoresChanged = checkVendedoresDiffers(formData, venta);
-  const combosChanged = checkCombosDiffers(formData, venta);
-  const imagenesChanged = formData.imagenes.some(
-    (i) => i.kind === "new" || (i.kind === "existing" && i.isDeleted),
-  );
-
+  const secciones = new Set(diffSummary.map((d) => d.section));
   return [
-    { label: "Cliente", differs: clienteChanged },
-    { label: "Plan", differs: planChanged },
-    { label: "Productos", differs: productosChanged || combosChanged },
-    { label: "Vendedores", differs: vendedoresChanged },
-    { label: "Imágenes", differs: imagenesChanged },
+    { label: "Cliente", differs: secciones.has("Cliente") },
+    { label: "Plan", differs: secciones.has("Plan") },
+    // Combos y productos comparten pestaña: una sola fila para los dos.
+    { label: "Productos", differs: secciones.has("Productos") || secciones.has("Combos") },
+    { label: "Vendedores", differs: secciones.has("Vendedores") },
+    { label: "Imágenes", differs: secciones.has("Imágenes") },
   ];
-}
-
-function checkClienteDiffers(fd: EditarVentaFormData, v: VentaV2): boolean {
-  const c = v.cliente;
-  const d = v.direccion;
-  if (fd.cliente.nombreCliente !== c.nombre) return true;
-  if (fd.cliente.telefono !== (c.telefono ?? "")) return true;
-  if (fd.cliente.aval !== (c.aval ?? "")) return true;
-  if (fd.cliente.referencia !== (c.referencia ?? "")) return true;
-  if (fd.cliente.clienteID !== (c.cliente_id ?? null)) return true;
-  if (fd.cliente.calle !== d.calle) return true;
-  if (fd.cliente.numeroExterior !== (d.numero_exterior ?? "")) return true;
-  if (fd.cliente.colonia !== d.colonia) return true;
-  if (fd.cliente.poblacion !== d.poblacion) return true;
-  if (fd.cliente.ciudad !== d.ciudad) return true;
-  if (fd.cliente.zonaClienteId !== (d.zona_cliente_id ?? null)) return true;
-  return false;
-}
-
-function checkHeaderDiffers(fd: EditarVentaFormData, v: VentaV2): boolean {
-  if (fd.financiero.fechaVenta !== v.fecha_venta) return true;
-  if (fd.gps.latitud !== v.gps.latitud || fd.gps.longitud !== v.gps.longitud) return true;
-  if (fd.financiero.montoAnual !== v.montos.anual) return true;
-  if (fd.financiero.montoCortoPlazo !== v.montos.corto_plazo) return true;
-  if (fd.financiero.montoContado !== v.montos.contado) return true;
-  const plan = v.plan_credito;
-  if (fd.financiero.plazoMeses !== (plan?.plazo_meses ?? 0)) return true;
-  if (fd.financiero.enganche !== (plan?.enganche ?? "0.00")) return true;
-  if (fd.financiero.parcialidad !== (plan?.parcialidad ?? "0.00")) return true;
-  if (fd.financiero.frecPago !== (plan?.frec_pago ?? "")) return true;
-  if (fd.financiero.nota !== (v.nota ?? "")) return true;
-  return false;
-}
-
-function checkProductosDiffers(fd: EditarVentaFormData, v: VentaV2): boolean {
-  const active = fd.productos.filter((p) => !p.isDeleted);
-  if (active.length !== v.productos.length) return true;
-  if (fd.productos.some((p) => p.isNew || p.isDeleted)) return true;
-  return false;
-}
-
-function checkVendedoresDiffers(fd: EditarVentaFormData, v: VentaV2): boolean {
-  const active = fd.vendedores.filter((x) => !x.isDeleted);
-  if (active.length !== v.vendedores.length) return true;
-  if (fd.vendedores.some((p) => p.isNew || p.isDeleted)) return true;
-  return false;
-}
-
-function checkCombosDiffers(fd: EditarVentaFormData, v: VentaV2): boolean {
-  const active = fd.combos.filter((p) => !p.isDeleted);
-  if (active.length !== v.combos.length) return true;
-  if (fd.combos.some((p) => p.isNew || p.isDeleted)) return true;
-  return false;
 }

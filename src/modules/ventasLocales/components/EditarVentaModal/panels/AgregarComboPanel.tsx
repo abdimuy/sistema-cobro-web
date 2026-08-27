@@ -18,6 +18,8 @@ interface AgregarComboPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   almacenesDefault: AlmacenesFormData;
+  /** Catálogo de almacenes. Iba vacío: los selectores no ofrecían nada. */
+  almacenes: ReadonlyArray<{ id: number; nombre: string }>;
   onAgregar: (c: Omit<ComboFormData, "id" | "isNew" | "isDeleted">) => void;
 }
 
@@ -37,6 +39,7 @@ export const AgregarComboPanel = ({
   open,
   onOpenChange,
   almacenesDefault,
+  almacenes,
   onAgregar,
 }: AgregarComboPanelProps) => {
   const [form, setForm] = useState<ComboFormState>({
@@ -68,7 +71,13 @@ export const AgregarComboPanel = ({
     onOpenChange(false);
   };
 
-  const canSubmit = form.nombre.trim().length > 0 && form.cantidad > 0;
+  // Mismo guard que AgregarProductoPanel: sin almacén no se puede agregar.
+  // En una venta 100 % combos el par por defecto salía en {0, 0} y el combo
+  // nacía con almacén 0 — el guardado moría con "los ids de almacén deben ser
+  // enteros positivos" sin marcar ningún campo.
+  const noAlmacen = form.almacenOrigenID === 0 || form.almacenDestinoID === 0;
+
+  const canSubmit = form.nombre.trim().length > 0 && form.cantidad > 0 && !noAlmacen;
 
   const handleAgregar = () => {
     if (!canSubmit) return;
@@ -156,27 +165,33 @@ export const AgregarComboPanel = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <CampoInline label="Almacén de origen">
+            <CampoInline label="Almacén de origen" obligatorio>
               <SeleccionarAlmacenCombobox
                 value={form.almacenOrigenID > 0 ? form.almacenOrigenID : null}
                 onChange={(v) =>
                   setForm((prev) => ({ ...prev, almacenOrigenID: v ?? 0 }))
                 }
-                almacenes={[]}
+                almacenes={almacenes}
                 placeholder="Origen"
               />
             </CampoInline>
-            <CampoInline label="Almacén de destino">
+            <CampoInline label="Almacén de destino" obligatorio>
               <SeleccionarAlmacenCombobox
                 value={form.almacenDestinoID > 0 ? form.almacenDestinoID : null}
                 onChange={(v) =>
                   setForm((prev) => ({ ...prev, almacenDestinoID: v ?? 0 }))
                 }
-                almacenes={[]}
+                almacenes={almacenes}
                 placeholder="Destino"
               />
             </CampoInline>
           </div>
+
+          {noAlmacen && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-[12px] text-destructive">
+              Elegí origen y destino.
+            </div>
+          )}
         </div>
 
         {/* Footer */}

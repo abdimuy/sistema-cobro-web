@@ -26,14 +26,20 @@ export type ClienteInput = {
   cliente: ClienteSnapshot;
 };
 
-export type ProductosInput = {
+// LineasInput lleva las DOS colecciones de líneas de la venta. El API las
+// reemplaza en UNA sola transacción (PUT /v2/ventas/{id}/lineas) y valida las
+// referencias producto→combo contra el estado final.
+//
+// Por qué no hay ya un `reemplazarCombos` y un `reemplazarProductos`: con dos
+// peticiones, borrar un combo y crear otro con id nuevo —el rodeo que la gente
+// descubrió sola para cambiar el contenido de un combo— falla en CUALQUIER
+// orden. Combos primero: el combo nuevo no cubre a los productos viejos.
+// Productos primero: los productos nuevos apuntan a un combo que ya no existe.
+// Las dos ramas terminan en 422 producto_combo_referencia_invalida.
+export type LineasInput = {
   ventaID: string;
-  productos: ReadonlyArray<Producto>;
-};
-
-export type CombosInput = {
-  ventaID: string;
-  combos: ReadonlyArray<Combo>;
+  combos: ReadonlyArray<Combo>;    // puede ir vacío
+  productos: ReadonlyArray<Producto>; // el API exige al menos uno
 };
 
 export type VendedoresInput = {
@@ -55,8 +61,7 @@ export interface VentaEditPort {
   obtenerVenta(ventaID: string): Promise<Venta>;
   actualizarHeader(input: HeaderInput): Promise<Venta>;
   actualizarCliente(input: ClienteInput): Promise<Venta>;
-  reemplazarProductos(input: ProductosInput): Promise<Venta>;
-  reemplazarCombos(input: CombosInput): Promise<Venta>;
+  reemplazarLineas(input: LineasInput): Promise<Venta>;
   reemplazarVendedores(input: VendedoresInput): Promise<Venta>;
   adjuntarImagen(input: AdjuntarImagenInput): Promise<ImagenExistente>;
   eliminarImagen(input: EliminarImagenInput): Promise<void>;
