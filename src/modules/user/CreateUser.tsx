@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { db, secondaryAuth } from "../../../firebase";
 import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { Timestamp, doc, setDoc } from "firebase/firestore";
@@ -10,17 +10,82 @@ import { ZonaCliente } from "../../services/api/getZonasCliente";
 import { CobradorDto } from "../../hooks/useGetCobradores";
 import useGetZonasCliente from "./useGetZonaCliente";
 import { androidModules } from "../../constants/androidModules";
+import { apiClient } from "./infrastructure/http/apiClient";
+import { HttpUserAdapter } from "./infrastructure/http/HttpUserAdapter";
+import { crearUsuario } from "./application/usecases/crearUsuario";
+import { DomainError } from "./domain/errors";
+
+// Un alta toca TRES sistemas y ninguno sabe de los otros: Firebase Auth (el
+// login), Firestore (lo que lee la app Android) y el API Go (MSP_USUARIOS, de
+// donde salen las pantallas de Vendedores y de Usuarios y roles). Saltarse el
+// tercero fue el defecto: cinco personas se dieron de alta y ninguna apareció
+// en Vendedores.
+const MSG_OK = "Usuario registrado exitosamente.";
+
+// El color del aviso lo decide `tono`, NO el texto. Antes se decidía con
+// `message.includes("Error")`, y los tres mensajes de error de Firebase de
+// más abajo no llevan esa palabra: la oficina los estaba viendo en VERDE.
+// Sniffear el texto para elegir el color vuelve a romperse con cada mensaje
+// nuevo, así que el estado lleva la intención explícita.
+type Tono = "ok" | "error";
+
+// mensajeSinApi dice las DOS cosas que la operadora necesita: que el usuario
+// SÍ quedó creado (Firebase y Firestore ya están escritos y no se deshacen) y
+// que falta registrarlo en el API. `razon` viene del DomainError del
+// adaptador — sin ella el aviso es el mismo para un permiso faltante que para
+// un teléfono demasiado largo, y no hay nada que corregir a ciegas.
+const mensajeSinApi = (razon?: string) =>
+  razon
+    ? `Error: ${razon}. El usuario sí se creó; falta registrarlo.`
+    : "Error al registrarlo en el sistema. El usuario sí se creó.";
+
+// El 409 NO es "falta registrarlo": la colisión es contra una fila que ya
+// está en MSP_USUARIOS, y volver a capturarla no arregla nada.
+//
+// El caso que ANTES era el frecuente ya no llega aquí: cuando un cobrador
+// nombra a alguien vendedor desde el teléfono, el API crea la fila al vuelo
+// con ESTATUS = VENDEDOR_ONLY (internal/auth/domain/usuario.go:90), y desde
+// ahora POST /v2/usuarios la PROMUEVE en sitio — engancha el firebase_uid,
+// la pasa a FIREBASE_USER conservando el id, y contesta 201. No hay aviso.
+//
+// Lo que queda bajo el 409 son tres colisiones que NO se resuelven solas al
+// iniciar sesión, y el API devuelve el MISMO código para las tres
+// (domain.ErrUsuarioYaExiste → code "usuario_ya_existe",
+// internal/auth/domain/errors.go:23) sin exponer cuál fue:
+//
+//  1. el correo pertenece a una fila DESACTIVADA — reactivarla es una
+//     decisión de oficina, deliberada;
+//  2. el correo ya es un FIREBASE_USER atado a otra cuenta de Firebase;
+//  3. el firebase_uid recién creado ya lo usa otra fila.
+//
+// Por eso el texto no promete nada automático: sólo dice que el alta en
+// Firebase sí ocurrió y que alguien tiene que revisarlo. Prometer que "queda
+// listo al iniciar sesión" —lo que decía antes— es peor que un mensaje
+// genérico: manda a la operadora a esperar algo que no va a pasar.
+const MSG_YA_EXISTIA =
+  "Error: el registro ya existe. El usuario sí se creó; requiere revisión manual.";
+
+const NAVEGAR_MS = 1500;
+// En el camino de fallo el mensaje dice que hay algo que hacer (registrar al
+// usuario a mano, o pedir que revisen la colisión), así que se le da tiempo de
+// sobra para leerlo antes de salir de la pantalla.
+const NAVEGAR_MS_FALLO = 8000;
 
 const CreateUser = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [name, setName] = useState<string>("");
   const [message, setMessage] = useState<string>("");
+  const [tono, setTono] = useState<Tono>("ok");
   const [ruta, setRuta] = useState<Ruta>();
   const [telefono, setTelefono] = useState<string>("");
   const [zonaCliente, setZonaCliente] = useState<ZonaCliente>();
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const navigate = useNavigate();
+
+  // Raíz de composición del módulo: el adaptador HTTP se instancia una sola
+  // vez y el caso de uso sólo conoce el puerto.
+  const userPort = useMemo(() => new HttpUserAdapter(apiClient), []);
 
   const { rutas, error } = useGetRutas();
   const { zonasCliente } = useGetZonasCliente();
@@ -51,10 +116,48 @@ const CreateUser = () => {
       };
       await setDoc(doc(db, "users", user.uid), data);
 
+      // Tercer paso: registrar el alta en el API (MSP_USUARIOS). Va aquí,
+      // entre el setDoc y el signOut, para no depender del orden de dos SDKs
+      // distintos. El token que viaja es el del ADMIN que opera la pantalla
+      // (apiClient usa `auth`, nunca `secondaryAuth`), que es lo correcto para
+      // el created_by del API.
+      let altaEnApi = true;
+      let razonFallo: string | undefined;
+      let codigoFallo: string | undefined;
+      try {
+        await crearUsuario(userPort, {
+          firebaseUid: user.uid,
+          email,
+          nombre: name,
+          telefono: telefono.trim() || undefined,
+        });
+      } catch (apiError) {
+        // Firebase y Firestore ya están escritos y no se deshacen: el alta NO
+        // se considera fallida. Se avisa y se sigue. Nada de reintentos en
+        // bucle — lo que hace falta es que alguien lo vea.
+        altaEnApi = false;
+        codigoFallo = apiError instanceof DomainError ? apiError.code : undefined;
+        razonFallo =
+          apiError instanceof Error && apiError.message
+            ? apiError.message
+            : undefined;
+        console.error("Error registrando el usuario en el API:", apiError);
+      }
+
       // Sign out the newly created user immediately to keep admin session active
       await signOut(secondaryAuth);
 
-      setMessage("Usuario registrado exitosamente.");
+      if (altaEnApi) {
+        setMessage(MSG_OK);
+        setTono("ok");
+      } else {
+        setMessage(
+          codigoFallo === "usuario_ya_existe"
+            ? MSG_YA_EXISTIA
+            : mensajeSinApi(razonFallo)
+        );
+        setTono("error");
+      }
 
       // Reset form
       setEmail("");
@@ -63,21 +166,32 @@ const CreateUser = () => {
       setTelefono("");
       setSelectedModules([]);
 
-      // Navigate after a short delay to show success message
-      setTimeout(() => {
-        navigate("/settings");
-      }, 1500);
-    } catch (error: any) {
+      // Navigate after a short delay to show the message
+      setTimeout(
+        () => {
+          navigate("/settings");
+        },
+        altaEnApi ? NAVEGAR_MS : NAVEGAR_MS_FALLO
+      );
+    } catch (error: unknown) {
       console.error("Error creating user:", error);
+      const code =
+        typeof error === "object" && error !== null && "code" in error
+          ? String((error as { code: unknown }).code)
+          : "";
+      // Los tres primeros no llevaban la palabra "Error" y se pintaban en
+      // verde. Ahora el color lo fija `tono`; la palabra se conserva porque
+      // además hace el aviso legible por sí solo.
       setMessage(
-        error.code === "auth/email-already-in-use"
-          ? "Este correo ya está registrado."
-          : error.code === "auth/weak-password"
-          ? "La contraseña debe tener al menos 6 caracteres."
-          : error.code === "auth/invalid-email"
-          ? "El correo electrónico no es válido."
+        code === "auth/email-already-in-use"
+          ? "Error: este correo ya está registrado."
+          : code === "auth/weak-password"
+          ? "Error: la contraseña necesita 6 caracteres."
+          : code === "auth/invalid-email"
+          ? "Error: el correo no es válido."
           : "Error al registrar el usuario. Intenta nuevamente."
       );
+      setTono("error");
     }
   };
 
@@ -202,7 +316,7 @@ const CreateUser = () => {
       </button>
       <p
         className={`text-center mt-4 text-sm ${
-          message.includes("Error") ? "text-red-500" : "text-green-500"
+          tono === "error" ? "text-red-500" : "text-green-500"
         }`}
       >
         {message}
