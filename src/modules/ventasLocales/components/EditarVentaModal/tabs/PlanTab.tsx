@@ -42,12 +42,6 @@ const fmtMoney = (n: number): string =>
 const getFieldError = (errors: ValidationError[], field: string): string | undefined =>
   errors.find((e) => e.field === field)?.message;
 
-const montosDiffer = (rawStr: string, calculated: number): boolean => {
-  const raw = parseFloat(rawStr);
-  if (isNaN(raw)) return false;
-  return Math.abs(raw - calculated) > 0.005;
-};
-
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const SubCardHeader = ({ title }: { title: string }) => (
@@ -66,9 +60,6 @@ export const PlanTab = ({
 }: PlanTabProps) => {
   const isCredito = data.tipoVenta === "CREDITO";
 
-  const errorMontoAnual = getFieldError(errors, "financiero.montoAnual");
-  const errorMontoCortoPlazo = getFieldError(errors, "financiero.montoCortoPlazo");
-  const errorMontoContado = getFieldError(errors, "financiero.montoContado");
   const errorEnganche = getFieldError(errors, "financiero.enganche");
   const errorParcialidad = getFieldError(errors, "financiero.parcialidad");
   const errorFrecPago = getFieldError(errors, "financiero.frecPago");
@@ -85,10 +76,6 @@ export const PlanTab = ({
       onUpdate("diaCobranzaSemana", "");
     }
   };
-
-  const anualDiffers = montosDiffer(data.montoAnual, preciosCalculados.anual);
-  const cortoDiffers = montosDiffer(data.montoCortoPlazo, preciosCalculados.cortoPlazo);
-  const contadoDiffers = montosDiffer(data.montoContado, preciosCalculados.contado);
 
   return (
     <div className="space-y-6">
@@ -125,81 +112,34 @@ export const PlanTab = ({
         </div>
       </div>
 
-      {/* Sub-card: Montos */}
+      {/* Sub-card: Montos
+          Sólo lectura, y no por prudencia: el servidor DESCARTA los montos que
+          se le manden. `crear_venta.go` los marca "ignored: montos are derived
+          from line items" y `ActualizarHeaderInput` ni siquiera los incluye.
+          Eran tres campos editables que no hacían nada — se escribía otro
+          número, se guardaba sin error, y al recargar volvía al anterior.
+          Para cambiar un total hay que cambiar los precios de las líneas, en
+          la pestaña Productos. */}
       <div className="rounded-lg border border-border/60 bg-card">
         <SubCardHeader title="Montos" />
         <div className="px-5 py-5">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <CampoInline
-              label="Anual"
-              obligatorio
-              error={errorMontoAnual}
-              helper={
-                !errorMontoAnual
-                  ? `Suma productos: ${fmtMoney(preciosCalculados.anual)}`
-                  : undefined
-              }
-            >
-              <div>
-                <MontoInput
-                  value={data.montoAnual}
-                  onChange={(v) => onUpdate("montoAnual", v)}
-                  error={!!errorMontoAnual}
-                />
-                {anualDiffers && !errorMontoAnual && (
-                  <p className="mt-0.5 text-[11px] text-chart-4">
-                    Difiere del calculado ({fmtMoney(preciosCalculados.anual)})
-                  </p>
-                )}
-              </div>
+            <CampoInline label="Anual" helper="Suma de productos">
+              <p className="font-mono text-sm tabular-nums text-foreground">
+                {fmtMoney(preciosCalculados.anual)}
+              </p>
             </CampoInline>
 
-            <CampoInline
-              label="Corto plazo"
-              obligatorio
-              error={errorMontoCortoPlazo}
-              helper={
-                !errorMontoCortoPlazo
-                  ? `Suma productos: ${fmtMoney(preciosCalculados.cortoPlazo)}`
-                  : undefined
-              }
-            >
-              <div>
-                <MontoInput
-                  value={data.montoCortoPlazo}
-                  onChange={(v) => onUpdate("montoCortoPlazo", v)}
-                  error={!!errorMontoCortoPlazo}
-                />
-                {cortoDiffers && !errorMontoCortoPlazo && (
-                  <p className="mt-0.5 text-[11px] text-chart-4">
-                    Difiere del calculado ({fmtMoney(preciosCalculados.cortoPlazo)})
-                  </p>
-                )}
-              </div>
+            <CampoInline label="Corto plazo" helper="Suma de productos">
+              <p className="font-mono text-sm tabular-nums text-foreground">
+                {fmtMoney(preciosCalculados.cortoPlazo)}
+              </p>
             </CampoInline>
 
-            <CampoInline
-              label="Contado"
-              obligatorio
-              error={errorMontoContado}
-              helper={
-                !errorMontoContado
-                  ? `Suma productos: ${fmtMoney(preciosCalculados.contado)}`
-                  : undefined
-              }
-            >
-              <div>
-                <MontoInput
-                  value={data.montoContado}
-                  onChange={(v) => onUpdate("montoContado", v)}
-                  error={!!errorMontoContado}
-                />
-                {contadoDiffers && !errorMontoContado && (
-                  <p className="mt-0.5 text-[11px] text-chart-4">
-                    Difiere del calculado ({fmtMoney(preciosCalculados.contado)})
-                  </p>
-                )}
-              </div>
+            <CampoInline label="Contado" helper="Suma de productos">
+              <p className="font-mono text-sm tabular-nums text-foreground">
+                {fmtMoney(preciosCalculados.contado)}
+              </p>
             </CampoInline>
           </div>
         </div>

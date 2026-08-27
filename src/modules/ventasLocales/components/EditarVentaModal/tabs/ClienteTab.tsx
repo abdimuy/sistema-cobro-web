@@ -20,6 +20,13 @@ interface Props {
   errors: ValidationError[];
   onUpdate: UpdateCliente;
   onUpdateGps: (field: "latitud" | "longitud", value: number) => void;
+  // Nombre real del cliente en Microsip para el clienteID vigente (viene de
+  // `nombre_cliente_microsip` en el detalle de la venta). Ausente cuando no
+  // hay cliente ligado, cuando el API no lo resolvió, o cuando el clienteID
+  // vigente ya no es el original de la venta (se ligó a otro cliente en esta
+  // misma sesión) — en ese caso EditarVentaModal deja de pasarlo y el nombre
+  // ya recién elegido en `data.nombreCliente` toma su lugar.
+  nombreClienteMicrosip?: string;
 }
 
 const SubCardHeader = ({ title }: { title: string }) => (
@@ -28,10 +35,28 @@ const SubCardHeader = ({ title }: { title: string }) => (
   </div>
 );
 
-export const ClienteTab = ({ data, gps, errors, onUpdate, onUpdateGps }: Props) => {
+export const ClienteTab = ({ data, gps, errors, onUpdate, onUpdateGps, nombreClienteMicrosip }: Props) => {
   const nombreError = getFieldError(errors, "cliente.nombreCliente");
   const telefonoError = getFieldError(errors, "cliente.telefono");
   const calleError = getFieldError(errors, "cliente.calle");
+
+  // Microsip manda sobre los datos del cliente cuando la venta está ligada:
+  // el campo Nombre se bloquea y muestra su nombre real, no lo que ya traía
+  // guardado la venta (eso fue el defecto: alguien lo editó sin desvincular).
+  // Si el API no resolvió el nombre, no se inventa nada — se muestra el que
+  // ya tenía la venta, en sólo lectura, porque el cliente sigue existiendo.
+  const vinculado = data.clienteID !== null;
+  const nombreMostrado = vinculado ? (nombreClienteMicrosip ?? data.nombreCliente) : data.nombreCliente;
+
+  const handleClienteMicrosipChange = (clienteId: number | null, nombre?: string) => {
+    onUpdate("clienteID", clienteId);
+    // Vincular y nombrar es un solo gesto: al elegir del buscador, el nombre
+    // se rellena solo con el dato real. Al desvincular no se toca el nombre;
+    // queda editable con lo que ya tenía.
+    if (nombre !== undefined) {
+      onUpdate("nombreCliente", nombre);
+    }
+  };
 
   const { zonas } = useGetZonasCliente();
   const zonasCombobox = useMemo(
@@ -53,8 +78,10 @@ export const ClienteTab = ({ data, gps, errors, onUpdate, onUpdateGps }: Props) 
         <div className="px-5 py-5 space-y-5">
           <CampoInline label="Nombre" obligatorio error={nombreError}>
             <Input
-              value={data.nombreCliente}
+              value={nombreMostrado}
               onChange={(e) => onUpdate("nombreCliente", e.target.value.toUpperCase())}
+              disabled={vinculado}
+              title={vinculado ? "Se edita en Microsip" : undefined}
               className={cn(nombreError && "border-destructive/60 focus-visible:ring-destructive/30")}
               aria-invalid={!!nombreError}
             />
@@ -91,8 +118,8 @@ export const ClienteTab = ({ data, gps, errors, onUpdate, onUpdateGps }: Props) 
             </p>
             <SeleccionarClienteMicrosipCombobox
               value={data.clienteID}
-              onChange={(id) => onUpdate("clienteID", id)}
-              fallbackName={data.nombreCliente}
+              onChange={handleClienteMicrosipChange}
+              nombreVinculado={nombreClienteMicrosip}
             />
           </div>
         </div>

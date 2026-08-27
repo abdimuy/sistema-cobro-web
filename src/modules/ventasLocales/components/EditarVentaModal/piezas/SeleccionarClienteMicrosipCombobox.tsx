@@ -14,12 +14,12 @@ import { useBuscarClientesMicrosip } from "./useBuscarClientesMicrosip";
 
 interface Props {
   value: number | null;
-  onChange: (clienteId: number | null) => void;
-  // fallbackName is shown on the trigger when a clienteID is already linked
-  // (loaded from the venta) but the user hasn't searched a client this session,
-  // so no in-session Cliente object is cached. Pass the venta's own client name
-  // here so the trigger reads "NOMBRE #id" instead of a bare "Cliente #id".
-  fallbackName?: string;
+  onChange: (clienteId: number | null, nombre?: string) => void;
+  // nombreVinculado es el nombre REAL del cliente en Microsip (llega del API,
+  // resuelto para el clienteID vigente). Se usa para el disparador cuando no
+  // hay un Cliente cacheado en esta sesión — nunca es texto tecleado por el
+  // usuario. Pásalo como undefined si el API no lo resolvió.
+  nombreVinculado?: string;
 }
 
 const saldoFormatter = new Intl.NumberFormat("es-MX", {
@@ -38,7 +38,7 @@ function formatSaldo(saldo: string): string | null {
 // clientes directory). Async twin of SeleccionarZonaCombobox: shouldFilter
 // is off on <Command> and the query drives useBuscarClientesMicrosip
 // (debounced, stale-request-safe) instead of filtering an in-memory list.
-export const SeleccionarClienteMicrosipCombobox = ({ value, onChange, fallbackName }: Props) => {
+export const SeleccionarClienteMicrosipCombobox = ({ value, onChange, nombreVinculado }: Props) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   // Cache of the last picked Cliente so the trigger can show a name instead
@@ -50,13 +50,13 @@ export const SeleccionarClienteMicrosipCombobox = ({ value, onChange, fallbackNa
   const { items, isLoading, error } = useBuscarClientesMicrosip(query);
 
   const handleSelect = (cliente: Cliente) => {
-    onChange(cliente.clienteId);
+    onChange(cliente.clienteId, cliente.nombre);
     setSelected(cliente);
     setOpen(false);
   };
 
   const handleDesvincular = () => {
-    onChange(null);
+    onChange(null, undefined);
     setSelected(null);
   };
 
@@ -79,18 +79,37 @@ export const SeleccionarClienteMicrosipCombobox = ({ value, onChange, fallbackNa
               {value === null ? (
                 "Vincular cliente Microsip"
               ) : (
-                <>
-                  {selected?.nombre ?? (fallbackName?.trim() || "Cliente")}
-                  <span className="ml-1.5 font-mono text-[11px] text-muted-foreground">
-                    #{value}
-                  </span>
-                </>
+                (() => {
+                  // NUNCA mostrar el nombre tecleado por el usuario aquí: ese fue
+                  // exactamente el defecto — el disparador pintaba el texto libre
+                  // del campo Nombre como si fuera el cliente vinculado,
+                  // confirmando visualmente una venta apuntando a otra persona.
+                  // Solo el nombre ya resuelto (esta sesión o por Microsip); si
+                  // no hay ninguno, el id a secas.
+                  const nombreResuelto = selected?.nombre ?? nombreVinculado;
+                  if (nombreResuelto === undefined) return `Cliente #${value}`;
+                  return (
+                    <>
+                      {nombreResuelto}
+                      <span className="ml-1.5 font-mono text-[11px] text-muted-foreground">
+                        #{value}
+                      </span>
+                    </>
+                  );
+                })()
               )}
             </span>
             <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-[320px] p-0" align="start">
+        {/* El ancho lo dicta el disparador, no un valor fijo: Radix publica
+            --radix-popover-trigger-width en el contenido. Con un ancho fijo el
+            panel quedaba más angosto que el campo y los nombres largos se
+            recortaban justo donde hay que distinguir a dos clientes parecidos. */}
+        <PopoverContent
+          className="w-[var(--radix-popover-trigger-width)] min-w-[320px] p-0"
+          align="start"
+        >
           <Command shouldFilter={false}>
             <CommandInput
               value={query}

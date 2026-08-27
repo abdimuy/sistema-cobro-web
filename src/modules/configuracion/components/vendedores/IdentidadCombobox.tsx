@@ -55,7 +55,13 @@ export function IdentidadCombobox({ opciones, value, onSelect, slot, placeholder
           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0" align="start">
+      {/* El ancho lo dicta el disparador (Radix publica
+          --radix-popover-trigger-width), no un valor fijo: con 300px el panel
+          quedaba más angosto que el campo y desalineado. */}
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] min-w-[300px] p-0"
+        align="start"
+      >
         <Command>
           <CommandInput placeholder="Buscar vendedor…" />
           <CommandList

@@ -132,6 +132,19 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
     [errors],
   );
 
+  // El nombre de Microsip que trae la venta (`nombre_cliente_microsip`) sólo
+  // es válido para el clienteID CON el que llegó: si en esta sesión se ligó
+  // a otro cliente vía el buscador, ese nombre queda obsoleto y no debe
+  // mostrarse — el nombre recién elegido ya vive en formData.cliente.nombreCliente
+  // (mismo gesto de vincular+nombrar en ClienteTab).
+  const nombreClienteMicrosip = useMemo(
+    () =>
+      formData.cliente.clienteID === venta.cliente.cliente_id
+        ? venta.nombre_cliente_microsip
+        : undefined,
+    [formData.cliente.clienteID, venta.cliente.cliente_id, venta.nombre_cliente_microsip],
+  );
+
   const totalAnualCalculado = useMemo(
     () =>
       formData.productos
@@ -291,6 +304,7 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
                 venta={venta}
                 nombre={formData.cliente.nombreCliente}
                 onNombreChange={(v) => updateCliente("nombreCliente", v)}
+                nombreBloqueado={formData.cliente.clienteID != null}
                 totalAnualCalculado={totalAnualCalculado}
                 activeProductsCount={activeProductsCount}
                 activeImagesCount={activeImagesCount}
@@ -348,6 +362,7 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
                       errors={errors}
                       onUpdate={updateCliente}
                       onUpdateGps={updateGps}
+                      nombreClienteMicrosip={nombreClienteMicrosip}
                     />
                   </TabsContent>
 

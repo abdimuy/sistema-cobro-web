@@ -30,25 +30,33 @@ describe("SeleccionarClienteMicrosipCombobox", () => {
     expect(screen.queryByLabelText("Desvincular cliente")).not.toBeInTheDocument();
   });
 
-  it("shows 'Cliente #<id>' when linked but the client hasn't been looked up this session", () => {
+  it("shows 'Cliente #<id>' when linked but no name resolved (no session lookup, no nombreVinculado)", () => {
     render(<SeleccionarClienteMicrosipCombobox value={24037} onChange={vi.fn()} />);
-    expect(screen.getByText("Cliente")).toBeInTheDocument();
-    expect(screen.getByText("#24037")).toBeInTheDocument();
+    expect(screen.getByText("Cliente #24037")).toBeInTheDocument();
     expect(screen.getByLabelText("Desvincular cliente")).toBeInTheDocument();
   });
 
-  it("shows the fallbackName + #id when linked with a name from the venta (no session lookup)", () => {
+  it("shows nombreVinculado + #id when linked with a name resolved by the API (no session lookup)", () => {
     render(
       <SeleccionarClienteMicrosipCombobox
         value={2655626}
         onChange={vi.fn()}
-        fallbackName="JUAN PÉREZ GARCÍA"
+        nombreVinculado="JUAN PÉREZ GARCÍA"
       />,
     );
     expect(screen.getByText("JUAN PÉREZ GARCÍA")).toBeInTheDocument();
     expect(screen.getByText("#2655626")).toBeInTheDocument();
-    // The bare "Cliente" placeholder must NOT appear once we have a name.
-    expect(screen.queryByText("Cliente")).not.toBeInTheDocument();
+    // The combined "Cliente #id" fallback must NOT appear once we have a name.
+    expect(screen.queryByText(/^Cliente #/)).not.toBeInTheDocument();
+  });
+
+  it("never shows a name that doesn't come from selected or nombreVinculado", () => {
+    // No session pick (selected=null) and no nombreVinculado from the API:
+    // the trigger must fall back to the bare id, never invent or echo a name
+    // from anywhere else (e.g. text typed into an unrelated field).
+    render(<SeleccionarClienteMicrosipCombobox value={99} onChange={vi.fn()} />);
+    expect(screen.getByText("Cliente #99")).toBeInTheDocument();
+    expect(screen.queryByText(/PÉREZ|SANCHEZ|GARCÍA/)).not.toBeInTheDocument();
   });
 
   it("typing in the search box drives the hook with the current query", async () => {
@@ -109,7 +117,7 @@ describe("SeleccionarClienteMicrosipCombobox", () => {
     await user.type(screen.getByPlaceholderText("Buscar por nombre o ID…"), "minerva");
     await user.click(screen.getByText("MINERVA LÓPEZ HERNÁNDEZ"));
 
-    expect(onChange).toHaveBeenCalledWith(24037);
+    expect(onChange).toHaveBeenCalledWith(24037, "MINERVA LÓPEZ HERNÁNDEZ");
     await waitFor(() =>
       expect(screen.queryByPlaceholderText("Buscar por nombre o ID…")).not.toBeInTheDocument(),
     );
@@ -128,7 +136,7 @@ describe("SeleccionarClienteMicrosipCombobox", () => {
 
     await user.click(screen.getByLabelText("Desvincular cliente"));
 
-    expect(onChange).toHaveBeenCalledWith(null);
+    expect(onChange).toHaveBeenCalledWith(null, undefined);
     expect(screen.queryByPlaceholderText("Buscar por nombre o ID…")).not.toBeInTheDocument();
   });
 

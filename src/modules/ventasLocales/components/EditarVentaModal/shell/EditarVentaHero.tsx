@@ -1,6 +1,7 @@
 import { useState } from "react";
 import dayjs from "dayjs";
 import type { VentaV2 } from "@/services/api/ventaV2Types";
+import { cn } from "@/lib/utils";
 
 const fmtMoney = (n: number): string =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
@@ -18,6 +19,14 @@ interface Props {
   venta: VentaV2;
   nombre: string;
   onNombreChange: (v: string) => void;
+  // nombreBloqueado apaga la edición en línea del título cuando la venta ya
+  // está ligada a un cliente de Microsip.
+  //
+  // No es un adorno: sin esto, el título del modal es una SEGUNDA puerta al
+  // mismo campo que la pestaña Cliente bloquea, y bastaría con renombrar
+  // desde aquí para volver a desincronizar el nombre del cliente_id — que es
+  // exactamente el defecto que aplicó tres ventas al cliente equivocado.
+  nombreBloqueado?: boolean;
   totalAnualCalculado: number;
   activeProductsCount: number;
   activeImagesCount: number;
@@ -27,6 +36,7 @@ export const EditarVentaHero = ({
   venta,
   nombre,
   onNombreChange,
+  nombreBloqueado = false,
   totalAnualCalculado,
   activeProductsCount,
   activeImagesCount,
@@ -40,6 +50,7 @@ export const EditarVentaHero = ({
   };
 
   const startEditing = () => {
+    if (nombreBloqueado) return;
     setDraft(nombre);
     setEditing(true);
   };
@@ -55,7 +66,7 @@ export const EditarVentaHero = ({
             EDITANDO · {fechaFormatted}
           </p>
           <h1 className="font-serif text-[32px] font-normal leading-[1.1] tracking-tight text-foreground">
-            {editing ? (
+            {editing && !nombreBloqueado ? (
               <input
                 className="font-serif text-[32px] font-normal leading-[1.1] tracking-tight bg-transparent border-0 outline-none focus:ring-0 w-full"
                 value={draft}
@@ -74,7 +85,14 @@ export const EditarVentaHero = ({
               <button
                 type="button"
                 onClick={startEditing}
-                className="text-left hover:bg-muted/40 -mx-1 px-1 rounded transition-colors"
+                disabled={nombreBloqueado}
+                title={nombreBloqueado ? "Se edita en Microsip" : undefined}
+                className={cn(
+                  "text-left -mx-1 px-1 rounded transition-colors",
+                  nombreBloqueado
+                    ? "cursor-default"
+                    : "hover:bg-muted/40"
+                )}
               >
                 {nombre || "Sin nombre"}
               </button>
