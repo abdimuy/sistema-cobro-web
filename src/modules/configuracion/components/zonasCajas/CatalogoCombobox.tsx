@@ -47,7 +47,11 @@ export function CatalogoCombobox({ opciones, value, onSelect, placeholder }: Pro
           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[260px] p-0" align="start">
+      {/* El ancho lo dicta el disparador —Radix publica
+          --radix-popover-trigger-width— y nunca un valor fijo: el panel del
+          buscador mide siempre lo mismo que el campo que lo abre. Sin mínimo:
+          un min-w lo vuelve a desalinear en cuanto el disparador es más angosto. */}
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
           <CommandInput placeholder={placeholder ?? "Buscar…"} />
           <CommandList
