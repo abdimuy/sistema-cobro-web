@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
 import VentaProductosTable from "./VentaProductosTable";
 import type { VentaV2 } from "@/services/api/ventaV2Types";
@@ -81,6 +81,63 @@ function makeVenta(overrides: Partial<VentaV2> = {}): VentaV2 {
   } as unknown as VentaV2;
 }
 
+// ─── Lectura por columna ─────────────────────────────────────────────────────
+//
+// Preguntar "¿aparece este texto en este <tr>?" no comprueba NADA sobre las
+// columnas. Un precio pintado bajo el nivel equivocado —exactamente el defecto
+// que esta pantalla existe para hacer visible— pasa desapercibido. Medido:
+// intercambiando `contado` y `corto` en `tierValue`, las seis pruebas de este
+// archivo seguían en verde, y la suite entera también.
+//
+// Estos helpers atan cada número a SU columna. El mapeo nivel→columna se LEE
+// del encabezado en vez de escribirse a mano: si alguien reordena las
+// columnas, el mapeo se recalcula solo y las aserciones siguen comprobando el
+// nivel y no la posición.
+
+type ColumnasDeNivel = { unitario: number; importe: number };
+
+/** Mapa nivel → índices de columna, deducido del primer piso del encabezado. */
+function columnasPorNivel(): Record<string, ColumnasDeNivel> {
+  const filaDeNiveles = screen
+    .getByText("Descripción")
+    .closest("tr") as HTMLTableRowElement;
+
+  const mapa: Record<string, ColumnasDeNivel> = {};
+  let columna = 0;
+  for (const celda of Array.from(filaDeNiveles.cells)) {
+    const ancho = celda.colSpan || 1;
+    // Los niveles son los encabezados que agrupan dos columnas: unitario e
+    // importe. Los de una sola (Descripción, Cant.) no son niveles.
+    if (ancho === 2) {
+      mapa[celda.textContent?.trim() ?? ""] = {
+        unitario: columna,
+        importe: columna + 1,
+      };
+    }
+    columna += ancho;
+  }
+  return mapa;
+}
+
+/**
+ * Las celdas de una fila indexadas por COLUMNA: expande los `colSpan` para que
+ * el índice del arreglo sea el de la columna y no el de la celda.
+ */
+function celdasPorColumna(fila: HTMLTableRowElement): HTMLTableCellElement[] {
+  const porColumna: HTMLTableCellElement[] = [];
+  for (const celda of Array.from(fila.cells)) {
+    for (let i = 0; i < (celda.colSpan || 1); i++) porColumna.push(celda);
+  }
+  return porColumna;
+}
+
+/** Las celdas, por columna, de la fila que contiene `texto`. */
+function filaDe(texto: string): HTMLTableCellElement[] {
+  return celdasPorColumna(
+    screen.getByText(texto).closest("tr") as HTMLTableRowElement,
+  );
+}
+
 describe("VentaProductosTable — unitario contra importe", () => {
   it("distingue el precio unitario del importe en los encabezados", () => {
     render(<VentaProductosTable venta={makeVenta()} />);
@@ -93,27 +150,28 @@ describe("VentaProductosTable — unitario contra importe", () => {
 
   it("muestra el importe de los TRES niveles por renglón, no sólo el que se cobra", () => {
     render(<VentaProductosTable venta={makeVenta()} />);
+    const col = columnasPorNivel();
+    const fila = filaDe("SILLA MADERA");
 
-    const fila = screen.getByText("SILLA MADERA").closest("tr");
-    expect(fila).not.toBeNull();
-    const celdas = within(fila as HTMLElement);
-
-    // El $61,600 de contado tiene que aparecer junto al $11,200 anual: es lo
-    // único que deja ver que un precio está cinco veces sobre el otro.
-    expect(celdas.getAllByText("$61,600")).toHaveLength(2); // contado y corto
-    expect(celdas.getByText("$11,200")).toBeInTheDocument();
-    expect(celdas.getAllByText("$7,700")).toHaveLength(2); // los unitarios
-    expect(celdas.getByText("$1,400")).toBeInTheDocument();
+    // El $61,600 de contado tiene que estar BAJO LA COLUMNA de contado, junto
+    // al $11,200 de anual: es lo único que deja ver que un precio va cinco
+    // veces sobre el otro.
+    expect(fila[col["Contado"].unitario]).toHaveTextContent("$7,700");
+    expect(fila[col["Contado"].importe]).toHaveTextContent("$61,600");
+    expect(fila[col["Corto plazo"].unitario]).toHaveTextContent("$7,700");
+    expect(fila[col["Corto plazo"].importe]).toHaveTextContent("$61,600");
+    expect(fila[col["Anual"].unitario]).toHaveTextContent("$1,400");
+    expect(fila[col["Anual"].importe]).toHaveTextContent("$11,200");
   });
 
-  it("totaliza los tres niveles al pie", () => {
+  it("totaliza los tres niveles al pie, cada uno bajo su columna", () => {
     render(<VentaProductosTable venta={makeVenta()} />);
+    const col = columnasPorNivel();
+    const pie = filaDe("Total");
 
-    const total = screen.getByText("Total").closest("tr");
-    const celdas = within(total as HTMLElement);
-
-    expect(celdas.getAllByText("$61,600")).toHaveLength(2);
-    expect(celdas.getByText("$11,200")).toBeInTheDocument();
+    expect(pie[col["Contado"].importe]).toHaveTextContent("$61,600");
+    expect(pie[col["Corto plazo"].importe]).toHaveTextContent("$61,600");
+    expect(pie[col["Anual"].importe]).toHaveTextContent("$11,200");
   });
 
   it("el combo aporta su importe y sus piezas no aportan ninguno", () => {
@@ -146,16 +204,15 @@ describe("VentaProductosTable — unitario contra importe", () => {
       ],
     } as unknown as Partial<VentaV2>);
     render(<VentaProductosTable venta={venta} />);
+    const col = columnasPorNivel();
+    const filaCombo = filaDe("SALA 3 PIEZAS");
 
-    const filaCombo = screen.getByText("SALA 3 PIEZAS").closest("tr");
-    const celdas = within(filaCombo as HTMLElement);
+    expect(filaCombo[col["Anual"].importe]).toHaveTextContent("$10,000"); // × 2
+    expect(filaCombo[col["Corto plazo"].importe]).toHaveTextContent("$9,000");
+    expect(filaCombo[col["Contado"].importe]).toHaveTextContent("$8,000");
 
-    expect(celdas.getByText("$10,000")).toBeInTheDocument(); // anual × 2
-    expect(celdas.getByText("$9,000")).toBeInTheDocument(); // corto × 2
-    expect(celdas.getByText("$8,000")).toBeInTheDocument(); // contado × 2
-
-    const filaPieza = screen.getByText("SOFA").closest("tr");
-    expect(within(filaPieza as HTMLElement).queryByText(/\$/)).toBeNull();
+    const filaPieza = screen.getByText("SOFA").closest("tr") as HTMLElement;
+    expect(filaPieza.textContent).not.toContain("$");
   });
 });
 
@@ -175,8 +232,13 @@ describe("VentaProductosTable — el pie concuerda con los montos del servidor",
   // (que suma por su precio) con una pieza dentro (que no suma), y un
   // producto suelto con cantidad. Es la combinación en la que las variantes
   // equivocadas de la regla dan resultados distintos.
+  // Los tres niveles llevan valores DISTINTOS, y los seis totales que salen de
+  // ellos también. Es deliberado: con dos niveles iguales —como en la venta
+  // real de las 8 sillas, donde contado y corto plazo valían los dos 7,700—
+  // intercambiar esas dos columnas es indetectable por construcción, y la
+  // prueba no puede decir nada sobre el mapeo.
   const COMBO = { cantidad: 2, anual: 5000, corto: 4500, contado: 4000 };
-  const SUELTO = { cantidad: 8, anual: 1400, corto: 7700, contado: 7700 };
+  const SUELTO = { cantidad: 8, anual: 1400, corto: 1300, contado: 1200 };
 
   const ventaConCombo = () =>
     makeVenta({
@@ -233,18 +295,35 @@ describe("VentaProductosTable — el pie concuerda con los montos del servidor",
       maximumFractionDigits: 0,
     }).format(Number(raw));
 
-  it("los tres totales del pie son los tres montos que manda el servidor", () => {
+  it("cada total del pie está bajo su nivel y vale lo que manda el servidor", () => {
     const venta = ventaConCombo();
     render(<VentaProductosTable venta={venta} />);
+    const col = columnasPorNivel();
+    const pie = filaDe("Total");
 
-    const pie = within(screen.getByText("Total").closest("tr") as HTMLElement);
+    // Es un cotejo del MAPEO, no del conjunto: cada monto del servidor tiene
+    // que estar en la columna de su nivel. Así cae tanto una divergencia de
+    // cálculo (dejar de contar los combos) como un cruce de columnas (pintar
+    // el precio de un nivel bajo el encabezado de otro).
+    expect(pie[col["Anual"].importe]).toHaveTextContent(fmt(venta.montos.anual));
+    expect(pie[col["Corto plazo"].importe]).toHaveTextContent(
+      fmt(venta.montos.corto_plazo),
+    );
+    expect(pie[col["Contado"].importe]).toHaveTextContent(fmt(venta.montos.contado));
+  });
 
-    // Uno por nivel. Si el cálculo del cliente se separara del del servidor
-    // —por ejemplo dejando de contar los combos, que es la divergencia que ya
-    // ocurrió una vez en este repo— alguno de los tres dejaría de aparecer.
-    expect(pie.getByText(fmt(venta.montos.anual))).toBeInTheDocument();
-    expect(pie.getByText(fmt(venta.montos.corto_plazo))).toBeInTheDocument();
-    expect(pie.getByText(fmt(venta.montos.contado))).toBeInTheDocument();
+  it("y los unitarios de cada renglón también están bajo su nivel", () => {
+    render(<VentaProductosTable venta={ventaConCombo()} />);
+    const col = columnasPorNivel();
+    const fila = filaDe("SILLA MADERA");
+
+    expect(fila[col["Anual"].unitario]).toHaveTextContent(fmt(String(SUELTO.anual)));
+    expect(fila[col["Corto plazo"].unitario]).toHaveTextContent(
+      fmt(String(SUELTO.corto)),
+    );
+    expect(fila[col["Contado"].unitario]).toHaveTextContent(
+      fmt(String(SUELTO.contado)),
+    );
   });
 
   it("la pieza del combo no se cuela en el total aunque traiga precio propio", () => {
@@ -252,10 +331,12 @@ describe("VentaProductosTable — el pie concuerda con los montos del servidor",
     // está dentro del precio del combo.
     const venta = ventaConCombo();
     render(<VentaProductosTable venta={venta} />);
+    const col = columnasPorNivel();
+    const pie = filaDe("Total");
 
-    const pie = within(screen.getByText("Total").closest("tr") as HTMLElement);
-
-    expect(pie.getByText(fmt(venta.montos.anual))).toBeInTheDocument();
-    expect(pie.queryByText(fmt(String(Number(venta.montos.anual) + 9999)))).toBeNull();
+    expect(pie[col["Anual"].importe]).toHaveTextContent(fmt(venta.montos.anual));
+    expect(pie[col["Anual"].importe]).not.toHaveTextContent(
+      fmt(String(Number(venta.montos.anual) + 9999)),
+    );
   });
 });
