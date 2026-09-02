@@ -224,8 +224,15 @@ describe("VentaProductosTable — unitario contra importe", () => {
 // nada lo notaría.
 //
 // La prueba compara el pie contra `venta.montos` en vez de contra constantes
-// escritas a mano, así que es un cotejo real entre el cálculo del cliente y el
-// del servidor (`recomputarMontos`), no una repetición del fixture.
+// escritas a mano, y lo hace COLUMNA POR COLUMNA: cada monto del servidor
+// tiene que estar bajo el encabezado de su nivel, no simplemente aparecer en
+// algún lugar del renglón.
+//
+// La distinción no es teórica. La primera versión de estas pruebas preguntaba
+// "¿aparece este texto en este <tr>?", que coteja el CONJUNTO y no el MAPEO.
+// Con esa forma, intercambiar `contado` y `corto` en `tierValue` —un precio
+// pintado bajo el encabezado del otro nivel, justo el defecto que esta
+// pantalla existe para hacer visible— dejaba las seis pruebas en verde.
 
 describe("VentaProductosTable — el pie concuerda con los montos del servidor", () => {
   // Una venta con las dos formas de línea a la vez: un combo con cantidad
