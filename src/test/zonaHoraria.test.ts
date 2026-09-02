@@ -25,20 +25,25 @@ import {
 // suite obtiene la misma zona, y una prueba puede usar una hora que sí
 // distingue (18:38, pasadas las 18:00, cuando México ya va un día atrás de
 // UTC) sin volverse dependiente de la máquina.
+//
+// Y la zona elegida es UTC, no la del negocio. Eso también es deliberado: si
+// la suite corriera en la zona del negocio, "anclado al negocio" y "anclado
+// al navegador" darían la misma respuesta y ninguna prueba podría
+// distinguirlos. Sería elegir otra vez el valor que deja verde cualquier
+// implementación. En UTC, una conversión anclada al navegador falla.
 
 describe("la suite fija la zona horaria", () => {
   it("vitest.config.ts declara TZ", () => {
-    expect(process.env.TZ).toBe("America/Mexico_City");
+    expect(process.env.TZ).toBe("UTC");
   });
 
-  it("y el runtime la respeta: pasadas las 18:00 México va un día atrás de UTC", () => {
+  it("y el runtime la respeta: el reloj del worker es UTC", () => {
     // Si TZ no llegara al worker, `Date` seguiría con la zona de la máquina y
-    // este offset sería el que fuera. 360 minutos = UTC-6.
+    // este offset sería el que fuera. 0 = UTC.
     const instante = new Date("2026-09-02T00:38:00Z");
 
-    expect(instante.getTimezoneOffset()).toBe(360);
-    expect(instante.getDate()).toBe(1);
-    expect(instante.getUTCDate()).toBe(2);
+    expect(instante.getTimezoneOffset()).toBe(0);
+    expect(instante.getDate()).toBe(instante.getUTCDate());
   });
 });
 

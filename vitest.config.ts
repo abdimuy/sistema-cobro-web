@@ -24,10 +24,27 @@ export default defineConfig({
     // y uno que convierte a local son indistinguibles. Por eso la suite
     // estaba verde mientras la fecha de venta se veía un día adelantada.
     //
-    // Es la zona del negocio (`ZONA_DE_NEGOCIO` en src/utils/tiempoDeNegocio)
-    // y la de las máquinas donde corre el escritorio. src/test/zonaHoraria
-    // .test.ts comprueba que llegue efectivamente al worker.
-    env: { TZ: "America/Mexico_City" },
+    // ## Por qué UTC y NO la zona del negocio
+    //
+    // Es deliberado, y es lo contrario de lo que parece natural. La regla del
+    // repo es anclar las conversiones a la zona del NEGOCIO
+    // (`ZONA_DE_NEGOCIO`), nunca a la del navegador. Si la suite corriera
+    // TAMBIÉN en la zona del negocio, las dos cosas coincidirían y ninguna
+    // prueba podría distinguirlas: una implementación anclada al navegador
+    // pasaría todas las pruebas de fechas, exactamente igual que la correcta.
+    // Medido: con TZ en America/Mexico_City, sustituir la conversión de
+    // PlanTab por el camino `dayjs` anclado al navegador deja las 4 pruebas
+    // en verde; con TZ en UTC, las 4 se ponen en rojo.
+    //
+    // Sería el fixture de las 12:00:00Z otra vez, un piso más arriba: elegir
+    // el valor que hace verde cualquier implementación. UTC es la única zona
+    // en la que "anclado al negocio" y "anclado al navegador" dan respuestas
+    // distintas para toda hora del día, así que es la única en la que las
+    // pruebas prueban algo.
+    //
+    // src/test/zonaHoraria.test.ts comprueba que la declaración llegue
+    // efectivamente al worker.
+    env: { TZ: "UTC" },
     setupFiles: ["./src/test/setup.ts"],
     css: false,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
