@@ -128,6 +128,12 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
       });
     });
 
+  // OJO: ésta es la MISMA regla de suma que `preciosDeLineas` y que
+  // `recomputarMontos` del servidor, escrita una tercera vez porque aquí
+  // opera sobre el DTO `VentaV2` y no sobre los tipos `*FormData` del editor.
+  // Coinciden hoy. Si cambia una, tienen que cambiar las tres — la prueba
+  // "el pie concuerda con los montos que manda el servidor" existe para que
+  // una divergencia se note.
   const totalDe = (t: Tier): number =>
     rows.reduce((sum, r) => sum + (tierImporte(r, t) ?? 0), 0);
 
@@ -138,6 +144,7 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
     <TableHead
       key={t}
       colSpan={2}
+      scope="colgroup"
       className={cn(
         "border-l border-border/40 text-center text-[10px] font-medium uppercase tracking-wider",
         t === tier ? "text-foreground" : "text-muted-foreground"
@@ -149,6 +156,7 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
 
   const subHead = (label: string, primera: boolean) => (
     <TableHead
+      scope="col"
       className={cn(
         "w-28 text-right text-[10px] font-normal uppercase tracking-wider text-muted-foreground",
         primera && "border-l border-border/40"
@@ -189,19 +197,23 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
           {venta.combos.length} combos · {venta.productos.length} productos
         </p>
       </div>
-      <div className="overflow-x-auto rounded-lg border border-border/60">
+      {/* Sin contenedor de scroll propio: el `Table` de shadcn ya envuelve
+          en un div con `overflow-auto`. Añadir otro no hace nada. */}
+      <div className="overflow-hidden rounded-lg border border-border/60">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead className="w-12" rowSpan={2}></TableHead>
               <TableHead
                 rowSpan={2}
+                scope="col"
                 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
               >
                 Descripción
               </TableHead>
               <TableHead
                 rowSpan={2}
+                scope="col"
                 className="w-16 text-right text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
               >
                 Cant.
@@ -277,12 +289,13 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
             })}
             <TableRow className="border-t border-border bg-muted/30 hover:bg-muted/30">
               <TableCell></TableCell>
-              <TableCell
+              <TableHead
                 colSpan={2}
-                className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
+                scope="row"
+                className="h-auto p-4 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
               >
                 Total
-              </TableCell>
+              </TableHead>
               {TIERS.map(({ tier: t }) => (
                 <Fragment key={t}>
                   <TableCell className="border-l border-border/40"></TableCell>

@@ -37,6 +37,15 @@ export type PreciosPorNivel = {
  * valía $6,000 y esa pantalla decía $5,500: ni el total real ni el de ninguna
  * otra regla. Duplicar esto no es barato — el número que sale de aquí es el
  * que el capturista compara contra lo que va a quedar en Microsip.
+ *
+ * ## Dónde MÁS vive esta regla
+ *
+ * Aquí no está toda. `VentaProductosTable` (la tabla del modal de detalle)
+ * la implementa otra vez en su `totalDe`, porque opera sobre el DTO `VentaV2`
+ * y no sobre estos tipos `*FormData`. Son dos variantes deliberadas sobre
+ * formas de dato distintas, no un descuido — pero **son dos**, y con
+ * `recomputarMontos` del servidor, tres. Si cambia el criterio, hay que
+ * cambiar las tres.
  */
 export function preciosDeLineas(
   productos: readonly ProductoFormData[],

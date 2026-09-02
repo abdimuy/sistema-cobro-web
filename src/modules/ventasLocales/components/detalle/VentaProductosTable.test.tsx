@@ -158,3 +158,104 @@ describe("VentaProductosTable — unitario contra importe", () => {
     expect(within(filaPieza as HTMLElement).queryByText(/\$/)).toBeNull();
   });
 });
+
+// Todo este arreglo existe para que el capturista COMPARE números. Pero la
+// pantalla enseña dos totales calculados por caminos distintos: esta tabla los
+// recalcula en el cliente a partir de las líneas, y el encabezado
+// (VentaDetalleHero) pinta los que manda el servidor en `venta.montos`. Si
+// divergieran, el usuario vería dos totales distintos de la misma venta y
+// nada lo notaría.
+//
+// La prueba compara el pie contra `venta.montos` en vez de contra constantes
+// escritas a mano, así que es un cotejo real entre el cálculo del cliente y el
+// del servidor (`recomputarMontos`), no una repetición del fixture.
+
+describe("VentaProductosTable — el pie concuerda con los montos del servidor", () => {
+  // Una venta con las dos formas de línea a la vez: un combo con cantidad
+  // (que suma por su precio) con una pieza dentro (que no suma), y un
+  // producto suelto con cantidad. Es la combinación en la que las variantes
+  // equivocadas de la regla dan resultados distintos.
+  const COMBO = { cantidad: 2, anual: 5000, corto: 4500, contado: 4000 };
+  const SUELTO = { cantidad: 8, anual: 1400, corto: 7700, contado: 7700 };
+
+  const ventaConCombo = () =>
+    makeVenta({
+      montos: {
+        anual: String(COMBO.cantidad * COMBO.anual + SUELTO.cantidad * SUELTO.anual),
+        corto_plazo: String(COMBO.cantidad * COMBO.corto + SUELTO.cantidad * SUELTO.corto),
+        contado: String(COMBO.cantidad * COMBO.contado + SUELTO.cantidad * SUELTO.contado),
+      },
+      combos: [
+        {
+          id: "44444444-4444-4444-4444-444444444444",
+          nombre: "SALA 3 PIEZAS",
+          precio_anual: String(COMBO.anual),
+          precio_corto: String(COMBO.corto),
+          precio_contado: String(COMBO.contado),
+          cantidad: String(COMBO.cantidad),
+          almacen_origen_id: 1,
+          almacen_destino_id: 2,
+        },
+      ],
+      productos: [
+        {
+          id: "22222222-2222-2222-2222-222222222222",
+          articulo_id: 4210,
+          articulo: "SILLA MADERA",
+          cantidad: String(SUELTO.cantidad),
+          precio_anual: String(SUELTO.anual),
+          precio_corto: String(SUELTO.corto),
+          precio_contado: String(SUELTO.contado),
+          combo_id: null,
+          almacen_origen_id: 1,
+          almacen_destino_id: 2,
+        },
+        {
+          id: "33333333-3333-3333-3333-333333333333",
+          articulo_id: 900,
+          articulo: "SOFA",
+          cantidad: "1",
+          precio_anual: "9999",
+          precio_corto: "9999",
+          precio_contado: "9999",
+          combo_id: "44444444-4444-4444-4444-444444444444",
+          almacen_origen_id: null,
+          almacen_destino_id: null,
+        },
+      ],
+    } as unknown as Partial<VentaV2>);
+
+  const fmt = (raw: string) =>
+    new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(Number(raw));
+
+  it("los tres totales del pie son los tres montos que manda el servidor", () => {
+    const venta = ventaConCombo();
+    render(<VentaProductosTable venta={venta} />);
+
+    const pie = within(screen.getByText("Total").closest("tr") as HTMLElement);
+
+    // Uno por nivel. Si el cálculo del cliente se separara del del servidor
+    // —por ejemplo dejando de contar los combos, que es la divergencia que ya
+    // ocurrió una vez en este repo— alguno de los tres dejaría de aparecer.
+    expect(pie.getByText(fmt(venta.montos.anual))).toBeInTheDocument();
+    expect(pie.getByText(fmt(venta.montos.corto_plazo))).toBeInTheDocument();
+    expect(pie.getByText(fmt(venta.montos.contado))).toBeInTheDocument();
+  });
+
+  it("la pieza del combo no se cuela en el total aunque traiga precio propio", () => {
+    // El SOFA lleva 9,999 en los tres niveles y NO debe sumar: su valor ya
+    // está dentro del precio del combo.
+    const venta = ventaConCombo();
+    render(<VentaProductosTable venta={venta} />);
+
+    const pie = within(screen.getByText("Total").closest("tr") as HTMLElement);
+
+    expect(pie.getByText(fmt(venta.montos.anual))).toBeInTheDocument();
+    expect(pie.queryByText(fmt(String(Number(venta.montos.anual) + 9999)))).toBeNull();
+  });
+});
