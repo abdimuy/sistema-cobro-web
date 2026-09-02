@@ -41,7 +41,13 @@ const direccionResumen = (venta: VentaV2): string => {
 
 export const VentaDetalleHero = ({ venta }: Props) => {
   const fecha = dayjs(venta.fecha_venta).format("DD MMM YYYY · HH:mm");
-  const totalLabel = venta.tipo_venta === "CONTADO" ? "Precio contado" : "Precio anual";
+  // "Total", no "Precio": estos montos son de la venta completa, y la tabla de
+  // artículos de esta misma pantalla usa los mismos tres nombres para precios
+  // UNITARIOS. Sin el apellido, una venta de 8 sillas capturada con el total
+  // en el campo de contado y el unitario en el de anual quedó con $61,600 de
+  // contado sobre una deuda de $11,200 — y así se escribió en Microsip, donde
+  // alimenta el "Hoy liquida con" del cobrador y el ticket.
+  const totalLabel = venta.tipo_venta === "CONTADO" ? "Total contado" : "Total anual";
   const totalRaw = venta.tipo_venta === "CONTADO" ? venta.montos.contado : venta.montos.anual;
   const estatusInfo =
     venta.cliente.cliente_id != null
@@ -87,9 +93,9 @@ export const VentaDetalleHero = ({ venta }: Props) => {
       </div>
 
       <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border/60 pt-5 font-mono text-[12px] tabular text-muted-foreground">
-        <Item label="Contado" value={fmtShort(venta.montos.contado)} />
+        <Item label="Total contado" value={fmtShort(venta.montos.contado)} />
         <Sep />
-        <Item label="Corto plazo" value={fmtShort(venta.montos.corto_plazo)} />
+        <Item label="Total corto plazo" value={fmtShort(venta.montos.corto_plazo)} />
         {venta.plan_credito && (
           <>
             <Sep />

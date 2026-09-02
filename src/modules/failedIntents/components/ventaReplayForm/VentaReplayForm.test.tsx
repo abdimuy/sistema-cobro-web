@@ -184,6 +184,66 @@ describe("VentaReplayForm", () => {
     });
   });
 
+  // La regla de sumar líneas (Σ precio × cantidad) estaba escrita dos veces en
+  // el escritorio y las dos copias YA habían divergido: el editor de ventas
+  // locales contaba los combos y descontaba a sus hijos —igual que
+  // `recomputarMontos` del servidor— y esta pantalla, que monta las MISMAS
+  // pestañas y muestra los mismos combos, los ignoraba por completo.
+  //
+  // Con un combo de $5,000 que agrupa piezas por $4,500 más una silla suelta
+  // de $1,000, la venta vale $6,000 y el panel Montos decía $5,500: ni el
+  // total real ni el de ninguna otra regla, sólo el de la copia rezagada.
+  it("los montos del replay cuentan el combo y NO sus hijos por separado", async () => {
+    const user = userEvent.setup();
+    const body = makeValidBody();
+    body.combos = [
+      {
+        id: "55555555-5555-5555-5555-555555555555",
+        nombre: "SALA 3 PIEZAS",
+        precio_anual: "5000.00",
+        precio_corto: "5000.00",
+        precio_contado: "5000.00",
+        cantidad: "1",
+        almacen_origen_id: 1,
+        almacen_destino_id: 2,
+      },
+    ];
+    (body.productos as unknown[]).push(
+      {
+        id: "66666666-6666-6666-6666-666666666666",
+        articulo_id: 200,
+        articulo: "SOFA",
+        cantidad: "1",
+        precio_anual: "2400.00",
+        precio_corto: "2400.00",
+        precio_contado: "2400.00",
+        combo_id: "55555555-5555-5555-5555-555555555555",
+        almacen_origen_id: null,
+        almacen_destino_id: null,
+      },
+      {
+        id: "77777777-7777-7777-7777-777777777777",
+        articulo_id: 201,
+        articulo: "SILLON",
+        cantidad: "1",
+        precio_anual: "2100.00",
+        precio_corto: "2100.00",
+        precio_contado: "2100.00",
+        combo_id: "55555555-5555-5555-5555-555555555555",
+        almacen_origen_id: null,
+        almacen_destino_id: null,
+      },
+    );
+
+    render(<VentaReplayForm initialBody={body} onChange={() => {}} />);
+    await user.click(screen.getByRole("tab", { name: /plan/i }));
+
+    // 1,000 de la silla suelta + 5,000 del combo. Los 4,500 de las piezas del
+    // combo NO suman aparte: su valor ya vive en el precio del combo.
+    expect(await screen.findAllByText("$6,000.00")).toHaveLength(3);
+    expect(screen.queryByText("$5,500.00")).toBeNull();
+  });
+
   it("emits onChange with parsed body when the operator edits raw JSON", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import type { VentaV2 } from "@/services/api/ventaV2Types";
 
 import { useVentaEditState } from "../../presentation/hooks/useVentaEditState";
+import { preciosDeLineas } from "../../presentation/preciosDeLineas";
 import { useGuardarEdicionVenta } from "../../presentation/hooks/useGuardarEdicionVenta";
 import type { PasoEdicion } from "../../application/dto/EdicionVentaResult";
 import { computeDiffSummary } from "./shell/computeDiffSummary";
@@ -146,31 +147,13 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
   );
 
   // Los tres totales de línea salen de la MISMA regla que el servidor aplica al
-  // guardar (internal/ventas/domain/venta.go, recomputarMontos): los productos
-  // de un combo NO suman por su cuenta —su valor vive en el precio del combo—
-  // y el combo suma una vez, por su cantidad.
-  //
-  // Aquí se sumaban todos los productos, hijos de combo incluidos, y no se
-  // sumaba ningún combo. Con un combo con descuento (15,000 con partes que
-  // valen 18,500) la pantalla decía 20,900 donde la venta quedaba en 17,400, y
-  // ahora que los hijos del combo se editan en esta misma pantalla, tocar uno
-  // movía un número que el servidor nunca iba a guardar.
-  const preciosCalculados = useMemo(() => {
-    const sueltos = formData.productos.filter((p) => !p.isDeleted && p.comboID === null);
-    const combos = formData.combos.filter((c) => !c.isDeleted);
-    const suma = (
-      precioProducto: (p: (typeof sueltos)[number]) => number,
-      precioCombo: (c: (typeof combos)[number]) => number,
-    ): number =>
-      sueltos.reduce((s, p) => s + precioProducto(p) * p.cantidad, 0) +
-      combos.reduce((s, c) => s + precioCombo(c) * c.cantidad, 0);
-
-    return {
-      anual: suma((p) => p.precioAnual, (c) => c.precioAnual),
-      cortoPlazo: suma((p) => p.precioCortoPlazo, (c) => c.precioCortoPlazo),
-      contado: suma((p) => p.precioContado, (c) => c.precioContado),
-    };
-  }, [formData.productos, formData.combos]);
+  // guardar (internal/ventas/domain/venta.go, recomputarMontos). Vive en
+  // `preciosDeLineas`, una sola vez, porque estaba escrita también en el
+  // formulario de replay y las dos copias ya habían divergido.
+  const preciosCalculados = useMemo(
+    () => preciosDeLineas(formData.productos, formData.combos),
+    [formData.productos, formData.combos],
+  );
 
   const totalAnualCalculado = preciosCalculados.anual;
 

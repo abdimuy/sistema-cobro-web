@@ -11,6 +11,7 @@ import { ProductosTab } from "@/modules/ventasLocales/components/EditarVentaModa
 import { VendedoresTab } from "@/modules/ventasLocales/components/EditarVentaModal/tabs/VendedoresTab";
 import { ResumenTab } from "@/modules/ventasLocales/components/EditarVentaModal/tabs/ResumenTab";
 import { UnderlineTab } from "@/modules/ventasLocales/components/EditarVentaModal/shell/UnderlineTabsBar";
+import { preciosDeLineas } from "@/modules/ventasLocales/presentation/preciosDeLineas";
 
 import { useVentaReplayEdit } from "../../presentation/hooks/useVentaReplayEdit";
 import { isVentaShapedBody } from "../../infrastructure/mappers/isVentaShapedBody";
@@ -276,7 +277,12 @@ function FormBranch({
   const s = edit.state;
   const activeProductsCount = s.formData.productos.filter((p) => !p.isDeleted).length;
   const activeVendedoresCount = s.formData.vendedores.filter((v) => !v.isDeleted).length;
-  const preciosCalculados = computePreciosCalculados(s.formData.productos);
+  // Los combos entran en la suma. Esta pantalla los muestra y los edita en la
+  // pestaña Productos, pero su propia copia de la regla los ignoraba: un combo
+  // de $5,000 sobre piezas de $4,500 daba $5,500 donde la venta vale $6,000.
+  // La regla vive ahora en un solo lugar, el mismo que usa el editor de
+  // ventas locales.
+  const preciosCalculados = preciosDeLineas(s.formData.productos, s.formData.combos);
   const diffSections = buildDiffSections(activeProductsCount, activeVendedoresCount);
 
   return (
@@ -358,23 +364,6 @@ function FormBranch({
 }
 
 type TabId = "resumen" | "cliente" | "plan" | "productos" | "vendedores";
-
-function computePreciosCalculados(
-  productos: Array<{
-    isDeleted?: boolean;
-    cantidad: number;
-    precioAnual: number;
-    precioCortoPlazo: number;
-    precioContado: number;
-  }>,
-): { anual: number; cortoPlazo: number; contado: number } {
-  const active = productos.filter((p) => !p.isDeleted);
-  return {
-    anual: active.reduce((s, p) => s + p.precioAnual * p.cantidad, 0),
-    cortoPlazo: active.reduce((s, p) => s + p.precioCortoPlazo * p.cantidad, 0),
-    contado: active.reduce((s, p) => s + p.precioContado * p.cantidad, 0),
-  };
-}
 
 function buildDiffSections(
   _productosCount: number,

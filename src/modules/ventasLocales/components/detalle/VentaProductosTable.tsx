@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Layers, Package } from "lucide-react";
 import {
   Table,
@@ -29,20 +30,39 @@ const fmtQty = (raw: string): string => {
 
 type Tier = "contado" | "corto" | "anual";
 
+const TIERS: ReadonlyArray<{ tier: Tier; label: string }> = [
+  { tier: "contado", label: "Contado" },
+  { tier: "corto", label: "Corto plazo" },
+  { tier: "anual", label: "Anual" },
+];
+
 interface Row {
   key: string;
   kind: "combo" | "producto" | "combo-item";
   descripcion: string;
   cantidad: string;
+  // Precios UNITARIOS. Cadena vacía en las piezas de un combo, que no llevan
+  // precio propio: su valor vive en el precio del combo.
   precioContado: string;
   precioCorto: string;
   precioAnual: string;
-  subtotal: number;
+  // Cantidad por la que se multiplica el unitario para dar el importe. 0 en
+  // las piezas de un combo, que no aportan importe.
+  multiplicador: number;
   refId?: string;
 }
 
-// The tier the venta actually charges — drives the subtotal and which price
-// column is emphasized. (CONTADO → contado, CREDITO → anual/financiado.)
+// The tier the venta actually charges — drives which column is emphasized.
+// (CONTADO → contado, CREDITO → anual/financiado.) Ya NO decide qué importes
+// se muestran: se muestran los tres.
+//
+// Mostrar sólo el del nivel cobrado fue parte de un defecto caro. Una venta
+// de 8 sillas se capturó con el TOTAL ($7,700) en los campos de contado y
+// corto plazo y el UNITARIO ($1,400) en el de anual; el servidor multiplica
+// los tres por la cantidad y la venta quedó con $61,600 de contado sobre una
+// deuda de $11,200, que es lo que se escribió en Microsip. La pantalla no
+// calculaba mal: es que el $61,600 no aparecía por ningún lado, así que no
+// había forma de ver que un precio iba cinco veces sobre el otro.
 const activeTier = (venta: VentaV2): Tier =>
   venta.tipo_venta === "CONTADO" ? "contado" : "anual";
 
@@ -53,12 +73,19 @@ const tierValue = (row: Row, tier: Tier): string =>
       ? row.precioCorto
       : row.precioAnual;
 
+// El importe del renglón en un nivel: unitario × cantidad.
+const tierImporte = (row: Row, tier: Tier): number | null => {
+  const unitario = tierValue(row, tier);
+  if (unitario === "") return null;
+  return Number(unitario) * row.multiplicador;
+};
+
 export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
   const tier = activeTier(venta);
   const rows: Row[] = [];
 
   venta.combos.forEach((combo) => {
-    const row: Row = {
+    rows.push({
       key: `combo:${combo.id}`,
       kind: "combo",
       descripcion: combo.nombre,
@@ -66,10 +93,8 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
       precioContado: combo.precio_contado,
       precioCorto: combo.precio_corto,
       precioAnual: combo.precio_anual,
-      subtotal: 0,
-    };
-    row.subtotal = Number(tierValue(row, tier)) * Number(combo.cantidad);
-    rows.push(row);
+      multiplicador: Number(combo.cantidad),
+    });
     venta.productos
       .filter((p) => p.combo_id === combo.id)
       .forEach((p) => {
@@ -81,7 +106,7 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
           precioContado: "",
           precioCorto: "",
           precioAnual: "",
-          subtotal: 0,
+          multiplicador: 0,
           refId: String(p.articulo_id),
         });
       });
@@ -90,7 +115,7 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
   venta.productos
     .filter((p) => !p.combo_id)
     .forEach((p) => {
-      const row: Row = {
+      rows.push({
         key: `producto:${p.id}`,
         kind: "producto",
         descripcion: p.articulo,
@@ -98,19 +123,23 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
         precioContado: p.precio_contado,
         precioCorto: p.precio_corto,
         precioAnual: p.precio_anual,
-        subtotal: 0,
+        multiplicador: Number(p.cantidad),
         refId: String(p.articulo_id),
-      };
-      row.subtotal = Number(tierValue(row, tier)) * Number(p.cantidad);
-      rows.push(row);
+      });
     });
 
-  const total = rows.reduce((sum, r) => sum + r.subtotal, 0);
+  const totalDe = (t: Tier): number =>
+    rows.reduce((sum, r) => sum + (tierImporte(r, t) ?? 0), 0);
 
-  const priceHead = (label: string, t: Tier) => (
+  // Encabezado en dos pisos: el nivel arriba, y debajo qué es cada columna.
+  // "Contado" a secas nombraba un unitario aquí y un total en el encabezado
+  // de la venta, y nada decía cuál era cuál.
+  const tierGroupHead = (label: string, t: Tier) => (
     <TableHead
+      key={t}
+      colSpan={2}
       className={cn(
-        "w-28 text-right text-[10px] font-medium uppercase tracking-wider",
+        "border-l border-border/40 text-center text-[10px] font-medium uppercase tracking-wider",
         t === tier ? "text-foreground" : "text-muted-foreground"
       )}
     >
@@ -118,9 +147,28 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
     </TableHead>
   );
 
-  const priceCell = (row: Row, t: Tier) => {
+  const subHead = (label: string, primera: boolean) => (
+    <TableHead
+      className={cn(
+        "w-28 text-right text-[10px] font-normal uppercase tracking-wider text-muted-foreground",
+        primera && "border-l border-border/40"
+      )}
+    >
+      {label}
+    </TableHead>
+  );
+
+  const unitarioCell = (row: Row, t: Tier) => {
     const v = tierValue(row, t);
-    if (v === "") return <TableCell></TableCell>;
+    return (
+      <TableCell className="tabular border-l border-border/40 text-right font-mono text-xs text-muted-foreground">
+        {v === "" ? "" : fmtMoney(v)}
+      </TableCell>
+    );
+  };
+
+  const importeCell = (row: Row, t: Tier) => {
+    const importe = tierImporte(row, t);
     return (
       <TableCell
         className={cn(
@@ -128,7 +176,7 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
           t === tier ? "font-medium text-foreground" : "text-muted-foreground/80"
         )}
       >
-        {fmtMoney(v)}
+        {importe === null ? "" : fmtMoney(String(importe))}
       </TableCell>
     );
   };
@@ -141,23 +189,32 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
           {venta.combos.length} combos · {venta.productos.length} productos
         </p>
       </div>
-      <div className="overflow-hidden rounded-lg border border-border/60">
+      <div className="overflow-x-auto rounded-lg border border-border/60">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="w-12"></TableHead>
-              <TableHead className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              <TableHead className="w-12" rowSpan={2}></TableHead>
+              <TableHead
+                rowSpan={2}
+                className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+              >
                 Descripción
               </TableHead>
-              <TableHead className="w-16 text-right text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              <TableHead
+                rowSpan={2}
+                className="w-16 text-right text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+              >
                 Cant.
               </TableHead>
-              {priceHead("Contado", "contado")}
-              {priceHead("Corto plazo", "corto")}
-              {priceHead("Anual", "anual")}
-              <TableHead className="w-32 text-right text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                Subtotal
-              </TableHead>
+              {TIERS.map(({ tier: t, label }) => tierGroupHead(label, t))}
+            </TableRow>
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              {TIERS.map(({ tier: t }) => (
+                <Fragment key={t}>
+                  {subHead("P. unitario", true)}
+                  {subHead("Importe", false)}
+                </Fragment>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -177,10 +234,9 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
                     <TableCell className="tabular text-right font-mono text-xs text-muted-foreground">
                       {row.cantidad}
                     </TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
+                    {/* Las piezas de un combo no llevan precio ni importe
+                        propios: su valor ya está en el precio del combo. */}
+                    <TableCell colSpan={6}></TableCell>
                   </TableRow>
                 );
               }
@@ -210,26 +266,38 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
                   <TableCell className="tabular text-right font-mono text-xs text-foreground">
                     {row.cantidad}
                   </TableCell>
-                  {priceCell(row, "contado")}
-                  {priceCell(row, "corto")}
-                  {priceCell(row, "anual")}
-                  <TableCell className="tabular text-right font-mono text-sm font-medium text-foreground">
-                    {fmtMoney(String(row.subtotal))}
-                  </TableCell>
+                  {TIERS.map(({ tier: t }) => (
+                    <Fragment key={t}>
+                      {unitarioCell(row, t)}
+                      {importeCell(row, t)}
+                    </Fragment>
+                  ))}
                 </TableRow>
               );
             })}
             <TableRow className="border-t border-border bg-muted/30 hover:bg-muted/30">
               <TableCell></TableCell>
               <TableCell
-                colSpan={5}
+                colSpan={2}
                 className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
               >
                 Total
               </TableCell>
-              <TableCell className="tabular text-right font-mono text-base font-semibold text-foreground">
-                {fmtMoney(String(total))}
-              </TableCell>
+              {TIERS.map(({ tier: t }) => (
+                <Fragment key={t}>
+                  <TableCell className="border-l border-border/40"></TableCell>
+                  <TableCell
+                    className={cn(
+                      "tabular text-right font-mono text-base",
+                      t === tier
+                        ? "font-semibold text-foreground"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    {fmtMoney(String(totalDe(t)))}
+                  </TableCell>
+                </Fragment>
+              ))}
             </TableRow>
           </TableBody>
         </Table>
