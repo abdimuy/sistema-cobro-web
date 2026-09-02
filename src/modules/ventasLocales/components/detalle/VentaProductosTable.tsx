@@ -11,16 +11,20 @@ import {
 import { cn } from "@/lib/utils";
 import { VentaV2 } from "@/services/api/ventaV2Types";
 
-const fmtMoney = (raw: string): string => {
+const fmtMoney = (raw: string, decimales: number): string => {
   const n = Number(raw);
   if (!Number.isFinite(n)) return raw;
   return new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: "MXN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: decimales,
+    maximumFractionDigits: decimales,
   }).format(n);
 };
+
+/** Si el número tiene centavos que un redondeo a pesos enteros perdería. */
+const tieneCentavos = (n: number): boolean =>
+  Number.isFinite(n) && Math.round(n * 100) % 100 !== 0;
 
 const fmtQty = (raw: string): string => {
   const n = Number(raw);
@@ -137,6 +141,33 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
   const totalDe = (t: Tier): number =>
     rows.reduce((sum, r) => sum + (tierImporte(r, t) ?? 0), 0);
 
+  // La precisión de las columnas de dinero la fija el DATO, no una constante.
+  //
+  // Con el redondeo fijo a pesos enteros, el unitario y el importe se
+  // redondeaban por separado y la aritmética VISIBLE dejaba de cerrar: un
+  // unitario de $4,000 (3,999.50) por 2 daba un importe de $7,999. Y cerraba
+  // a veces —de seis combinaciones con centavos, cuatro cuadran por
+  // casualidad—, que es peor que fallar siempre: parece un defecto de cálculo
+  // intermitente del servidor, y no lo hay. Poner el unitario junto al importe
+  // sólo sirve si se pueden multiplicar con la vista.
+  //
+  // Con centavos en juego se muestran los dos decimales en TODA la tabla, para
+  // que las seis columnas de dinero queden alineadas entre sí. Sin ellos se
+  // queda en pesos enteros: el precio de una recámara rara vez trae centavos y
+  // repetir ".00" seis veces por renglón sólo gastaría ancho, que con nueve
+  // columnas es escaso.
+  const mostrados: number[] = [];
+  for (const fila of rows) {
+    for (const { tier: t } of TIERS) {
+      const unitario = tierValue(fila, t);
+      if (unitario !== "") mostrados.push(Number(unitario));
+      const importe = tierImporte(fila, t);
+      if (importe !== null) mostrados.push(importe);
+    }
+  }
+  for (const { tier: t } of TIERS) mostrados.push(totalDe(t));
+  const decimales = mostrados.some(tieneCentavos) ? 2 : 0;
+
   // Encabezado en dos pisos: el nivel arriba, y debajo qué es cada columna.
   // "Contado" a secas nombraba un unitario aquí y un total en el encabezado
   // de la venta, y nada decía cuál era cuál.
@@ -170,7 +201,7 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
     const v = tierValue(row, t);
     return (
       <TableCell className="tabular border-l border-border/40 text-right font-mono text-xs text-muted-foreground">
-        {v === "" ? "" : fmtMoney(v)}
+        {v === "" ? "" : fmtMoney(v, decimales)}
       </TableCell>
     );
   };
@@ -184,7 +215,7 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
           t === tier ? "font-medium text-foreground" : "text-muted-foreground/80"
         )}
       >
-        {importe === null ? "" : fmtMoney(String(importe))}
+        {importe === null ? "" : fmtMoney(String(importe), decimales)}
       </TableCell>
     );
   };
@@ -247,8 +278,18 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
                       {row.cantidad}
                     </TableCell>
                     {/* Las piezas de un combo no llevan precio ni importe
-                        propios: su valor ya está en el precio del combo. */}
-                    <TableCell colSpan={6}></TableCell>
+                        propios —su valor ya está en el precio del combo—, pero
+                        sí llevan las MISMAS celdas que los demás renglones, no
+                        un `colSpan` que las funda. Con la celda fundida, las
+                        líneas que separan CONTADO | CORTO PLAZO | ANUAL
+                        desaparecían justo en estas filas y la rejilla se
+                        recomponía en cada combo con piezas. */}
+                    {TIERS.map(({ tier: t }) => (
+                      <Fragment key={t}>
+                        {unitarioCell(row, t)}
+                        {importeCell(row, t)}
+                      </Fragment>
+                    ))}
                   </TableRow>
                 );
               }
@@ -307,7 +348,7 @@ export const VentaProductosTable = ({ venta }: { venta: VentaV2 }) => {
                         : "text-muted-foreground"
                     )}
                   >
-                    {fmtMoney(String(totalDe(t)))}
+                    {fmtMoney(String(totalDe(t)), decimales)}
                   </TableCell>
                 </Fragment>
               ))}

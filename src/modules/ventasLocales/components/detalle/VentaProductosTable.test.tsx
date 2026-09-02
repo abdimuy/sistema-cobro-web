@@ -131,6 +131,25 @@ function celdasPorColumna(fila: HTMLTableRowElement): HTMLTableCellElement[] {
   return porColumna;
 }
 
+/** Índice de columna de un encabezado que NO agrupa (Descripción, Cant.). */
+function columnaDe(encabezado: string): number {
+  const filaDeNiveles = screen
+    .getByText("Descripción")
+    .closest("tr") as HTMLTableRowElement;
+
+  let columna = 0;
+  for (const celda of Array.from(filaDeNiveles.cells)) {
+    if (celda.textContent?.trim() === encabezado) return columna;
+    columna += celda.colSpan || 1;
+  }
+  throw new Error(`no hay un encabezado "${encabezado}"`);
+}
+
+/** El número de una celda de dinero o de cantidad: "$3,999.50" → 3999.5 */
+function numeroDe(celda: HTMLTableCellElement): number {
+  return Number((celda.textContent ?? "").replace(/[^\d.-]/g, ""));
+}
+
 /** Las celdas, por columna, de la fila que contiene `texto`. */
 function filaDe(texto: string): HTMLTableCellElement[] {
   return celdasPorColumna(
@@ -347,3 +366,170 @@ describe("VentaProductosTable — el pie concuerda con los montos del servidor",
     );
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Poner el unitario JUNTO al importe sólo sirve si el capturista puede
+// comprobar la multiplicación con la vista. Si los dos números se redondean
+// por separado, deja de cerrar:
+//
+//     unitario $4,000  × 2  =  importe $7,999      (real: 3,999.50 × 2)
+//     unitario $1,300  × 3  =  importe $3,899      (real: 1,299.50 × 3)
+//
+// Y lo peor es que cierra a veces: de seis combinaciones con centavos, cuatro
+// cuadran por casualidad. Un fallo intermitente en una pantalla cuyo propósito
+// es cuadrar números hace que alguien reporte un defecto de cálculo que no
+// existe — el servidor calcula bien; es el formato el que miente.
+//
+// El redondeo a pesos enteros venía de antes, pero antes se mostraba UN número
+// por nivel y no había nada que cuadrar. Estas pruebas fijan la aritmética
+// visible.
+
+describe("VentaProductosTable — la multiplicación cierra a la vista", () => {
+  const CENTAVOS = {
+    combo: { cantidad: 2, anual: "4999.99", corto: "4499.75", contado: "3999.50" },
+    suelto: { cantidad: 3, anual: "1399.00", corto: "1299.50", contado: "1199.99" },
+  };
+
+  const ventaConCentavos = () =>
+    makeVenta({
+      montos: { anual: "14196.98", corto_plazo: "12898.00", contado: "11598.97" },
+      combos: [
+        {
+          id: "44444444-4444-4444-4444-444444444444",
+          nombre: "SALA 3 PIEZAS",
+          precio_anual: CENTAVOS.combo.anual,
+          precio_corto: CENTAVOS.combo.corto,
+          precio_contado: CENTAVOS.combo.contado,
+          cantidad: String(CENTAVOS.combo.cantidad),
+          almacen_origen_id: 1,
+          almacen_destino_id: 2,
+        },
+      ],
+      productos: [
+        {
+          id: "22222222-2222-2222-2222-222222222222",
+          articulo_id: 4210,
+          articulo: "COMEDOR 6 SILLAS",
+          cantidad: String(CENTAVOS.suelto.cantidad),
+          precio_anual: CENTAVOS.suelto.anual,
+          precio_corto: CENTAVOS.suelto.corto,
+          precio_contado: CENTAVOS.suelto.contado,
+          combo_id: null,
+          almacen_origen_id: 1,
+          almacen_destino_id: 2,
+        },
+        {
+          id: "33333333-3333-3333-3333-333333333333",
+          articulo_id: 900,
+          articulo: "SOFA",
+          cantidad: "2",
+          precio_anual: "9999",
+          precio_corto: "9999",
+          precio_contado: "9999",
+          combo_id: "44444444-4444-4444-4444-444444444444",
+          almacen_origen_id: null,
+          almacen_destino_id: null,
+        },
+      ],
+    } as unknown as Partial<VentaV2>);
+
+  it.each(["SALA 3 PIEZAS", "COMEDOR 6 SILLAS"])(
+    "en «%s», unitario × cantidad es exactamente el importe que se muestra",
+    (descripcion) => {
+      render(<VentaProductosTable venta={ventaConCentavos()} />);
+      const col = columnasPorNivel();
+      const fila = filaDe(descripcion);
+      const cantidad = numeroDe(fila[columnaDe("Cant.")]);
+
+      for (const nivel of ["Contado", "Corto plazo", "Anual"]) {
+        const unitario = numeroDe(fila[col[nivel].unitario]);
+        const importe = numeroDe(fila[col[nivel].importe]);
+
+        // A dos decimales, que es la precisión del peso: lo que se ve tiene
+        // que multiplicar, no aproximarse.
+        expect(Math.round(unitario * cantidad * 100)).toBe(Math.round(importe * 100));
+      }
+    },
+  );
+
+  it("y el pie sigue siendo el monto del servidor, con sus centavos", () => {
+    const venta = ventaConCentavos();
+    render(<VentaProductosTable venta={venta} />);
+    const col = columnasPorNivel();
+    const pie = filaDe("Total");
+
+    for (const [nivel, monto] of [
+      ["Anual", venta.montos.anual],
+      ["Corto plazo", venta.montos.corto_plazo],
+      ["Contado", venta.montos.contado],
+    ] as const) {
+      expect(numeroDe(pie[col[nivel].importe])).toBeCloseTo(Number(monto), 2);
+    }
+  });
+
+  it("sin centavos la tabla no se ensancha: sigue en pesos enteros", () => {
+    // El precio de una recámara rara vez trae centavos. En ese caso mostrar
+    // ".00" seis veces por renglón sólo gastaría ancho, y ya son nueve
+    // columnas.
+    render(<VentaProductosTable venta={makeVenta()} />);
+    const col = columnasPorNivel();
+    const fila = filaDe("SILLA MADERA");
+
+    expect(fila[col["Contado"].unitario]).toHaveTextContent("$7,700");
+    expect(fila[col["Contado"].unitario]).not.toHaveTextContent(".00");
+  });
+});
+
+describe("VentaProductosTable — la rejilla no se rompe en las filas de pieza", () => {
+  it("las piezas de un combo conservan los separadores entre niveles", () => {
+    // La fila de la pieza era un solo `colSpan={6}` sin bordes, así que las
+    // líneas que separan CONTADO | CORTO PLAZO | ANUAL desaparecían y la
+    // rejilla se recomponía en cada combo con piezas.
+    render(<VentaProductosTable venta={ventaConPieza()} />);
+    const col = columnasPorNivel();
+    const filaPieza = filaDe("SOFA");
+
+    for (const nivel of ["Contado", "Corto plazo", "Anual"]) {
+      expect(filaPieza[col[nivel].unitario].className).toContain("border-l");
+    }
+  });
+
+  it("y la fila de la pieza sigue sin aportar importe", () => {
+    render(<VentaProductosTable venta={ventaConPieza()} />);
+    const filaPieza = screen.getByText("SOFA").closest("tr") as HTMLElement;
+
+    expect(filaPieza.textContent).not.toContain("$");
+  });
+});
+
+function ventaConPieza(): VentaV2 {
+  return makeVenta({
+    combos: [
+      {
+        id: "44444444-4444-4444-4444-444444444444",
+        nombre: "SALA 3 PIEZAS",
+        precio_anual: "5000",
+        precio_corto: "4500",
+        precio_contado: "4000",
+        cantidad: "1",
+        almacen_origen_id: 1,
+        almacen_destino_id: 2,
+      },
+    ],
+    productos: [
+      {
+        id: "33333333-3333-3333-3333-333333333333",
+        articulo_id: 900,
+        articulo: "SOFA",
+        cantidad: "1",
+        precio_anual: "0",
+        precio_corto: "0",
+        precio_contado: "0",
+        combo_id: "44444444-4444-4444-4444-444444444444",
+        almacen_origen_id: null,
+        almacen_destino_id: null,
+      },
+    ],
+  } as unknown as Partial<VentaV2>);
+}
