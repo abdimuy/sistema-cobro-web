@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { desdeRelojDeNegocio, enRelojDeNegocio } from "@/utils/tiempoDeNegocio";
+import { desdeRelojDeNegocio, relojDeNegocioSeguro } from "@/utils/tiempoDeNegocio";
 import { CampoInline } from "../piezas/CampoInline";
 import { MontoInput } from "../piezas/MontoInput";
 import { DiaCobranzaPicker } from "../piezas/DiaCobranzaPicker";
@@ -96,9 +96,17 @@ export const PlanTab = ({
                 navegador (`docs/module-standards/DATETIME_HANDLING.md`): un
                 vendedor en otra zona tiene que capturar la misma hora que la
                 oficina. */}
+            {/* `relojDeNegocioSeguro` y no la versión estricta: esta misma
+                pestaña la monta VentaReplayForm para editar cuerpos que el
+                servidor RECHAZÓ, donde la fecha bien puede ser ilegible. Un
+                throw aquí ocurre en render, y como no hay ningún
+                ErrorBoundary en src/ se lleva la aplicación entera. Con la
+                fecha rota el campo sale vacío y el operador la corrige, que
+                es justo para lo que existe esa pantalla. */}
             <Input
               type="datetime-local"
-              value={enRelojDeNegocio(data.fechaVenta)}
+              aria-label="Fecha de venta"
+              value={relojDeNegocioSeguro(data.fechaVenta)}
               onChange={(e) => {
                 const iso = e.target.value
                   ? desdeRelojDeNegocio(e.target.value)

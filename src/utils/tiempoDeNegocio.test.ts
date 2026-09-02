@@ -6,6 +6,7 @@ import {
   inicioDelDiaDeNegocio,
   offsetDeNegocioEnMinutos,
   rangoDeDiasDeNegocio,
+  relojDeNegocioSeguro,
 } from "./tiempoDeNegocio";
 
 // El contrato con el API (docs/module-standards/DATETIME_HANDLING.md):
@@ -160,6 +161,29 @@ describe("enRelojDeNegocio", () => {
   it("rechaza un instante que no lo es en vez de inventar una fecha", () => {
     expect(() => enRelojDeNegocio("ayer por la tarde")).toThrow();
   });
+
+  // `new Date()` acepta muchas más cosas que RFC3339, y varias las interpreta
+  // en la zona del NAVEGADOR. Comprobar sólo `Number.isNaN(getTime())` dejaba
+  // esa puerta abierta justo en el módulo cuya tesis es que el navegador
+  // nunca manda.
+  it("rechaza un formato que Date sí parsea pero en la zona del navegador", () => {
+    // Con TZ=UTC esto devolvía "2026-06-06T10:00" y con TZ en México,
+    // "2026-06-06T05:00". La respuesta dependía de la máquina.
+    expect(() => enRelojDeNegocio("06/06/2026 10:00")).toThrow();
+  });
+
+  it("rechaza una fecha sin hora, que Date lee como medianoche UTC", () => {
+    // Devolvía "2026-08-31T18:00": un día antes del que se pidió.
+    expect(() => enRelojDeNegocio("2026-09-01")).toThrow();
+  });
+
+  it("exige el designador de zona, que es lo que hace RFC3339 a un instante", () => {
+    expect(() => enRelojDeNegocio("2026-09-02T00:38:00")).toThrow();
+  });
+
+  it("acepta un offset explícito, no sólo Z", () => {
+    expect(enRelojDeNegocio("2026-09-01T18:38:00-06:00")).toBe("2026-09-01T18:38");
+  });
 });
 
 describe("desdeRelojDeNegocio", () => {
@@ -185,5 +209,36 @@ describe("desdeRelojDeNegocio", () => {
 
   it("rechaza un día que no existe en el calendario", () => {
     expect(() => desdeRelojDeNegocio("2026-02-30T10:00")).toThrow();
+  });
+
+  it("rechaza basura pegada al final en vez de ignorarla", () => {
+    // El patrón no estaba anclado: cualquier cosa después del minuto se
+    // descartaba en silencio y devolvía un instante como si nada.
+    expect(() => desdeRelojDeNegocio("2026-09-01T18:38basura")).toThrow();
+  });
+
+  it("tolera los segundos, que algunos navegadores sí mandan", () => {
+    expect(desdeRelojDeNegocio("2026-09-01T18:38:00")).toBe("2026-09-02T00:38:00Z");
+  });
+});
+
+describe("relojDeNegocioSeguro", () => {
+  // La variante tolerante existe por una razón concreta: el formulario de
+  // replay de intentos fallidos edita cuerpos que el servidor RECHAZÓ, y su
+  // guardia estructural (isVentaShapedBody) sólo exige que `fecha_venta` sea
+  // un string — no valida el valor, a propósito, porque "ése es el trabajo
+  // del formulario, que los muestra como errores por campo". Un instante
+  // ilegible tiene que pintar un campo vacío que el operador corrige, no
+  // tumbar la pantalla que existe para corregirlo.
+
+  it("con un instante bueno da lo mismo que la estricta", () => {
+    expect(relojDeNegocioSeguro("2026-09-02T00:38:00Z")).toBe("2026-09-01T18:38");
+  });
+
+  it("con un instante ilegible devuelve vacío en vez de lanzar", () => {
+    expect(relojDeNegocioSeguro("")).toBe("");
+    expect(relojDeNegocioSeguro("ayer")).toBe("");
+    expect(relojDeNegocioSeguro("2026-13-45T99:99:99Z")).toBe("");
+    expect(relojDeNegocioSeguro("2026-09-01")).toBe("");
   });
 });

@@ -46,7 +46,7 @@ function renderPlanTab(overrides: Partial<FinancieroFormData> = {}) {
       onUpdate={onUpdate}
     />,
   );
-  return { onUpdate, campo: screen.getByDisplayValue(/^\d{4}-\d{2}-\d{2}T/) };
+  return { onUpdate, campo: screen.getByLabelText("Fecha de venta") };
 }
 
 describe("PlanTab — fecha de venta", () => {
@@ -86,5 +86,23 @@ describe("PlanTab — fecha de venta", () => {
     const { campo } = renderPlanTab({ fechaVenta: "2026-09-02T00:38:12.482Z" });
 
     expect(campo).toHaveValue(RELOJ_DE_NEGOCIO);
+  });
+
+  // Con una fecha ilegible el campo tiene que salir VACÍO, no tumbar la
+  // pantalla. No es hipotético: el formulario de replay de intentos fallidos
+  // monta esta misma pestaña para editar cuerpos que el servidor rechazó, y
+  // su guardia estructural sólo exige que `fecha_venta` sea un string.
+  // Además no hay un solo ErrorBoundary en src/, así que un throw en render
+  // desmonta la aplicación entera, no el modal.
+  it.each([
+    ["vacía", ""],
+    ["basura", "ayer por la tarde"],
+    ["fuera del calendario", "2026-13-45T99:99:99Z"],
+    ["una fecha sin hora", "2026-09-01"],
+  ])("con una fecha %s el campo sale vacío y la pantalla no se cae", (_caso, valor) => {
+    expect(() => renderPlanTab({ fechaVenta: valor })).not.toThrow();
+
+    const campo = screen.getByLabelText("Fecha de venta");
+    expect(campo).toHaveValue("");
   });
 });

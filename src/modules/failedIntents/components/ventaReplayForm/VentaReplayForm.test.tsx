@@ -244,6 +244,26 @@ describe("VentaReplayForm", () => {
     expect(screen.queryByText("$5,500.00")).toBeNull();
   });
 
+  // isVentaShapedBody sólo exige que `fecha_venta` sea un string, y su propio
+  // comentario dice que no valida valores a propósito: "ése es el trabajo del
+  // formulario, que los muestra como errores por campo para que el operador
+  // los corrija". Un intento fallido con la fecha en blanco es justo la clase
+  // de cuerpo que esta pantalla existe para arreglar — así que la pantalla no
+  // puede caerse al abrirlo. Y no hay ErrorBoundary en src/: un throw en
+  // render se lleva la aplicación entera, no el modal.
+  it("un cuerpo con la fecha ilegible se puede abrir y corregir, no tumba la pantalla", async () => {
+    const user = userEvent.setup();
+    const body = makeValidBody();
+    body.fecha_venta = "";
+
+    expect(() =>
+      render(<VentaReplayForm initialBody={body} onChange={() => {}} />),
+    ).not.toThrow();
+
+    await user.click(screen.getByRole("tab", { name: /plan/i }));
+    expect(await screen.findByLabelText("Fecha de venta")).toHaveValue("");
+  });
+
   it("emits onChange with parsed body when the operator edits raw JSON", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
