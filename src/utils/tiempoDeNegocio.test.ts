@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   ZONA_DE_NEGOCIO,
+  desdeRelojDeNegocio,
+  enRelojDeNegocio,
   inicioDelDiaDeNegocio,
   offsetDeNegocioEnMinutos,
   rangoDeDiasDeNegocio,
@@ -125,5 +127,63 @@ describe("rangoDeDiasDeNegocio", () => {
 
   it("rechaza un rango invertido en vez de devolver vacío en silencio", () => {
     expect(() => rangoDeDiasDeNegocio("2026-08-20", "2026-08-19")).toThrow();
+  });
+});
+
+// ─── reloj de pared ↔ instante ───────────────────────────────────────────────
+//
+// La misma confusión que el rango de días, un nivel más fino: un
+// `<input type="datetime-local">` habla relojes de pared sin zona, y la venta
+// guarda un instante UTC. Medido el 2026-09-01: la venta de las 18:38 de
+// México se mostraba como "09/02/2026, 12:38 AM" porque el campo recortaba el
+// ISO con `slice(0, 16)`.
+
+describe("enRelojDeNegocio", () => {
+  it("la venta de las 18:38 de México se ve como las 18:38, no como las 00:38", () => {
+    expect(enRelojDeNegocio("2026-09-02T00:38:00Z")).toBe("2026-09-01T18:38");
+  });
+
+  it("no es slice(0, 16): el recorte devolvería el reloj UTC", () => {
+    const instante = "2026-09-02T00:38:00Z";
+
+    expect(enRelojDeNegocio(instante)).not.toBe(instante.slice(0, 16));
+  });
+
+  it("tolera milisegundos en el instante", () => {
+    expect(enRelojDeNegocio("2026-09-02T00:38:12.482Z")).toBe("2026-09-01T18:38");
+  });
+
+  it("respeta las reglas IANA: en junio de 2022 México estaba en UTC-5", () => {
+    expect(enRelojDeNegocio("2022-06-16T00:38:00Z")).toBe("2022-06-15T19:38");
+  });
+
+  it("rechaza un instante que no lo es en vez de inventar una fecha", () => {
+    expect(() => enRelojDeNegocio("ayer por la tarde")).toThrow();
+  });
+});
+
+describe("desdeRelojDeNegocio", () => {
+  it("las 18:38 del 1 de septiembre son las 00:38 UTC del 2", () => {
+    expect(desdeRelojDeNegocio("2026-09-01T18:38")).toBe("2026-09-02T00:38:00Z");
+  });
+
+  it('no es `${reloj}:00.000Z`: estampar la Z adelanta la venta seis horas', () => {
+    const reloj = "2026-09-01T18:38";
+
+    expect(desdeRelojDeNegocio(reloj)).not.toBe(`${reloj}:00.000Z`);
+  });
+
+  it("es la inversa exacta de enRelojDeNegocio", () => {
+    const instante = "2026-09-02T00:38:00Z";
+
+    expect(desdeRelojDeNegocio(enRelojDeNegocio(instante))).toBe(instante);
+  });
+
+  it("rechaza un reloj mal formado", () => {
+    expect(() => desdeRelojDeNegocio("2026-09-01")).toThrow();
+  });
+
+  it("rechaza un día que no existe en el calendario", () => {
+    expect(() => desdeRelojDeNegocio("2026-02-30T10:00")).toThrow();
   });
 });

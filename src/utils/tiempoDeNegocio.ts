@@ -184,3 +184,74 @@ function diaSiguiente(dia: DiaDeNegocio): DiaDeNegocio {
 function enRFC3339(instante: Date): string {
   return instante.toISOString().replace(/\.\d{3}Z$/, "Z");
 }
+
+/**
+ * Un reloj de pared del negocio en el formato que exige `<input
+ * type="datetime-local">`: `yyyy-MM-ddTHH:mm`, **sin zona**.
+ *
+ * Es lo mismo que `DiaDeNegocio` un nivel más fino: tampoco significa nada
+ * hasta que se dice en qué zona se lee.
+ */
+export type RelojDeNegocio = string;
+
+const FORMATO_RELOJ = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/;
+
+/**
+ * El instante `instanteISO` leído como reloj de pared del negocio, listo para
+ * el `value` de un `<input type="datetime-local">`.
+ *
+ * ```ts
+ * enRelojDeNegocio("2026-09-02T00:38:00Z") // "2026-09-01T18:38"
+ * ```
+ *
+ * NO es `instanteISO.slice(0, 16)`. Ese recorte mete el reloj UTC en un
+ * control que no tiene zona: la venta de las 18:38 se mostraba como las 00:38
+ * del día siguiente. Y como el control reescribe lo que muestra, "corregir"
+ * ese día retrocedía la venta 24 horas.
+ */
+export function enRelojDeNegocio(
+  instanteISO: string,
+  zona: string = ZONA_DE_NEGOCIO,
+): RelojDeNegocio {
+  const instante = new Date(instanteISO);
+  if (Number.isNaN(instante.getTime())) {
+    throw new Error(`tiempoDeNegocio: "${instanteISO}" no es un instante ISO`);
+  }
+  const offset = offsetDeNegocioEnMinutos(instante, zona);
+  const relojDePared = new Date(instante.getTime() + offset * MINUTO_EN_MS);
+  return relojDePared.toISOString().slice(0, 16);
+}
+
+/**
+ * El instante RFC3339 UTC en que ocurre `reloj` en la zona del negocio — la
+ * inversa exacta de `enRelojDeNegocio`.
+ *
+ * ```ts
+ * desdeRelojDeNegocio("2026-09-01T18:38") // "2026-09-02T00:38:00Z"
+ * ```
+ *
+ * NO es `` `${reloj}:00.000Z` ``. Estampar la Z encima del reloj local declara
+ * que las 18:38 de México fueron las 18:38 UTC — seis horas antes de la venta.
+ */
+export function desdeRelojDeNegocio(
+  reloj: RelojDeNegocio,
+  zona: string = ZONA_DE_NEGOCIO,
+): string {
+  const coincidencia = FORMATO_RELOJ.exec(reloj);
+  if (coincidencia === null) {
+    throw new Error(`tiempoDeNegocio: "${reloj}" no es un reloj yyyy-MM-ddTHH:mm`);
+  }
+  const [, anio, mes, diaDelMes, hora, minuto] = coincidencia.map(Number);
+  partirDia(`${coincidencia[1]}-${coincidencia[2]}-${coincidencia[3]}`);
+
+  // Mismo baile de dos pasadas que `inicioDelDiaDeNegocio`: el offset se
+  // evalúa en el instante candidato, no en el supuesto.
+  const relojComoUTC = Date.UTC(anio, mes - 1, diaDelMes, hora, minuto);
+  const primerOffset = offsetDeNegocioEnMinutos(new Date(relojComoUTC), zona);
+  const candidato = relojComoUTC - primerOffset * MINUTO_EN_MS;
+  const segundoOffset = offsetDeNegocioEnMinutos(new Date(candidato), zona);
+  if (segundoOffset === primerOffset) {
+    return enRFC3339(new Date(candidato));
+  }
+  return enRFC3339(new Date(relojComoUTC - segundoOffset * MINUTO_EN_MS));
+}

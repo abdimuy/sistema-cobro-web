@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { desdeRelojDeNegocio, enRelojDeNegocio } from "@/utils/tiempoDeNegocio";
 import { CampoInline } from "../piezas/CampoInline";
 import { MontoInput } from "../piezas/MontoInput";
 import { DiaCobranzaPicker } from "../piezas/DiaCobranzaPicker";
@@ -84,12 +85,23 @@ export const PlanTab = ({
         <SubCardHeader title="Datos generales" />
         <div className="px-5 py-5 space-y-5">
           <CampoInline label="Fecha de venta" obligatorio>
+            {/* El `value` de un datetime-local es un reloj de pared SIN zona,
+                y `data.fechaVenta` es un instante UTC. Traducirlos con
+                `slice(0,16)` y reestampar ":00.000Z" al escribir era leer y
+                escribir el reloj UTC dentro de un control local: la venta de
+                las 18:38 se veía como las 00:38 del día siguiente, y quien
+                "corregía" ese día la retrocedía 24 horas.
+
+                La conversión se ancla a la zona del NEGOCIO, no a la del
+                navegador (`docs/module-standards/DATETIME_HANDLING.md`): un
+                vendedor en otra zona tiene que capturar la misma hora que la
+                oficina. */}
             <Input
               type="datetime-local"
-              value={data.fechaVenta.slice(0, 16)}
+              value={enRelojDeNegocio(data.fechaVenta)}
               onChange={(e) => {
                 const iso = e.target.value
-                  ? `${e.target.value}:00.000Z`
+                  ? desdeRelojDeNegocio(e.target.value)
                   : data.fechaVenta;
                 onUpdate("fechaVenta", iso);
               }}
