@@ -197,7 +197,11 @@ export type RelojDeNegocio = string;
 // Anclado en los dos extremos a propósito. Sin el `$`, cualquier cosa pegada
 // después del minuto se descartaba en silencio y `desdeRelojDeNegocio`
 // devolvía un instante como si la entrada estuviera bien.
-const FORMATO_RELOJ = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2})?$/;
+// El año va `\d{4,}` y no `\d{4}`: un `datetime-local` de Chromium admite
+// hasta el año 275760, y exigir cuatro dígitos exactos hacía lanzar a
+// `desdeRelojDeNegocio` dentro del onChange — donde un throw no lo recoge
+// ningún ErrorBoundary, se escapa a `window` y la pulsación se pierde.
+const FORMATO_RELOJ = /^(\d{4,})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2})?$/;
 
 /**
  * RFC3339 con designador de zona obligatorio.
@@ -215,7 +219,7 @@ const FORMATO_RELOJ = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2})?$/;
  * Comprobar sólo `Number.isNaN(getTime())` dejaba pasar las dos.
  */
 const FORMATO_INSTANTE =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+  /^\+?\d{4,}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 
 /**
  * El instante `instanteISO` leído como reloj de pared del negocio, listo para
@@ -244,7 +248,27 @@ export function enRelojDeNegocio(
   }
   const offset = offsetDeNegocioEnMinutos(instante, zona);
   const relojDePared = new Date(instante.getTime() + offset * MINUTO_EN_MS);
-  return relojDePared.toISOString().slice(0, 16);
+  return formatearRelojUTC(relojDePared);
+}
+
+/**
+ * `Date` → `yyyy-MM-ddTHH:mm` leyendo sus campos UTC.
+ *
+ * NO es `toISOString().slice(0, 16)`. En cuanto el año pasa de cuatro dígitos,
+ * `toISOString()` cambia a la forma EXPANDIDA de ISO 8601
+ * (`"+010000-01-01T10:00:00.000Z"`) y ese recorte devuelve
+ * `"+010000-01-01T10"`: con el signo delante y sin los minutos. Cortar cadenas
+ * por índice es exactamente el error que este módulo existe para no cometer.
+ */
+function formatearRelojUTC(instante: Date): RelojDeNegocio {
+  const dosDigitos = (n: number): string => String(n).padStart(2, "0");
+  return (
+    String(instante.getUTCFullYear()).padStart(4, "0") +
+    `-${dosDigitos(instante.getUTCMonth() + 1)}` +
+    `-${dosDigitos(instante.getUTCDate())}` +
+    `T${dosDigitos(instante.getUTCHours())}` +
+    `:${dosDigitos(instante.getUTCMinutes())}`
+  );
 }
 
 /**
@@ -267,11 +291,25 @@ export function desdeRelojDeNegocio(
     throw new Error(`tiempoDeNegocio: "${reloj}" no es un reloj yyyy-MM-ddTHH:mm`);
   }
   const [, anio, mes, diaDelMes, hora, minuto] = coincidencia.map(Number);
-  partirDia(`${coincidencia[1]}-${coincidencia[2]}-${coincidencia[3]}`);
+
+  // El formato puede ser correcto y el reloj no existir (2026-02-30T10:00), o
+  // caer fuera del rango representable. `Date.UTC` normaliza en silencio, así
+  // que se comprueba el viaje redondo. No se reusa `partirDia` porque aquél
+  // exige un año de exactamente cuatro dígitos.
+  const relojComoUTC = Date.UTC(anio, mes - 1, diaDelMes, hora, minuto);
+  const normalizado = new Date(relojComoUTC);
+  if (
+    normalizado.getUTCFullYear() !== anio ||
+    normalizado.getUTCMonth() !== mes - 1 ||
+    normalizado.getUTCDate() !== diaDelMes ||
+    normalizado.getUTCHours() !== hora ||
+    normalizado.getUTCMinutes() !== minuto
+  ) {
+    throw new Error(`tiempoDeNegocio: "${reloj}" no existe en el calendario`);
+  }
 
   // Mismo baile de dos pasadas que `inicioDelDiaDeNegocio`: el offset se
   // evalúa en el instante candidato, no en el supuesto.
-  const relojComoUTC = Date.UTC(anio, mes - 1, diaDelMes, hora, minuto);
   const primerOffset = offsetDeNegocioEnMinutos(new Date(relojComoUTC), zona);
   const candidato = relojComoUTC - primerOffset * MINUTO_EN_MS;
   const segundoOffset = offsetDeNegocioEnMinutos(new Date(candidato), zona);

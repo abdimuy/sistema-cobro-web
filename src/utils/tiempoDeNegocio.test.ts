@@ -184,6 +184,15 @@ describe("enRelojDeNegocio", () => {
   it("acepta un offset explícito, no sólo Z", () => {
     expect(enRelojDeNegocio("2026-09-01T18:38:00-06:00")).toBe("2026-09-01T18:38");
   });
+
+  it("un año de cinco dígitos no se corta mal", () => {
+    // `toISOString()` cambia a la forma EXPANDIDA de ISO 8601 en cuanto el año
+    // pasa de cuatro dígitos ("+010000-01-01T10:00:00.000Z"), y el recorte por
+    // posición devolvía "+010000-01-01T10": con el signo delante y sin los
+    // minutos. Cortar cadenas por índice es justo lo que este módulo existe
+    // para no hacer.
+    expect(enRelojDeNegocio("+010000-01-01T10:00:00Z")).toBe("10000-01-01T04:00");
+  });
 });
 
 describe("desdeRelojDeNegocio", () => {
@@ -219,6 +228,24 @@ describe("desdeRelojDeNegocio", () => {
 
   it("tolera los segundos, que algunos navegadores sí mandan", () => {
     expect(desdeRelojDeNegocio("2026-09-01T18:38:00")).toBe("2026-09-02T00:38:00Z");
+  });
+
+  it("acepta un año de más de cuatro dígitos, que el control sí produce", () => {
+    // Un `datetime-local` de Chromium admite hasta el año 275760. Exigir
+    // cuatro dígitos exactos hacía lanzar a `desdeRelojDeNegocio` DENTRO del
+    // onChange, y ahí un throw no lo recoge ningún ErrorBoundary: se escapa a
+    // `window` y la pulsación se pierde.
+    expect(desdeRelojDeNegocio("10000-01-01T04:00")).toBe("+010000-01-01T10:00:00Z");
+  });
+
+  it("y ese año sobrevive el viaje de ida y vuelta", () => {
+    const reloj = "10000-01-01T04:00";
+
+    expect(enRelojDeNegocio(desdeRelojDeNegocio(reloj))).toBe(reloj);
+  });
+
+  it("sigue rechazando un año que no cabe en el calendario", () => {
+    expect(() => desdeRelojDeNegocio("999999-01-01T04:00")).toThrow();
   });
 });
 
