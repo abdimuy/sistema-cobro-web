@@ -4,6 +4,8 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import type { IntentoAgrupado } from "../domain/entities";
+import type { Manifest } from "../domain/entities/Manifest";
+import type { UploadMap } from "../application/dto/UploadFile";
 import type { IntentStatusValue } from "../domain/values";
 import { useIntentosAgrupados } from "../presentation/hooks/useIntentosAgrupados";
 import { useFailedIntentDetail } from "../presentation/hooks/useFailedIntentDetail";
@@ -17,6 +19,14 @@ import { IntentosTranquilos } from "./IntentosTranquilos";
 import { Inspector } from "./Inspector";
 import { Evidencia } from "./Evidencia";
 import { ReplayWithSheet } from "./ReplayWithSheet";
+import { efectoDeAccionDelDetalle } from "./efectoDeAccionDelDetalle";
+
+// EnvioEditado es lo que el editor compuso y todavía no se manda: se guarda
+// entre "Guardar y reenviar" y el sí del diálogo. Las dos formas son las dos
+// ramas del editor — cuerpo JSON puro, o multipart con su manifiesto.
+type EnvioEditado =
+  | { kind: "json"; body: unknown }
+  | { kind: "multipart"; manifest: Manifest; uploads: UploadMap };
 import { ConfirmarAccionDialog } from "./ConfirmarAccionDialog";
 import { avisoDe, type AccionMutante } from "./accionesCopy";
 import { LINEA, SUPERFICIE, TEXTO_2, ACENTO_TEXTO } from "./paleta";
@@ -49,6 +59,10 @@ export function FailedIntentsScreen() {
   const [accion, setAccion] = useState<AccionMutante | null>(null);
   const [objetivo, setObjetivo] = useState<IntentoAgrupado | null>(null);
   const [replayWithOpen, setReplayWithOpen] = useState(false);
+  // El envío que el operador ya compuso en el editor y que espera
+  // confirmación. Existe porque la confirmación va DESPUÉS de editar: sin
+  // esto no habría qué reenviar cuando el diálogo dice que sí.
+  const [envioEditado, setEnvioEditado] = useState<EnvioEditado | null>(null);
 
   const lista = useIntentosAgrupados({
     status: estadoDelFiltro(filtro),
@@ -142,10 +156,21 @@ export function FailedIntentsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolver.state]);
 
+  // Cierra todo: se usa cuando el reenvío terminó, bien o mal.
   function cerrarDialogos() {
     setAccion(null);
     setObjetivo(null);
+    setEnvioEditado(null);
     setReplayWithOpen(false);
+  }
+
+  // Cancelar la confirmación deja el editor ABIERTO y conserva lo editado.
+  // Cerrarlo aquí tiraría el trabajo del operador por arrepentirse del último
+  // paso, que es justo cuando más caro sale.
+  function cancelarConfirmacion() {
+    setAccion(null);
+    setObjetivo(null);
+    setEnvioEditado(null);
   }
 
   const seleccionar = useCallback((intento: IntentoAgrupado) => {
@@ -167,6 +192,23 @@ export function FailedIntentsScreen() {
 
   const confirmar = useCallback(
     (cual: AccionMutante) => {
+      // `reenviar_editado` se resuelve aparte: no depende de `objetivo` sino
+      // del intento abierto y del envío que el editor compuso.
+      if (cual === "reenviar_editado") {
+        const intento = detail.intent;
+        if (!intento || !envioEditado) return;
+        setAccion(null);
+        if (envioEditado.kind === "json") {
+          void replay.replayWith(intento, envioEditado.body);
+        } else {
+          void replay.replayWithMultipart(
+            intento,
+            envioEditado.manifest,
+            envioEditado.uploads,
+          );
+        }
+        return;
+      }
       if (!objetivo) return;
       switch (cual) {
         case "reenviar":
@@ -186,13 +228,9 @@ export function FailedIntentsScreen() {
             notes: "ignorada desde la consola",
           });
           return;
-        case "reenviar_editado":
-          setAccion(null);
-          setReplayWithOpen(true);
-          return;
       }
     },
-    [objetivo, replay, resolver],
+    [objetivo, replay, resolver, detail.intent, envioEditado],
   );
 
   const pendiente =
@@ -310,9 +348,11 @@ export function FailedIntentsScreen() {
               const intento = buscar(selectedId, necesitanAccion, seReintentan);
               if (!intento) return;
               setObjetivo(intento);
-              if (a === "replay") setAccion("reenviar");
-              else if (a === "resolve") setAccion("atender");
-              else if (a === "replay-with") setAccion("reenviar_editado");
+              // La decisión vive en efectoDeAccionDelDetalle, que explica por
+              // qué abrir el editor NO lleva diálogo y tiene prueba propia.
+              const efecto = efectoDeAccionDelDetalle(a);
+              if (efecto.tipo === "abrir_editor") setReplayWithOpen(true);
+              else setAccion(efecto.accion);
             }}
             onClose={() => setSelectedId(null)}
             partesMultipart={partes.bundle?.parts}
@@ -334,7 +374,7 @@ export function FailedIntentsScreen() {
         intento={objetivo}
         pending={pendiente}
         onConfirm={confirmar}
-        onCancel={cerrarDialogos}
+        onCancel={cancelarConfirmacion}
       />
 
       <ReplayWithSheet
@@ -342,10 +382,12 @@ export function FailedIntentsScreen() {
         open={replayWithOpen}
         pending={replay.state.status === "pending"}
         onSubmitJson={(body) => {
-          if (detail.intent) void replay.replayWith(detail.intent, body);
+          setEnvioEditado({ kind: "json", body });
+          setAccion("reenviar_editado");
         }}
         onSubmitMultipart={(manifest, uploads) => {
-          if (detail.intent) void replay.replayWithMultipart(detail.intent, manifest, uploads);
+          setEnvioEditado({ kind: "multipart", manifest, uploads });
+          setAccion("reenviar_editado");
         }}
         onCancel={() => setReplayWithOpen(false)}
       />
