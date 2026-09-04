@@ -94,3 +94,35 @@ describe("VentaDetalleHero — estatus cliente badge", () => {
     expect(screen.queryByText("Z")).not.toBeInTheDocument();
   });
 });
+
+describe("VentaDetalleHero — los montos son TOTALES, y lo dicen", () => {
+  // El encabezado lee `montos.*` tal cual del API: son totales de la venta.
+  // La tabla de artículos de la misma pantalla usaba la palabra "Contado"
+  // para un precio UNITARIO. Con las dos sin apellido, una venta de 8 sillas
+  // capturada con el total en el campo de contado y el unitario en el de
+  // anual quedó con $61,600 de contado sobre una deuda de $11,200 y nadie lo
+  // vio antes de que llegara a Microsip.
+
+  it("rotula el monto grande como total, no como 'precio'", () => {
+    render(<VentaDetalleHero venta={makeVenta({ tipo_venta: "CREDITO" })} />);
+
+    expect(screen.getByText("Total anual")).toBeInTheDocument();
+    expect(screen.queryByText("Precio anual")).toBeNull();
+  });
+
+  it("y en una venta de contado dice total de contado", () => {
+    render(<VentaDetalleHero venta={makeVenta({ tipo_venta: "CONTADO" })} />);
+
+    // Dos veces: el monto grande y el del pie, que en una venta de contado
+    // son el mismo número.
+    expect(screen.getAllByText("Total contado")).toHaveLength(2);
+    expect(screen.queryByText("Precio contado")).toBeNull();
+  });
+
+  it("los montos del pie también dicen que son totales", () => {
+    render(<VentaDetalleHero venta={makeVenta({ tipo_venta: "CREDITO" })} />);
+
+    expect(screen.getByText("Total contado")).toBeInTheDocument();
+    expect(screen.getByText("Total corto plazo")).toBeInTheDocument();
+  });
+});

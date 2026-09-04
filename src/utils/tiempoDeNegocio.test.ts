@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   ZONA_DE_NEGOCIO,
+  desdeRelojDeNegocio,
+  enRelojDeNegocio,
   inicioDelDiaDeNegocio,
   offsetDeNegocioEnMinutos,
   rangoDeDiasDeNegocio,
+  relojDeNegocioSeguro,
 } from "./tiempoDeNegocio";
 
 // El contrato con el API (docs/module-standards/DATETIME_HANDLING.md):
@@ -125,5 +128,144 @@ describe("rangoDeDiasDeNegocio", () => {
 
   it("rechaza un rango invertido en vez de devolver vacío en silencio", () => {
     expect(() => rangoDeDiasDeNegocio("2026-08-20", "2026-08-19")).toThrow();
+  });
+});
+
+// ─── reloj de pared ↔ instante ───────────────────────────────────────────────
+//
+// La misma confusión que el rango de días, un nivel más fino: un
+// `<input type="datetime-local">` habla relojes de pared sin zona, y la venta
+// guarda un instante UTC. Medido el 2026-09-01: la venta de las 18:38 de
+// México se mostraba como "09/02/2026, 12:38 AM" porque el campo recortaba el
+// ISO con `slice(0, 16)`.
+
+describe("enRelojDeNegocio", () => {
+  it("la venta de las 18:38 de México se ve como las 18:38, no como las 00:38", () => {
+    expect(enRelojDeNegocio("2026-09-02T00:38:00Z")).toBe("2026-09-01T18:38");
+  });
+
+  it("no es slice(0, 16): el recorte devolvería el reloj UTC", () => {
+    const instante = "2026-09-02T00:38:00Z";
+
+    expect(enRelojDeNegocio(instante)).not.toBe(instante.slice(0, 16));
+  });
+
+  it("tolera milisegundos en el instante", () => {
+    expect(enRelojDeNegocio("2026-09-02T00:38:12.482Z")).toBe("2026-09-01T18:38");
+  });
+
+  it("respeta las reglas IANA: en junio de 2022 México estaba en UTC-5", () => {
+    expect(enRelojDeNegocio("2022-06-16T00:38:00Z")).toBe("2022-06-15T19:38");
+  });
+
+  it("rechaza un instante que no lo es en vez de inventar una fecha", () => {
+    expect(() => enRelojDeNegocio("ayer por la tarde")).toThrow();
+  });
+
+  // `new Date()` acepta muchas más cosas que RFC3339, y varias las interpreta
+  // en la zona del NAVEGADOR. Comprobar sólo `Number.isNaN(getTime())` dejaba
+  // esa puerta abierta justo en el módulo cuya tesis es que el navegador
+  // nunca manda.
+  it("rechaza un formato que Date sí parsea pero en la zona del navegador", () => {
+    // Con TZ=UTC esto devolvía "2026-06-06T10:00" y con TZ en México,
+    // "2026-06-06T05:00". La respuesta dependía de la máquina.
+    expect(() => enRelojDeNegocio("06/06/2026 10:00")).toThrow();
+  });
+
+  it("rechaza una fecha sin hora, que Date lee como medianoche UTC", () => {
+    // Devolvía "2026-08-31T18:00": un día antes del que se pidió.
+    expect(() => enRelojDeNegocio("2026-09-01")).toThrow();
+  });
+
+  it("exige el designador de zona, que es lo que hace RFC3339 a un instante", () => {
+    expect(() => enRelojDeNegocio("2026-09-02T00:38:00")).toThrow();
+  });
+
+  it("acepta un offset explícito, no sólo Z", () => {
+    expect(enRelojDeNegocio("2026-09-01T18:38:00-06:00")).toBe("2026-09-01T18:38");
+  });
+
+  it("un año de cinco dígitos no se corta mal", () => {
+    // `toISOString()` cambia a la forma EXPANDIDA de ISO 8601 en cuanto el año
+    // pasa de cuatro dígitos ("+010000-01-01T10:00:00.000Z"), y el recorte por
+    // posición devolvía "+010000-01-01T10": con el signo delante y sin los
+    // minutos. Cortar cadenas por índice es justo lo que este módulo existe
+    // para no hacer.
+    expect(enRelojDeNegocio("+010000-01-01T10:00:00Z")).toBe("10000-01-01T04:00");
+  });
+});
+
+describe("desdeRelojDeNegocio", () => {
+  it("las 18:38 del 1 de septiembre son las 00:38 UTC del 2", () => {
+    expect(desdeRelojDeNegocio("2026-09-01T18:38")).toBe("2026-09-02T00:38:00Z");
+  });
+
+  it('no es `${reloj}:00.000Z`: estampar la Z adelanta la venta seis horas', () => {
+    const reloj = "2026-09-01T18:38";
+
+    expect(desdeRelojDeNegocio(reloj)).not.toBe(`${reloj}:00.000Z`);
+  });
+
+  it("es la inversa exacta de enRelojDeNegocio", () => {
+    const instante = "2026-09-02T00:38:00Z";
+
+    expect(desdeRelojDeNegocio(enRelojDeNegocio(instante))).toBe(instante);
+  });
+
+  it("rechaza un reloj mal formado", () => {
+    expect(() => desdeRelojDeNegocio("2026-09-01")).toThrow();
+  });
+
+  it("rechaza un día que no existe en el calendario", () => {
+    expect(() => desdeRelojDeNegocio("2026-02-30T10:00")).toThrow();
+  });
+
+  it("rechaza basura pegada al final en vez de ignorarla", () => {
+    // El patrón no estaba anclado: cualquier cosa después del minuto se
+    // descartaba en silencio y devolvía un instante como si nada.
+    expect(() => desdeRelojDeNegocio("2026-09-01T18:38basura")).toThrow();
+  });
+
+  it("tolera los segundos, que algunos navegadores sí mandan", () => {
+    expect(desdeRelojDeNegocio("2026-09-01T18:38:00")).toBe("2026-09-02T00:38:00Z");
+  });
+
+  it("acepta un año de más de cuatro dígitos, que el control sí produce", () => {
+    // Un `datetime-local` de Chromium admite hasta el año 275760. Exigir
+    // cuatro dígitos exactos hacía lanzar a `desdeRelojDeNegocio` DENTRO del
+    // onChange, y ahí un throw no lo recoge ningún ErrorBoundary: se escapa a
+    // `window` y la pulsación se pierde.
+    expect(desdeRelojDeNegocio("10000-01-01T04:00")).toBe("+010000-01-01T10:00:00Z");
+  });
+
+  it("y ese año sobrevive el viaje de ida y vuelta", () => {
+    const reloj = "10000-01-01T04:00";
+
+    expect(enRelojDeNegocio(desdeRelojDeNegocio(reloj))).toBe(reloj);
+  });
+
+  it("sigue rechazando un año que no cabe en el calendario", () => {
+    expect(() => desdeRelojDeNegocio("999999-01-01T04:00")).toThrow();
+  });
+});
+
+describe("relojDeNegocioSeguro", () => {
+  // La variante tolerante existe por una razón concreta: el formulario de
+  // replay de intentos fallidos edita cuerpos que el servidor RECHAZÓ, y su
+  // guardia estructural (isVentaShapedBody) sólo exige que `fecha_venta` sea
+  // un string — no valida el valor, a propósito, porque "ése es el trabajo
+  // del formulario, que los muestra como errores por campo". Un instante
+  // ilegible tiene que pintar un campo vacío que el operador corrige, no
+  // tumbar la pantalla que existe para corregirlo.
+
+  it("con un instante bueno da lo mismo que la estricta", () => {
+    expect(relojDeNegocioSeguro("2026-09-02T00:38:00Z")).toBe("2026-09-01T18:38");
+  });
+
+  it("con un instante ilegible devuelve vacío en vez de lanzar", () => {
+    expect(relojDeNegocioSeguro("")).toBe("");
+    expect(relojDeNegocioSeguro("ayer")).toBe("");
+    expect(relojDeNegocioSeguro("2026-13-45T99:99:99Z")).toBe("");
+    expect(relojDeNegocioSeguro("2026-09-01")).toBe("");
   });
 });
