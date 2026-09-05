@@ -1,5 +1,14 @@
-// Versión mostrada dentro de la app. Base = prod (fallback); el build de prueba
-// la sobreescribe vía VITE_APP_VERSION en .env.test (igual patrón que api.ts).
-// Debe coincidir con la `version` del config Tauri del build correspondiente
-// (tauri.conf.json para prod, tauri.test.conf.json para prueba).
-export const APP_VERSION = import.meta.env.VITE_APP_VERSION ?? '1.16.0';
+// Versión mostrada dentro de la app.
+//
+// Sale de package.json, inyectada por vite.config.ts. NO se escribe a mano:
+// ya vivía copiada en `.env.production` y se quedó atrás dos versiones
+// seguidas, así que la barra lateral decía "v1.21.0" mientras corría la
+// 1.23.0. Quien mira ese número lo mira justamente para saber si ya actualizó.
+//
+// VITE_APP_VERSION sigue teniendo prioridad porque el build de prueba la usa
+// para su sufijo (`1.13.2-test.11` en .env.test), que no es la versión del
+// paquete y no debe derivarse de ella.
+declare const __VERSION_DEL_PAQUETE__: string;
+
+export const APP_VERSION: string =
+  import.meta.env.VITE_APP_VERSION ?? __VERSION_DEL_PAQUETE__;
