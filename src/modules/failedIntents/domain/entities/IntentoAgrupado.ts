@@ -55,6 +55,9 @@ export type IntentoAgrupado = {
   // tarjeta se degrada a la referencia y el módulo. Nunca se inventa un
   // nombre: esta pantalla existe para decidir si una venta entró o no.
   readonly quien: string | null;
+  // capturadoPor es quién capturó el trabajo cuando eso no es el cliente: el
+  // cobrador de un pago. Null en ventas, donde `quien` ya es el cliente.
+  readonly capturadoPor: string | null;
   readonly cuanto: number | null;
   // referencia es el ancla para buscar el trabajo en otro lado (el id de la
   // venta, el del cliente en un pago). Sólo viene del resumen del servidor.
@@ -230,7 +233,23 @@ function desdeGrupo(clave: string, grupo: readonly FailedIntent[]): IntentoAgrup
     clave,
     modulo: moduloDelGrupo(ordenados),
     path: ultimo.path,
-    quien: preferido(ordenados, (i) => i.resumen?.titulo ?? null, (i) => quienDe(i.body)),
+    // El nombre del CLIENTE manda. En ventas viene en el título; en pagos el
+    // título es el cobrador y el cliente lo resuelve el servidor aparte, así
+    // que se prefiere ése. Es la pregunta que hace la oficina: de quién es
+    // este trabajo.
+    quien: preferido(
+      ordenados,
+      (i) => i.resumen?.cliente ?? i.resumen?.titulo ?? null,
+      (i) => quienDe(i.body),
+    ),
+    // capturadoPor sólo existe cuando el título NO era el cliente — o sea, el
+    // cobrador de un pago. No se tira: dice quién capturó, que es la segunda
+    // pregunta de la oficina cuando un pago no entró.
+    capturadoPor: preferido(
+      ordenados,
+      (i) => (i.resumen?.cliente ? (i.resumen?.titulo ?? null) : null),
+      () => null,
+    ),
     cuanto: preferido(ordenados, (i) => i.resumen?.monto ?? null, (i) => cuantoDe(i.body)),
     referencia: preferido(ordenados, (i) => i.resumen?.referencia ?? null, () => null),
     causa,

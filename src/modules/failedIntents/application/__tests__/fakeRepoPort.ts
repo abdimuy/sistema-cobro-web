@@ -166,3 +166,17 @@ export function makeFakeIntent(overrides: Partial<FailedIntent> = {}): FailedInt
   };
   return { ...base, ...overrides };
 }
+
+// resumenDe completa los campos que una prueba no nombra. Sin él, cada literal
+// de resumen en las pruebas tiene que repetir `monto: null, referencia: null,
+// cliente: null`, y añadir un campo al tipo obliga a tocarlos todos.
+export function resumenDe(
+  partial: Partial<import("../../domain/entities/ResumenIntento").ResumenIntento>,
+): import("../../domain/entities/ResumenIntento").ResumenIntento {
+  return {
+    titulo: partial.titulo ?? null,
+    monto: partial.monto ?? null,
+    referencia: partial.referencia ?? null,
+    cliente: partial.cliente ?? null,
+  };
+}

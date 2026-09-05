@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { BlobPart, BlobPartsBundle } from "../domain/entities";
 import type { DomainError } from "../domain/errors";
+import { VisorDeImagenes } from "./VisorDeImagenes";
 import { LINEA, SUPERFICIE_2, TEXTO_2 } from "./paleta";
 
 // Evidencia muestra lo que fotografió el vendedor. **Se ve, no se abre.**
@@ -62,15 +63,48 @@ export function Evidencia({
   const bytes = imagenes.reduce((t, p) => t + p.sizeBytes, 0);
 
   return (
+    <GaleriaDeEvidencia imagenes={imagenes} bytes={bytes} descargar={downloadPart} />
+  );
+}
+
+// GaleriaDeEvidencia junta las miniaturas con el visor. El estado del visor
+// vive aquí y no en Evidencia porque Evidencia tiene returns tempranos —de
+// carga, de error, de vacío— y un hook por encima de ellos se saltaría las
+// reglas de hooks en cuanto alguien mueva una guarda.
+function GaleriaDeEvidencia({
+  imagenes,
+  bytes,
+  descargar,
+}: {
+  imagenes: readonly BlobPart[];
+  bytes: number;
+  descargar: (index: number) => Promise<Blob>;
+}) {
+  const [abierta, setAbierta] = useState<number | null>(null);
+  return (
     <div data-testid="evidencia">
       <div className="grid grid-cols-3 gap-1.5">
-        {imagenes.map((parte) => (
-          <Miniatura key={parte.index} parte={parte} descargar={downloadPart} />
+        {imagenes.map((parte, i) => (
+          <Miniatura
+            key={parte.index}
+            parte={parte}
+            descargar={descargar}
+            onAbrir={() => setAbierta(i)}
+          />
         ))}
       </div>
       <p className={`text-[11.5px] ${TEXTO_2} mt-[7px]`}>
         {imagenes.length} {imagenes.length === 1 ? "foto" : "fotos"} · {megas(bytes)}
+        <span className="ml-1 opacity-70">· clic para ampliar</span>
       </p>
+      {abierta !== null && (
+        <VisorDeImagenes
+          imagenes={imagenes}
+          indiceInicial={abierta}
+          descargar={descargar}
+          onClose={() => setAbierta(null)}
+        />
+      )}
     </div>
   );
 }
@@ -81,9 +115,11 @@ export function Evidencia({
 function Miniatura({
   parte,
   descargar,
+  onAbrir,
 }: {
   parte: BlobPart;
   descargar: (index: number) => Promise<Blob>;
+  onAbrir: () => void;
 }) {
   const [url, setUrl] = useState<string | null>(null);
   const [fallo, setFallo] = useState(false);
@@ -111,8 +147,11 @@ function Miniatura({
   const etiqueta = parte.filename ?? parte.name ?? `Parte ${parte.index}`;
 
   return (
-    <figure
-      className={`relative m-0 aspect-[3/4] overflow-hidden rounded-sm border ${LINEA} ${SUPERFICIE_2}`}
+    <button
+      type="button"
+      onClick={onAbrir}
+      aria-label={`Ampliar ${etiqueta}`}
+      className={`relative m-0 block w-full aspect-[3/4] overflow-hidden rounded-sm border ${LINEA} ${SUPERFICIE_2} cursor-zoom-in hover:opacity-90`}
       data-testid={`evidencia-parte-${parte.index}`}
     >
       {url && !fallo ? (
@@ -122,10 +161,10 @@ function Miniatura({
           {fallo ? "No se pudo cargar" : "…"}
         </span>
       )}
-      <figcaption className="absolute inset-x-0 bottom-0 bg-black/55 text-white text-[9.5px] px-1.5 py-[3px] truncate">
+      <span className="absolute inset-x-0 bottom-0 bg-black/55 text-white text-[9.5px] px-1.5 py-[3px] truncate block">
         {etiqueta}
-      </figcaption>
-    </figure>
+      </span>
+    </button>
   );
 }
 

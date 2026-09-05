@@ -29,4 +29,11 @@ export type ResumenIntento = {
   // referencia es el ancla para encontrar el trabajo en otro lado: el id de la
   // venta, el del cliente en un pago.
   readonly referencia: string | null;
+  // cliente es el nombre resuelto por el servidor contra CLIENTES, y sólo
+  // llega cuando el título NO es ya el del cliente — es decir, en pagos, cuyo
+  // cuerpo trae el id pero no el nombre.
+  //
+  // Va aparte de `titulo` porque las dos cosas responden preguntas distintas y
+  // la oficina usa las dos: de quién es el dinero, y quién lo capturó.
+  readonly cliente: string | null;
 };

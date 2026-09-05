@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { listarIntentosAgrupados } from "./listarIntentosAgrupados";
-import { FakeRepoPort, makeFakeIntent } from "../__tests__/fakeRepoPort";
+import { agruparYPartir, listarIntentosAgrupados } from "./listarIntentosAgrupados";
+import { FakeRepoPort, makeFakeIntent, resumenDe } from "../__tests__/fakeRepoPort";
 import { DomainError } from "../../domain/errors";
 
 const T = (hhmm: string) => new Date(`2026-08-19T${hhmm}:00.000Z`);
@@ -62,14 +62,17 @@ describe("listarIntentosAgrupados", () => {
 
     const out = await listarIntentosAgrupados(port, {});
 
-    expect(out.necesitanAccion.map((g) => g.modulo)).toEqual(["pagos", "ventas"]);
+    expect(out.necesitanAccion.map((g) => g.modulo)).toEqual(["ventas", "pagos"]);
     expect(out.seReintentan).toHaveLength(0);
   });
 
-  it("ordena por quien lleva más tiempo esperando, no por el último intento", async () => {
-    // La venta que reintenta cada minuto tiene el `ultimo` más fresco; si el
-    // orden fuera por ahí, se pondría siempre al frente y la que se rindió
-    // hace horas —la que de verdad necesita a alguien— caería al fondo.
+  it("por defecto ordena del más reciente al más viejo", async () => {
+    // El default cambió: la pregunta de todos los días es "¿qué se rompió
+    // hoy?", y con el orden viejo lo de hoy quedaba al final de una lista de
+    // semanas. El orden por antigüedad sigue disponible como opción.
+    //
+    // Ordena por `primero`, no por `ultimo`: la fila que reintenta cada minuto
+    // tiene el `ultimo` siempre fresco y por ahí se quedaría clavada arriba.
     const port = new FakeRepoPort();
     port.listResponse = {
       items: [
@@ -94,7 +97,53 @@ describe("listarIntentosAgrupados", () => {
 
     const out = await listarIntentosAgrupados(port, {});
 
+    expect(out.necesitanAccion.map((g) => g.id)).toEqual(["reciente", "vieja"]);
+  });
+
+  // El orden viejo no se perdió: sigue disponible, y sirve para vaciar la cola
+  // de lo que lleva más tiempo esperando.
+  it("con orden 'antiguos' vuelve a primero el que lleva más esperando", () => {
+    const items = [
+      makeFakeIntent({
+        id: "reciente",
+        idempotencyKey: "b",
+        receivedAt: T("15:00"),
+        httpStatus: 422,
+        errorCode: "campo_invalido",
+      }),
+      makeFakeIntent({
+        id: "vieja",
+        idempotencyKey: "a",
+        receivedAt: T("09:00"),
+        httpStatus: 422,
+        errorCode: "campo_invalido",
+      }),
+    ];
+
+    const out = agruparYPartir(items, "antiguos");
+
     expect(out.necesitanAccion.map((g) => g.id)).toEqual(["vieja", "reciente"]);
+  });
+
+  // Un renglón sin monto va al FINAL, no al principio: un hueco no es lo más
+  // barato, y ponerlo arriba escondería lo caro, que es lo que se prioriza.
+  it("con orden 'monto' lo caro va primero y lo que no tiene monto al final", () => {
+    const conMonto = (id: string, monto: string | undefined, key: string) =>
+      makeFakeIntent({
+        id,
+        idempotencyKey: key,
+        receivedAt: T("10:00"),
+        httpStatus: 422,
+        errorCode: "campo_invalido",
+        resumen: resumenDe(monto === undefined ? { titulo: "X" } : { titulo: "X", monto: Number(monto) }),
+      });
+
+    const out = agruparYPartir(
+      [conMonto("chica", "100.00", "a"), conMonto("sin", undefined, "b"), conMonto("grande", "9000.00", "c")],
+      "monto",
+    );
+
+    expect(out.necesitanAccion.map((g) => g.id)).toEqual(["grande", "chica", "sin"]);
   });
 
   it("trece filas de la misma venta rinden UN renglón que dice trece", async () => {

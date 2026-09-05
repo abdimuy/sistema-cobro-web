@@ -38,6 +38,9 @@ export type ResumenDTO = {
   titulo?: string;
   monto?: string;
   referencia?: string;
+  // cliente lo resuelve el servidor contra CLIENTES para los pagos, cuyo
+  // cuerpo trae el id del cliente pero no su nombre.
+  cliente?: string;
 };
 
 export function dtoToFailedIntent(dto: FailedIntentDTO): FailedIntent {
@@ -107,8 +110,11 @@ export function dtoAResumen(dto: ResumenDTO | null | undefined): ResumenIntento 
   const titulo = textoOpcional(dto.titulo);
   const monto = montoOpcional(dto.monto);
   const referencia = textoOpcional(dto.referencia);
-  if (titulo === null && monto === null && referencia === null) return null;
-  return { titulo, monto, referencia };
+  const cliente = textoOpcional(dto.cliente);
+  if (titulo === null && monto === null && referencia === null && cliente === null) {
+    return null;
+  }
+  return { titulo, monto, referencia, cliente };
 }
 
 // montoOpcional parsea el monto, que viaja como CADENA decimal a propósito: el

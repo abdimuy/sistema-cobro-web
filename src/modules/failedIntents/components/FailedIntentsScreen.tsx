@@ -19,6 +19,11 @@ import { IntentosTranquilos } from "./IntentosTranquilos";
 import { Inspector } from "./Inspector";
 import { Evidencia } from "./Evidencia";
 import { ReplayWithSheet } from "./ReplayWithSheet";
+import { SelectorDeOrden } from "./SelectorDeOrden";
+import {
+  ORDEN_POR_DEFECTO,
+  type OrdenLista,
+} from "../application/usecases/listarIntentosAgrupados";
 import { efectoDeAccionDelDetalle } from "./efectoDeAccionDelDetalle";
 
 // EnvioEditado es lo que el editor compuso y todavía no se manda: se guarda
@@ -59,6 +64,7 @@ export function FailedIntentsScreen() {
   const [accion, setAccion] = useState<AccionMutante | null>(null);
   const [objetivo, setObjetivo] = useState<IntentoAgrupado | null>(null);
   const [replayWithOpen, setReplayWithOpen] = useState(false);
+  const [orden, setOrden] = useState<OrdenLista>(ORDEN_POR_DEFECTO);
   // El envío que el operador ya compuso en el editor y que espera
   // confirmación. Existe porque la confirmación va DESPUÉS de editar: sin
   // esto no habría qué reenviar cuando el diálogo dice que sí.
@@ -68,6 +74,7 @@ export function FailedIntentsScreen() {
     status: estadoDelFiltro(filtro),
     modulo: moduloDelFiltro(filtro),
     pageSize: 50,
+    orden,
   });
   const detail = useFailedIntentDetail(selectedId);
   // Las partes del cuerpo en disco se piden UNA vez por renglón abierto, aquí,
@@ -287,7 +294,10 @@ export function FailedIntentsScreen() {
                 Actualizar
               </Button>
             </div>
-            <FiltroChips value={filtro} conteos={conteos} onChange={setFiltro} />
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <FiltroChips value={filtro} conteos={conteos} onChange={setFiltro} />
+              <SelectorDeOrden valor={orden} onChange={setOrden} />
+            </div>
           </header>
 
           <section>

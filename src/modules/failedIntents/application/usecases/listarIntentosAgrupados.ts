@@ -37,8 +37,30 @@ export async function listarIntentosAgrupados(
 // en la primera y diez en la segunda— y agrupar por página diría "3 intentos"
 // y luego "10" en vez de "13". La pantalla acumula las filas planas y vuelve a
 // agrupar el total; el caso de uso sigue siendo la entrada de un solo tiro.
+/**
+ * Cómo se ordena la lista.
+ *
+ *  - `recientes` — lo que apareció más recientemente, primero. Es el default:
+ *    la pregunta de todos los días es "¿qué se rompió hoy?", y con el orden
+ *    inverso lo de hoy quedaba al final de una lista de semanas.
+ *
+ *    Ordena por `primero` (cuándo se vio por primera vez), NO por `ultimo`.
+ *    La diferencia no es cosmética: una fila que reintenta cada minuto tiene
+ *    el `ultimo` siempre fresco, así que por ahí se quedaría clavada arriba
+ *    tapando todo lo demás — y encima se movería sola bajo el cursor. Es
+ *    además la fecha que la tabla muestra en la columna "DESDE".
+ *  - `antiguos` — lo que lleva más tiempo esperando. Sirve para vaciar la
+ *    cola vieja, que era para lo que se ordenaba así antes.
+ *  - `monto` — lo más caro primero, para priorizar por dinero en riesgo.
+ *  - `intentos` — lo que más ha insistido, que suele ser lo más atorado.
+ */
+export type OrdenLista = "recientes" | "antiguos" | "monto" | "intentos";
+
+export const ORDEN_POR_DEFECTO: OrdenLista = "recientes";
+
 export function agruparYPartir(
   items: readonly FailedIntent[],
+  orden: OrdenLista = ORDEN_POR_DEFECTO,
 ): Pick<ListaAgrupadaOutput, "necesitanAccion" | "seReintentan"> {
   const necesitanAccion: IntentoAgrupado[] = [];
   const seReintentan: IntentoAgrupado[] = [];
@@ -46,21 +68,30 @@ export function agruparYPartir(
     if (g.urgencia.necesitaAccion()) necesitanAccion.push(g);
     else seReintentan.push(g);
   }
-  porAntiguedad(necesitanAccion);
-  porAntiguedad(seReintentan);
+  ordenar(necesitanAccion, orden);
+  ordenar(seReintentan, orden);
   return { necesitanAccion, seReintentan };
 }
 
-// porAntiguedad ordena in-place: primero el que lleva más tiempo esperando y,
-// a igualdad de fecha, el de más intentos. El desempate por clave mantiene el
-// orden estable entre renders — sin él, dos capturas del mismo segundo pueden
-// intercambiarse y el renglón que alguien estaba a punto de tocar se mueve.
-function porAntiguedad(lista: IntentoAgrupado[]): void {
+// ordenar aplica el criterio pedido. Todos los criterios terminan en el mismo
+// desempate por clave: sin él, dos capturas del mismo segundo pueden
+// intercambiarse entre renders y el renglón que alguien estaba a punto de
+// tocar se mueve bajo el cursor.
+function ordenar(lista: IntentoAgrupado[], orden: OrdenLista): void {
+  const comparadores: Record<OrdenLista, (a: IntentoAgrupado, b: IntentoAgrupado) => number> = {
+    recientes: (a, b) => b.primero.getTime() - a.primero.getTime(),
+    antiguos: (a, b) => a.primero.getTime() - b.primero.getTime(),
+    // Sin monto va al final, no al principio: un hueco no es lo más barato.
+    monto: (a, b) => (b.cuanto ?? -1) - (a.cuanto ?? -1),
+    intentos: (a, b) => b.intentos - a.intentos,
+  };
+  const principal = comparadores[orden];
   lista.sort((a, b) => {
-    const porFecha = a.primero.getTime() - b.primero.getTime();
-    if (porFecha !== 0) return porFecha;
+    const porPrincipal = principal(a, b);
+    if (porPrincipal !== 0) return porPrincipal;
     const porIntentos = b.intentos - a.intentos;
     if (porIntentos !== 0) return porIntentos;
     return a.clave.localeCompare(b.clave);
   });
 }
+
