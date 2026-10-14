@@ -2,18 +2,21 @@ import { Camera } from "lucide-react";
 import { refImagenesDeActividad, type Actividad } from "../../domain/entities";
 import { plural } from "../lib/format";
 import { InfoRapida, TarjetaSub, TarjetaTitulo } from "../comunes/InfoRapida";
+import { claveDeRef } from "../../presentation/hooks/useImagenes";
 import { GaleriaFotos } from "./GaleriaFotos";
 
 const MINIATURAS_EN_POPOVER = 3;
 
 function TarjetaFotos({ actividad }: { actividad: Actividad }) {
+  const refImagenes = refImagenesDeActividad(actividad);
   return (
     <div className="w-[260px]">
       <TarjetaTitulo>{plural(actividad.numFotos, "foto", "fotos")}</TarjetaTitulo>
       <TarjetaSub>clic en el renglón para verlas</TarjetaSub>
       <div className="mt-2">
         <GaleriaFotos
-          refImagenes={refImagenesDeActividad(actividad)}
+          key={refImagenes ? claveDeRef(refImagenes) : "sin-fotos"}
+          refImagenes={refImagenes}
           mensajeSinFotos="Sin comprobante"
           limite={MINIATURAS_EN_POPOVER}
         />

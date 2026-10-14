@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { refImagenesDeActividad, type Actividad, type TipoActividad } from "../../domain/entities";
 import { diaDeNegocioDe, dinero2, fechaLarga, horaCorta } from "../lib/format";
 import { FORMA_COBRO_ETIQUETA } from "../lib/tipoActividadMeta";
+import { claveDeRef } from "../../presentation/hooks/useImagenes";
 import { GaleriaFotos } from "./GaleriaFotos";
 
 const MIGA: Record<TipoActividad, string> = {
@@ -57,6 +58,7 @@ export function ModalActividadDetalle({
   const esVisita = a.visita !== null;
   const estado = estadoPago(a);
   const doctoPvId = a.doctoPvId;
+  const refImagenes = refImagenesDeActividad(a);
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="block max-h-[90vh] w-[94vw] max-w-[640px] gap-0 overflow-hidden p-0 [&_button.absolute.right-4.top-4]:hidden">
@@ -149,7 +151,8 @@ export function ModalActividadDetalle({
             </Seccion>
             <Seccion titulo={a.numFotos > 0 ? `Fotos · ${a.numFotos}` : "Fotos"} ancha>
               <GaleriaFotos
-                refImagenes={refImagenesDeActividad(a)}
+                key={refImagenes ? claveDeRef(refImagenes) : "sin-fotos"}
+                refImagenes={refImagenes}
                 mensajeSinFotos={a.pago && !a.pago.pagoRecibidoId ? "Sin comprobante" : "No se tomaron fotos"}
               />
             </Seccion>
