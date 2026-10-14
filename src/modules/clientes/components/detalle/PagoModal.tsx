@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { usePagoDetalle } from "../../presentation/hooks/usePagoDetalle";
 import { categoriaMeta } from "../lib/pagoConcepto";
 import { formatMoney } from "../lib/format";
+import { PagoFotos } from "./PagoFotos";
 
 // FichaMapEmbed is lazy-loaded — avoids pulling in the maps bundle for closed modals.
 const FichaMapEmbed = lazy(() =>
@@ -27,9 +28,12 @@ interface Props {
   clienteId: number;
   doctoCcId: number | null;
   onClose: () => void;
+  // Desempeño los pasa para encadenar modales; Clientes no.
+  onAbrirVenta?: (doctoPvId: number) => void;
+  onAbrirCliente?: () => void;
 }
 
-export function PagoModal({ clienteId, doctoCcId, onClose }: Props) {
+export function PagoModal({ clienteId, doctoCcId, onClose, onAbrirVenta, onAbrirCliente }: Props) {
   const { detalle, isLoading, error } = usePagoDetalle(clienteId, doctoCcId);
   const hasMapsKey = Boolean(import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
 
@@ -277,15 +281,23 @@ export function PagoModal({ clienteId, doctoCcId, onClose }: Props) {
                 </section>
               )}
 
-              {/* ── Comprobante ── */}
-              <section>
-                <h4 className="mb-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Comprobante
-                </h4>
-                <p className="font-mono text-[11px] italic text-muted-foreground">
-                  Sin comprobante
-                </p>
-              </section>
+              {/* ── Fotos / comprobante ── */}
+              <PagoFotos pagoRecibidoId={detalle.pagoRecibidoId} />
+
+              {(onAbrirVenta || onAbrirCliente) && (
+                <footer className="flex justify-end gap-2 border-t border-border/60 pt-4">
+                  {onAbrirCliente && (
+                    <Button variant="outline" size="sm" onClick={onAbrirCliente}>
+                      Ficha del cliente
+                    </Button>
+                  )}
+                  {onAbrirVenta && (
+                    <Button size="sm" onClick={() => onAbrirVenta(detalle.doctoPvId)}>
+                      Detalle de venta
+                    </Button>
+                  )}
+                </footer>
+              )}
             </div>
           )}
         </div>

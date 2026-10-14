@@ -26,4 +26,7 @@ export type PagoDetalle = {
   readonly recibidoAt: Date | null;
   readonly aplicadoAt: Date | null;
   readonly origen: "app" | "microsip";
+  // UUID de MSP_PAGOS_RECIBIDOS: null en pagos de Microsip o anteriores a 2.18.0.
+  readonly pagoRecibidoId: string | null;
+  readonly numFotos: number;
 };
