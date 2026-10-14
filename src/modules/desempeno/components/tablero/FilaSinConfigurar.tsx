@@ -1,13 +1,6 @@
 import { Link } from "react-router-dom";
-import type { MotivoNoConfigurado, UsuarioTablero } from "../../domain/entities";
-
-const MENSAJE: Record<MotivoNoConfigurado, string> = {
-  sin_zona: "No tiene zona asignada. Sin zona no se puede medir su jornada ni sus cuentas.",
-  sin_inicio_semana: "No tiene inicio de semana. Sin él no se puede medir su jornada ni sus cuentas.",
-  inicio_semana_futuro: "Su inicio de semana todavía no llega. Revisa la fecha en Usuarios.",
-};
-// Respaldo si el API no dice el motivo (o manda uno que este escritorio no conoce).
-const MENSAJE_GENERICO = "Falta configurarlo. Sin zona e inicio de semana no se puede medir su jornada ni sus cuentas.";
+import type { UsuarioTablero } from "../../domain/entities";
+import { mensajeSinConfigurar } from "../lib/motivoNoConfigurado";
 
 // Usuario sin zona o sin inicio de semana (spec §5, contrato v2 §2). El enlace
 // va a Usuarios (/settings), donde se editan la zona y el inicio de semana
@@ -21,7 +14,7 @@ export function FilaSinConfigurar({
   puedeConfigurar: boolean;
   columnas: number;
 }) {
-  const mensaje = (u.motivoNoConfigurado && MENSAJE[u.motivoNoConfigurado]) || MENSAJE_GENERICO;
+  const mensaje = mensajeSinConfigurar(u.motivoNoConfigurado);
   return (
     <tr>
       <td className="rounded-l-[14px] border-y border-l border-dashed border-border px-2 py-3.5 pl-[18px]">
