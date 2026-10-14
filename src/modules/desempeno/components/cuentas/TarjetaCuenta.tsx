@@ -1,5 +1,5 @@
 import type { Cuenta } from "../../domain/entities";
-import { diaDeNegocioDe, dinero, fechaCorta, horaCorta } from "../lib/format";
+import { diaDeNegocioDe, dinero2, fechaCorta, horaCorta } from "../lib/format";
 import { etiquetaDeIdActividad } from "../lib/tipoActividadMeta";
 import { TarjetaFilas, TarjetaNota, TarjetaTitulo } from "../comunes/InfoRapida";
 
@@ -22,7 +22,7 @@ export function TarjetaCuenta({ cuenta: c }: { cuenta: Cuenta }) {
       <TarjetaFilas
         filas={[
           ["Lo determinó", determino],
-          ["Abonado en la semana", `${dinero(c.abonoSemana)} de ${dinero(c.parcialidad)}`],
+          ["Abonado en la semana", `${dinero2(c.abonoSemana)} de ${dinero2(c.parcialidad)}`],
           ["Última actividad", c.ultimaActividad ? cuando(c.ultimaActividad.hora) : "—"],
         ]}
       />

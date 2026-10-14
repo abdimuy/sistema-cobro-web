@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Actividad } from "../../domain/entities";
-import { diaDeNegocioDe, dinero, fechaCorta, horaCorta } from "../lib/format";
+import { diaDeNegocioDe, dinero2, fechaCorta, horaCorta } from "../lib/format";
 import { FORMA_COBRO_ETIQUETA, TIPO_ACTIVIDAD_META } from "../lib/tipoActividadMeta";
 import { TarjetaFilas, TarjetaNota, TarjetaSub, TarjetaTitulo } from "./InfoRapida";
 
@@ -18,7 +18,7 @@ export function TarjetaActividad({ actividad: a }: { actividad: Actividad }) {
   const resumen = a.visita
     ? a.visita.tipoVisita
     : a.pago
-      ? `${a.tipo === "condonacion" ? "−" : ""}${dinero(a.pago.importe)}`
+      ? `${a.tipo === "condonacion" ? "−" : ""}${dinero2(a.pago.importe)}`
       : "";
   const filas: Array<readonly [string, ReactNode]> = [
     ["Cliente", a.clienteNombre],

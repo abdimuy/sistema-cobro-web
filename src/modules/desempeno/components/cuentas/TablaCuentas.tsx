@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { Cuenta } from "../../domain/entities";
-import { diaDeNegocioDe, dinero, fechaCorta, horaCorta } from "../lib/format";
+import { diaDeNegocioDe, dinero2, fechaCorta, horaCorta } from "../lib/format";
 import { TIPO_ACTIVIDAD_META } from "../lib/tipoActividadMeta";
 import { ChipTrato } from "../comunes/ChipTrato";
 import { InfoRapida } from "../comunes/InfoRapida";
@@ -97,8 +97,8 @@ export function TablaCuentas({
                   <div className="text-[13px]">{c.producto ?? "—"}</div>
                   <div className="font-mono text-[11px] text-muted-foreground">{c.folio ?? "—"}</div>
                 </td>
-                <td className="px-3 py-2.5 text-right tabular">{dinero(c.saldo)}</td>
-                <td className="px-3 py-2.5 text-right tabular">{dinero(c.parcialidad)}</td>
+                <td className="px-3 py-2.5 text-right tabular">{dinero2(c.saldo)}</td>
+                <td className="px-3 py-2.5 text-right tabular">{dinero2(c.parcialidad)}</td>
                 <td className="px-3 py-2.5">
                   <Atrasos n={c.numAtrasos} />
                 </td>

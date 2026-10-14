@@ -25,10 +25,10 @@ describe("ChipTrato", () => {
 describe("MontoActividad", () => {
   it("pago, condonación y visita", () => {
     const { rerender } = render(<MontoActividad actividad={makeActividadPago()} />);
-    expect(screen.getByText("$150")).toBeInTheDocument();
+    expect(screen.getByText("$150.00")).toBeInTheDocument();
 
     rerender(<MontoActividad actividad={makeActividadCondonacion()} />);
-    expect(screen.getByText("−$50")).toBeInTheDocument();
+    expect(screen.getByText("−$50.00")).toBeInTheDocument();
 
     rerender(<MontoActividad actividad={makeActividadVisita()} />);
     expect(screen.getByText("No se encontraba")).toBeInTheDocument();
@@ -59,7 +59,7 @@ describe("MontoActividad", () => {
 describe("TarjetaActividad", () => {
   it("resume un pago con hora de la oficina y sin 'Depósito'", () => {
     render(<TarjetaActividad actividad={makeActividadPago()} />);
-    expect(screen.getByText("Pago · $150")).toBeInTheDocument();
+    expect(screen.getByText("Pago · $150.00")).toBeInTheDocument();
     // Registrado 14:20:00Z y recibido 14:20:05Z: los dos caen en 08:20 de la
     // oficina (subtítulo y renglón "Llegó").
     expect(screen.getAllByText("mié 14 oct 08:20")).toHaveLength(2);
@@ -108,5 +108,24 @@ describe("Estados", () => {
   it("vacío", () => {
     render(<EstadoVacio titulo="Sin actividad hoy" detalle="Su último movimiento fue ayer." />);
     expect(screen.getByText("Sin actividad hoy")).toBeInTheDocument();
+  });
+});
+
+describe("montos individuales con centavos", () => {
+  const conCentavos = (base = makeActividadPago()) => ({ ...base, pago: { ...base.pago!, importe: "150.50" } });
+
+  it("MontoActividad: un pago de $150.50 no se redondea", () => {
+    render(<MontoActividad actividad={conCentavos()} />);
+    expect(screen.getByText("$150.50")).toBeInTheDocument();
+  });
+
+  it("MontoActividad: condonación con centavos", () => {
+    render(<MontoActividad actividad={conCentavos(makeActividadCondonacion())} />);
+    expect(screen.getByText("−$150.50")).toBeInTheDocument();
+  });
+
+  it("TarjetaActividad: el resumen del pago lleva centavos", () => {
+    render(<TarjetaActividad actividad={conCentavos()} />);
+    expect(screen.getByText("Pago · $150.50")).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { Actividad } from "../../domain/entities";
-import { dinero } from "../lib/format";
+import { dinero2 } from "../lib/format";
 import { ChipTrato } from "./ChipTrato";
 
 // Monto o resultado de una actividad. Una visita muestra el literal que
@@ -14,12 +14,12 @@ export function MontoActividad({ actividad }: { actividad: Actividad }) {
   const pago = actividad.pago;
   if (!pago) return <span className="text-muted-foreground">—</span>;
   if (actividad.tipo === "condonacion") {
-    return <span className="tabular text-dsm-violeta">−{dinero(pago.importe)}</span>;
+    return <span className="tabular text-dsm-violeta">−{dinero2(pago.importe)}</span>;
   }
   return (
     <span className="inline-flex items-baseline gap-1.5">
       <span className={cn("tabular", pago.rechazado && "text-muted-foreground line-through")}>
-        {dinero(pago.importe)}
+        {dinero2(pago.importe)}
       </span>
       {pago.rechazado ? (
         <span className="text-[11px] text-dsm-rojo">Rechazado</span>

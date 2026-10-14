@@ -119,7 +119,7 @@ describe("JornadaTab", () => {
     const puntos = await screen.findAllByTestId("eje-punto");
     expect(puntos).toHaveLength(5);
     await user.hover(puntos[0]);
-    expect(await screen.findByText("Pago · $150")).toBeInTheDocument();
+    expect(await screen.findByText("Pago · $150.00")).toBeInTheDocument();
     await user.click(puntos[0]);
     expect(onAbrirActividad).toHaveBeenCalled();
   });

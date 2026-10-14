@@ -58,7 +58,7 @@ describe("CuentasTab", () => {
     await user.hover(chip);
     expect(await screen.findByText("No hace falta volver")).toBeInTheDocument();
     expect(screen.getByText("Pago · mié 14 oct 08:20")).toBeInTheDocument();
-    expect(screen.getByText("$150 de $150")).toBeInTheDocument();
+    expect(screen.getByText("$150.00 de $150.00")).toBeInTheDocument();
   });
 
   it("atrasos y clic en la cuenta", async () => {
@@ -140,5 +140,19 @@ describe("CuentasTab", () => {
     fireEvent.keyDown(fila, { key: " " });
     expect(onAbrirCuenta).toHaveBeenCalledTimes(2);
     expect(screen.getByText("SIN DETALLE").closest("tr")).not.toHaveAttribute("tabindex");
+  });
+
+  it("saldo, parcialidad y abono de la semana con centavos", async () => {
+    const user = userEvent.setup();
+    const port = new FakeDesempenoPort();
+    port.cuentasResponse = makeCuentasSemana({
+      cuentas: [makeCuenta({ saldo: "16650.50", parcialidad: "150.50", abonoSemana: "150.50" })],
+    });
+    montar(port);
+    const fila = (await screen.findByText("JUANA ANDRADE LECHUGA")).closest("tr")!;
+    expect(within(fila).getByText("$16,650.50")).toBeInTheDocument();
+    expect(within(fila).getByText("$150.50")).toBeInTheDocument();
+    await user.hover(within(fila).getByText("Pagó esta semana"));
+    expect(await screen.findByText("$150.50 de $150.50")).toBeInTheDocument();
   });
 });
