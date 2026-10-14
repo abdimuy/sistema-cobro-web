@@ -63,6 +63,11 @@ describe("FichaScreen", () => {
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
 
+  it("inicio de semana en el futuro (contrato v2.1): lo dice en el encabezado", () => {
+    montar("cuentas", makeUsuarioSinConfigurar({ motivoNoConfigurado: "inicio_semana_futuro" }));
+    expect(screen.getByText("Sin configurar · el inicio de semana aún no llega")).toBeInTheDocument();
+  });
+
   it("pestañas: marca la actual y avisa al cambiar", async () => {
     const user = userEvent.setup();
     const props = montar("jornada");

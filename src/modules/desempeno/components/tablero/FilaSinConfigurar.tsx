@@ -4,6 +4,7 @@ import type { MotivoNoConfigurado, UsuarioTablero } from "../../domain/entities"
 const MENSAJE: Record<MotivoNoConfigurado, string> = {
   sin_zona: "No tiene zona asignada. Sin zona no se puede medir su jornada ni sus cuentas.",
   sin_inicio_semana: "No tiene inicio de semana. Sin él no se puede medir su jornada ni sus cuentas.",
+  inicio_semana_futuro: "Su inicio de semana todavía no llega. Revisa la fecha en Usuarios.",
 };
 // Respaldo si el API no dice el motivo (o manda uno que este escritorio no conoce).
 const MENSAJE_GENERICO = "Falta configurarlo. Sin zona e inicio de semana no se puede medir su jornada ni sus cuentas.";

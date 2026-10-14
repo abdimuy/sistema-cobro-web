@@ -48,6 +48,17 @@ describe("TableroScreen", () => {
     expect(within(norma).getByText("Pide a un administrador")).toBeInTheDocument();
   });
 
+  it("inicio de semana en el futuro (contrato v2.1) lo explica en la fila", async () => {
+    const port = new FakeDesempenoPort();
+    port.tableroResponse = makeTablero({
+      usuarios: [makeUsuarioSinConfigurar({ motivoNoConfigurado: "inicio_semana_futuro" })],
+    });
+    montar(port);
+    const norma = (await screen.findByText("Norma Velázquez Rojas")).closest("tr")!;
+    expect(within(norma).getByText(/Su inicio de semana todavía no llega/)).toBeInTheDocument();
+    expect(within(norma).queryByText(/Falta configurarlo/)).not.toBeInTheDocument();
+  });
+
   it("muestra cifras por usuario y NINGÚN total del equipo (D14)", async () => {
     montar();
     const fila = (await screen.findByText("Juan Carlos Méndez")).closest("tr")!;

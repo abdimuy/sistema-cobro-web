@@ -337,6 +337,15 @@ describe("DTO del contrato → dominio (objeto completo)", () => {
     expect(Object.keys(t)).toEqual(["generadoAt", "periodo", "pausaMin", "usuarios"]);
   });
 
+  it("motivo inicio_semana_futuro (contrato v2.1) es una fila no configurada, no un error", () => {
+    const u = dtoToTablero({
+      ...tableroDTO,
+      usuarios: [{ ...tableroDTO.usuarios[1], motivo_no_configurado: "inicio_semana_futuro" }],
+    }).usuarios[0];
+    expect(u.configurado).toBe(false);
+    expect(u.motivoNoConfigurado).toBe("inicio_semana_futuro");
+  });
+
   it("jornada", () => {
     expect(dtoToJornada(jornadaDTO)).toEqual(jornada);
   });

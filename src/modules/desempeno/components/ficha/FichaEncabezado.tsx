@@ -22,6 +22,7 @@ const ESTADO = {
 const MOTIVO: Record<MotivoNoConfigurado, string> = {
   sin_zona: "falta la zona",
   sin_inicio_semana: "falta el inicio de semana",
+  inicio_semana_futuro: "el inicio de semana aún no llega",
 };
 
 function Cifra({ titulo, valor, nota }: { titulo: string; valor: string; nota?: string }) {

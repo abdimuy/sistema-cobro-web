@@ -11,7 +11,9 @@ export const ESTADOS_AHORA = ["activo", "sin_actividad", "no_ha_empezado"] as co
 export type EstadoAhora = (typeof ESTADOS_AHORA)[number];
 export const esEstadoAhora = (v: unknown): v is EstadoAhora => esUno(ESTADOS_AHORA, v);
 
-export const MOTIVOS_NO_CONFIGURADO = ["sin_zona", "sin_inicio_semana"] as const;
+// `inicio_semana_futuro` (contrato v2.1): el inicio de semana quedó después de
+// ahora; el servidor manda la fila como no configurada en vez de un 422.
+export const MOTIVOS_NO_CONFIGURADO = ["sin_zona", "sin_inicio_semana", "inicio_semana_futuro"] as const;
 export type MotivoNoConfigurado = (typeof MOTIVOS_NO_CONFIGURADO)[number];
 export const esMotivoNoConfigurado = (v: unknown): v is MotivoNoConfigurado =>
   esUno(MOTIVOS_NO_CONFIGURADO, v);
