@@ -8,8 +8,10 @@ import {
   horaCorta,
   porcentaje,
 } from "../lib/format";
+import { Link } from "react-router-dom";
 import { PuntoEstado } from "../comunes/PuntoEstado";
 import { SegmentoPeriodo } from "../comunes/SegmentoPeriodo";
+import { RUTA_CONFIGURAR_USUARIO } from "./sinConfigurar";
 
 const ESTADO = {
   activo: "Activo",
@@ -63,6 +65,14 @@ export function FichaEncabezado({
               <span className="rounded-full bg-dsm-ambar-fondo px-2.5 py-0.5 text-dsm-ambar">
                 {`Sin configurar · ${MOTIVO[u.motivoNoConfigurado]}`}
               </span>
+            )}
+            {!u.configurado && (
+              <Link
+                to={RUTA_CONFIGURAR_USUARIO}
+                className="text-dsm-marca underline-offset-2 hover:underline"
+              >
+                Configurar en Usuarios
+              </Link>
             )}
             {inicioDia && <span>{`Semana desde ${fechaCorta(inicioDia)} · hace ${haceDias} d`}</span>}
             <span className="inline-flex items-center gap-1.5 rounded-full bg-dsm-tarjeta px-2.5 py-0.5 text-foreground ring-1 ring-border">

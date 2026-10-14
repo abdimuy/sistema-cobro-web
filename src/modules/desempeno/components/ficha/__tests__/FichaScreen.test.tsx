@@ -89,4 +89,38 @@ describe("FichaScreen", () => {
     expect(esPestana("excel")).toBe(false);
     expect(esPestana(null)).toBe(false);
   });
+
+  it("cifras incoherentes a propósito: se pinta lo que manda el API, sin recalcular", () => {
+    montar(
+      "jornada",
+      makeUsuarioTablero({
+        cobertura: { conAlgo: 186, total: 232 },
+        coberturaPorSegmento: { sinVisitar: 46, volver: 20, despues: 3, pagados: 140, sinNada: 50 },
+        cobro: { cobrado: "8600.00", esperado: "13050.00", falta: "4000.00", pct: "61.00" },
+      }),
+    );
+    expect(screen.getByText("50 de 232")).toBeInTheDocument();
+    expect(screen.getByText("por cobrar $4,000")).toBeInTheDocument();
+    expect(screen.getByText("61.0%")).toBeInTheDocument();
+  });
+
+  it("el día de inicio de semana es el de la oficina (03:00Z del sábado = viernes en CDMX)", () => {
+    montar("jornada", makeUsuarioTablero({ inicioSemana: "2026-10-10T03:00:00Z" }));
+    expect(screen.getByText("Semana desde vie 9 oct · hace 5 d")).toBeInTheDocument();
+  });
+
+  it("usuario sin configurar: enlace a Usuarios en el encabezado", () => {
+    montar("cuentas", makeUsuarioSinConfigurar());
+    const enlaces = screen.getAllByRole("link", { name: "Configurar en Usuarios" });
+    expect(enlaces[0]).toHaveAttribute("href", "/settings");
+  });
+
+  it("pestañas enlazadas con su panel (aria-controls / aria-labelledby)", () => {
+    montar("actividad");
+    const tab = screen.getByRole("tab", { name: /Actividad de la zona/ });
+    const panel = screen.getByRole("tabpanel");
+    expect(tab).toHaveAttribute("aria-controls", panel.id);
+    expect(panel).toHaveAttribute("aria-labelledby", tab.id);
+    expect(screen.getByRole("tablist")).toBeInTheDocument();
+  });
 });

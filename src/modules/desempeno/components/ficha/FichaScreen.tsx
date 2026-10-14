@@ -70,9 +70,11 @@ export function FichaScreen(p: FichaScreenProps) {
         {pestanas.map(([valor, texto, n]) => (
           <button
             key={valor}
+            id={`ficha-tab-${valor}`}
             type="button"
             role="tab"
             aria-selected={p.pestana === valor}
+            aria-controls={`ficha-panel-${valor}`}
             onClick={() => p.onCambiarPestana(valor)}
             className={cn(
               "inline-flex h-[34px] items-center gap-2 whitespace-nowrap rounded-full px-[18px] text-[13px]",
@@ -86,7 +88,11 @@ export function FichaScreen(p: FichaScreenProps) {
           </button>
         ))}
       </div>
-      <div role="tabpanel">
+      <div
+        role="tabpanel"
+        id={`ficha-panel-${p.pestana}`}
+        aria-labelledby={`ficha-tab-${p.pestana}`}
+      >
         {p.pestana === "jornada" && (
           <JornadaTab
             usuario={p.usuario}
