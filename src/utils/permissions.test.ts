@@ -183,9 +183,10 @@ describe("DESEMPENO_COBRADORES (D9)", () => {
     expect(canUserAccessModule(usuario(ROLES.OPERADOR), "HOME")).toBe(true);
   });
 
-  it("el aterrizaje tras login no cambia: la primera pantalla que no es '/'", () => {
-    expect(getFirstAccessibleModule(usuario(ROLES.SUPER_ADMIN))).toBe("/sales");
-    expect(getFirstAccessibleModule(usuario(ROLES.OPERADOR, ["DESEMPENO_COBRADORES", "CLIENTES"]))).toBe("/clientes");
-    expect(getFirstAccessibleModule(usuario(ROLES.OPERADOR, ["DESEMPENO_COBRADORES"]))).toBe("/");
+  it("aterrizaje tras login: con Desempeño, el tablero ('/'); sin él, la primera pantalla como hoy", () => {
+    expect(getFirstAccessibleModule(usuario(ROLES.SUPER_ADMIN))).toBe("/");
+    expect(getFirstAccessibleModule(usuario(ROLES.OPERADOR, ["DESEMPENO_COBRADORES", "CLIENTES"]))).toBe("/");
+    expect(getFirstAccessibleModule(usuario(ROLES.OPERADOR, ["CLIENTES", "RUTAS"]))).toBe("/clientes");
+    expect(getFirstAccessibleModule(usuario(ROLES.OPERADOR))).toBe("/");
   });
 });

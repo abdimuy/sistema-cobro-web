@@ -13,8 +13,14 @@ vi.mock("../useAuth", () => ({
 }));
 
 describe("usePermissions con Desempeño de cobradores (D9)", () => {
-  it("el aterrizaje tras login salta '/' aunque Desempeño esté encendido", () => {
-    permisos.modulos = ["DESEMPENO_COBRADORES", "CLIENTES"];
+  it("aterrizaje tras login: con Desempeño encendido va al tablero ('/')", () => {
+    permisos.modulos = ["CLIENTES", "DESEMPENO_COBRADORES"];
+    const { result } = renderHook(() => usePermissions());
+    expect(result.current.getFirstAvailableRoute()).toBe("/");
+  });
+
+  it("aterrizaje tras login: sin Desempeño, la primera pantalla como hoy", () => {
+    permisos.modulos = ["CLIENTES", "RUTAS"];
     const { result } = renderHook(() => usePermissions());
     expect(result.current.getFirstAvailableRoute()).toBe("/clientes");
   });

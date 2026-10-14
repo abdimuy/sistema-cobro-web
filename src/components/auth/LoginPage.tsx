@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermissions } from '../../hooks/usePermissions';
 import { APP_VERSION } from '../../constants/version';
@@ -12,14 +12,24 @@ const LoginPage: React.FC = () => {
   const { login, loading, error, clearError, isAuthenticated, deviceBlocked, deviceInfo, logout } = useAuth();
   const { getFirstAvailableRoute } = usePermissions();
   const navigate = useNavigate();
+  const location = useLocation();
+  // ProtectedRoute manda aquí con `state.from`: se respeta para no perder un
+  // enlace profundo (p. ej. la ficha de Desempeño, /?usuario=…). "/" a secas
+  // no cuenta como destino: ahí decide getFirstAvailableRoute. Al llegar,
+  // ProtectedRoute vuelve a revisar el permiso.
+  const from = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
+  const destinoPrevio =
+    from?.pathname && from.pathname !== '/login' && (from.pathname !== '/' || from.search)
+      ? `${from.pathname}${from.search ?? ''}`
+      : null;
 
   // Redirigir si ya está autenticado
   useEffect(() => {
     if (isAuthenticated) {
-      const redirectRoute = getFirstAvailableRoute();
+      const redirectRoute = destinoPrevio ?? getFirstAvailableRoute();
       navigate(redirectRoute, { replace: true });
     }
-  }, [isAuthenticated, navigate, getFirstAvailableRoute]);
+  }, [isAuthenticated, navigate, getFirstAvailableRoute, destinoPrevio]);
 
   // Limpiar error cuando el usuario empiece a escribir
   useEffect(() => {

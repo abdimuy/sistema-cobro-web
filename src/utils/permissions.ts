@@ -115,8 +115,12 @@ export const getFirstAccessibleModule = (userData: UserData | null): string => {
     return '/'; // Fallback a home
   }
 
-  // Buscar el primer módulo que no sea "/" (Inicio, o Desempeño de cobradores
-  // que vive en la misma ruta)
+  // Con Desempeño de cobradores, "/" ES su tablero: ahí aterriza (D9).
+  if (accessibleModules.some(module => module.key === 'DESEMPENO_COBRADORES')) {
+    return '/';
+  }
+
+  // Sin él, el primer módulo que no sea "/" (Inicio)
   const firstModule = accessibleModules.find(module => module.path !== '/');
   return firstModule?.path || '/';
 };
