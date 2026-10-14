@@ -1,4 +1,4 @@
-import { UserData, RoleType } from '../types/auth';
+import { UserData, RoleType, ModuleConfig } from '../types/auth';
 import { ROLES, ROLE_PERMISSIONS, ROLE_HIERARCHY } from '../constants/roles';
 import { DESKTOP_MODULES, PUBLIC_MODULES } from '../constants/modules';
 
@@ -115,7 +115,17 @@ export const getFirstAccessibleModule = (userData: UserData | null): string => {
     return '/'; // Fallback a home
   }
 
-  // Buscar el primer módulo que no sea HOME
-  const firstModule = accessibleModules.find(module => module.key !== 'HOME');
+  // Buscar el primer módulo que no sea "/" (Inicio, o Desempeño de cobradores
+  // que vive en la misma ruta)
+  const firstModule = accessibleModules.find(module => module.path !== '/');
   return firstModule?.path || '/';
+};
+
+/**
+ * Módulos que pinta el menú lateral. Con "Desempeño de cobradores", Inicio ES
+ * esa pantalla (las dos apuntan a "/"): no se pintan dos entradas iguales.
+ */
+export const modulosParaMenu = (modulos: ModuleConfig[]): ModuleConfig[] => {
+  const conDesempeno = modulos.some((m) => m.key === 'DESEMPENO_COBRADORES');
+  return conDesempeno ? modulos.filter((m) => m.key !== 'HOME') : modulos;
 };

@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom"
 import { Armchair, ArrowDownCircle, RefreshCw, Loader2 } from "lucide-react"
 import { usePermissions } from "@/hooks/usePermissions"
+import { modulosParaMenu } from "@/utils/permissions"
 import { APP_VERSION } from "@/constants/version"
 import { useUpdater } from "@/context/UpdaterContext"
 import { NavUser } from "./NavUser"
@@ -96,7 +97,8 @@ function SidebarUpdateBanner() {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { getAvailableModulesWithConfig } = usePermissions()
   const location = useLocation()
-  const modules = getAvailableModulesWithConfig()
+  // Con Desempeño de cobradores, Inicio no se repite: las dos son "/" (D9).
+  const modules = modulosParaMenu(getAvailableModulesWithConfig())
 
   return (
     <Sidebar variant="inset" {...props}>

@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { canUserAccessModule, filterModulesByPermissions } from "./permissions";
+import {
+  canUserAccessModule,
+  filterModulesByPermissions,
+  getFirstAccessibleModule,
+  modulosParaMenu,
+} from "./permissions";
 import { desktopModules } from "../constants/desktopModules";
-import { DESKTOP_MODULES } from "../constants/modules";
+import { DESKTOP_MODULES, ROUTE_TO_MODULE } from "../constants/modules";
 import { ROLES } from "../constants/roles";
 import type { UserData } from "../types/auth";
 
@@ -130,11 +135,12 @@ describe("desktopModules (interruptores de la pantalla de usuarios)", () => {
     expect(desktopModules.map((m) => m.key)).not.toContain("HOME");
   });
 
-  it("cubre todas las pantallas salvo Inicio — hoy son 13", () => {
+  it("cubre todas las pantallas salvo Inicio — hoy son 14 (con Desempeño de cobradores)", () => {
     const esperados = DESKTOP_MODULES.filter((m) => m.key !== "HOME").map((m) => m.key);
 
     expect(desktopModules.map((m) => m.key)).toEqual(esperados);
-    expect(desktopModules).toHaveLength(13);
+    expect(desktopModules).toHaveLength(14);
+    expect(desktopModules.map((m) => m.key)).toContain("DESEMPENO_COBRADORES");
   });
 
   it("cada interruptor corresponde a un módulo que la regla puede conceder", () => {
@@ -142,5 +148,44 @@ describe("desktopModules (interruptores de la pantalla de usuarios)", () => {
       const usuarioConEse = usuario(ROLES.OPERADOR, [interruptor.key]);
       expect(canUserAccessModule(usuarioConEse, interruptor.key)).toBe(true);
     }
+  });
+});
+
+describe("modulosParaMenu", () => {
+  const home = { key: "HOME", label: "Inicio", path: "/" };
+  const desempeno = { key: "DESEMPENO_COBRADORES", label: "Desempeño de cobradores", path: "/" };
+  const clientes = { key: "CLIENTES", label: "Clientes", path: "/clientes" };
+
+  it("con Desempeño, Inicio no se repite en el menú (las dos apuntan a /)", () => {
+    expect(modulosParaMenu([home, desempeno, clientes]).map((m) => m.key)).toEqual([
+      "DESEMPENO_COBRADORES",
+      "CLIENTES",
+    ]);
+  });
+
+  it("sin Desempeño, Inicio se queda", () => {
+    expect(modulosParaMenu([home, clientes]).map((m) => m.key)).toEqual(["HOME", "CLIENTES"]);
+  });
+});
+
+describe("DESEMPENO_COBRADORES (D9)", () => {
+  it("exige su interruptor: no es público", () => {
+    expect(canUserAccessModule(usuario(ROLES.ADMIN), "DESEMPENO_COBRADORES")).toBe(false);
+    expect(canUserAccessModule(usuario(ROLES.OPERADOR, ["DESEMPENO_COBRADORES"]), "DESEMPENO_COBRADORES")).toBe(true);
+  });
+
+  it("SUPER_ADMIN lo ve sin encenderlo (anti-bloqueo)", () => {
+    expect(canUserAccessModule(usuario(ROLES.SUPER_ADMIN), "DESEMPENO_COBRADORES")).toBe(true);
+  });
+
+  it("'/' sigue siendo Inicio, público: Inicio decide qué pintar", () => {
+    expect(ROUTE_TO_MODULE["/"]).toBe("HOME");
+    expect(canUserAccessModule(usuario(ROLES.OPERADOR), "HOME")).toBe(true);
+  });
+
+  it("el aterrizaje tras login no cambia: la primera pantalla que no es '/'", () => {
+    expect(getFirstAccessibleModule(usuario(ROLES.SUPER_ADMIN))).toBe("/sales");
+    expect(getFirstAccessibleModule(usuario(ROLES.OPERADOR, ["DESEMPENO_COBRADORES", "CLIENTES"]))).toBe("/clientes");
+    expect(getFirstAccessibleModule(usuario(ROLES.OPERADOR, ["DESEMPENO_COBRADORES"]))).toBe("/");
   });
 });

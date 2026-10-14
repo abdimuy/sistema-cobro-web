@@ -29,8 +29,9 @@ export const usePermissions = () => {
       return '/'; // Fallback a home
     }
 
-    // Buscar el primer módulo que no sea HOME
-    const firstModule = availableModules.find(module => module.key !== 'HOME');
+    // Buscar el primer módulo que no sea "/" (Inicio, o Desempeño de
+    // cobradores que vive en la misma ruta)
+    const firstModule = availableModules.find(module => module.path !== '/');
     return firstModule?.path || '/';
   };
 

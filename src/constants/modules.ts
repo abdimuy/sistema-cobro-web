@@ -1,5 +1,5 @@
 import { ModuleConfig } from '../types/auth';
-import { Home, BarChart3, ShoppingCart, Shield, Truck, Package, Users, AlertTriangle, Sparkles, Contact, Route, TrendingUp, SlidersHorizontal, Inbox } from 'lucide-react';
+import { Home, Activity, BarChart3, ShoppingCart, Shield, Truck, Package, Users, AlertTriangle, Sparkles, Contact, Route, TrendingUp, SlidersHorizontal, Inbox } from 'lucide-react';
 
 // Registro único de las pantallas del escritorio. Toda pantalla que no sea
 // pública (Inicio) se concede por interruptor por usuario (MODULOS_DESKTOP)
@@ -12,6 +12,16 @@ export const DESKTOP_MODULES: ModuleConfig[] = [
     label: 'Inicio',
     path: '/',
     icon: Home,
+    color: 'blue'
+  },
+  {
+    // D9: con este interruptor, "/" es Desempeño de cobradores. Comparte la
+    // ruta con Inicio; el menú muestra solo uno (modulosParaMenu). En
+    // ROUTE_TO_MODULE "/" sigue siendo HOME (pública): Inicio decide qué pintar.
+    key: 'DESEMPENO_COBRADORES',
+    label: 'Desempeño de cobradores',
+    path: '/',
+    icon: Activity,
     color: 'blue'
   },
   {
