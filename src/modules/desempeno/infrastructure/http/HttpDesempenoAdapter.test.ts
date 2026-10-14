@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import axios, { type AxiosInstance } from "axios";
+import { http, HttpResponse } from "msw";
 import { server } from "../../../../test/msw/server";
 import { desempenoHandlers } from "../../../../test/msw/handlers/desempeno";
 import { HttpDesempenoAdapter } from "./HttpDesempenoAdapter";
@@ -121,6 +122,23 @@ describe("HttpDesempenoAdapter", () => {
     expect(get).toHaveBeenCalledWith("/visitas/v-1/imagenes/img-1", { responseType: "blob", signal: undefined });
     await a.descargarImagen({ tipo: "pago", pagoRecibidoId: "p-1" }, "img-2");
     expect(get).toHaveBeenLastCalledWith("/cobranza/pagos/p-1/imagenes/img-2", { responseType: "blob", signal: undefined });
+  });
+
+  it("descarga de foto que falla: el cuerpo JSON llega como Blob y aun así se lee el código", async () => {
+    server.use(
+      http.get("*/v2/visitas/:id/imagenes/:img", () =>
+        HttpResponse.json(
+          { title: "Not Found", status: 404, detail: "la imagen no es de esa visita", errors: [{ message: "code=imagen_not_found" }] },
+          { status: 404 },
+        ),
+      ),
+    );
+    const e = await adapter()
+      .descargarImagen({ tipo: "visita", visitaId: "v-1" }, "img-ajena")
+      .catch((x: unknown) => x);
+    expect(e).toBeInstanceOf(DomainError);
+    expect((e as DomainError).code).toBe("imagen_not_found");
+    expect((e as DomainError).message).toBe("la imagen no es de esa visita");
   });
 
   it("errores del API llegan como DomainError con el código del contrato", async () => {

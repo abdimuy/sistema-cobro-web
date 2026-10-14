@@ -26,6 +26,21 @@ describe("apperrorToDomainError", () => {
     expect(e.message).toBe("el usuario no tiene zona asignada");
   });
 
+  it("acepta errors[].message con la forma 'code: mensaje'", () => {
+    const e = apperrorToDomainError(
+      errorHttp(404, { detail: "no existe el usuario", errors: [{ message: "desempeno_usuario_not_found: no existe" }] }),
+    );
+    expect(e.code).toBe("desempeno_usuario_not_found");
+    expect(e.message).toBe("no existe el usuario");
+  });
+
+  it("ignora mensajes de errors[] que no traen código y usa el siguiente", () => {
+    const e = apperrorToDomainError(
+      errorHttp(422, { detail: "x", errors: [{ message: "Pausa fuera de rango" }, { message: "code=desempeno_parametro_invalido" }] }),
+    );
+    expect(e.code).toBe("desempeno_parametro_invalido");
+  });
+
   it("también acepta `code` plano (Problem Details)", () => {
     expect(apperrorToDomainError(errorHttp(422, { code: "desempeno_parametro_invalido", detail: "pausa_min fuera de rango" })).code).toBe(
       "desempeno_parametro_invalido",
