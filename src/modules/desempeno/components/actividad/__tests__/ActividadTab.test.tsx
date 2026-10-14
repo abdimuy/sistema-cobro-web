@@ -6,6 +6,8 @@ import { renderConDesempeno } from "../../../test/renderConDesempeno";
 import {
   FakeDesempenoPort,
   makeActividadPago,
+  makeActividadVisita,
+  makeCatalogos,
   makePaginaActividad,
   makeUsuarioTablero,
 } from "../../../application/__tests__/fakeDesempenoPort";
@@ -99,7 +101,7 @@ describe("ActividadTab", () => {
     const user = userEvent.setup();
     const { port } = montar();
     await screen.findByText("JUANA ANDRADE LECHUGA");
-    await user.type(screen.getByPlaceholderText("Cliente o folio"), "andrade");
+    await user.type(screen.getByLabelText("Buscar cliente o folio"), "andrade");
     await waitFor(() => expect(ultimaConsulta(port).q).toBe("andrade"));
     expect(port.actividadCalls.filter((c) => c.filtros.q === "andr")).toHaveLength(0);
   });
@@ -259,5 +261,140 @@ describe("ActividadTab", () => {
     expect(screen.getByLabelText("Agrupar")).toHaveValue("");
     await screen.findByText("JUANA ANDRADE LECHUGA");
     expect(screen.queryAllByTestId("grupo")).toHaveLength(0);
+  });
+
+  it("los totales son los del servidor aunque no coincidan con los renglones de la página", async () => {
+    const port = new FakeDesempenoPort();
+    port.actividadResponse = makePaginaActividad({
+      siguienteCursor: "c2",
+      totales: { n: 1188, importe: "289450.00", porTipo: { pago: 980, visita: 200, condonacion: 8 } },
+    });
+    montar(port);
+    await screen.findByText("JUANA ANDRADE LECHUGA");
+    expect(screen.getByText("1,188 movimientos")).toBeInTheDocument();
+    expect(screen.getByText("980 pagos")).toBeInTheDocument();
+    expect(screen.getByText("200 visitas")).toBeInTheDocument();
+    expect(screen.getByText("8 condonaciones")).toBeInTheDocument();
+    expect(screen.getByText("cobrado $289,450")).toBeInTheDocument();
+  });
+
+  it("la tabla respeta el orden del servidor (no reordena en pantalla)", async () => {
+    const port = new FakeDesempenoPort();
+    port.actividadResponse = makePaginaActividad({
+      items: [
+        makeActividadPago({ id: "pago:1", clienteNombre: "ZENAIDA ROJAS" }),
+        makeActividadPago({ id: "pago:2", clienteNombre: "ABEL MORA" }),
+        makeActividadPago({ id: "pago:3", clienteNombre: "MARTA LUNA" }),
+      ],
+    });
+    montar(port);
+    await screen.findByText("ZENAIDA ROJAS");
+    const filas = screen.getAllByRole("row").slice(1).map((r) => r.textContent ?? "");
+    expect(filas[0]).toContain("ZENAIDA ROJAS");
+    expect(filas[1]).toContain("ABEL MORA");
+    expect(filas[2]).toContain("MARTA LUNA");
+  });
+
+  it("una vista guardada restaura también sus columnas", async () => {
+    const user = userEvent.setup();
+    montar();
+    await screen.findByText("JUANA ANDRADE LECHUGA");
+    await user.click(screen.getByRole("button", { name: "Columnas" }));
+    await user.click(await screen.findByRole("checkbox", { name: "Forma de cobro" }));
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "Guardar vista" }));
+    await user.type(screen.getByLabelText("Nombre de la vista"), "Con forma");
+    await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+    await user.click(screen.getByRole("button", { name: "Columnas" }));
+    await user.click(await screen.findByRole("checkbox", { name: "Forma de cobro" }));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("columnheader", { name: "Forma de cobro" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Con forma" }));
+    expect(await screen.findByRole("columnheader", { name: "Forma de cobro" })).toBeInTheDocument();
+  });
+
+  it("'Forma de cobro' usa la etiqueta del catálogo del API", async () => {
+    const user = userEvent.setup();
+    const port = new FakeDesempenoPort();
+    port.catalogosResponse = makeCatalogos({
+      formasCobro: [{ codigo: "efectivo", etiqueta: "Efectivo en ruta" }],
+    });
+    montar(port);
+    await screen.findByText("JUANA ANDRADE LECHUGA");
+    await user.click(screen.getByRole("button", { name: "Columnas" }));
+    await user.click(await screen.findByRole("checkbox", { name: "Forma de cobro" }));
+    const fila = screen.getByText("JUANA ANDRADE LECHUGA").closest("tr")!;
+    expect(await within(fila).findByText("Efectivo en ruta")).toBeInTheDocument();
+  });
+
+  it("un renglón se abre con el teclado", async () => {
+    const onAbrirActividad = vi.fn();
+    montar(new FakeDesempenoPort(), onAbrirActividad);
+    const fila = (await screen.findByText("JUANA ANDRADE LECHUGA")).closest("tr")!;
+    expect(fila).toHaveAttribute("tabindex", "0");
+    fireEvent.keyDown(fila, { key: "Enter" });
+    fireEvent.keyDown(fila, { key: " " });
+    expect(onAbrirActividad).toHaveBeenCalledTimes(2);
+  });
+
+  it("un monto que no es número avisa y no se manda", async () => {
+    const user = userEvent.setup();
+    const { port } = montar();
+    await screen.findByText("JUANA ANDRADE LECHUGA");
+    const llamadas = port.actividadCalls.length;
+    await user.type(screen.getByLabelText("Monto mínimo"), "12,5x");
+    await user.tab();
+    expect(screen.getByText("el monto debe ser un número, como 150 o 150.50")).toBeInTheDocument();
+    expect(port.actividadCalls).toHaveLength(llamadas);
+
+    await user.clear(screen.getByLabelText("Monto mínimo"));
+    await user.type(screen.getByLabelText("Monto mínimo"), "150.50");
+    await user.tab();
+    await waitFor(() => expect(ultimaConsulta(port).montoMin).toBe("150.50"));
+    expect(screen.queryByText(/el monto debe ser un número/)).not.toBeInTheDocument();
+  });
+
+  it("cambiar las fechas no borra lo que se está escribiendo en la búsqueda", async () => {
+    const user = userEvent.setup();
+    const { port } = montar();
+    await screen.findByText("JUANA ANDRADE LECHUGA");
+    await user.type(screen.getByLabelText("Buscar cliente o folio"), "andr");
+    fireEvent.change(screen.getByLabelText("Del"), { target: { value: "2026-10-13" } });
+    expect(screen.getByLabelText("Buscar cliente o folio")).toHaveValue("andr");
+    await waitFor(() => expect(ultimaConsulta(port)).toMatchObject({ q: "andr", desde: "2026-10-13T06:00:00Z" }));
+  });
+
+  it("sin fechas muestra el rango por defecto del API: semana del usuario hasta ahora", async () => {
+    montar();
+    await screen.findByText("JUANA ANDRADE LECHUGA");
+    expect(screen.getByText("Semana en curso · desde vie 9 oct")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Del"), { target: { value: "2026-10-13" } });
+    expect(screen.queryByText("Semana en curso · desde vie 9 oct")).not.toBeInTheDocument();
+  });
+
+  it("usuario sin configurar (409): estado propio, sin Reintentar", async () => {
+    const port = new FakeDesempenoPort();
+    port.throwOnNext.listarActividad = new DomainError(
+      "desempeno_usuario_sin_inicio_semana",
+      "el usuario no tiene inicio de semana",
+    );
+    montar(port);
+    expect(await screen.findByText("Sin configurar")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Configurar en Usuarios" })).toHaveAttribute("href", "/settings");
+    expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
+  });
+
+  it("una visita sin forma de cobro no muestra forma", async () => {
+    const user = userEvent.setup();
+    const port = new FakeDesempenoPort();
+    port.actividadResponse = makePaginaActividad({ items: [makeActividadVisita()] });
+    montar(port);
+    await screen.findByText("MARÍA ELENA CUAUTLE TLAPA");
+    await user.click(screen.getByRole("button", { name: "Columnas" }));
+    await user.click(await screen.findByRole("checkbox", { name: "Forma de cobro" }));
+    const fila = screen.getByText("MARÍA ELENA CUAUTLE TLAPA").closest("tr")!;
+    expect(within(fila).getAllByText("—").length).toBeGreaterThan(0);
   });
 });

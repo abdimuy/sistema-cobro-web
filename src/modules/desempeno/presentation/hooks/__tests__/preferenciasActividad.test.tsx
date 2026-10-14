@@ -33,6 +33,28 @@ describe("vistas guardadas y columnas (por computadora)", () => {
     );
   });
 
+  it("una vista con filtros de otra forma (versión vieja o editada a mano) se descarta", () => {
+    const buena = {
+      id: "mi-1",
+      nombre: "Buena",
+      filtros: { ...FILTROS_ACTIVIDAD_INICIALES, conGps: false },
+      columnas: ["tipo"],
+    };
+    const malas = [
+      { ...buena, id: "m1", filtros: { ...FILTROS_ACTIVIDAD_INICIALES, tipos: "pago" } },
+      { ...buena, id: "m2", filtros: { ...FILTROS_ACTIVIDAD_INICIALES, orden: "colonia" } },
+      { ...buena, id: "m3", filtros: { ...FILTROS_ACTIVIDAD_INICIALES, formasCobro: ["deposito"] } },
+      { ...buena, id: "m4", filtros: { ...FILTROS_ACTIVIDAD_INICIALES, conGps: "no" } },
+      { ...buena, id: "m5", filtros: { tipos: [] } },
+    ];
+    for (const mala of malas) {
+      localStorage.setItem(CLAVE_VISTAS, JSON.stringify([buena, mala]));
+      expect(renderHook(() => useVistasGuardadas()).result.current.vistas).toEqual([]);
+    }
+    localStorage.setItem(CLAVE_VISTAS, JSON.stringify([buena]));
+    expect(renderHook(() => useVistasGuardadas()).result.current.vistas).toHaveLength(1);
+  });
+
   it("localStorage que lanza no tumba la pestaña", () => {
     const original = Storage.prototype.getItem;
     Storage.prototype.getItem = () => {

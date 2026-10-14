@@ -75,6 +75,51 @@ describe("useActividad", () => {
     expect(result.current.items).toHaveLength(1);
   });
 
+  it("una página de 'cargar más' que llega después de cambiar los filtros no se mezcla", async () => {
+    const port = new FakeDesempenoPort();
+    let liberarMas: () => void = () => {};
+    port.actividadResponse = (pagina) =>
+      pagina.cursor === null
+        ? makePaginaActividad({ siguienteCursor: "c2" })
+        : new Promise((res) => {
+            liberarMas = () =>
+              res(makePaginaActividad({ items: [makeActividadPago({ id: "pago:vieja" })] }));
+          });
+    const { result, rerender } = renderHook(
+      ({ f }: { f: FiltrosActividad }) => useActividad("uid-juan", f),
+      { wrapper: envolver(port), initialProps: { f: FILTROS_ACTIVIDAD_INICIALES } },
+    );
+    await waitFor(() => expect(result.current.hayMas).toBe(true));
+    act(() => result.current.cargarMas());
+
+    port.actividadResponse = makePaginaActividad({ items: [makeActividadPago()] });
+    rerender({ f: { ...FILTROS_ACTIVIDAD_INICIALES, tipos: ["pago"] } });
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+    await act(async () => liberarMas());
+
+    expect(result.current.items.map((a) => a.id)).toEqual(["pago:15082369"]);
+    expect(result.current.isLoadingMas).toBe(false);
+  });
+
+  it("dos clics seguidos en 'cargar más' piden la página una sola vez", async () => {
+    const port = new FakeDesempenoPort();
+    port.actividadResponse = (pagina) =>
+      pagina.cursor === null
+        ? makePaginaActividad({ siguienteCursor: "c2" })
+        : makePaginaActividad({ items: [makeActividadPago({ id: "pago:2" })] });
+    const { result } = renderHook(() => useActividad("uid-juan", FILTROS_ACTIVIDAD_INICIALES), {
+      wrapper: envolver(port),
+    });
+    await waitFor(() => expect(result.current.hayMas).toBe(true));
+    act(() => {
+      result.current.cargarMas();
+      result.current.cargarMas();
+    });
+    await waitFor(() => expect(result.current.items).toHaveLength(6));
+    expect(port.actividadCalls.filter((c) => c.pagina.cursor === "c2")).toHaveLength(1);
+  });
+
   it("expone el error del servidor", async () => {
     const port = new FakeDesempenoPort();
     port.throwOnNext.listarActividad = new DomainError(

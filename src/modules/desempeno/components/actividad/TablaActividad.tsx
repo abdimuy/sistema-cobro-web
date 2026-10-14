@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import type { Actividad, FiltrosActividad, OrdenActividad } from "../../domain/entities";
 import type { ClaveColumna } from "../../presentation/actividadPreferencias";
 import { diaDeNegocioDe, fechaCorta, horaCorta } from "../lib/format";
+import type { FormaCobro } from "../../domain/entities";
 import { FORMA_COBRO_ETIQUETA } from "../lib/tipoActividadMeta";
 import { InfoRapida } from "../comunes/InfoRapida";
 import { IconoTipoActividad } from "../comunes/IconoTipoActividad";
@@ -18,14 +19,20 @@ function cuando(iso: string): string {
   return `${fechaCorta(diaDeNegocioDe(iso))} · ${horaCorta(iso)}`;
 }
 
+// Etiquetas de forma de cobro: las del catálogo del API; si aún no llegan, las
+// fijas del contrato.
+export type EtiquetasForma = Partial<Record<FormaCobro, string>>;
+
 function Celda({
   clave,
   a,
+  etiquetasForma,
   onAbrirVenta,
   renderFotos,
 }: {
   clave: ClaveColumna;
   a: Actividad;
+  etiquetasForma: EtiquetasForma;
   onAbrirVenta?: AbrirVenta;
   renderFotos?: (a: Actividad) => ReactNode;
 }) {
@@ -54,7 +61,11 @@ function Celda({
       return <MontoActividad actividad={a} />;
     case "forma":
       return (
-        <span>{a.pago && a.tipo === "pago" ? FORMA_COBRO_ETIQUETA[a.pago.formaCobro] : "—"}</span>
+        <span>
+          {a.pago && a.tipo === "pago"
+            ? (etiquetasForma[a.pago.formaCobro] ?? FORMA_COBRO_ETIQUETA[a.pago.formaCobro])
+            : "—"}
+        </span>
       );
     case "registro":
       return (
@@ -100,6 +111,7 @@ export function TablaActividad({
   columnas,
   filtros,
   agrupacion,
+  etiquetasForma,
   onOrdenar,
   onAbrir,
   onAbrirVenta,
@@ -109,6 +121,7 @@ export function TablaActividad({
   columnas: readonly ClaveColumna[];
   filtros: FiltrosActividad;
   agrupacion: Agrupacion;
+  etiquetasForma: EtiquetasForma;
   onOrdenar: (orden: OrdenActividad) => void;
   onAbrir: (a: Actividad) => void;
   onAbrirVenta?: AbrirVenta;
@@ -118,8 +131,16 @@ export function TablaActividad({
   const renglon = (a: Actividad) => (
     <tr
       key={a.id}
+      tabIndex={0}
       onClick={() => onAbrir(a)}
-      className="cursor-pointer border-b border-border last:border-b-0 hover:bg-muted/50"
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onAbrir(a);
+        }
+      }}
+      className="cursor-pointer border-b border-border last:border-b-0 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
       {visibles.map((c) => (
         <td
@@ -127,7 +148,11 @@ export function TablaActividad({
           className={cn("px-3 py-2.5 text-[13px]", c.derecha && "text-right")}
           onClick={c.clave === "fotos" ? (e) => e.stopPropagation() : undefined}
         >
-          <Celda clave={c.clave} a={a} onAbrirVenta={onAbrirVenta} renderFotos={renderFotos} />
+          <Celda
+            clave={c.clave}
+            a={a}
+            etiquetasForma={etiquetasForma}
+            onAbrirVenta={onAbrirVenta} renderFotos={renderFotos} />
         </td>
       ))}
     </tr>

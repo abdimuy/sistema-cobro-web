@@ -37,10 +37,15 @@ export function useActividad(uid: string, filtros: FiltrosActividad): UseActivid
   const [error, setError] = useState<DomainError | null>(null);
   const [tick, setTick] = useState(0);
   const generacion = useRef(0);
+  // "Cargar más" en vuelo: su AbortController. La ref (y no el estado) evita
+  // que dos clics en el mismo instante pidan la misma página dos veces.
+  const masEnVuelo = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const gen = ++generacion.current;
     const ctrl = new AbortController();
+    masEnVuelo.current?.abort();
+    masEnVuelo.current = null;
     setItems([]);
     setTotales(null);
     setCursor(null);
@@ -70,23 +75,26 @@ export function useActividad(uid: string, filtros: FiltrosActividad): UseActivid
   }, [port, uid, filtros, tick]);
 
   const cargarMas = useCallback(() => {
-    if (cursor === null || isLoadingMas) return;
+    if (cursor === null || masEnVuelo.current !== null) return;
     const gen = generacion.current;
+    const ctrl = new AbortController();
+    masEnVuelo.current = ctrl;
     setIsLoadingMas(true);
     setError(null);
-    listarActividad(port, uid, filtros, { cursor, limit: LIMITE_PAGINA_ACTIVIDAD })
+    listarActividad(port, uid, filtros, { cursor, limit: LIMITE_PAGINA_ACTIVIDAD }, ctrl.signal)
       .then((p) => {
-        if (gen !== generacion.current) return;
+        if (gen !== generacion.current || ctrl.signal.aborted) return;
         setItems((previos) => [...previos, ...p.items]);
         setCursor(p.siguienteCursor);
       })
       .catch((e: unknown) => {
-        if (gen === generacion.current) setError(toDomainError(e));
+        if (gen === generacion.current && !ctrl.signal.aborted) setError(toDomainError(e));
       })
       .finally(() => {
+        if (masEnVuelo.current === ctrl) masEnVuelo.current = null;
         if (gen === generacion.current) setIsLoadingMas(false);
       });
-  }, [port, uid, filtros, cursor, isLoadingMas]);
+  }, [port, uid, filtros, cursor]);
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 

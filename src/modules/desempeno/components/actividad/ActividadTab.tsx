@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
   FILTROS_ACTIVIDAD_INICIALES,
+  LIMITE_PAGINA_ACTIVIDAD,
   type Actividad,
   type FiltrosActividad,
   type OrdenActividad,
@@ -12,10 +13,12 @@ import { useVistasGuardadas } from "../../presentation/hooks/useVistasGuardadas"
 import { dinero, entero, plural } from "../lib/format";
 import { ErrorConReintento, EstadoVacio } from "../comunes/Estados";
 import type { AbrirVenta } from "../jornada/describirActividades";
+import { EstadoSinConfigurar } from "../ficha/EstadoSinConfigurar";
+import { esErrorSinConfigurar } from "../ficha/sinConfigurar";
 import { FiltrosActividadBar } from "./FiltrosActividadBar";
 import { VistasActividad } from "./VistasActividad";
 import { MenuColumnas } from "./MenuColumnas";
-import { TablaActividad } from "./TablaActividad";
+import { TablaActividad, type EtiquetasForma } from "./TablaActividad";
 import { AGRUPACIONES, ORDEN_PARA_AGRUPAR, type Agrupacion } from "./agrupar";
 import { VISTAS_PREDEFINIDAS } from "./vistasPredefinidas";
 
@@ -44,6 +47,10 @@ export function ActividadTab({
   const { vistas, guardar, eliminar } = useVistasGuardadas();
   const { catalogos } = useCatalogos();
   const actividad = useActividad(usuario.uid, filtros);
+  const etiquetasForma = useMemo<EtiquetasForma>(
+    () => Object.fromEntries((catalogos?.formasCobro ?? []).map((f) => [f.codigo, f.etiqueta])),
+    [catalogos],
+  );
 
   const cambiar = useCallback((parcial: Partial<FiltrosActividad>) => {
     setFiltros((f) => ({ ...f, ...parcial }));
@@ -100,6 +107,7 @@ export function ActividadTab({
       <FiltrosActividadBar
         filtros={filtros}
         catalogos={catalogos}
+        inicioSemana={usuario.inicioSemana}
         opcionesRegistro={opcionesRegistro}
         onCambiar={cambiar}
         onLimpiar={() => aplicarVista("todo")}
@@ -135,7 +143,9 @@ export function ActividadTab({
         </div>
       </div>
 
-      {actividad.error && actividad.items.length === 0 ? (
+      {actividad.error && actividad.items.length === 0 && esErrorSinConfigurar(actividad.error) ? (
+        <EstadoSinConfigurar mensaje={actividad.error.message} />
+      ) : actividad.error && actividad.items.length === 0 ? (
         <ErrorConReintento
           titulo="No se pudo cargar la actividad"
           mensaje={actividad.error.message}
@@ -156,6 +166,7 @@ export function ActividadTab({
           columnas={columnas}
           filtros={filtros}
           agrupacion={agrupacion}
+          etiquetasForma={etiquetasForma}
           onOrdenar={ordenar}
           onAbrir={onAbrirActividad}
           onAbrirVenta={onAbrirVenta}
@@ -175,7 +186,7 @@ export function ActividadTab({
             onClick={actividad.cargarMas}
             className="h-9 rounded-full bg-dsm-tarjeta px-4 text-[13px] ring-1 ring-border hover:bg-muted disabled:opacity-50"
           >
-            Mostrar 100 más
+            {`Mostrar ${LIMITE_PAGINA_ACTIVIDAD} más`}
           </button>
         </div>
       )}

@@ -9,7 +9,7 @@ import {
   type TipoActividad,
   type TipoVisitaCatalogo,
 } from "../../domain/entities";
-import { diaDeNegocioDe, sumarDias } from "../lib/format";
+import { diaDeNegocioDe, fechaCorta, sumarDias } from "../lib/format";
 
 const SELECT =
   "h-9 rounded-full bg-dsm-tarjeta pl-3 pr-7 text-[13px] ring-1 ring-border disabled:opacity-50";
@@ -20,6 +20,8 @@ type Props = {
   filtros: FiltrosActividad;
   /** Formas de cobro y tipos de visita del API; null mientras no llegan. */
   catalogos: Catalogos | null;
+  /** Inicio de semana del usuario: el rango que usa el API si no hay fechas. */
+  inicioSemana: string | null;
   opcionesRegistro: ReadonlyArray<{ valor: string; etiqueta: string }>;
   onCambiar: (parcial: Partial<FiltrosActividad>) => void;
   onLimpiar: () => void;
@@ -54,14 +56,15 @@ function porGrupo(
   return grupos;
 }
 
-function montoDe(texto: string): string | null {
-  const t = texto.trim();
-  return t === "" ? null : t;
-}
+// Monto como lo acepta el API (decimal con punto, hasta 2 decimales). Se valida
+// aquí para no mandar algo que regrese 422.
+const MONTO_VALIDO = /^\d+(\.\d{1,2})?$/;
+const MENSAJE_MONTO = "el monto debe ser un número, como 150 o 150.50";
 
 export function FiltrosActividadBar({
   filtros,
   catalogos,
+  inicioSemana,
   opcionesRegistro,
   onCambiar,
   onLimpiar,
@@ -70,14 +73,14 @@ export function FiltrosActividadBar({
   const [rango, setRango] = useState<{ desde: string; hasta: string } | null>(null);
   const [montoMin, setMontoMin] = useState(filtros.montoMin ?? "");
   const [montoMax, setMontoMax] = useState(filtros.montoMax ?? "");
+  const [montoInvalido, setMontoInvalido] = useState(false);
 
-  // Si los filtros cambian desde fuera (vista, Limpiar), los campos se alinean.
-  useEffect(() => {
-    setQ(filtros.q);
-    setMontoMin(filtros.montoMin ?? "");
-    setMontoMax(filtros.montoMax ?? "");
-    setRango(null);
-  }, [filtros.q, filtros.montoMin, filtros.montoMax, filtros.desde, filtros.hasta]);
+  // Si los filtros cambian desde fuera (vista, Limpiar), cada campo se alinea
+  // con SU filtro; cambiar las fechas no borra lo que se está escribiendo.
+  useEffect(() => setQ(filtros.q), [filtros.q]);
+  useEffect(() => setMontoMin(filtros.montoMin ?? ""), [filtros.montoMin]);
+  useEffect(() => setMontoMax(filtros.montoMax ?? ""), [filtros.montoMax]);
+  useEffect(() => setRango(null), [filtros.desde, filtros.hasta]);
 
   useEffect(() => {
     if (q === filtros.q) return undefined;
@@ -103,7 +106,13 @@ export function FiltrosActividadBar({
   };
 
   const confirmarMonto = (campo: "montoMin" | "montoMax", texto: string) => {
-    const valor = montoDe(texto);
+    const t = texto.trim();
+    if (t !== "" && !MONTO_VALIDO.test(t)) {
+      setMontoInvalido(true);
+      return;
+    }
+    setMontoInvalido(false);
+    const valor = t === "" ? null : t;
     if (valor !== filtros[campo]) onCambiar({ [campo]: valor });
   };
 
@@ -118,6 +127,7 @@ export function FiltrosActividadBar({
           className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
         />
         <input
+          aria-label="Buscar cliente o folio"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Cliente o folio"
@@ -211,6 +221,11 @@ export function FiltrosActividadBar({
           onChange={(e) => cambiarRango(desdeVisible, e.target.value)}
         />
       </label>
+      {!invertido && desdeVisible === "" && hastaVisible === "" && inicioSemana && (
+        <span className="text-xs text-muted-foreground">
+          {`Semana en curso · desde ${fechaCorta(diaDeNegocioDe(inicioSemana))}`}
+        </span>
+      )}
       {invertido && (
         <span role="alert" className="text-xs text-dsm-rojo">
           El rango está invertido
@@ -244,6 +259,11 @@ export function FiltrosActividadBar({
           }}
         />
       </span>
+      {montoInvalido && (
+        <span role="alert" className="text-xs text-dsm-rojo">
+          {MENSAJE_MONTO}
+        </span>
+      )}
       <label className={CAMPO}>
         Fotos
         <select
