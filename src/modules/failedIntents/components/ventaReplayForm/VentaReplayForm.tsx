@@ -288,7 +288,7 @@ function FormBranch({
   return (
     <div className="flex-1 overflow-y-auto">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
-        <div className="sticky top-0 z-10 border-b border-border/60 bg-background/95 backdrop-blur px-6">
+        <div className="sticky top-0 z-10 border-b border-border/60 bg-background px-6">
           <TabsList className="h-9 w-full justify-start gap-1 rounded-none border-0 bg-transparent p-0">
             <UnderlineTab value="resumen" label="Resumen" />
             <UnderlineTab value="cliente" label="Cliente" />

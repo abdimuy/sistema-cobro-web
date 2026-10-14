@@ -310,7 +310,7 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
                 value={activeTab}
                 onValueChange={(v) => setActiveTab(v as TabId)}
               >
-                <div className="sticky top-[60px] z-10 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-6">
+                <div className="sticky top-[60px] z-10 border-b border-border/60 bg-background px-6">
                   <TabsList className="h-9 w-full justify-start gap-1 rounded-none border-0 bg-transparent p-0">
                     <UnderlineTab value="resumen" label="Resumen" />
                     <UnderlineTab

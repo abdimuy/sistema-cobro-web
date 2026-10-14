@@ -57,7 +57,7 @@ export function PagoModal({ clienteId, doctoCcId, onClose }: Props) {
         <DialogDescription className="sr-only">detalle del pago</DialogDescription>
 
         {/* Sticky header */}
-        <header className="sticky top-0 z-10 flex h-[60px] shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <header className="sticky top-0 z-10 flex h-[60px] shrink-0 items-center justify-between border-b border-border/60 bg-background px-6">
           <div className="flex items-center gap-3 text-xs">
             <span className="text-muted-foreground">Pagos</span>
             <span className="text-muted-foreground/40">/</span>

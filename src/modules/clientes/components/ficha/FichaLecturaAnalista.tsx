@@ -26,7 +26,7 @@ export function FichaLecturaAnalista({ pulso }: Props) {
       className="border-b border-border/60 px-8 py-9"
       aria-label="Lectura del analista"
     >
-      <article className="lectura-rise group relative mx-auto max-w-3xl overflow-hidden rounded-[20px] bg-white/[0.035] px-7 py-7 shadow-[0_8px_32px_-10px_rgba(0,0,0,0.55),inset_0_1px_0_0_rgba(255,255,255,0.06)] backdrop-blur-xl transition-shadow duration-500 hover:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.65),inset_0_1px_0_0_rgba(255,255,255,0.1)]">
+      <article className="lectura-rise group relative mx-auto max-w-3xl overflow-hidden rounded-[20px] bg-white/[0.035] px-7 py-7 shadow-[0_8px_32px_-10px_rgba(0,0,0,0.55),inset_0_1px_0_0_rgba(255,255,255,0.06)] transition-shadow duration-500 hover:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.65),inset_0_1px_0_0_rgba(255,255,255,0.1)]">
         {/* Ambient ink-amber glow — the single accent in a monochrome theme. */}
         <div
           aria-hidden

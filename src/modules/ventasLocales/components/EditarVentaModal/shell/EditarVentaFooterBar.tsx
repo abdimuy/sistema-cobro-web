@@ -69,7 +69,7 @@ export const EditarVentaFooterBar = ({
   onDiscard,
   onConfirmSave,
 }: Props) => (
-  <footer className="sticky bottom-0 z-10 flex items-center justify-between gap-2 border-t border-border/60 bg-background/95 px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+  <footer className="sticky bottom-0 z-10 flex items-center justify-between gap-2 border-t border-border/60 bg-background px-6 py-3">
     <FooterCounter cambiosCount={cambiosCount} errors={errors} />
     <div className="flex items-center gap-2">
       <Button

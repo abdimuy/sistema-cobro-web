@@ -38,7 +38,7 @@ export const VentaActionBar = ({ venta, onClose, onUpdated }: Props) => {
 
   return (
     <>
-      <div className="sticky bottom-0 z-10 flex items-center justify-between gap-2 border-t border-border/60 bg-background/95 px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="sticky bottom-0 z-10 flex items-center justify-between gap-2 border-t border-border/60 bg-background px-6 py-3">
         <div>
           {!terminal && (
             <Button

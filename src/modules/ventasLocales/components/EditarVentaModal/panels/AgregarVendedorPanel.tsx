@@ -77,7 +77,7 @@ export const AgregarVendedorPanel = ({
           giving a full modal-height drawer. With `absolute` it was clipped to
           the short VendedoresTab container. z above header/tabs/footer. */}
       <div
-        className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-background/80"
         onClick={handleClose}
       />
       {/* Panel */}

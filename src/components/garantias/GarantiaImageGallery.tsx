@@ -106,7 +106,7 @@ const GarantiaImageGallery: React.FC<GarantiaImageGalleryProps> = ({
 
       {/* Lightbox dialog */}
       <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="max-w-4xl p-2 bg-background/95 backdrop-blur-sm border-border">
+        <DialogContent className="max-w-4xl p-2 bg-background border-border">
           <div className="relative flex items-center justify-center min-h-[400px]">
             {canNavigate && allUrls.length > 1 && (
               <button

@@ -19,8 +19,7 @@ export function FichaHeader({ ficha, onReporteClick }: Props) {
     <header
       className={cn(
         "sticky top-0 z-20 flex h-[56px] shrink-0 items-center justify-between",
-        "border-b border-border/60 bg-background/95 px-6",
-        "backdrop-blur supports-[backdrop-filter]:bg-background/80",
+        "border-b border-border/60 bg-background px-6",
       )}
     >
       {/* Left: breadcrumb */}
