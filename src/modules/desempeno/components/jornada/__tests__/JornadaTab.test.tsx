@@ -1,15 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { JornadaTab } from "../JornadaTab";
 import { renderConDesempeno } from "../../../test/renderConDesempeno";
 import {
   FakeDesempenoPort,
   makeActividadPago,
+  makeActividadVisita,
   makeJornada,
   makeUsuarioTablero,
 } from "../../../application/__tests__/fakeDesempenoPort";
 import { DomainError } from "../../../domain/errors";
+import { UN_MINUTO_MS } from "../../../presentation/hooks/lib/useCadaMinuto";
 
 vi.mock("../MapaJornadaGoogle", () => ({
   MapaJornadaGoogle: ({ puntos }: { puntos: Array<{ n: number }> }) => (
@@ -200,12 +202,100 @@ describe("JornadaTab", () => {
     const user = userEvent.setup();
     const port = new FakeDesempenoPort();
     port.throwOnNext.obtenerJornada = new DomainError(
+      "desempeno_firestore_unavailable",
+      "no se pudo leer firestore",
+    );
+    montar({ port });
+    expect(await screen.findByText("no se pudo leer firestore")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    await waitFor(() => expect(port.jornadaCalls).toHaveLength(2));
+  });
+
+  it("los conteos de los carriles del eje son los del resumen del API, no renglones contados", async () => {
+    const port = new FakeDesempenoPort();
+    port.jornadaResponse = makeJornada({
+      resumen: { ...makeJornada().resumen, pagos: { n: 31, importe: "8600.00" }, visitas: 13, condonaciones: 2 },
+    });
+    montar({ port });
+    await screen.findAllByTestId("eje-punto");
+    const carril = (texto: string) =>
+      screen.getByText((_, el) => el?.tagName === "SPAN" && el.textContent === texto);
+    expect(carril("Pagos 31")).toBeInTheDocument();
+    expect(carril("Visitas 13")).toBeInTheDocument();
+    expect(carril("Condonaciones 2")).toBeInTheDocument();
+  });
+
+  it("eje: el punto se coloca en la hora de la oficina (14:20Z = 08:20)", async () => {
+    montar();
+    const puntos = await screen.findAllByTestId("eje-punto");
+    // 08:20 en un eje 07:00–20:00 = 80/780 = 10.256 %.
+    expect(parseFloat(puntos[0].style.left)).toBeCloseTo(10.256, 2);
+  });
+
+  it("mapa: 'sin GPS' cuenta las actividades sin GPS, no las que quedaron fuera del mapa", async () => {
+    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "llave-de-prueba");
+    const port = new FakeDesempenoPort();
+    port.jornadaResponse = makeJornada({
+      actividades: [
+        makeActividadPago(),
+        // Con GPS según el servidor pero sin coordenadas: no se dibuja ni es "sin GPS".
+        makeActividadPago({ id: "pago:2", lat: null, lng: null, conGps: true }),
+        makeActividadVisita(),
+      ],
+    });
+    montar({ port });
+    expect(await screen.findByTestId("mapa-google")).toHaveTextContent("1");
+    expect(screen.getByText("1 sin GPS")).toBeInTheDocument();
+  });
+
+  it("mapa: un día sin ubicaciones no carga Google y lo dice", async () => {
+    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "llave-de-prueba");
+    const port = new FakeDesempenoPort();
+    port.jornadaResponse = makeJornada({ actividades: [makeActividadVisita()] });
+    montar({ port });
+    expect(await screen.findByText("Sin ubicaciones este día")).toBeInTheDocument();
+    expect(screen.queryByTestId("mapa-google")).not.toBeInTheDocument();
+  });
+
+  it("usuario sin configurar (409): dice qué falta y enlaza a Usuarios, sin Reintentar", async () => {
+    const port = new FakeDesempenoPort();
+    port.throwOnNext.obtenerJornada = new DomainError(
       "desempeno_usuario_sin_zona",
       "el usuario no tiene zona",
     );
     montar({ port });
-    expect(await screen.findByText("el usuario no tiene zona")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Reintentar" }));
-    await waitFor(() => expect(port.jornadaCalls).toHaveLength(2));
+    expect(await screen.findByText("Sin configurar")).toBeInTheDocument();
+    expect(screen.getByText("el usuario no tiene zona")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Configurar en Usuarios" })).toHaveAttribute(
+      "href",
+      "/settings",
+    );
+    expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
+  });
+
+  it("si falla la actualización de cada minuto, conserva la lista y avisa con la hora de los datos", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    try {
+      const port = new FakeDesempenoPort();
+      montar({ port });
+      await screen.findByText("JUANA ANDRADE LECHUGA");
+      port.throwOnNext.obtenerJornada = new DomainError("error_inesperado", "sin red");
+      act(() => {
+        vi.advanceTimersByTime(UN_MINUTO_MS);
+      });
+      expect(await screen.findByText("No se pudo actualizar · datos de las 16:40")).toBeInTheDocument();
+      expect(screen.getByText("JUANA ANDRADE LECHUGA")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("un renglón se abre con el teclado (Enter y Espacio)", async () => {
+    const { onAbrirActividad } = montar();
+    const renglon = (await screen.findByText("JUANA ANDRADE LECHUGA")).closest("li")!;
+    expect(renglon).toHaveAttribute("tabindex", "0");
+    fireEvent.keyDown(renglon, { key: "Enter" });
+    fireEvent.keyDown(renglon, { key: " " });
+    expect(onAbrirActividad).toHaveBeenCalledTimes(2);
   });
 });

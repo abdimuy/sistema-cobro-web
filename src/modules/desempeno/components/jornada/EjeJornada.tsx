@@ -12,6 +12,15 @@ const CARRILES: ReadonlyArray<readonly [TipoActividad, string]> = [
   ["visita", "Visitas"],
   ["condonacion", "Condonaciones"],
 ];
+
+// Conteo de cada carril: el del resumen del servidor (D10), nunca los renglones
+// contados en pantalla.
+function conteoDe(jornada: Jornada, tipo: TipoActividad): number {
+  const r = jornada.resumen;
+  if (tipo === "pago") return r.pagos.n;
+  if (tipo === "visita") return r.visitas;
+  return r.condonaciones;
+}
 const HORAS = Array.from(
   { length: HORA_FIN_EJE - HORA_INICIO_EJE + 1 },
   (_, i) => HORA_INICIO_EJE + i,
@@ -19,7 +28,6 @@ const HORAS = Array.from(
 
 // EjeJornada: carriles de pagos, visitas y condonaciones sobre el eje 7–20 h.
 // `linea` es el hueco donde la integración pone la LineaActividad (carril 1).
-// Los conteos por carril son los renglones recibidos, no una cifra del negocio.
 export function EjeJornada({
   jornada,
   linea,
@@ -44,7 +52,7 @@ export function EjeJornada({
             <div key={tipo} className="contents">
               <span className="flex items-center gap-2 text-xs text-muted-foreground">
                 <i className={cn("h-2 w-2 rounded-full", TIPO_ACTIVIDAD_META[tipo].clasePunto)} />
-                {etiqueta} <b className="font-medium text-foreground">{delTipo.length}</b>
+                {etiqueta} <b className="font-medium text-foreground">{conteoDe(jornada, tipo)}</b>
               </span>
               <div className="relative h-10 border-b border-border">
                 {jornada.linea.pausas.map((p) => (

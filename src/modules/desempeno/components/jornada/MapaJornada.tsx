@@ -26,7 +26,8 @@ export function MapaJornada({
       puntos.push({ id: a.id, n: i + 1, lat: a.lat, lng: a.lng });
     }
   });
-  const sinGps = actividades.length - puntos.length;
+  // Rótulo de dibujo: cuántas actividades vinieron sin GPS (bandera del API).
+  const sinGps = actividades.filter((a) => !a.conGps).length;
   const hayLlave = Boolean(import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
   return (
     <div className="overflow-hidden rounded-[14px] bg-dsm-tarjeta shadow-sm ring-1 ring-border">
@@ -34,7 +35,9 @@ export function MapaJornada({
         <h3 className="text-[13px] font-medium">Recorrido</h3>
         <span className="font-mono text-[11px] text-muted-foreground">{etiquetaDia}</span>
       </div>
-      {hayLlave ? (
+      {puntos.length === 0 ? (
+        <p className={AVISO}>Sin ubicaciones este día</p>
+      ) : hayLlave ? (
         <Suspense fallback={<p className={AVISO}>Cargando mapa…</p>}>
           <MapaJornadaGoogle puntos={puntos} onSeleccionar={onSeleccionar} />
         </Suspense>

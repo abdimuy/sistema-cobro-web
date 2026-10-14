@@ -12,6 +12,8 @@ import {
   sumarDias,
 } from "../lib/format";
 import { ErrorConReintento, EstadoVacio } from "../comunes/Estados";
+import { EstadoSinConfigurar } from "../ficha/EstadoSinConfigurar";
+import { esErrorSinConfigurar } from "../ficha/sinConfigurar";
 import type { AbrirVenta } from "./describirActividades";
 import { NavegadorDia } from "./NavegadorDia";
 import { EjeJornada } from "./EjeJornada";
@@ -86,12 +88,23 @@ export function JornadaTab({
         )}
       </div>
 
-      {error && !jornada && (
+      {error && !jornada && esErrorSinConfigurar(error) && (
+        <EstadoSinConfigurar mensaje={error.message} />
+      )}
+      {error && !jornada && !esErrorSinConfigurar(error) && (
         <ErrorConReintento
           titulo="No se pudo cargar la jornada"
           mensaje={error.message}
           onReintentar={refresh}
         />
+      )}
+      {error && jornada && (
+        <div
+          role="status"
+          className="self-start rounded-full bg-dsm-ambar-fondo px-4 py-1.5 text-xs text-dsm-ambar"
+        >
+          {`No se pudo actualizar · datos de las ${horaCorta(jornada.generadoAt)}`}
+        </div>
       )}
       {isLoading && !jornada && (
         <div className="h-48 animate-pulse rounded-[14px] bg-dsm-tarjeta" />

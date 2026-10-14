@@ -101,9 +101,17 @@ function FragmentoActividad({
       <li
         ref={refResaltada}
         data-resaltada={resaltada ? "true" : undefined}
+        tabIndex={0}
         onClick={() => onAbrir(a)}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onAbrir(a);
+          }
+        }}
         className={cn(
-          "grid cursor-pointer grid-cols-[22px_44px_28px_1fr_auto_auto] items-center gap-3 px-[18px] py-[11px] hover:bg-muted/50",
+          "grid cursor-pointer grid-cols-[22px_44px_28px_1fr_auto_auto] items-center gap-3 px-[18px] py-[11px] hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
           resaltada && "bg-dsm-marca-fondo",
         )}
       >
