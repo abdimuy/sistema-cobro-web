@@ -7,7 +7,7 @@ import { registrar } from "./lib/bitacora";
 import { instalarRespaldoDeRepintado } from "./lib/repintado";
 
 // Components
-import Home from "./modules/home/Home";
+import Inicio from "./modules/inicio/Inicio";
 import Settings from "./modules/setting/Settings";
 import CreateUser from "./modules/user/CreateUser";
 import Sales from "./modules/sales/Sales";
@@ -87,7 +87,7 @@ function App() {
 
             {/* Rutas Protegidas con Layout */}
             <Route element={<ProtectedLayout />}>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Inicio />} />
 
               <Route path="/sales" element={
                 <ProtectedRoute requiredModule="SALES"><Sales /></ProtectedRoute>
