@@ -1,3 +1,5 @@
+mod repintado;
+
 use sha2::{Digest, Sha256};
 use std::process::Command;
 use tauri::{
@@ -307,7 +309,7 @@ fn get_board_serial() -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
@@ -315,13 +317,26 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }))
+        // Log en disco también en release (carpeta de logs de la app:
+        // ~/Library/Logs/<identificador>/ en macOS, %LOCALAPPDATA%\<identificador>\logs
+        // en Windows). Ahí quedan despertares, repintados, recargas del WebView
+        // y errores del frontend, para diagnosticar después sin el inspector.
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .level(log::LevelFilter::Info)
+                .max_file_size(2_000_000)
+                .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepSome(5))
+                .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal)
+                .build(),
+        )
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             get_device_fingerprint,
             get_device_label,
             get_device_info,
             update_tray_badge,
-            close_splash
+            close_splash,
+            repintado::registrar_frontend
         ])
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
@@ -333,13 +348,8 @@ pub fn run() {
             Some(vec!["--minimized"]),
         ))
         .setup(|app| {
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
+            log::info!("arranque v{}", app.package_info().version);
+            repintado::instalar(app.handle());
 
             // System tray
             let open_i = MenuItem::with_id(app, "open", "Abrir", true, None::<&str>)?;
@@ -394,7 +404,24 @@ pub fn run() {
                 api.prevent_close();
                 let _ = window.hide();
             }
-        })
+        });
+
+    // Si el proceso WebContent de WKWebView muere (p. ej. tras el reposo),
+    // Tauri por defecto recarga sin dejar rastro. Se hace lo mismo, pero
+    // quedando en el log; registrar este gancho reemplaza al de Tauri, así
+    // que la recarga corre por cuenta propia.
+    #[cfg(target_os = "macos")]
+    let builder = builder.on_web_content_process_terminate(|webview| {
+        log::warn!(
+            "el proceso web de la ventana {} terminó; recargando",
+            webview.label()
+        );
+        if let Err(e) = webview.reload() {
+            log::error!("no se pudo recargar la ventana {}: {e}", webview.label());
+        }
+    });
+
+    builder
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

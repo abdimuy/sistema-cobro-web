@@ -33,6 +33,14 @@ tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 sha2 = "0.10"
 
+# Repintado del WebView al despertar o cambiar de pantalla (src/repintado.rs).
+# Mismas versiones que ya arrastra tauri/wry; sólo se activan las features
+# que hacen falta para observar NSWorkspace/NSApplication y tocar el NSView.
+[target.'cfg(target_os = "macos")'.dependencies]
+block2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "block2", "NSNotification", "NSOperation", "NSString", "NSGeometry", "NSObject"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSWorkspace", "NSApplication", "NSResponder", "NSView"] }
+
 [features]
 # Habilita el inspector (devtools del WebView) en builds release.
 # Solo el build de TEST lo activa con `--features devtools`; prod (CI release.yml)
