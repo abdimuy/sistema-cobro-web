@@ -11,7 +11,8 @@ import type {
 
 // Copia de los ejemplos de 2026-10-14-desempeno-contratos.md (v2) con los "..."
 // completados. Los NOMBRES de campo son ley: si el contrato cambia, esto cambia.
-// 16:31Z = 10:31 en la oficina (America/Mexico_City, UTC−6).
+// 16:31Z = 10:31 en la oficina (America/Mexico_City, UTC−6). Campos del mismo
+// tipo llevan valores DISTINTOS para que un mapper que los cruce falle.
 
 export const actividadPagoDTO: ActividadDTO = {
   id: "pago:15082369",
@@ -98,7 +99,7 @@ export const lineaDTO: LineaDelDiaDTO = {
       hasta: "2026-10-14T17:05:00Z",
       pagos: { n: 12, importe: "3150.00" },
       visitas: 5,
-      condonaciones: 0,
+      condonaciones: 1,
       clientes: 14,
     },
   ],
@@ -106,7 +107,7 @@ export const lineaDTO: LineaDelDiaDTO = {
     hora: 7 + i,
     pagos: i === 3 ? 3 : 0,
     visitas: i === 3 ? 1 : 0,
-    condonaciones: 0,
+    condonaciones: i === 3 ? 2 : 0,
     importe: i === 3 ? "450.00" : "0.00",
   })),
   pausas: [
@@ -145,15 +146,15 @@ export const tableroDTO: TableroDTO = {
       pausas: { n: 1, minutos: 72, en_curso: false },
       pagos: { n: 31, importe: "8600.00" },
       pagos_por_forma: {
-        efectivo: { n: 28, importe: "7800.00" },
+        efectivo: { n: 27, importe: "7550.00" },
         transferencia: { n: 3, importe: "800.00" },
-        cheque: { n: 0, importe: "0.00" },
+        cheque: { n: 1, importe: "250.00" },
       },
-      condonaciones: { n: 0, importe: "0.00" },
-      no_aplicados: { n: 0, importe: "0.00" },
+      condonaciones: { n: 1, importe: "120.00" },
+      no_aplicados: { n: 2, importe: "300.00" },
       visitas: 13,
       cobertura: { con_algo: 186, total: 232 },
-      cobertura_por_segmento: { sin_visitar: 46, volver: 20, despues: 3, pagados: 140, sin_nada: 46 },
+      cobertura_por_segmento: { sin_visitar: 40, volver: 20, despues: 3, pagados: 140, sin_nada: 46 },
       cobro: { cobrado: "8600.00", esperado: "13050.00", falta: "4450.00", pct: "65.90" },
       lineas: [lineaDTO],
     },
@@ -215,7 +216,7 @@ export const jornadaDTO: JornadaDTO = {
     pausas: { n: 1, minutos: 72, en_curso: false },
     pagos: { n: 31, importe: "8600.00" },
     visitas: 13,
-    condonaciones: 0,
+    condonaciones: 2,
     clientes: 41,
   },
 };
@@ -228,7 +229,7 @@ export const paginaActividadDTO: PaginaActividadDTO = {
 
 export const cuentasDTO: CuentasDTO = {
   inicio_semana: "2026-10-09T13:46:00Z",
-  conteos: { sin_visitar: 46, volver: 20, despues: 3, pagados: 140, sin_nada: 46, total: 232 },
+  conteos: { sin_visitar: 40, volver: 20, despues: 3, pagados: 140, sin_nada: 46, total: 232 },
   cuentas: [
     {
       venta_id: 13785217,
