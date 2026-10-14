@@ -3,6 +3,8 @@ import { Toaster } from "sonner";
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { setNavigateRef } from "./lib/navigation";
+import { registrar } from "./lib/bitacora";
+import { instalarRespaldoDeRepintado } from "./lib/repintado";
 
 // Components
 import Home from "./modules/home/Home";
@@ -50,6 +52,14 @@ function App() {
   useEffect(() => {
     invoke("close_splash").catch(() => {});
   }, []);
+
+  // Cada arranque del frontend queda en el log en disco: si el WebView se
+  // recarga solo (p. ej. murió su proceso tras el reposo) se ve ahí.
+  useEffect(() => {
+    registrar("info", `frontend montado en ${window.location.pathname}`);
+  }, []);
+
+  useEffect(() => instalarRespaldoDeRepintado(), []);
 
   return (
     <ThemeProvider>
