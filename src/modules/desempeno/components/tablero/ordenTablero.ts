@@ -22,7 +22,8 @@ export const ORDEN_TABLERO_INICIAL: OrdenTablero = { clave: "zona", dir: 1 };
 const ASCENDENTES: readonly ClaveOrdenTablero[] = ["nombre", "zona", "ahora", "faltan"];
 const RANGO_AHORA = { activo: 0, sin_actividad: 1, no_ha_empezado: 2 } as const;
 
-function valor(u: UsuarioTablero, clave: ClaveOrdenTablero): string | number {
+// null = sin dato (p. ej. % de cobro sin esperado): siempre al final.
+function valor(u: UsuarioTablero, clave: ClaveOrdenTablero): string | number | null {
   switch (clave) {
     case "nombre":
       return u.nombre;
@@ -41,7 +42,7 @@ function valor(u: UsuarioTablero, clave: ClaveOrdenTablero): string | number {
     case "faltan":
       return u.coberturaPorSegmento.sinNada;
     case "cobro":
-      return u.cobro.pct === null ? Number.NEGATIVE_INFINITY : Number(u.cobro.pct);
+      return u.cobro.pct === null ? null : Number(u.cobro.pct);
   }
 }
 
@@ -52,6 +53,7 @@ export function ordenarUsuarios(
   return [...usuarios].sort((a, b) => {
     const x = valor(a, orden.clave);
     const y = valor(b, orden.clave);
+    if (x === null || y === null) return x === y ? 0 : x === null ? 1 : -1;
     const c =
       typeof x === "string" && typeof y === "string"
         ? x.localeCompare(y, "es", { numeric: true })

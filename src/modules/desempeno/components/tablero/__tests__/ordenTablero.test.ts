@@ -25,6 +25,20 @@ describe("ordenTablero", () => {
     expect(ordenarUsuarios([rosa, juan], { clave: "cobro", dir: -1 })[1].uid).toBe("uid-rosa");
   });
 
+  it("% nulo va al final en los dos sentidos", () => {
+    const ana = makeUsuarioTablero({ uid: "uid-ana", cobro: { cobrado: "1.00", esperado: "100.00", falta: "99.00", pct: "1.00" } });
+    expect(ordenarUsuarios([rosa, juan, ana], { clave: "cobro", dir: 1 }).map((u) => u.uid)).toEqual([
+      "uid-ana",
+      "uid-juan",
+      "uid-rosa",
+    ]);
+    expect(ordenarUsuarios([rosa, ana, juan], { clave: "cobro", dir: -1 }).map((u) => u.uid)).toEqual([
+      "uid-juan",
+      "uid-ana",
+      "uid-rosa",
+    ]);
+  });
+
   it("buscar no distingue acentos ni mayúsculas y mira nombre y zona", () => {
     expect(filtrarUsuarios([juan, rosa], "mendez").map((u) => u.uid)).toEqual(["uid-juan"]);
     expect(filtrarUsuarios([juan, rosa], "ruta 22").map((u) => u.uid)).toEqual(["uid-rosa"]);
