@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import type {
   ConteosCuentas,
   Cuenta,
+  CuentasSemana,
   Direccion,
   OrdenCuentas,
   SegmentoFiltro,
@@ -13,6 +14,8 @@ import type { ConsultaCuentas } from "../../application/ports/DesempenoPort";
 import { useCuentas } from "../../presentation/hooks/useCuentas";
 import { ErrorConReintento, EstadoVacio } from "../comunes/Estados";
 import { InfoRapida, TarjetaNota, TarjetaTitulo } from "../comunes/InfoRapida";
+import { EstadoSinConfigurar } from "../ficha/EstadoSinConfigurar";
+import { esErrorSinConfigurar } from "../ficha/sinConfigurar";
 import { TablaCuentas } from "./TablaCuentas";
 
 const PILDORAS: ReadonlyArray<readonly [SegmentoFiltro, string, keyof ConteosCuentas]> = [
@@ -57,7 +60,14 @@ export function CuentasTab({
     [segmento, q, clave],
   );
   const { cuentas, isLoading, error, refresh } = useCuentas(usuario.uid, consulta);
-  const conteos = cuentas?.conteos;
+  // Los conteos son de toda la semana (no dependen de la pastilla): mientras
+  // llega la respuesta de otra pastilla se conservan los últimos recibidos para
+  // que no parpadeen. La tabla sí espera a su respuesta.
+  const [ultimas, setUltimas] = useState<CuentasSemana | null>(null);
+  useEffect(() => {
+    if (cuentas) setUltimas(cuentas);
+  }, [cuentas]);
+  const conteos = (cuentas ?? (isLoading ? ultimas : null))?.conteos;
 
   return (
     <div className="flex flex-col gap-3">
@@ -111,6 +121,7 @@ export function CuentasTab({
               className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
             />
             <input
+              aria-label="Buscar cliente o folio"
               value={escrito}
               onChange={(e) => setEscrito(e.target.value)}
               placeholder="Cliente o folio"
@@ -134,7 +145,9 @@ export function CuentasTab({
         </div>
       </div>
 
-      {error && !cuentas ? (
+      {error && !cuentas && esErrorSinConfigurar(error) ? (
+        <EstadoSinConfigurar mensaje={error.message} />
+      ) : error && !cuentas ? (
         <ErrorConReintento
           titulo="No se pudieron cargar las cuentas"
           mensaje={error.message}

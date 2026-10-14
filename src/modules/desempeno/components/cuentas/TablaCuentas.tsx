@@ -60,12 +60,22 @@ export function TablaCuentas({
                 key={c.ventaId}
                 aria-disabled={abrible ? undefined : "true"}
                 title={abrible ? undefined : "Sin detalle de venta"}
+                tabIndex={abrible ? 0 : undefined}
                 onClick={() => {
                   if (abrible) onAbrir(c);
                 }}
+                onKeyDown={(e) => {
+                  if (!abrible || e.target !== e.currentTarget) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onAbrir(c);
+                  }
+                }}
                 className={cn(
                   "border-b border-border last:border-b-0",
-                  abrible ? "cursor-pointer hover:bg-muted/50" : "opacity-80",
+                  abrible
+                    ? "cursor-pointer hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    : "opacity-80",
                 )}
               >
                 <td className="px-3 py-2.5">

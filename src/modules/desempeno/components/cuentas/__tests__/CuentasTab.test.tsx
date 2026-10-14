@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CuentasTab } from "../CuentasTab";
 import { renderConDesempeno } from "../../../test/renderConDesempeno";
@@ -45,7 +45,7 @@ describe("CuentasTab", () => {
     await screen.findByText("GERARDO XICALE ANALCO");
     await user.selectOptions(screen.getByLabelText("Ordenar"), "saldo");
     await waitFor(() => expect(ultima(port)).toMatchObject({ orden: "saldo", dir: "desc" }));
-    await user.type(screen.getByPlaceholderText("Cliente o folio"), "xicale");
+    await user.type(screen.getByLabelText("Buscar cliente o folio"), "xicale");
     await waitFor(() => expect(ultima(port).q).toBe("xicale"));
     expect(port.cuentasCalls.filter((c) => c.consulta.q === "xic")).toHaveLength(0);
   });
@@ -94,5 +94,51 @@ describe("CuentasTab", () => {
     );
     await user.click(screen.getByRole("button", { name: /Volver/ }));
     expect(await screen.findByText("el usuario no tiene inicio de semana")).toBeInTheDocument();
+  });
+
+  it("al cambiar de pastilla los conteos no parpadean mientras llega la respuesta", async () => {
+    const user = userEvent.setup();
+    const port = new FakeDesempenoPort();
+    montar(port);
+    await screen.findByText("GERARDO XICALE ANALCO");
+    let liberar: () => void = () => {};
+    port.cuentasResponse = () =>
+      new Promise((res) => {
+        liberar = () =>
+          res(makeCuentasSemana({ conteos: { ...makeCuentasSemana().conteos, pagados: 141 } }));
+      });
+    await user.click(screen.getByRole("button", { name: /Pagados/ }));
+    expect(within(screen.getByRole("button", { name: /Pagados/ })).getByText("140")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Pagados/ })).toHaveAttribute("aria-pressed", "true");
+    await act(async () => liberar());
+    expect(
+      await within(screen.getByRole("button", { name: /Pagados/ })).findByText("141"),
+    ).toBeInTheDocument();
+  });
+
+  it("usuario sin configurar (409): estado propio, sin Reintentar", async () => {
+    const port = new FakeDesempenoPort();
+    port.throwOnNext.obtenerCuentas = new DomainError(
+      "desempeno_usuario_sin_zona",
+      "el usuario no tiene zona",
+    );
+    montar(port);
+    expect(await screen.findByText("Sin configurar")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Configurar en Usuarios" })).toHaveAttribute("href", "/settings");
+    expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
+  });
+
+  it("una cuenta se abre con el teclado; la que no tiene detalle no es alcanzable", async () => {
+    const port = new FakeDesempenoPort();
+    port.cuentasResponse = makeCuentasSemana({
+      cuentas: [makeCuenta(), makeCuenta({ ventaId: 2, doctoPvId: null, clienteNombre: "SIN DETALLE" })],
+    });
+    const { onAbrirCuenta } = montar(port);
+    const fila = (await screen.findByText("JUANA ANDRADE LECHUGA")).closest("tr")!;
+    expect(fila).toHaveAttribute("tabindex", "0");
+    fireEvent.keyDown(fila, { key: "Enter" });
+    fireEvent.keyDown(fila, { key: " " });
+    expect(onAbrirCuenta).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("SIN DETALLE").closest("tr")).not.toHaveAttribute("tabindex");
   });
 });
