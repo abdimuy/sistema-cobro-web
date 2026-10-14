@@ -3,7 +3,7 @@ import type { ConversacionDetalle, Decision } from "../../domain/entities";
 import { confianzaBinaria } from "../../domain/helpers";
 import { useAccionesBorrador } from "../../presentation/hooks/useAccionesBorrador";
 import { humanizeSnake } from "../lib/format";
-import { ConfirmActionDialog } from "@/modules/ventasLocales/components/detalle/ConfirmActionDialog";
+import { ConfirmActionDialog } from "@/modules/ventasLocales";
 
 type Mode = "view" | "dictar" | "asignar";
 

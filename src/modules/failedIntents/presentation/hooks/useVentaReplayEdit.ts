@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import type { VentaV2 } from "@/services/api/ventaV2Types";
-import { useVentaEditState } from "@/modules/ventasLocales/presentation/hooks/useVentaEditState";
+import { useVentaEditState } from "@/modules/ventasLocales";
 import { crearVentaBodyToVentaV2 } from "../../infrastructure/mappers/crearVentaBodyToVentaV2";
 import { crearVentaBodyToVentaV2WithCorrections } from "../../infrastructure/mappers/crearVentaBodyToVentaV2WithCorrections";
 import type { Correction } from "../../infrastructure/mappers/crearVentaBodyToVentaV2WithCorrections";

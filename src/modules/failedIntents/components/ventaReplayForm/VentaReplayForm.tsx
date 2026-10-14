@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AlertCircle, FileJson, LayoutList } from "lucide-react";
 
-import { ClienteTab } from "@/modules/ventasLocales/components/EditarVentaModal/tabs/ClienteTab";
-import { PlanTab } from "@/modules/ventasLocales/components/EditarVentaModal/tabs/PlanTab";
-import { ProductosTab } from "@/modules/ventasLocales/components/EditarVentaModal/tabs/ProductosTab";
-import { VendedoresTab } from "@/modules/ventasLocales/components/EditarVentaModal/tabs/VendedoresTab";
-import { ResumenTab } from "@/modules/ventasLocales/components/EditarVentaModal/tabs/ResumenTab";
-import { UnderlineTab } from "@/modules/ventasLocales/components/EditarVentaModal/shell/UnderlineTabsBar";
-import { preciosDeLineas } from "@/modules/ventasLocales/presentation/preciosDeLineas";
+import {
+  ClienteTab,
+  PlanTab,
+  ProductosTab,
+  VendedoresTab,
+  ResumenTab,
+  UnderlineTab,
+  preciosDeLineas,
+} from "@/modules/ventasLocales";
 
 import { useVentaReplayEdit } from "../../presentation/hooks/useVentaReplayEdit";
 import { isVentaShapedBody } from "../../infrastructure/mappers/isVentaShapedBody";

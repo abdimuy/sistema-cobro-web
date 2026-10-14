@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ConfirmActionDialog } from "@/modules/ventasLocales/components/detalle/ConfirmActionDialog";
+import { ConfirmActionDialog } from "@/modules/ventasLocales";
 import { useCatalogoPermisos } from "../../presentation/hooks/useCatalogoPermisos";
 import { useEditarPermisosRol } from "../../presentation/hooks/useEditarPermisosRol";
 import { useCrudRol } from "../../presentation/hooks/useCrudRol";

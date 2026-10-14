@@ -1,6 +1,4 @@
-import type { EditarVentaFormData } from "@/modules/ventasLocales/presentation/hooks/useVentaEditState";
-import { Monto } from "@/modules/ventasLocales/domain/values/Monto";
-import { Cantidad } from "@/modules/ventasLocales/domain/values/Cantidad";
+import { Monto, Cantidad, type EditarVentaFormData } from "@/modules/ventasLocales";
 
 // formDataToCrearVentaBody serializes the live EditarVentaFormData back
 // into the POST /v2/ventas request shape. The reverse mapper is

@@ -10,9 +10,7 @@ import type {
   ComboV2,
   VendedorV2,
 } from "@/services/api/ventaV2Types";
-import { Monto } from "@/modules/ventasLocales/domain/values/Monto";
-import { Cantidad } from "@/modules/ventasLocales/domain/values/Cantidad";
-import { Telefono } from "@/modules/ventasLocales/domain/values/Telefono";
+import { Monto, Cantidad, Telefono } from "@/modules/ventasLocales";
 import { isVentaShapedBody } from "./isVentaShapedBody";
 
 // crearVentaBodyToVentaV2WithCorrections is the audit-trail variant of

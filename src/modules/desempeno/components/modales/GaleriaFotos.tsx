@@ -2,9 +2,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 // Imports directos (no el index de detalle) para no arrastrar todo el modal de ventas.
-import AuthenticatedImage from "@/modules/ventasLocales/components/detalle/AuthenticatedImage";
-import VentaImagenLightbox from "@/modules/ventasLocales/components/detalle/VentaImagenLightbox";
-import type { FuenteImagen } from "@/modules/ventasLocales/components/detalle/fuenteImagen";
+import { AuthenticatedImage, VentaImagenLightbox, type FuenteImagen } from "@/modules/ventasLocales";
 import type { RefImagenes } from "../../domain/entities";
 import { descargarImagen } from "../../application/usecases/consultas";
 import { useDesempenoPort } from "../../presentation/context/useDesempenoPort";

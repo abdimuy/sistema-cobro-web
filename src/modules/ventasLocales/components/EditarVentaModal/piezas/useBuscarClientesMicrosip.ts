@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import type { Cliente } from "@/modules/clientes/domain/entities";
-import { DomainError } from "@/modules/clientes/domain/errors";
-import { buscarClientes } from "@/modules/clientes/application/usecases/buscarClientes";
-import { HttpClientesAdapter } from "@/modules/clientes/infrastructure/http/HttpClientesAdapter";
+import {
+  DomainError,
+  HttpClientesAdapter,
+  buscarClientes,
+  type Cliente,
+} from "@/modules/clientes";
 import { apiClient } from "../../../infrastructure/http/apiClient";
 
 const DEBOUNCE_MS = 300;
@@ -12,7 +14,15 @@ const RESULT_LIMIT = 8;
 // hands to HttpClientesAdapter (V2 client, Bearer token injected via
 // interceptor), but owned by ventasLocales so this piece works without
 // mounting <ClientesProvider> (which this modal's tree doesn't have).
-const clientesPort = new HttpClientesAdapter(apiClient);
+// Created lazily on first search, not at module evaluation: this module and
+// the Clientes public index import each other in a cycle (see
+// src/modules/ventasLocales/index.ts), so HttpClientesAdapter may not be
+// initialized yet while this file is being evaluated.
+let clientesPort: HttpClientesAdapter | null = null;
+function puertoClientes(): HttpClientesAdapter {
+  clientesPort ??= new HttpClientesAdapter(apiClient);
+  return clientesPort;
+}
 
 export type UseBuscarClientesMicrosipReturn = {
   items: ReadonlyArray<Cliente>;
@@ -48,7 +58,7 @@ export function useBuscarClientesMicrosip(q: string): UseBuscarClientesMicrosipR
       const ctrl = new AbortController();
       abortRef.current = ctrl;
 
-      buscarClientes(clientesPort, { q: trimmed, limit: RESULT_LIMIT }, ctrl.signal)
+      buscarClientes(puertoClientes(), { q: trimmed, limit: RESULT_LIMIT }, ctrl.signal)
         .then((out) => {
           if (ctrl.signal.aborted) return;
           setItems(out.items.slice(0, RESULT_LIMIT));

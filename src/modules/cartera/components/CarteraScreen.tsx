@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Panel } from "@/modules/clientes/components/ficha/lib/Panel";
+import { Panel } from "@/modules/clientes";
 import useGetZonasCliente from "@/modules/user/useGetZonaCliente";
 import type { FilterOption } from "./CarteraFilters";
 import { useSaludCartera } from "../presentation/hooks/useSaludCartera";

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ConfirmActionDialog } from "@/modules/ventasLocales/components/detalle/ConfirmActionDialog";
+import { ConfirmActionDialog } from "@/modules/ventasLocales";
 import { IdentidadCombobox } from "./IdentidadCombobox";
 import { MapeoMeter } from "../comunes/MapeoMeter";
 import type { AsignarVendedorSlots } from "../../presentation/hooks/useAsignarVendedor";

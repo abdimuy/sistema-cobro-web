@@ -9,7 +9,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import type { Cliente } from "@/modules/clientes/domain/entities";
+import type { Cliente } from "@/modules/clientes";
 import { useBuscarClientesMicrosip } from "./useBuscarClientesMicrosip";
 
 interface Props {

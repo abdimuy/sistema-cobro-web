@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import AuthenticatedImage from "@/modules/ventasLocales/components/detalle/AuthenticatedImage";
-import VentaImagenLightbox from "@/modules/ventasLocales/components/detalle/VentaImagenLightbox";
-import type { FuenteImagen } from "@/modules/ventasLocales/components/detalle/fuenteImagen";
+import { AuthenticatedImage, VentaImagenLightbox, type FuenteImagen } from "@/modules/ventasLocales";
 import { useClientesPort } from "../../presentation/context/ClientesContext";
 import { useImagenesPago } from "../../presentation/hooks/useImagenesPago";
 
