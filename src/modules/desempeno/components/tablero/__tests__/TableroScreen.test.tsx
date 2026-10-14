@@ -59,6 +59,41 @@ describe("TableroScreen", () => {
     expect(within(norma).queryByText(/Falta configurarlo/)).not.toBeInTheDocument();
   });
 
+  // D14 con cifras elegidas para que cada suma del equipo sea un número que
+  // ninguna fila muestra: si aparece, alguien sumó usuarios en el escritorio.
+  it.each(["hoy", "semana"] as const)(
+    "D14 (%s): ninguna suma del equipo de visitas, condonaciones, horas ni pagos",
+    async (periodo) => {
+      const port = new FakeDesempenoPort();
+      port.tableroResponse = makeTablero({
+        periodo,
+        usuarios: [
+          makeUsuarioTablero({ visitas: 13, condonaciones: { n: 2, importe: "120.00" }, minutosActivos: 346 }),
+          makeUsuarioTablero({
+            uid: "uid-rosa",
+            nombre: "Rosa Isela Pacheco",
+            zonaId: 21564,
+            zonaNombre: "RUTA 22",
+            visitas: 29,
+            condonaciones: { n: 15, importe: "333.00" },
+            minutosActivos: 211,
+            pagos: { n: 24, importe: "5100.00" },
+          }),
+        ],
+      });
+      montar(port);
+      await screen.findByText("Rosa Isela Pacheco");
+      const texto = document.body.textContent ?? "";
+      const numero = (n: string) => new RegExp(`(^|[^\\d:.,])${n}([^\\d:.,]|$)`);
+      expect(texto).not.toMatch(numero("42")); // visitas 13 + 29
+      expect(texto).not.toMatch(numero("17")); // condonaciones 2 + 15
+      expect(texto).not.toMatch(/\$453/); // $120 + $333
+      expect(texto).not.toMatch(/9 h 17|557/); // 346 + 211 min
+      expect(texto).not.toMatch(numero("55")); // pagos 31 + 24
+      expect(texto).not.toMatch(/13,700/); // $8,600 + $5,100
+    },
+  );
+
   it("muestra cifras por usuario y NINGÚN total del equipo (D14)", async () => {
     montar();
     const fila = (await screen.findByText("Juan Carlos Méndez")).closest("tr")!;
