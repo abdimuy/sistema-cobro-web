@@ -1,9 +1,30 @@
 import { describe, expect, it, vi } from "vitest";
+import { useEffect } from "react";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ModalesFicha } from "../ModalesFicha";
 import { renderConDesempeno } from "../../../test/renderConDesempeno";
+import { render } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { DesempenoProvider } from "../../../presentation/context/DesempenoProvider";
+import { FakeDesempenoPort } from "../../../application/__tests__/fakeDesempenoPort";
+import type { ModalFicha } from "../ModalesFicha";
 import { makeActividadPago, makeActividadVisita } from "../../../application/__tests__/fakeDesempenoPort";
+
+// Cuántas veces se montó cada VentaModal (por doctoPvId).
+const montajesVenta: number[] = [];
+function VentaModalFalso(p: { clienteId: number; doctoPvId: number; onPagoClick?: (id: number) => void }) {
+  useEffect(() => {
+    montajesVenta.push(p.doctoPvId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <div data-testid="venta-modal">
+      {`${p.clienteId}-${p.doctoPvId}`}
+      <button type="button" onClick={() => p.onPagoClick?.(15082369)}>abrir pago</button>
+    </div>
+  );
+}
 
 vi.mock("@/modules/clientes", () => ({
   PagoModal: (p: { clienteId: number; doctoCcId: number; onAbrirVenta?: (id: number) => void }) => (
@@ -12,12 +33,7 @@ vi.mock("@/modules/clientes", () => ({
       <button type="button" onClick={() => p.onAbrirVenta?.(9921)}>abrir venta</button>
     </div>
   ),
-  VentaModal: (p: { clienteId: number; doctoPvId: number; onPagoClick?: (id: number) => void }) => (
-    <div data-testid="venta-modal">
-      {`${p.clienteId}-${p.doctoPvId}`}
-      <button type="button" onClick={() => p.onPagoClick?.(15082369)}>abrir pago</button>
-    </div>
-  ),
+  VentaModal: (p: { clienteId: number; doctoPvId: number; onPagoClick?: (id: number) => void }) => <VentaModalFalso {...p} />,
   ClienteFicha: (p: { clienteId: number }) => <div data-testid="cliente-ficha">{p.clienteId}</div>,
 }));
 vi.mock("@/modules/ventasLocales/components/detalle/AuthenticatedImage", () => ({
@@ -83,5 +99,34 @@ describe("ModalesFicha", () => {
     );
     await user.click(screen.getByRole("button", { name: "abrir pago" }));
     expect(onAbrir).toHaveBeenCalledWith({ tipo: "pago", clienteId: 1544855, doctoCcId: 15082369 });
+  });
+
+  it("la clave es la identidad del modal: quitar uno de abajo no vuelve a montar los de arriba", () => {
+    montajesVenta.length = 0;
+    const venta = { tipo: "venta" as const, clienteId: 1544855, doctoPvId: 9921 };
+    // Mismos providers en los dos renders: solo cambia la pila.
+    const port = new FakeDesempenoPort();
+    const ui = (pila: ModalFicha[]) => (
+      <MemoryRouter>
+        <DesempenoProvider port={port}>
+          <ModalesFicha pila={pila} onCerrar={vi.fn()} onAbrir={vi.fn()} />
+        </DesempenoProvider>
+      </MemoryRouter>
+    );
+    const { rerender } = render(ui([{ tipo: "cliente", clienteId: 1544855 }, venta]));
+    rerender(ui([venta]));
+    expect(screen.getByTestId("venta-modal")).toBeInTheDocument();
+    expect(montajesVenta).toEqual([9921]);
+  });
+
+  it("el mismo modal dos veces en la pila no repite clave", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const venta = { tipo: "venta" as const, clienteId: 1544855, doctoPvId: 9921 };
+    renderConDesempeno(
+      <ModalesFicha pila={[venta, { tipo: "pago", clienteId: 1544855, doctoCcId: 15082369 }, venta]} onCerrar={vi.fn()} onAbrir={vi.fn()} />,
+    );
+    expect(screen.getAllByTestId("venta-modal")).toHaveLength(2);
+    expect(error.mock.calls.some((c) => String(c[0]).includes("same key"))).toBe(false);
+    error.mockRestore();
   });
 });

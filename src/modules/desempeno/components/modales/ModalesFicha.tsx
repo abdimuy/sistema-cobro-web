@@ -11,6 +11,33 @@ export type ModalFicha =
   | { tipo: "venta"; clienteId: number; doctoPvId: number }
   | { tipo: "cliente"; clienteId: number };
 
+// Identidad de un modal: qué muestra, no en qué posición está.
+function identidad(m: ModalFicha): string {
+  switch (m.tipo) {
+    case "actividad":
+      return `actividad:${m.actividad.id}`;
+    case "pago":
+      return `pago:${m.clienteId}:${m.doctoCcId}`;
+    case "venta":
+      return `venta:${m.clienteId}:${m.doctoPvId}`;
+    case "cliente":
+      return `cliente:${m.clienteId}`;
+  }
+}
+
+// Claves estables por identidad. Si el mismo modal aparece otra vez más arriba
+// (venta → pago → la misma venta), la repetición lleva su número de aparición:
+// la pila solo crece o se cierra por arriba, así que ese número no cambia.
+function clavesDe(pila: readonly ModalFicha[]): string[] {
+  const vistas = new Map<string, number>();
+  return pila.map((m) => {
+    const id = identidad(m);
+    const n = (vistas.get(id) ?? 0) + 1;
+    vistas.set(id, n);
+    return n === 1 ? id : `${id}#${n}`;
+  });
+}
+
 // Pila de modales de la ficha (D11: se reutilizan los de Clientes). Un pago con
 // docto_cc_id abre el PagoModal de Clientes; una visita o un pago que aún no
 // llega a Microsip abre el modal propio. Se pueden encadenar (pago → venta →
@@ -25,10 +52,11 @@ export function ModalesFicha({
   onCerrar: () => void;
   onAbrir: (m: ModalFicha) => void;
 }) {
+  const claves = clavesDe(pila);
   return (
     <>
       {pila.map((m, i) => {
-        const clave = `${m.tipo}-${i}`;
+        const clave = claves[i];
         if (m.tipo === "actividad") {
           const a = m.actividad;
           if (a.pago && a.pago.doctoCcId !== null) {
