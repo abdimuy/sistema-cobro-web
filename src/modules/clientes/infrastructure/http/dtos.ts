@@ -251,6 +251,9 @@ export type PagoDetalleDTO = {
   recibido_at?: string; // RFC3339
   aplicado_at?: string; // RFC3339
   origen: string; // "app" | "microsip"
+  // Contrato desempeño §6. Opcionales: un API anterior no los manda.
+  pago_recibido_id?: string | null;
+  num_fotos?: number;
 };
 
 // ─── POST /clientes/_search/refresh ──────────────────────────────────────────
@@ -382,4 +385,14 @@ export type EventoTimelineDto = {
 
 export type TimelineDto = {
   eventos: EventoTimelineDto[];
+};
+
+// ImagenPagoDTO matches GET /v2/cobranza/pagos/{id}/imagenes (array).
+export type ImagenPagoDTO = {
+  id: string;
+  mime: string;
+  size_bytes: number;
+  descripcion?: string | null;
+  created_at: string;
+  updated_at: string;
 };

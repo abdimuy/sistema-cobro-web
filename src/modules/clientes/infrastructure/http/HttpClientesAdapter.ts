@@ -1,5 +1,5 @@
 import type { AxiosInstance } from "axios";
-import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle, Predicciones, Benchmark, CohortBy, EventoTimeline } from "../../domain/entities";
+import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle, Predicciones, Benchmark, CohortBy, EventoTimeline, ImagenPago } from "../../domain/entities";
 import type { ClientesPort, FichaDateRange } from "../../application/ports/ClientesPort";
 import type {
   BuscarClientesInput,
@@ -20,6 +20,7 @@ import { dtoToPagoDetalle } from "../mappers/dtoToPagoDetalle";
 import { dtoToPredicciones } from "../mappers/dtoToPredicciones";
 import { dtoToBenchmark } from "../mappers/dtoToBenchmark";
 import { dtoToTimeline } from "../mappers/dtoToTimeline";
+import { dtoToImagenPago } from "../mappers/dtoToImagenPago";
 import { apperrorToDomainError } from "../mappers/errorMapper";
 import type {
   ListResponseDTO,
@@ -33,6 +34,7 @@ import type {
   PrediccionesDto,
   BenchmarkDto,
   TimelineDto,
+  ImagenPagoDTO,
 } from "./dtos";
 
 const CLIENTES_BASE = "/clientes";
@@ -256,6 +258,30 @@ export class HttpClientesAdapter implements ClientesPort {
           paramsSerializer: { indexes: null },
           signal,
         },
+      );
+      return data;
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async listarImagenesPago(pagoRecibidoId: string, signal?: AbortSignal): Promise<ImagenPago[]> {
+    try {
+      const { data } = await this.client.get<ImagenPagoDTO[]>(
+        `/cobranza/pagos/${encodeURIComponent(pagoRecibidoId)}/imagenes`,
+        { signal },
+      );
+      return data.map(dtoToImagenPago);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async descargarImagenPago(pagoRecibidoId: string, imagenId: string, signal?: AbortSignal): Promise<Blob> {
+    try {
+      const { data } = await this.client.get<Blob>(
+        `/cobranza/pagos/${encodeURIComponent(pagoRecibidoId)}/imagenes/${encodeURIComponent(imagenId)}`,
+        { responseType: "blob", signal },
       );
       return data;
     } catch (e) {

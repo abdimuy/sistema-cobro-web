@@ -1,4 +1,4 @@
-import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle, Predicciones, Benchmark, CohortBy, EventoTimeline } from "../../domain/entities";
+import type { FichaCliente, VentaDetalle, RitmoPago, PagoDetalle, Predicciones, Benchmark, CohortBy, EventoTimeline, ImagenPago } from "../../domain/entities";
 import type {
   BuscarClientesInput,
   BuscarClientesOutput,
@@ -65,4 +65,7 @@ export interface ClientesPort {
     signal?: AbortSignal,
   ): Promise<Benchmark>;
   obtenerTimeline(clienteId: number, signal?: AbortSignal): Promise<EventoTimeline[]>;
+  // Fotos de un pago de la app (MSP_PAGOS_RECIBIDOS), por su UUID.
+  listarImagenesPago(pagoRecibidoId: string, signal?: AbortSignal): Promise<ImagenPago[]>;
+  descargarImagenPago(pagoRecibidoId: string, imagenId: string, signal?: AbortSignal): Promise<Blob>;
 }

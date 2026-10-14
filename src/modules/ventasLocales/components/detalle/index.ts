@@ -16,3 +16,6 @@ export { default as ConfirmActionDialog } from "./ConfirmActionDialog";
 export { default as CancelarVentaDialog } from "./CancelarVentaDialog";
 export { default as AuthenticatedImage } from "./AuthenticatedImage";
 export { useVentaActions } from "./useVentaActions";
+export { fuenteImagenVenta } from "./fuenteImagen";
+export type { FuenteImagen } from "./fuenteImagen";
+export type { ImagenDeVisor } from "./VentaImagenLightbox";

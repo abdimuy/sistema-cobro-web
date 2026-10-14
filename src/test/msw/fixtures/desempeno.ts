@@ -1,0 +1,301 @@
+import type {
+  ActividadDTO,
+  CatalogosDTO,
+  CuentasDTO,
+  ImagenDTO,
+  JornadaDTO,
+  LineaDelDiaDTO,
+  PaginaActividadDTO,
+  TableroDTO,
+} from "../../../modules/desempeno/infrastructure/http/dtos";
+
+// Copia de los ejemplos de 2026-10-14-desempeno-contratos.md (v2) con los "..."
+// completados. Los NOMBRES de campo son ley: si el contrato cambia, esto cambia.
+// 16:31Z = 10:31 en la oficina (America/Mexico_City, UTC−6). Campos del mismo
+// tipo llevan valores DISTINTOS para que un mapper que los cruce falle.
+
+export const actividadPagoDTO: ActividadDTO = {
+  id: "pago:15082369",
+  tipo: "pago",
+  hora: "2026-10-14T16:31:00Z",
+  recibido_at: "2026-10-14T16:31:05Z",
+  cliente_id: 1544855,
+  cliente_nombre: "JUANA ANDRADE LECHUGA",
+  venta_id: 13785217,
+  folio: "Z1677035",
+  registrado_por: { usuario_uid: "abc123", cobrador_id: 11502, nombre: "JUAN CARLOS MENDEZ", origen: "app" },
+  lat: 18.4617,
+  lng: -97.3928,
+  con_gps: true,
+  num_fotos: 2,
+  docto_pv_id: 9921,
+  captura_tardia: false,
+  pago: {
+    importe: "150.00",
+    forma_cobro: "efectivo",
+    forma_cobro_id: 157,
+    aplicado: true,
+    rechazado: false,
+    docto_cc_id: 15082369,
+    pago_recibido_id: "7a1f39e4-2b6c-4d1e-9f0a-3c5b8e2d1a47",
+  },
+  visita: null,
+};
+
+// Visita capturada en oficina: sin venta, sin GPS, sin fotos, llegó al
+// servidor más de 2 h después (el servidor la marca como captura tardía).
+export const actividadVisitaDTO: ActividadDTO = {
+  id: "visita:412cc2fc-7d0e-4b8a-9c1f-5e6a7b8c9d0e",
+  tipo: "visita",
+  hora: "2026-10-14T17:05:00Z",
+  recibido_at: "2026-10-14T19:20:00Z",
+  cliente_id: 1602231,
+  cliente_nombre: "MARÍA ELENA CUAUTLE TLAPA",
+  venta_id: null,
+  folio: null,
+  registrado_por: { usuario_uid: null, cobrador_id: null, nombre: "Oficina", origen: "oficina" },
+  lat: null,
+  lng: null,
+  con_gps: false,
+  num_fotos: 0,
+  docto_pv_id: null,
+  captura_tardia: true,
+  pago: null,
+  visita: {
+    visita_id: "412cc2fc-7d0e-4b8a-9c1f-5e6a7b8c9d0e",
+    tipo_visita: "No se encontraba",
+    nota: "Vecina dice que regresa el lunes",
+    estado: "no_estaba",
+    trato: "nadie",
+    etiqueta: "No estaba",
+  },
+};
+
+export const lineaDTO: LineaDelDiaDTO = {
+  dia: "2026-10-14",
+  puntos: [
+    {
+      id: "pago:15082369",
+      tipo: "pago",
+      hora: "2026-10-14T16:31:00Z",
+      cliente_nombre: "JUANA ANDRADE LECHUGA",
+      importe: "150.00",
+      resultado: null,
+      num_fotos: 2,
+    },
+    {
+      id: "visita:412cc2fc-7d0e-4b8a-9c1f-5e6a7b8c9d0e",
+      tipo: "visita",
+      hora: "2026-10-14T17:05:00Z",
+      cliente_nombre: "MARÍA ELENA CUAUTLE TLAPA",
+      importe: null,
+      resultado: "No se encontraba",
+      num_fotos: 0,
+    },
+  ],
+  tramos: [
+    {
+      desde: "2026-10-14T16:31:00Z",
+      hasta: "2026-10-14T17:05:00Z",
+      pagos: { n: 12, importe: "3150.00" },
+      visitas: 5,
+      condonaciones: 1,
+      clientes: 14,
+    },
+  ],
+  por_hora: Array.from({ length: 13 }, (_, i) => ({
+    hora: 7 + i,
+    pagos: i === 3 ? 3 : 0,
+    visitas: i === 3 ? 1 : 0,
+    condonaciones: i === 3 ? 2 : 0,
+    importe: i === 3 ? "450.00" : "0.00",
+  })),
+  pausas: [
+    {
+      desde: "2026-10-14T17:05:00Z",
+      hasta: "2026-10-14T18:17:00Z",
+      minutos: 72,
+      anterior_id: "visita:412cc2fc-7d0e-4b8a-9c1f-5e6a7b8c9d0e",
+      siguiente_id: null,
+      en_curso: false,
+    },
+  ],
+};
+
+export const tableroDTO: TableroDTO = {
+  generado_at: "2026-10-14T22:40:00Z",
+  periodo: "hoy",
+  pausa_min: 45,
+  usuarios: [
+    {
+      uid: "abc123",
+      nombre: "Juan Carlos Méndez",
+      email: "juan.mendez@muebleriamsp.mx",
+      zona_id: 21563,
+      zona_nombre: "RUTA 21",
+      configurado: true,
+      motivo_no_configurado: null,
+      inicio_semana: "2026-10-09T13:46:00Z",
+      ventas_universo: 232,
+      estado_ahora: "activo",
+      estado_desde: "2026-10-14T22:10:00Z",
+      ultima: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z", cliente_nombre: "JUANA ANDRADE LECHUGA" },
+      primera_actividad: "2026-10-14T14:20:00Z",
+      ultima_actividad: "2026-10-14T22:10:00Z",
+      minutos_activos: 346,
+      pausas: { n: 1, minutos: 72, en_curso: false },
+      pagos: { n: 31, importe: "8600.00" },
+      pagos_por_forma: {
+        efectivo: { n: 27, importe: "7550.00" },
+        transferencia: { n: 3, importe: "800.00" },
+        cheque: { n: 1, importe: "250.00" },
+      },
+      condonaciones: { n: 1, importe: "120.00" },
+      no_aplicados: { n: 2, importe: "300.00" },
+      visitas: 13,
+      cobertura: { con_algo: 186, total: 232 },
+      cobertura_por_segmento: { sin_visitar: 40, volver: 20, despues: 3, pagados: 140, sin_nada: 46 },
+      cobro: { cobrado: "8600.00", esperado: "13050.00", falta: "4450.00", pct: "65.90" },
+      lineas: [lineaDTO],
+    },
+    {
+      uid: "def456",
+      nombre: "Norma Velázquez Rojas",
+      email: "norma.velazquez@muebleriamsp.mx",
+      zona_id: null,
+      zona_nombre: null,
+      configurado: false,
+      motivo_no_configurado: "sin_zona",
+      inicio_semana: null,
+      ventas_universo: 0,
+      estado_ahora: "no_ha_empezado",
+      estado_desde: null,
+      ultima: null,
+      primera_actividad: null,
+      ultima_actividad: null,
+      minutos_activos: 0,
+      pausas: { n: 0, minutos: 0, en_curso: false },
+      pagos: { n: 0, importe: "0.00" },
+      pagos_por_forma: {
+        efectivo: { n: 0, importe: "0.00" },
+        transferencia: { n: 0, importe: "0.00" },
+        cheque: { n: 0, importe: "0.00" },
+      },
+      condonaciones: { n: 0, importe: "0.00" },
+      no_aplicados: { n: 0, importe: "0.00" },
+      visitas: 0,
+      cobertura: { con_algo: 0, total: 0 },
+      cobertura_por_segmento: { sin_visitar: 0, volver: 0, despues: 0, pagados: 0, sin_nada: 0 },
+      cobro: { cobrado: "0.00", esperado: "0.00", falta: "0.00", pct: null },
+      lineas: [],
+    },
+  ],
+};
+
+export const jornadaDTO: JornadaDTO = {
+  uid: "abc123",
+  fecha: "2026-10-14",
+  pausa_min: 45,
+  generado_at: "2026-10-14T22:40:00Z",
+  actividades: [actividadPagoDTO, actividadVisitaDTO],
+  linea: lineaDTO,
+  senales: [
+    {
+      tipo: "mismo_punto",
+      actividad_ids: ["pago:15082369"],
+      desde: "2026-10-14T16:31:00Z",
+      hasta: "2026-10-14T16:37:00Z",
+      detalle: "4 cuentas desde el mismo punto en 6 min",
+      regla: "≥ 4 clientes distintos en 25 m dentro de 10 min",
+    },
+  ],
+  resumen: {
+    primera_actividad: "2026-10-14T16:31:00Z",
+    ultima_actividad: "2026-10-14T17:05:00Z",
+    minutos_activos: 346,
+    pausas: { n: 1, minutos: 72, en_curso: false },
+    pagos: { n: 31, importe: "8600.00" },
+    visitas: 13,
+    condonaciones: 2,
+    clientes: 41,
+  },
+};
+
+export const paginaActividadDTO: PaginaActividadDTO = {
+  items: [actividadPagoDTO, actividadVisitaDTO],
+  siguiente_cursor: "opaco-2",
+  totales: { n: 1188, importe: "289450.00", por_tipo: { pago: 980, visita: 200, condonacion: 8 } },
+};
+
+export const cuentasDTO: CuentasDTO = {
+  inicio_semana: "2026-10-09T13:46:00Z",
+  conteos: { sin_visitar: 40, volver: 20, despues: 3, pagados: 140, sin_nada: 46, total: 232 },
+  cuentas: [
+    {
+      venta_id: 13785217,
+      docto_pv_id: 9921,
+      folio: "Z1677035",
+      cliente_id: 1544855,
+      cliente_nombre: "JUANA ANDRADE LECHUGA",
+      producto: "ROPERO LABRADO CALIFORNIA VINO",
+      estado: "pago",
+      trato: "pagado",
+      etiqueta: "Pagó esta semana",
+      detalle: "No hace falta volver",
+      segmento: "pagados",
+      con_algo: true,
+      determinado_por: "pago:15082369",
+      ultima_actividad: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T16:31:00Z" },
+      saldo: "16650.00",
+      parcialidad: "150.00",
+      abono_semana: "150.00",
+      num_atrasos: 0,
+      nueva: false,
+    },
+    {
+      venta_id: 13790011,
+      docto_pv_id: null,
+      folio: null,
+      cliente_id: 1602231,
+      cliente_nombre: "MARÍA ELENA CUAUTLE TLAPA",
+      producto: null,
+      estado: "sin_tocar",
+      trato: "sin_trabajar",
+      etiqueta: "Sin tocar",
+      detalle: "Nadie fue esta semana",
+      segmento: "sin_visitar",
+      con_algo: false,
+      determinado_por: null,
+      ultima_actividad: null,
+      saldo: "4200.00",
+      parcialidad: "200.00",
+      abono_semana: "0.00",
+      num_atrasos: 3,
+      nueva: true,
+    },
+  ],
+};
+
+export const catalogosDTO: CatalogosDTO = {
+  formas_cobro: [
+    { codigo: "efectivo", etiqueta: "Efectivo" },
+    { codigo: "transferencia", etiqueta: "Transferencia" },
+    { codigo: "cheque", etiqueta: "Cheque" },
+    { codigo: "condonacion", etiqueta: "Condonación" },
+  ],
+  tipos_visita: [
+    { literal: "No se encontraba", estado: "no_estaba", grupo: "No estaba" },
+    { literal: "Se negó a pagar", estado: "se_nego", grupo: "Se negó" },
+  ],
+};
+
+export const imagenesDTO: ImagenDTO[] = [
+  {
+    id: "0b6f1c2e-5a7d-4e3b-8c9f-1d2e3f4a5b6c",
+    mime: "image/jpeg",
+    size_bytes: 184320,
+    descripcion: null,
+    created_at: "2026-10-14T16:31:10Z",
+    updated_at: "2026-10-14T16:31:10Z",
+  },
+];

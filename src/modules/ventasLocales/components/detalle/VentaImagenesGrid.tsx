@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { ImageIcon } from "lucide-react";
 import AuthenticatedImage from "./AuthenticatedImage";
 import VentaImagenLightbox from "./VentaImagenLightbox";
+import { fuenteImagenVenta } from "./fuenteImagen";
 import { ImagenV2 } from "@/services/api/ventaV2Types";
 
 interface Props {
@@ -32,8 +33,7 @@ export const VentaImagenesGrid = ({ ventaId, imagenes }: Props) => {
             className="group relative aspect-square overflow-hidden rounded-lg border border-border/60 bg-muted transition hover:border-border focus:outline-none focus:ring-2 focus:ring-foreground/20"
           >
             <AuthenticatedImage
-              ventaId={ventaId}
-              imagenId={img.id}
+              fuente={fuenteImagenVenta(ventaId, img.id)}
               alt={img.descripcion ?? "imagen de la venta"}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             />
@@ -56,7 +56,7 @@ export const VentaImagenesGrid = ({ ventaId, imagenes }: Props) => {
       {openIndex !== null &&
         createPortal(
           <VentaImagenLightbox
-            ventaId={ventaId}
+            fuentePara={(id) => fuenteImagenVenta(ventaId, id)}
             imagenes={imagenes}
             initialIndex={openIndex}
             onClose={() => setOpenIndex(null)}

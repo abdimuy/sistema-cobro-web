@@ -15,8 +15,8 @@ const imagenes = [
 const renderLightbox = (onClose = vi.fn()) => {
   const utils = render(
     <VentaImagenLightbox
-      ventaId="v1"
       imagenes={imagenes}
+      fuentePara={(id) => ({ cacheKey: `venta/v1/${id}`, descargar: async () => new Blob() })}
       initialIndex={0}
       onClose={onClose}
     />,

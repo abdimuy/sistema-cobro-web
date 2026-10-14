@@ -2,6 +2,7 @@ import { Pencil, RotateCcw, X } from "lucide-react";
 import { useRef } from "react";
 import { cn } from "@/lib/utils";
 import AuthenticatedImage from "../../detalle/AuthenticatedImage";
+import { fuenteImagenVenta } from "../../detalle/fuenteImagen";
 import type { ImagenFormData } from "../../../presentation/hooks/useVentaEditState";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -41,8 +42,7 @@ export const ImagenTileEditable = ({
       {/* Image */}
       {imagen.kind === "existing" ? (
         <AuthenticatedImage
-          ventaId={ventaId}
-          imagenId={imagen.id}
+          fuente={fuenteImagenVenta(ventaId, imagen.id)}
           className={cn(
             "h-full w-full object-cover",
             isDeleted && "opacity-40 saturate-0",

@@ -76,5 +76,7 @@ export function dtoToPagoDetalle(dto: PagoDetalleDTO): PagoDetalle {
     recibidoAt,
     aplicadoAt,
     origen,
+    pagoRecibidoId: dto.pago_recibido_id ?? null,
+    numFotos: typeof dto.num_fotos === "number" ? dto.num_fotos : 0,
   };
 }

@@ -11,11 +11,15 @@ import {
 } from "lucide-react";
 import dayjs from "dayjs";
 import AuthenticatedImage from "./AuthenticatedImage";
-import { ImagenV2 } from "@/services/api/ventaV2Types";
+import type { FuenteImagen } from "./fuenteImagen";
+
+// Lo mínimo que el visor necesita de una imagen. ImagenV2 (ventas) lo cumple
+// tal cual; Clientes y Desempeño mapean sus imágenes a esta forma.
+export type ImagenDeVisor = { id: string; descripcion: string | null; created_at: string };
 
 interface Props {
-  ventaId: string;
-  imagenes: ImagenV2[];
+  imagenes: readonly ImagenDeVisor[];
+  fuentePara: (imagenId: string) => FuenteImagen;
   initialIndex: number;
   onClose: () => void;
 }
@@ -29,7 +33,7 @@ const calcOptimal = (img: HTMLImageElement, rot: number): number => {
   return Math.min(vw / w, vh / h);
 };
 
-export const VentaImagenLightbox = ({ ventaId, imagenes, initialIndex, onClose }: Props) => {
+export const VentaImagenLightbox = ({ imagenes, fuentePara, initialIndex, onClose }: Props) => {
   const [index, setIndex] = useState(initialIndex);
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -238,8 +242,7 @@ export const VentaImagenLightbox = ({ ventaId, imagenes, initialIndex, onClose }
       >
         {current && (
           <AuthenticatedImage
-            ventaId={ventaId}
-            imagenId={current.id}
+            fuente={fuentePara(current.id)}
             alt={current.descripcion ?? "imagen"}
             className={`max-w-none select-none rounded-md ${
               zoom > 1 ? "cursor-move" : "cursor-default"

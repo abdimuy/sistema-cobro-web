@@ -12,6 +12,7 @@ import type {
   Benchmark,
   CohortBy,
   EventoTimeline,
+  ImagenPago,
 } from "../../domain/entities";
 import type { ClientesPort, FichaDateRange } from "../ports/ClientesPort";
 import type {
@@ -194,6 +195,22 @@ export class FakeClientesPort implements ClientesPort {
     return new Blob(["%PDF-1.4 fake"], { type: "application/pdf" });
   }
 
+  listarImagenesPagoCalls: Array<{ pagoRecibidoId: string; signal?: AbortSignal }> = [];
+  imagenesPagoResponse: ImagenPago[] | (() => ImagenPago[]) = [];
+
+  async listarImagenesPago(pagoRecibidoId: string, signal?: AbortSignal): Promise<ImagenPago[]> {
+    this.listarImagenesPagoCalls.push({ pagoRecibidoId, signal });
+    const e = this.takeThrow("listarImagenesPago");
+    if (e) throw e;
+    return resolve(this.imagenesPagoResponse);
+  }
+
+  async descargarImagenPago(): Promise<Blob> {
+    const e = this.takeThrow("descargarImagenPago");
+    if (e) throw e;
+    return new Blob(["jpg"], { type: "image/jpeg" });
+  }
+
   private takeThrow(method: keyof ClientesPort): Error | undefined {
     const e = this.throwOnNext[method];
     if (e) {
@@ -363,6 +380,8 @@ export function makeFakePagoDetalle(
     recibidoAt: new Date("2025-12-15T10:30:00.000Z"),
     aplicadoAt: new Date("2025-12-15T10:31:00.000Z"),
     origen: "app",
+    pagoRecibidoId: null,
+    numFotos: 0,
   };
   return { ...base, ...overrides };
 }
@@ -579,4 +598,16 @@ export function makeFakeBenchmark(
     },
   };
   return { ...base, ...overrides };
+}
+
+export function makeFakeImagenPago(overrides: Partial<ImagenPago> = {}): ImagenPago {
+  return {
+    id: "0b6f1c2e-5a7d-4e3b-8c9f-1d2e3f4a5b6c",
+    mime: "image/jpeg",
+    sizeBytes: 184320,
+    descripcion: "Recibo firmado",
+    createdAt: "2026-10-14T14:20:10Z",
+    updatedAt: "2026-10-14T14:20:10Z",
+    ...overrides,
+  };
 }

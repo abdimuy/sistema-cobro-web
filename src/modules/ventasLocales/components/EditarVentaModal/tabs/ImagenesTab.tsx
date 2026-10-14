@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DropzoneTile } from "../piezas/DropzoneTile";
 import { ImagenTileEditable } from "../piezas/ImagenTileEditable";
 import { VentaImagenLightbox } from "../../detalle/VentaImagenLightbox";
+import { fuenteImagenVenta } from "../../detalle/fuenteImagen";
 import type { ImagenV2 } from "@/services/api/ventaV2Types";
 import type {
   ImagenFormData,
@@ -116,7 +117,7 @@ export const ImagenesTab = ({
       {/* Lightbox */}
       {lightboxIndex !== null && existingImagenesAsV2.length > 0 && (
         <VentaImagenLightbox
-          ventaId={ventaId}
+          fuentePara={(id) => fuenteImagenVenta(ventaId, id)}
           imagenes={existingImagenesAsV2}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
