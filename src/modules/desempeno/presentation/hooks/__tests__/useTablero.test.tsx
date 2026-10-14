@@ -62,4 +62,21 @@ describe("useTablero", () => {
     expect(port.tableroCalls).toHaveLength(2);
     expect(result.current.tablero).not.toBeNull();
   });
+
+  it("una consulta que tarda más de un minuto termina mostrando datos (el minuto no la aborta)", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] });
+    const port = new FakeDesempenoPort();
+    port.tableroResponse = () =>
+      new Promise((res) => {
+        setTimeout(() => res(makeTablero()), UN_MINUTO_MS + 30_000);
+      });
+    const { result } = renderHook(() => useTablero(), { wrapper: envolver(port) });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(UN_MINUTO_MS + 30_000);
+    });
+
+    expect(port.tableroCalls).toHaveLength(1);
+    expect(result.current.tablero).not.toBeNull();
+  });
 });
