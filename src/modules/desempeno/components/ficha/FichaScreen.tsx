@@ -35,6 +35,8 @@ export type FichaScreenProps = {
   /** `ahora` = `generado_at` de la jornada en el día de hoy; null en días pasados. */
   renderLinea?: (j: Jornada, ahora: string | null) => ReactNode;
   controlesLinea?: ReactNode;
+  /** Aviso discreto bajo la navegación (p. ej. "No se pudo actualizar"). */
+  aviso?: ReactNode;
 };
 
 export function FichaScreen(p: FichaScreenProps) {
@@ -60,6 +62,7 @@ export function FichaScreen(p: FichaScreenProps) {
           {`Datos de las ${horaCorta(p.generadoAt)}`}
         </span>
       </nav>
+      {p.aviso}
       <AvisoPantallaAngosta />
       <FichaEncabezado usuario={p.usuario} periodo={p.periodo} hoy={p.hoy} />
       <div

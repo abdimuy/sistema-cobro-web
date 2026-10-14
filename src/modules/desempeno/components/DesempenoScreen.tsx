@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Settings } from "lucide-react";
-import type { Actividad, Cuenta, Jornada } from "../domain/entities";
+import type { Actividad, Cuenta, Jornada, Tablero } from "../domain/entities";
 import { useTablero } from "../presentation/hooks/useTablero";
 import { usePreferencias } from "../presentation/context/usePreferencias";
-import { hoyDeNegocio } from "./lib/format";
+import { horaCorta, hoyDeNegocio } from "./lib/format";
 import { mensajeSinConfigurar } from "./lib/motivoNoConfigurado";
 import { ErrorConReintento, EstadoVacio } from "./comunes/Estados";
 import { TableroScreen } from "./tablero/TableroScreen";
@@ -36,7 +36,14 @@ export function DesempenoScreen({ puedeConfigurar }: { puedeConfigurar: boolean 
 // leyenda (carril 1), y las fotos y la pila de modales (carril 3).
 function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar: boolean }) {
   const [params, setParams] = useSearchParams();
-  const { tablero, error, refresh } = useTablero();
+  const { tablero: recibido, error, refresh } = useTablero();
+  // Al cambiar Hoy/Semana (otra consulta) useCargaRemota borra los datos; la
+  // ficha conserva el último tablero recibido mientras llega el nuevo para no
+  // desmontarse (lo tecleado en Actividad se pierde). Las cifras siguen
+  // rotuladas con el periodo de SUS datos (tablero.periodo), nunca con el nuevo.
+  const [ultimo, setUltimo] = useState<Tablero | null>(null);
+  if (recibido && recibido !== ultimo) setUltimo(recibido);
+  const tablero = recibido ?? ultimo;
   const { vista, horario } = usePreferencias();
   const [pila, setPila] = useState<ModalFicha[]>([]);
   const hoy = hoyDeNegocio();
@@ -122,6 +129,19 @@ function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar
         onCambiarPestana={(p) => cambiarParam("pestana", p)}
         onCambiarDia={(d) => cambiarParam("dia", d)}
         onVolver={volver}
+        aviso={
+          error && (
+            <div
+              role="status"
+              className="flex items-center justify-between rounded-full bg-dsm-ambar-fondo px-4 py-2 text-[13px] text-dsm-ambar"
+            >
+              {`No se pudo actualizar · datos de ${horaCorta(tablero.generadoAt)}`}
+              <button type="button" onClick={refresh} className="underline underline-offset-2">
+                Reintentar
+              </button>
+            </div>
+          )
+        }
         onAbrirActividad={(a: Actividad) => abrir({ tipo: "actividad", actividad: a })}
         onAbrirCuenta={(c: Cuenta) => {
           if (c.doctoPvId !== null) abrir({ tipo: "venta", clienteId: c.clienteId, doctoPvId: c.doctoPvId });

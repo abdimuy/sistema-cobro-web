@@ -167,6 +167,40 @@ describe("DesempenoScreen (carriles conectados)", () => {
     expect(screen.queryByRole("link", { name: /Configurar/ })).not.toBeInTheDocument();
   });
 
+  it("cambiar Hoy/Semana en la ficha no la desmonta: lo tecleado en Actividad se queda", async () => {
+    const user = userEvent.setup();
+    let liberar: () => void = () => {};
+    const port = montar("/?usuario=uid-juan&pestana=actividad");
+    const buscar = await screen.findByLabelText("Buscar cliente o folio");
+    await user.type(buscar, "JUANA");
+    // La consulta de Semana se queda en vuelo: mientras, la ficha sigue ahí.
+    port.tableroResponse = () =>
+      new Promise((r) => {
+        liberar = () => r(makeTablero({ periodo: "semana" }));
+      });
+    await user.click(screen.getByRole("button", { name: "Semana" }));
+    expect(screen.getByRole("heading", { name: "Juan Carlos Méndez" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Buscar cliente o folio")).toHaveValue("JUANA");
+    liberar();
+    expect(await screen.findByText("Cobrado en la semana")).toBeInTheDocument();
+    expect(screen.getByLabelText("Buscar cliente o folio")).toHaveValue("JUANA");
+  });
+
+  it("si falla la recarga con datos previos: aviso discreto con la hora de los datos, la ficha sigue", async () => {
+    const user = userEvent.setup();
+    const port = montar("/?usuario=uid-juan&pestana=actividad");
+    await screen.findByRole("heading", { name: "Juan Carlos Méndez" });
+    port.throwOnNext.obtenerTablero = new Error("se cayó");
+    port.tableroResponse = makeTablero({ periodo: "semana" });
+    await user.click(screen.getByRole("button", { name: "Semana" }));
+    expect(await screen.findByText("No se pudo actualizar · datos de 16:40")).toBeInTheDocument();
+    expect(screen.queryByText("No se pudo cargar la ficha")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Juan Carlos Méndez" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    expect(await screen.findByText("Cobrado en la semana")).toBeInTheDocument();
+    expect(screen.queryByText(/No se pudo actualizar/)).not.toBeInTheDocument();
+  });
+
   it("si el tablero no carga, la ficha muestra el error con Reintentar", async () => {
     const port = new FakeDesempenoPort();
     port.throwOnNext.obtenerTablero = new Error("se cayó");
