@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom"
+import { Outlet } from "react-router-dom"
 import { Separator } from "@/components/ui/separator"
 import {
   Breadcrumb,
@@ -16,18 +16,10 @@ import { AppUpdater } from "./AppUpdater"
 import { UpdaterProvider } from "@/context/UpdaterContext"
 import NotificationBell from "./notifications/NotificationBell"
 import { ThemeToggle } from "./ThemeToggle"
-import { DESKTOP_MODULES } from "@/constants/modules"
-
-function useCurrentModuleLabel() {
-  const { pathname } = useLocation()
-  const mod = DESKTOP_MODULES.find(
-    (m) => pathname === m.path || (m.path !== "/" && pathname.startsWith(m.path))
-  )
-  return mod?.label ?? "Inicio"
-}
+import { useEtiquetaModuloActual } from "@/hooks/useEtiquetaModuloActual"
 
 export function AppLayout() {
-  const moduleLabel = useCurrentModuleLabel()
+  const moduleLabel = useEtiquetaModuloActual()
 
   return (
     <UpdaterProvider>
