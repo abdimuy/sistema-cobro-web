@@ -282,7 +282,8 @@ export function PagoModal({ clienteId, doctoCcId, onClose, onAbrirVenta, onAbrir
               )}
 
               {/* ── Fotos / comprobante ── */}
-              <PagoFotos pagoRecibidoId={detalle.pagoRecibidoId} />
+              {/* key: otro pago monta otra sección, sin estado del anterior. */}
+              <PagoFotos key={detalle.pagoRecibidoId ?? "sin-comprobante"} pagoRecibidoId={detalle.pagoRecibidoId} />
 
               {(onAbrirVenta || onAbrirCliente) && (
                 <footer className="flex justify-end gap-2 border-t border-border/60 pt-4">
