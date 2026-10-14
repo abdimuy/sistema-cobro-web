@@ -29,4 +29,47 @@ describe("useCadaMinuto", () => {
     vi.advanceTimersByTime(3 * UN_MINUTO_MS);
     expect(activo).not.toHaveBeenCalled();
   });
+
+  describe("con la ventana oculta", () => {
+    let oculto = false;
+    beforeEach(() => {
+      oculto = false;
+      vi.spyOn(document, "hidden", "get").mockImplementation(() => oculto);
+    });
+    afterEach(() => vi.restoreAllMocks());
+    const cambiarVisibilidad = (o: boolean) => {
+      oculto = o;
+      document.dispatchEvent(new Event("visibilitychange"));
+    };
+
+    it("pausa mientras document.hidden y refresca una vez al volver a ser visible", () => {
+      const fn = vi.fn();
+      renderHook(() => useCadaMinuto(fn, true));
+      cambiarVisibilidad(true);
+      vi.advanceTimersByTime(5 * UN_MINUTO_MS);
+      expect(fn).not.toHaveBeenCalled();
+      cambiarVisibilidad(false);
+      expect(fn).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(UN_MINUTO_MS);
+      expect(fn).toHaveBeenCalledTimes(2);
+    });
+
+    it("si arranca oculta no llama hasta volver a ser visible", () => {
+      oculto = true;
+      const fn = vi.fn();
+      renderHook(() => useCadaMinuto(fn, true));
+      vi.advanceTimersByTime(3 * UN_MINUTO_MS);
+      expect(fn).not.toHaveBeenCalled();
+      cambiarVisibilidad(false);
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it("inactivo no refresca al volver a ser visible", () => {
+      const fn = vi.fn();
+      renderHook(() => useCadaMinuto(fn, false));
+      cambiarVisibilidad(true);
+      cambiarVisibilidad(false);
+      expect(fn).not.toHaveBeenCalled();
+    });
+  });
 });
