@@ -78,4 +78,52 @@ describe("useCargaRemota", () => {
 
     expect(result.current.datos).toBe("nueva");
   });
+
+  it("refresh con una petición en curso no la aborta ni lanza otra", async () => {
+    const lenta = diferida();
+    let llamadas = 0;
+    let abortada = false;
+    const cargar: Cargar = (signal) => {
+      llamadas++;
+      signal.addEventListener("abort", () => {
+        abortada = true;
+      });
+      return lenta.promesa;
+    };
+    const { result } = renderHook(() => useCargaRemota(cargar));
+
+    act(() => result.current.refresh());
+    act(() => result.current.refresh());
+
+    expect(llamadas).toBe(1);
+    expect(abortada).toBe(false);
+    await act(async () => lenta.resolver("por fin"));
+    expect(result.current.datos).toBe("por fin");
+
+    act(() => result.current.refresh());
+    expect(llamadas).toBe(2);
+  });
+
+  it("el error de una recarga se conserva mientras se reintenta (sin parpadeo)", async () => {
+    let llamada = 0;
+    const reintento = diferida();
+    const cargar: Cargar = () => {
+      llamada++;
+      if (llamada === 1) return Promise.resolve("datos de las 16:40");
+      if (llamada === 2) return Promise.reject(new DomainError("network_error", "error de red"));
+      return reintento.promesa;
+    };
+    const { result } = renderHook(() => useCargaRemota(cargar));
+    await waitFor(() => expect(result.current.datos).toBe("datos de las 16:40"));
+    act(() => result.current.refresh());
+    await waitFor(() => expect(result.current.error?.code).toBe("network_error"));
+
+    act(() => result.current.refresh());
+
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.error?.code).toBe("network_error");
+    await act(async () => reintento.resolver("datos de las 16:41"));
+    expect(result.current.error).toBeNull();
+    expect(result.current.datos).toBe("datos de las 16:41");
+  });
 });
