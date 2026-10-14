@@ -68,12 +68,16 @@ export function ActividadTab({
     setVistaActiva(id);
   };
 
-  const ordenar = (orden: OrdenActividad) =>
+  // Ordenar por otra columna deshace la agrupación: los grupos solo tienen
+  // sentido con el orden que los junta.
+  const ordenar = (orden: OrdenActividad) => {
+    if (agrupacion !== "" && ORDEN_PARA_AGRUPAR[agrupacion] !== orden) setAgrupacion("");
     setFiltros((f) =>
       f.orden === orden
         ? { ...f, dir: f.dir === "asc" ? "desc" : "asc" }
         : { ...f, orden, dir: orden === "hora" || orden === "monto" ? "desc" : "asc" },
     );
+  };
 
   const agrupar = (g: Agrupacion) => {
     setAgrupacion(g);

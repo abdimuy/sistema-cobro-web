@@ -239,4 +239,25 @@ describe("ActividadTab", () => {
     await user.selectOptions(screen.getByLabelText("Tipo"), "condonacion");
     expect(await screen.findByText("Ningún movimiento con estos filtros")).toBeInTheDocument();
   });
+
+  it("agrupar por cliente pide al servidor el orden por cliente", async () => {
+    const user = userEvent.setup();
+    const { port } = montar();
+    await screen.findByText("JUANA ANDRADE LECHUGA");
+    await user.selectOptions(screen.getByLabelText("Agrupar"), "cliente");
+    await waitFor(() => expect(ultimaConsulta(port)).toMatchObject({ orden: "cliente", dir: "asc" }));
+  });
+
+  it("ordenar por otra columna con agrupación activa quita la agrupación", async () => {
+    const user = userEvent.setup();
+    const { port } = montar();
+    await screen.findByText("JUANA ANDRADE LECHUGA");
+    await user.selectOptions(screen.getByLabelText("Agrupar"), "tipo");
+    await screen.findAllByTestId("grupo");
+    await user.click(screen.getByRole("button", { name: /^Cliente/ }));
+    await waitFor(() => expect(ultimaConsulta(port).orden).toBe("cliente"));
+    expect(screen.getByLabelText("Agrupar")).toHaveValue("");
+    await screen.findByText("JUANA ANDRADE LECHUGA");
+    expect(screen.queryAllByTestId("grupo")).toHaveLength(0);
+  });
 });

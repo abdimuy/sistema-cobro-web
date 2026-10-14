@@ -174,7 +174,7 @@ export function TablaActividad({
             : agruparConsecutivos(items, agrupacion).map((g) => [
                 <tr key={`g-${g.clave}-${g.items[0].id}`} data-testid="grupo" className="bg-muted/40">
                   <td colSpan={visibles.length} className="px-3 py-1.5 text-[12.5px] font-medium">
-                    {g.clave}
+                    {g.etiqueta}
                   </td>
                 </tr>,
                 ...g.items.map(renglon),
