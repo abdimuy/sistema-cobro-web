@@ -10,6 +10,9 @@ import { AgGridReact } from "ag-grid-react";
 import { AG_GRID_LOCALE_ES } from "@ag-grid-community/locale";
 import dayjs from "dayjs";
 import "ag-grid-enterprise";
+// Estilos de la cuadrícula: antes llegaban por el Inicio viejo; cada pantalla trae los suyos.
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-quartz.css";
 import relativeTime from "dayjs/plugin/relativeTime";
 import useGetPagosByVentaId from "../../hooks/useGetPagosByVentaId";
 import Map from "../../components/Map";
