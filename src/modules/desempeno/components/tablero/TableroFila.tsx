@@ -57,7 +57,10 @@ export function TableroFila({
         if (e.currentTarget.contains(e.target as Node)) onAbrir(u.uid);
       }}
       onKeyDown={(e) => {
-        if (e.key === "Enter" && e.target === e.currentTarget) onAbrir(u.uid);
+        if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) {
+          e.preventDefault();
+          onAbrir(u.uid);
+        }
       }}
       className="group cursor-pointer outline-none [&>td]:transition-colors hover:[&>td]:bg-dsm-marca-fondo focus-visible:[&>td]:bg-dsm-marca-fondo"
     >
@@ -78,13 +81,26 @@ export function TableroFila({
         </InfoRapida>
       </td>
       <td className={`${CELDA} w-[32%] min-w-[260px]`}>
-        {periodo === "hoy" ? (
+        {u.lineas.length === 0 ? (
+          <div className="relative">
+            <LineaActividad
+              linea={null}
+              vista={vista}
+              pausaMin={pausaMin}
+              horario={horario}
+              ahora={periodo === "hoy" ? generadoAt : null}
+            />
+            <span className="absolute inset-0 flex items-center justify-center text-[12px] text-muted-foreground">
+              Sin actividad
+            </span>
+          </div>
+        ) : periodo === "hoy" ? (
           <LineaActividad
-            linea={u.lineas[0] ?? null}
+            linea={u.lineas[0]}
             vista={vista}
             pausaMin={pausaMin}
             horario={horario}
-            ahora={u.lineas[0]?.dia === hoy || u.lineas.length === 0 ? generadoAt : null}
+            ahora={u.lineas[0].dia === hoy ? generadoAt : null}
           />
         ) : (
           <div className="flex gap-1">

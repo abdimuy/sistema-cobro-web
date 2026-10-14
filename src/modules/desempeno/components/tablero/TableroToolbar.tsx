@@ -71,6 +71,8 @@ export function TableroToolbar({ q, onQ }: { q: string; onQ: (q: string) => void
       <label className="relative">
         <Search aria-hidden className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
         <input
+          type="search"
+          aria-label="Buscar cobrador o zona"
           value={q}
           onChange={(e) => onQ(e.target.value)}
           placeholder="Buscar cobrador o zona"

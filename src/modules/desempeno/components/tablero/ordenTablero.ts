@@ -17,6 +17,8 @@ export type ClaveOrdenTablero =
 
 export type OrdenTablero = { clave: ClaveOrdenTablero; dir: 1 | -1 };
 
+// Al abrir se ordena por zona (así se reparte el trabajo); la columna
+// "Cobrador" ordena por nombre. Ningún encabezado se marca hasta elegir uno.
 export const ORDEN_TABLERO_INICIAL: OrdenTablero = { clave: "zona", dir: 1 };
 
 const ASCENDENTES: readonly ClaveOrdenTablero[] = ["nombre", "zona", "ahora", "faltan"];

@@ -36,7 +36,10 @@ function Encabezado({
   const activa = orden.clave === clave;
   const Icono = activa ? (orden.dir === 1 ? ArrowUp : ArrowDown) : ChevronsUpDown;
   return (
-    <th className={cn("h-7 px-2 font-normal", derecha ? "text-right" : "text-left")}>
+    <th
+      aria-sort={activa ? (orden.dir === 1 ? "ascending" : "descending") : "none"}
+      className={cn("h-7 px-2 font-normal", derecha ? "text-right" : "text-left")}
+    >
       <button
         type="button"
         onClick={() => onOrdenar(clave)}
@@ -125,7 +128,7 @@ export function TableroScreen({
           <table className="w-full border-separate border-spacing-y-2">
             <thead>
               <tr>
-                <Encabezado clave="zona" texto="Cobrador" orden={orden} onOrdenar={onOrdenar} />
+                <Encabezado clave="nombre" texto="Cobrador" orden={orden} onOrdenar={onOrdenar} />
                 <Encabezado clave="ahora" texto="Ahora" orden={orden} onOrdenar={onOrdenar} />
                 <th className="relative h-7 px-2 text-left font-normal">
                   <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground">

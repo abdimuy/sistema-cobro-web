@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
-import type { UsuarioTablero } from "../../domain/entities";
+import type { MotivoNoConfigurado, UsuarioTablero } from "../../domain/entities";
 
-const MENSAJE = {
+const MENSAJE: Record<MotivoNoConfigurado, string> = {
   sin_zona: "No tiene zona asignada. Sin zona no se puede medir su jornada ni sus cuentas.",
   sin_inicio_semana: "No tiene inicio de semana. Sin él no se puede medir su jornada ni sus cuentas.",
-} as const;
+};
+// Respaldo si el API no dice el motivo (o manda uno que este escritorio no conoce).
+const MENSAJE_GENERICO = "Falta configurarlo. Sin zona e inicio de semana no se puede medir su jornada ni sus cuentas.";
 
 // Usuario sin zona o sin inicio de semana (spec §5, contrato v2 §2). El enlace
 // va a Usuarios (/settings), donde se editan la zona y el inicio de semana
@@ -18,7 +20,7 @@ export function FilaSinConfigurar({
   puedeConfigurar: boolean;
   columnas: number;
 }) {
-  const motivo = u.motivoNoConfigurado ?? "sin_zona";
+  const mensaje = (u.motivoNoConfigurado && MENSAJE[u.motivoNoConfigurado]) || MENSAJE_GENERICO;
   return (
     <tr>
       <td className="rounded-l-[14px] border-y border-l border-dashed border-border px-2 py-3.5 pl-[18px]">
@@ -35,7 +37,7 @@ export function FilaSinConfigurar({
         colSpan={columnas - 3}
         className="border-y border-dashed border-border px-2 py-3.5 text-[12.5px] text-muted-foreground"
       >
-        {MENSAJE[motivo]}
+        {mensaje}
       </td>
       <td className="rounded-r-[14px] border-y border-r border-dashed border-border px-2 py-3.5 pr-[18px] text-right">
         {puedeConfigurar ? (
