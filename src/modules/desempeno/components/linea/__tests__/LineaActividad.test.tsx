@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LineaActividad } from "../LineaActividad";
-import { makeLinea, makePausa } from "../../../application/__tests__/fakeDesempenoPort";
+import { makeLinea, makePausa, makePorHora, makeTramo } from "../../../application/__tests__/fakeDesempenoPort";
 
 const base = {
   linea: makeLinea(),
@@ -41,7 +41,7 @@ describe("LineaActividad — Puntos", () => {
     expect(await screen.findByText("Pago · 08:20")).toBeInTheDocument();
     expect(screen.getByText("JUANA ANDRADE LECHUGA")).toBeInTheDocument();
     expect(screen.getByText("$150.00")).toBeInTheDocument();
-    expect(screen.getByText("Fotos")).toBeInTheDocument();
+    expect(screen.getByText("Fotos").nextElementSibling).toHaveTextContent(/^1$/);
   });
 
   it("popover del punto de visita: el resultado literal, sin monto", async () => {
@@ -52,7 +52,7 @@ describe("LineaActividad — Puntos", () => {
     expect(screen.getByText("MARÍA ELENA CUAUTLE TLAPA")).toBeInTheDocument();
     expect(screen.getByText("No se encontraba")).toBeInTheDocument();
     expect(screen.queryByText("Monto")).not.toBeInTheDocument();
-    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("Fotos").nextElementSibling).toHaveTextContent(/^2$/);
   });
 });
 
@@ -93,6 +93,23 @@ describe("LineaActividad — Bloques", () => {
   });
 });
 
+describe("LineaActividad — color de tramos", () => {
+  it("verde con pagos, gris solo visitas, morado solo condonaciones", () => {
+    const linea = makeLinea({
+      tramos: [
+        makeTramo(),
+        makeTramo({ desde: "2026-10-14T16:00:00Z", hasta: "2026-10-14T16:20:00Z", pagos: { n: 0, importe: "0.00" }, visitas: 2, condonaciones: 0 }),
+        makeTramo({ desde: "2026-10-14T17:00:00Z", hasta: "2026-10-14T17:20:00Z", pagos: { n: 0, importe: "0.00" }, visitas: 0, condonaciones: 1 }),
+      ],
+    });
+    render(<LineaActividad {...base} linea={linea} vista="bloques" />);
+    const [conPagos, soloVisitas, soloCondonaciones] = screen.getAllByTestId("tramo");
+    expect(conPagos).toHaveClass("bg-dsm-ok");
+    expect(soloVisitas).toHaveClass("bg-dsm-visita");
+    expect(soloCondonaciones).toHaveClass("bg-dsm-violeta");
+  });
+});
+
 describe("LineaActividad — Por hora y Bloques + hora", () => {
   it("13 barras (7..19) y popover de una hora con su importe del API", async () => {
     const user = userEvent.setup();
@@ -112,6 +129,26 @@ describe("LineaActividad — Por hora y Bloques + hora", () => {
     await user.hover(screen.getAllByTestId("barra-hora")[0]); // 07:00
     expect(await screen.findByText("07:00–08:00")).toBeInTheDocument();
     expect(screen.getByText("Sin movimientos en esta hora.")).toBeInTheDocument();
+  });
+
+  it("la pila de cada hora se escala completa: nunca pasa del alto de la barra", () => {
+    const linea = makeLinea({ porHora: makePorHora({ 9: { pagos: 10, visitas: 10, importe: "1500.00" }, 10: { pagos: 3, importe: "450.00" } }) });
+    render(<LineaActividad {...base} linea={linea} vista="por_hora" />);
+    const barras = screen.getAllByTestId("barra-hora");
+    const alturas = (b: HTMLElement) => Array.from(b.querySelectorAll("i")).map((i) => parseFloat(i.style.height));
+    // 20 movimientos en la hora más cargada: la pila llena la barra, mitad y mitad.
+    expect(alturas(barras[2])).toEqual([50, 50]);
+    // 3 de 20 movimientos.
+    expect(alturas(barras[3])[0]).toBeCloseTo(15, 5);
+  });
+
+  it("con pocas horas cargadas la escala mínima es de 12 movimientos por hora", () => {
+    render(<LineaActividad {...base} vista="por_hora" />);
+    const barras = screen.getAllByTestId("barra-hora");
+    // 08:00 trae 1 pago y 1 visita: cada uno 1/12 de la barra.
+    const alturas = Array.from(barras[1].querySelectorAll("i")).map((i) => parseFloat(i.style.height));
+    expect(alturas[0]).toBeCloseTo(100 / 12, 5);
+    expect(alturas[1]).toBeCloseTo(100 / 12, 5);
   });
 
   it("Bloques + hora pinta tramos, barras y la tira de pausas", () => {

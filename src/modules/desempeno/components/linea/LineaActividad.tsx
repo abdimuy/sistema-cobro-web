@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { LineaDelDia, Pausa, PuntoLinea } from "../../domain/entities";
+import type { HoraDelDia, LineaDelDia, Pausa, PuntoLinea, Tramo } from "../../domain/entities";
 import type { Horario } from "../../application/ports/DesempenoPort";
 import type { VistaLinea } from "../../presentation/preferencias";
 import { ancho, MARCAS_EJE, posicion, posicionHorario, posicionMinutos } from "../lib/escala";
@@ -8,7 +8,9 @@ import { TIPO_ACTIVIDAD_META } from "../lib/tipoActividadMeta";
 import { InfoRapida } from "../comunes/InfoRapida";
 import { TarjetaHora, TarjetaPausa, TarjetaPunto, TarjetaTramo } from "./TarjetasLinea";
 
-// Cuántos movimientos en una hora llenan la barra. Es solo la escala del dibujo.
+// Escala mínima del dibujo: cuántos movimientos en una hora llenan la barra.
+// Si alguna hora trae más, la escala sube a esa hora para que la pila nunca se
+// desborde. Las barras de distintas filas se comparan mientras nadie pase de 12.
 export const ESCALA_BARRA_HORA = 12;
 const HORAS_EN_EJE = 13;
 const ORDEN_DIBUJO = { visita: 0, condonacion: 1, pago: 2 } as const;
@@ -149,6 +151,13 @@ function Pausas({
   );
 }
 
+// Verde con pagos, gris si solo hubo visitas, morado si solo condonaciones.
+function colorTramo(t: Tramo): string {
+  if (t.pagos.n > 0) return "bg-dsm-ok";
+  if (t.visitas === 0 && t.condonaciones > 0) return "bg-dsm-violeta";
+  return "bg-dsm-visita";
+}
+
 function Tramos({ linea, mitad, etiquetaDia }: { linea: LineaDelDia; mitad: boolean; etiquetaDia?: string }) {
   return (
     <>
@@ -158,7 +167,7 @@ function Tramos({ linea, mitad, etiquetaDia }: { linea: LineaDelDia; mitad: bool
             data-testid="tramo"
             className={cn(
               "absolute rounded-[5px]",
-              t.pagos.n > 0 ? "bg-dsm-ok" : "bg-dsm-visita",
+              colorTramo(t),
               mitad ? "bottom-2 top-1/2" : "inset-y-1.5",
             )}
             style={{ left: `${posicion(t.desde)}%`, width: `${Math.max(0.6, ancho(t.desde, t.hasta))}%` }}
@@ -169,11 +178,15 @@ function Tramos({ linea, mitad, etiquetaDia }: { linea: LineaDelDia; mitad: bool
   );
 }
 
-function altura(n: number): string {
-  return `${Math.min(100, (n / ESCALA_BARRA_HORA) * 100)}%`;
+// Movimientos que llenan la barra en esta línea. La suma por hora es solo para
+// la escala del dibujo; ninguna cifra mostrada sale de aquí (D10).
+function escalaBarras(porHora: readonly HoraDelDia[]): number {
+  return Math.max(ESCALA_BARRA_HORA, ...porHora.map((h) => h.pagos + h.visitas + h.condonaciones));
 }
 
 function BarrasHora({ linea, etiquetaDia }: { linea: LineaDelDia; etiquetaDia?: string }) {
+  const escala = escalaBarras(linea.porHora);
+  const altura = (n: number) => `${(n / escala) * 100}%`;
   return (
     <>
       {linea.porHora.map((h) => (

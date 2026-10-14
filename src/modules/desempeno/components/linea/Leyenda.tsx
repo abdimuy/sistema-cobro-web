@@ -19,7 +19,7 @@ export function Leyenda({ vista }: { vista: VistaLinea }) {
         Condonación
       </span>
       {conBloques && (
-        <span className="inline-flex items-center gap-1.5" title="Verde con pagos, gris solo visitas">
+        <span className="inline-flex items-center gap-1.5" title="Verde con pagos, gris solo visitas, morado solo condonaciones">
           <i className="h-2 w-4 rounded-sm bg-dsm-ok" />
           Trabajando
         </span>
