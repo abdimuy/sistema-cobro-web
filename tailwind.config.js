@@ -64,6 +64,25 @@ export default {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
+  			},
+  			dsm: {
+  				canvas: 'hsl(var(--dsm-canvas))',
+  				tarjeta: 'hsl(var(--dsm-tarjeta))',
+  				marca: 'hsl(var(--dsm-marca))',
+  				'marca-fondo': 'hsl(var(--dsm-marca-fondo))',
+  				ok: 'hsl(var(--dsm-ok))',
+  				'ok-fondo': 'hsl(var(--dsm-ok-fondo))',
+  				teal: 'hsl(var(--dsm-teal))',
+  				'teal-fondo': 'hsl(var(--dsm-teal-fondo))',
+  				ambar: 'hsl(var(--dsm-ambar))',
+  				'ambar-fondo': 'hsl(var(--dsm-ambar-fondo))',
+  				rojo: 'hsl(var(--dsm-rojo))',
+  				'rojo-fondo': 'hsl(var(--dsm-rojo-fondo))',
+  				violeta: 'hsl(var(--dsm-violeta))',
+  				'violeta-fondo': 'hsl(var(--dsm-violeta-fondo))',
+  				gris: 'hsl(var(--dsm-gris))',
+  				'gris-fondo': 'hsl(var(--dsm-gris-fondo))',
+  				visita: 'hsl(var(--dsm-visita))'
   			}
   		}
   	}
