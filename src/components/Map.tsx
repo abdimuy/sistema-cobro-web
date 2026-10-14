@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { GoogleMap } from "@react-google-maps/api";
 import { useTheme } from "../context/ThemeContext";
+import { MapaConCarga } from "./maps/MapaConCarga";
 
 // interface Point {
 //   lat: number;
@@ -134,24 +135,26 @@ const Map: React.FC<MapProps> = ({ points = [] }) => {
 
   return (
     <div className="flex rounded-lg overflow-hidden flex-1 h-full">
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={points[0] || defaultCenter}
-        zoom={points.length > 0 ? 15 : 12}
-        options={{
-          styles: isDark ? darkMapStyles : undefined,
-        }}
-        onLoad={(map) => {
-          mapRef.current = map;
-          points.forEach((point) => {
-            const marker = new google.maps.Marker({
-              position: point,
-              map: map,
+      <MapaConCarga>
+        <GoogleMap
+          mapContainerStyle={containerStyle}
+          center={points[0] || defaultCenter}
+          zoom={points.length > 0 ? 15 : 12}
+          options={{
+            styles: isDark ? darkMapStyles : undefined,
+          }}
+          onLoad={(map) => {
+            mapRef.current = map;
+            points.forEach((point) => {
+              const marker = new google.maps.Marker({
+                position: point,
+                map: map,
+              });
+              markersRef.current.push(marker);
             });
-            markersRef.current.push(marker);
-          });
-        }}
-      />
+          }}
+        />
+      </MapaConCarga>
     </div>
   );
 };

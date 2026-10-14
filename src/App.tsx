@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { LoadScript } from "@react-google-maps/api";
 import { Toaster } from "sonner";
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
@@ -58,7 +57,7 @@ function App() {
       <NotificationProvider>
       <Router>
         <NavigationSetter />
-        <LoadScript googleMapsApiKey="AIzaSyCASwsCJvFm7dGajUWlVg19PmS8JVPqRaY">
+        {/* Google Maps ya no envuelve la app: cada mapa lo carga con MapaConCarga. */}
           <Toaster
             richColors
             position="top-right"
@@ -159,7 +158,6 @@ function App() {
             {/* Redirección por defecto */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </LoadScript>
       </Router>
       </NotificationProvider>
     </AuthProvider>
