@@ -16,6 +16,7 @@ import {
   primerNombre,
   sinAcentos,
   sumarDias,
+  textoInicioSemana,
 } from "../format";
 
 // La suite corre con TZ=UTC: si estas funciones usaran el reloj del
@@ -74,5 +75,26 @@ describe("duraciones, dinero y textos", () => {
   it("búsqueda sin acentos y nombre corto", () => {
     expect(sinAcentos("Méndez ÁVILA")).toBe("mendez avila");
     expect(primerNombre("Juan Carlos Méndez")).toBe("Juan Carlos");
+  });
+});
+
+describe("textoInicioSemana (fecha y hora de la oficina)", () => {
+  it("mismo día: hace 0 d", () => {
+    expect(textoInicioSemana("2026-10-15T14:12:00Z", "2026-10-15")).toBe(
+      "Semana desde jue 15 oct, 08:12 · hace 0 d",
+    );
+  });
+
+  it("la hora y el día son los de CDMX, no los de UTC", () => {
+    // 03:00Z del sábado = 21:00 del viernes en la oficina.
+    expect(textoInicioSemana("2026-10-10T03:00:00Z", "2026-10-14")).toBe(
+      "Semana desde vie 9 oct, 21:00 · hace 5 d",
+    );
+  });
+
+  it("un inicio después de hoy no dice \"hace\"", () => {
+    expect(textoInicioSemana("2026-10-16T14:00:00Z", "2026-10-15")).toBe(
+      "Semana desde vie 16 oct, 08:00",
+    );
   });
 });

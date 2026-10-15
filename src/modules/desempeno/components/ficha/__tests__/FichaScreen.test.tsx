@@ -41,7 +41,7 @@ describe("FichaScreen", () => {
     montar();
     expect(screen.getByRole("heading", { name: "Juan Carlos Méndez" })).toBeInTheDocument();
     expect(screen.getByText("RUTA 21")).toBeInTheDocument();
-    expect(screen.getByText("Semana desde vie 9 oct · hace 5 d")).toBeInTheDocument();
+    expect(screen.getByText("Semana desde vie 9 oct, 07:46 · hace 5 d")).toBeInTheDocument();
     expect(screen.getByText("Activo")).toBeInTheDocument();
     expect(screen.getByText("Cobrado hoy")).toBeInTheDocument();
     expect(screen.getByText("$8,600")).toBeInTheDocument();
@@ -111,7 +111,7 @@ describe("FichaScreen", () => {
 
   it("el día de inicio de semana es el de la oficina (03:00Z del sábado = viernes en CDMX)", () => {
     montar("jornada", makeUsuarioTablero({ inicioSemana: "2026-10-10T03:00:00Z" }));
-    expect(screen.getByText("Semana desde vie 9 oct · hace 5 d")).toBeInTheDocument();
+    expect(screen.getByText("Semana desde vie 9 oct, 21:00 · hace 5 d")).toBeInTheDocument();
   });
 
   it("usuario sin configurar: enlace a Usuarios en el encabezado", () => {

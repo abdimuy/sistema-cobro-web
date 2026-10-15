@@ -1,13 +1,5 @@
 import type { MotivoNoConfigurado, Periodo, UsuarioTablero } from "../../domain/entities";
-import {
-  diaDeNegocioDe,
-  diasEntre,
-  dinero,
-  duracionCorta,
-  fechaCorta,
-  horaCorta,
-  porcentaje,
-} from "../lib/format";
+import { dinero, duracionCorta, horaCorta, porcentaje, textoInicioSemana } from "../lib/format";
 import { Link } from "react-router-dom";
 import { PuntoEstado } from "../comunes/PuntoEstado";
 import { SegmentoPeriodo } from "../comunes/SegmentoPeriodo";
@@ -38,8 +30,8 @@ function Cifra({ titulo, valor, nota }: { titulo: string; valor: string; nota?: 
 }
 
 // Encabezado de la ficha: todas las cifras son las del usuario que mandó el API
-// (D10, D14). `hace N d` es la distancia en días de calendario entre el inicio
-// de semana y hoy: rotulación, no una cifra del negocio.
+// (D10, D14). El inicio de semana va con fecha y hora de la oficina
+// (`textoInicioSemana`).
 export function FichaEncabezado({
   usuario: u,
   periodo,
@@ -49,8 +41,6 @@ export function FichaEncabezado({
   periodo: Periodo;
   hoy: string;
 }) {
-  const inicioDia = u.inicioSemana ? diaDeNegocioDe(u.inicioSemana) : null;
-  const haceDias = inicioDia ? diasEntre(inicioDia, hoy).length - 1 : null;
   return (
     <>
       <header className="flex flex-wrap items-end justify-between gap-6">
@@ -75,7 +65,7 @@ export function FichaEncabezado({
                 Configurar en Usuarios
               </Link>
             )}
-            {inicioDia && <span>{`Semana desde ${fechaCorta(inicioDia)} · hace ${haceDias} d`}</span>}
+            {u.inicioSemana && <span>{textoInicioSemana(u.inicioSemana, hoy)}</span>}
             <span className="inline-flex items-center gap-1.5 rounded-full bg-dsm-tarjeta px-2.5 py-0.5 text-foreground ring-1 ring-border">
               <PuntoEstado estado={u.estadoAhora} />
               {ESTADO[u.estadoAhora]}

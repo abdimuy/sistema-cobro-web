@@ -1,7 +1,16 @@
 import type { Periodo, UsuarioTablero } from "../../domain/entities";
 import type { Horario } from "../../application/ports/DesempenoPort";
 import type { VistaLinea } from "../../presentation/preferencias";
-import { diaDeNegocioDe, dinero, duracionCorta, fechaCorta, horaCorta, plural, porcentaje } from "../lib/format";
+import {
+  diaDeNegocioDe,
+  dinero,
+  duracionCorta,
+  fechaCorta,
+  horaCorta,
+  plural,
+  porcentaje,
+  textoInicioSemana,
+} from "../lib/format";
 import { InfoRapida } from "../comunes/InfoRapida";
 import { PuntoEstado } from "../comunes/PuntoEstado";
 import { LineaActividad } from "../linea/LineaActividad";
@@ -71,6 +80,11 @@ export function TableroFila({
           </span>
         </InfoRapida>
         <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{u.zonaNombre}</div>
+        {u.inicioSemana && (
+          <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+            {textoInicioSemana(u.inicioSemana, hoy)}
+          </div>
+        )}
       </td>
       <td className={CELDA}>
         <InfoRapida contenido={<TarjetaAhora usuario={u} pausaMin={pausaMin} />}>

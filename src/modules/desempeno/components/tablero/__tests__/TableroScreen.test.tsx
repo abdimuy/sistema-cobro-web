@@ -36,6 +36,12 @@ describe("TableroScreen", () => {
     expect(within(norma).getByRole("link", { name: "Configurar" })).toHaveAttribute("href", "/settings");
   });
 
+  it("cada fila dice desde cuándo corre su semana, con fecha y hora de la oficina", async () => {
+    montar();
+    const juan = (await screen.findByText("Juan Carlos Méndez")).closest("tr")!;
+    expect(within(juan).getByText("Semana desde vie 9 oct, 07:46 · hace 5 d")).toBeInTheDocument();
+  });
+
   it("sin inicio de semana lo dice; sin permiso no hay enlace", async () => {
     const port = new FakeDesempenoPort();
     port.tableroResponse = makeTablero({

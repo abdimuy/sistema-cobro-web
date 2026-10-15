@@ -122,3 +122,17 @@ export function sinAcentos(s: string): string {
 export function primerNombre(nombre: string): string {
   return nombre.split(" ").slice(0, 2).join(" ");
 }
+
+/**
+ * Rótulo del inicio de semana con fecha y hora de la oficina:
+ * ("2026-10-15T14:12:00Z", "2026-10-15") → "Semana desde jue 15 oct, 08:12 · hace 0 d".
+ * `hace N d` son días de calendario del negocio entre el inicio y `hoy`
+ * (rotulación, no una cifra del negocio). Si el inicio cae después de `hoy`,
+ * se omite el "hace".
+ */
+export function textoInicioSemana(inicioIso: string, hoy: string): string {
+  const dia = diaDeNegocioDe(inicioIso);
+  const base = `Semana desde ${fechaCorta(dia)}, ${horaCorta(inicioIso)}`;
+  if (dia > hoy) return base;
+  return `${base} · hace ${diasEntre(dia, hoy).length - 1} d`;
+}
