@@ -6,7 +6,9 @@ import type {
   Horario,
 } from "../../application/ports/DesempenoPort";
 import {
+  CLAVE_PAUSA_MIN,
   CLAVE_VISTA_LINEA,
+  esPausaMinValida,
   esVistaLinea,
   PAUSA_MIN_PREDETERMINADA,
   VISTA_LINEA_PREDETERMINADA,
@@ -25,8 +27,10 @@ export function PreferenciasProvider({
   children: ReactNode;
 }) {
   const [periodo, setPeriodo] = useState<Periodo>(iniciales?.periodo ?? "hoy");
-  const [pausaMin, setPausaMin] = useState<number>(
-    iniciales?.pausaMin ?? PAUSA_MIN_PREDETERMINADA,
+  const [pausaMin, setPausaMinEstado] = useState<number>(
+    () =>
+      iniciales?.pausaMin ??
+      leerLocal(CLAVE_PAUSA_MIN, PAUSA_MIN_PREDETERMINADA, esPausaMinValida),
   );
   const [horario, setHorario] = useState<Horario | null>(iniciales?.horario ?? null);
   const [vista, setVistaEstado] = useState<VistaLinea>(
@@ -38,6 +42,14 @@ export function PreferenciasProvider({
   const setVista = useCallback((v: VistaLinea) => {
     setVistaEstado(v);
     escribirLocal(CLAVE_VISTA_LINEA, v);
+  }, []);
+
+  // Defensa en profundidad: un valor fuera del contrato (5–240, entero) nunca
+  // llega a la consulta ni se guarda; el control ya lo avisa antes.
+  const setPausaMin = useCallback((m: number) => {
+    if (!esPausaMinValida(m)) return;
+    setPausaMinEstado(m);
+    escribirLocal(CLAVE_PAUSA_MIN, m);
   }, []);
 
   const consultaJornada = useMemo<ConsultaJornada>(
@@ -62,7 +74,7 @@ export function PreferenciasProvider({
       setHorario,
       setVista,
     }),
-    [periodo, pausaMin, horario, vista, consultaJornada, consultaTablero, setVista],
+    [periodo, pausaMin, horario, vista, consultaJornada, consultaTablero, setPausaMin, setVista],
   );
 
   return <PreferenciasContext.Provider value={valor}>{children}</PreferenciasContext.Provider>;

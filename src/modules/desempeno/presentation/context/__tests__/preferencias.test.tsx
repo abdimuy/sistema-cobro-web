@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { DesempenoProvider } from "../DesempenoProvider";
 import { usePreferencias } from "../usePreferencias";
 import { useDesempenoPort } from "../useDesempenoPort";
-import { CLAVE_VISTA_LINEA } from "../../preferencias";
+import { CLAVE_PAUSA_MIN, CLAVE_VISTA_LINEA } from "../../preferencias";
 import { FakeDesempenoPort } from "../../../application/__tests__/fakeDesempenoPort";
 
 const port = new FakeDesempenoPort();
@@ -37,6 +37,45 @@ describe("preferencias de la pantalla", () => {
     localStorage.setItem(CLAVE_VISTA_LINEA, JSON.stringify("barras"));
     const { result } = renderHook(() => usePreferencias(), { wrapper: envoltura });
     expect(result.current.vista).toBe("bloques");
+  });
+
+  it("el umbral de pausa se recuerda por computadora y acepta cualquier entero 5–240", () => {
+    localStorage.setItem(CLAVE_PAUSA_MIN, JSON.stringify(37));
+    const { result } = renderHook(() => usePreferencias(), { wrapper: envoltura });
+    expect(result.current.pausaMin).toBe(37);
+    expect(result.current.consultaJornada.pausaMin).toBe(37);
+    expect(result.current.consultaTablero.pausaMin).toBe(37);
+
+    act(() => result.current.setPausaMin(125));
+
+    expect(result.current.pausaMin).toBe(125);
+    expect(localStorage.getItem(CLAVE_PAUSA_MIN)).toBe(JSON.stringify(125));
+  });
+
+  it.each([
+    ["menor a 5", 4],
+    ["mayor a 240", 241],
+    ["con decimales", 12.5],
+    ["texto", "30"],
+    ["nulo", null],
+  ])("un umbral guardado inválido (%s) cae a 45", (_caso, guardado) => {
+    localStorage.setItem(CLAVE_PAUSA_MIN, JSON.stringify(guardado));
+    const { result } = renderHook(() => usePreferencias(), { wrapper: envoltura });
+    expect(result.current.pausaMin).toBe(45);
+  });
+
+  it("un umbral guardado que no es JSON cae a 45", () => {
+    localStorage.setItem(CLAVE_PAUSA_MIN, "{roto");
+    const { result } = renderHook(() => usePreferencias(), { wrapper: envoltura });
+    expect(result.current.pausaMin).toBe(45);
+  });
+
+  it("setPausaMin ignora un valor fuera del contrato: ni lo usa ni lo guarda", () => {
+    const { result } = renderHook(() => usePreferencias(), { wrapper: envoltura });
+    act(() => result.current.setPausaMin(500));
+    act(() => result.current.setPausaMin(2));
+    expect(result.current.pausaMin).toBe(45);
+    expect(localStorage.getItem(CLAVE_PAUSA_MIN)).toBeNull();
   });
 
   it("consultaTablero es estable entre renders y cambia con el periodo", () => {
