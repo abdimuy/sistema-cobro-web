@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { List } from "lucide-react";
 import type { Actividad, Jornada, UsuarioTablero } from "../../domain/entities";
 import { useJornada } from "../../presentation/hooks/useJornada";
+import { usePreferencias } from "../../presentation/context/usePreferencias";
 import {
   diaDeNegocioDe,
   duracionCorta,
@@ -12,6 +13,8 @@ import {
   sumarDias,
 } from "../lib/format";
 import { ErrorConReintento, EstadoVacio } from "../comunes/Estados";
+import { ControlUmbralPausa } from "../comunes/ControlUmbralPausa";
+import { ControlHorario } from "../comunes/ControlHorario";
 import { EstadoSinConfigurar } from "../ficha/EstadoSinConfigurar";
 import { esErrorSinConfigurar } from "../ficha/sinConfigurar";
 import type { AbrirVenta } from "./describirActividades";
@@ -53,6 +56,8 @@ export function JornadaTab({
 }: JornadaTabProps) {
   const esHoy = dia === hoy;
   const { jornada, isLoading, error, refresh } = useJornada(usuario.uid, dia, esHoy);
+  // Mismo umbral y horario que el tablero: viven en usePreferencias.
+  const { pausaMin, setPausaMin } = usePreferencias();
   const [resaltada, setResaltada] = useState<string | null>(null);
 
   // ← → cambian de día (mock), salvo dentro de un campo o con un modal abierto.
@@ -80,6 +85,8 @@ export function JornadaTab({
           inicioSemanaDia={usuario.inicioSemana ? diaDeNegocioDe(usuario.inicioSemana) : null}
           onCambiar={onCambiarDia}
         />
+        <ControlUmbralPausa valor={pausaMin} onCambiar={setPausaMin} />
+        <ControlHorario />
         {controlesLinea}
         {jornada && r?.primeraActividad && (
           <span className="text-xs text-muted-foreground">

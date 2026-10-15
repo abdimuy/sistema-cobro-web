@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { JornadaTab } from "../JornadaTab";
+import { TableroToolbar } from "../../tablero/TableroToolbar";
 import { renderConDesempeno } from "../../../test/renderConDesempeno";
 import {
   FakeDesempenoPort,
@@ -297,5 +298,90 @@ describe("JornadaTab", () => {
     fireEvent.keyDown(renglon, { key: "Enter" });
     fireEvent.keyDown(renglon, { key: " " });
     expect(onAbrirActividad).toHaveBeenCalledTimes(2);
+  });
+
+  describe("umbral de pausa y horario dentro de la ficha", () => {
+    function ultimaJornada(port: FakeDesempenoPort) {
+      return port.jornadaCalls[port.jornadaCalls.length - 1]?.consulta;
+    }
+
+    it("un botón rápido cambia el pausaMin que llega a obtenerJornada", async () => {
+      const user = userEvent.setup();
+      const { port } = montar();
+      await screen.findByText("MARÍA ELENA CUAUTLE TLAPA");
+      expect(ultimaJornada(port)?.pausaMin).toBe(45);
+      await user.click(screen.getByRole("button", { name: "90 min" }));
+      await waitFor(() => expect(ultimaJornada(port)?.pausaMin).toBe(90));
+    });
+
+    it("un umbral tecleado libre (22) llega a obtenerJornada; uno inválido no sale", async () => {
+      const user = userEvent.setup();
+      const { port } = montar();
+      await screen.findByText("MARÍA ELENA CUAUTLE TLAPA");
+      const campo = screen.getByRole("spinbutton", { name: "Minutos de pausa" });
+      await user.clear(campo);
+      await user.type(campo, "22{Enter}");
+      await waitFor(() => expect(ultimaJornada(port)?.pausaMin).toBe(22));
+
+      const llamadas = port.jornadaCalls.length;
+      await user.clear(campo);
+      await user.type(campo, "3{Enter}");
+      expect(screen.getByRole("alert")).toHaveTextContent("entre 5 y 240 minutos");
+      expect(port.jornadaCalls.slice(llamadas).every((c) => c.consulta.pausaMin === 22)).toBe(true);
+    });
+
+    it("las flechas del teclado dentro del campo no cambian de día", async () => {
+      const user = userEvent.setup();
+      const { onCambiarDia } = montar({ dia: "2026-10-13" });
+      await screen.findByText("MARÍA ELENA CUAUTLE TLAPA");
+      await user.click(screen.getByRole("spinbutton", { name: "Minutos de pausa" }));
+      await user.keyboard("{ArrowLeft}{ArrowRight}");
+      expect(onCambiarDia).not.toHaveBeenCalled();
+    });
+
+    it("el interruptor de Horario está en la jornada y viaja en la consulta", async () => {
+      const user = userEvent.setup();
+      const { port } = montar();
+      await screen.findByText("MARÍA ELENA CUAUTLE TLAPA");
+      await user.click(screen.getByRole("button", { name: "Horario" }));
+      await waitFor(() => expect(ultimaJornada(port)?.horario).toEqual({ desde: "08:00", hasta: "18:00" }));
+      await user.selectOptions(screen.getByLabelText("Inicio de horario"), "07:30");
+      await waitFor(() => expect(ultimaJornada(port)?.horario).toEqual({ desde: "07:30", hasta: "18:00" }));
+    });
+
+    it("es el mismo valor que el del tablero: lo que se elige en uno se ve en el otro", async () => {
+      const user = userEvent.setup();
+      const port = new FakeDesempenoPort();
+      renderConDesempeno(
+        <>
+          <div data-testid="tablero">
+            <TableroToolbar q="" onQ={vi.fn()} />
+          </div>
+          <div data-testid="ficha">
+            <JornadaTab
+              usuario={makeUsuarioTablero()}
+              dia="2026-10-14"
+              hoy="2026-10-14"
+              onCambiarDia={vi.fn()}
+              onAbrirActividad={vi.fn()}
+            />
+          </div>
+        </>,
+        { port },
+      );
+      await screen.findByText("MARÍA ELENA CUAUTLE TLAPA");
+      const enFicha = within(screen.getByTestId("ficha"));
+      const enTablero = within(screen.getByTestId("tablero"));
+
+      await user.clear(enFicha.getByRole("spinbutton", { name: "Minutos de pausa" }));
+      await user.type(enFicha.getByRole("spinbutton", { name: "Minutos de pausa" }), "55{Enter}");
+
+      await waitFor(() => expect(ultimaJornada(port)?.pausaMin).toBe(55));
+      expect(enTablero.getByRole("spinbutton", { name: "Minutos de pausa" })).toHaveValue(55);
+
+      await user.click(enTablero.getByRole("button", { name: "30 min" }));
+      await waitFor(() => expect(ultimaJornada(port)?.pausaMin).toBe(30));
+      expect(enFicha.getByRole("button", { name: "30 min" })).toHaveAttribute("aria-pressed", "true");
+    });
   });
 });
