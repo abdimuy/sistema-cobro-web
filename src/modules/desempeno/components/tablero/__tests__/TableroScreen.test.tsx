@@ -119,13 +119,41 @@ describe("TableroScreen", () => {
     await user.click(screen.getByRole("button", { name: "Semana" }));
     await waitFor(() => expect(ultimaConsulta(port)?.periodo).toBe("semana"));
 
-    await user.selectOptions(screen.getByLabelText("Pausa desde"), "30");
+    await user.click(screen.getByRole("button", { name: "30 min" }));
     await waitFor(() => expect(ultimaConsulta(port)?.pausaMin).toBe(30));
 
     await user.click(screen.getByRole("button", { name: "Horario" }));
     await waitFor(() => expect(ultimaConsulta(port)?.horario).toEqual({ desde: "08:00", hasta: "18:00" }));
     await user.selectOptions(screen.getByLabelText("Fin de horario"), "19:00");
     await waitFor(() => expect(ultimaConsulta(port)?.horario).toEqual({ desde: "08:00", hasta: "19:00" }));
+  });
+
+  it("umbral tecleado libre (37) llega a obtenerTablero y se recuerda; uno inválido no sale", async () => {
+    const user = userEvent.setup();
+    const { port } = montar();
+    await screen.findByText("Juan Carlos Méndez");
+    const campo = within(screen.getByRole("group", { name: "Pausa desde" })).getByRole("spinbutton", {
+      name: "Minutos de pausa",
+    });
+
+    await user.clear(campo);
+    await user.type(campo, "37{Enter}");
+    await waitFor(() => expect(ultimaConsulta(port)?.pausaMin).toBe(37));
+    expect(localStorage.getItem("desempeno.pausa-min")).toBe("37");
+
+    const llamadas = port.tableroCalls.length;
+    await user.clear(campo);
+    await user.type(campo, "300{Enter}");
+    expect(screen.getByRole("alert")).toHaveTextContent("entre 5 y 240 minutos");
+    expect(port.tableroCalls.slice(llamadas).every((c) => c.consulta.pausaMin === 37)).toBe(true);
+  });
+
+  it("abre con el umbral recordado en la consulta", async () => {
+    localStorage.setItem("desempeno.pausa-min", "75");
+    const { port } = montar();
+    await screen.findByText("Juan Carlos Méndez");
+    expect(port.tableroCalls[0]?.consulta.pausaMin).toBe(75);
+    expect(screen.getByRole("spinbutton", { name: "Minutos de pausa" })).toHaveValue(75);
   });
 
   it("en Semana la línea se pinta por día con su etiqueta", async () => {
