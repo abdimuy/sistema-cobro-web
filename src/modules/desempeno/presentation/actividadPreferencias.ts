@@ -12,6 +12,7 @@ export const CLAVES_COLUMNA = [
   "cliente",
   "venta",
   "monto",
+  "nota",
   "forma",
   "registro",
   "llegada",
@@ -20,13 +21,16 @@ export const CLAVES_COLUMNA = [
 ] as const;
 export type ClaveColumna = (typeof CLAVES_COLUMNA)[number];
 
-// Las del mock: forma de cobro y llegada al servidor arrancan ocultas.
+// Las del mock: forma de cobro y llegada al servidor arrancan ocultas. La nota
+// de la visita arranca visible; quien ya guardó sus columnas la activa en el
+// menú de columnas.
 export const COLUMNAS_POR_DEFECTO: ClaveColumna[] = [
   "tipo",
   "hora",
   "cliente",
   "venta",
   "monto",
+  "nota",
   "registro",
   "fotos",
   "gps",

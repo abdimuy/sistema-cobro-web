@@ -9,6 +9,7 @@ import { FORMA_COBRO_ETIQUETA } from "../lib/tipoActividadMeta";
 import { InfoRapida } from "../comunes/InfoRapida";
 import { IconoTipoActividad } from "../comunes/IconoTipoActividad";
 import { MontoActividad } from "../comunes/MontoActividad";
+import { NotaVisita } from "../comunes/NotaVisita";
 import { TarjetaActividad } from "../comunes/TarjetaActividad";
 import type { AbrirVenta } from "../jornada/describirActividades";
 import { FolioVenta } from "../jornada/FolioVenta";
@@ -59,6 +60,8 @@ function Celda({
       );
     case "monto":
       return <MontoActividad actividad={a} />;
+    case "nota":
+      return <NotaVisita actividad={a} className="block max-w-[260px] text-[12.5px]" vacio />;
     case "forma":
       return (
         <span>

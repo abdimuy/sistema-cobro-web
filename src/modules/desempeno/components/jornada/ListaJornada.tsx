@@ -6,6 +6,7 @@ import { duracion, horaCorta } from "../lib/format";
 import { InfoRapida } from "../comunes/InfoRapida";
 import { IconoTipoActividad } from "../comunes/IconoTipoActividad";
 import { MontoActividad } from "../comunes/MontoActividad";
+import { NotaVisita } from "../comunes/NotaVisita";
 import { TarjetaActividad } from "../comunes/TarjetaActividad";
 import type { AbrirVenta } from "./describirActividades";
 import { FolioVenta } from "./FolioVenta";
@@ -129,8 +130,12 @@ function FragmentoActividad({
             {a.registradoPor.origen === "oficina" && " · registró oficina"}
           </div>
         </div>
-        <div className="text-right">
+        <div className="min-w-0 text-right">
           <MontoActividad actividad={a} />
+          <NotaVisita
+            actividad={a}
+            className="ml-auto mt-0.5 block max-w-[240px] text-[11.5px] text-muted-foreground"
+          />
         </div>
         <div className="flex items-center gap-2 text-[12px]" onClick={(e) => e.stopPropagation()}>
           {fotos}

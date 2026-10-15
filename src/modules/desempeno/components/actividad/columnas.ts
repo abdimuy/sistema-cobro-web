@@ -14,6 +14,7 @@ export const COLUMNAS: ReadonlyArray<{
   { clave: "cliente", titulo: "Cliente", orden: "cliente" },
   { clave: "venta", titulo: "Venta", orden: null },
   { clave: "monto", titulo: "Monto o resultado", orden: "monto", derecha: true },
+  { clave: "nota", titulo: "Nota", orden: null },
   { clave: "forma", titulo: "Forma de cobro", orden: null },
   { clave: "registro", titulo: "Registró", orden: "registrado_por" },
   { clave: "llegada", titulo: "Llegó al servidor", orden: null },
