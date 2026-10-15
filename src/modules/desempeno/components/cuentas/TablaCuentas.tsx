@@ -4,10 +4,9 @@ import { diaDeNegocioDe, dinero2, fechaCorta, horaCorta } from "../lib/format";
 import { TIPO_ACTIVIDAD_META } from "../lib/tipoActividadMeta";
 import { ChipTrato } from "../comunes/ChipTrato";
 import { InfoRapida } from "../comunes/InfoRapida";
+import { CLASE_TONO_ATRASOS, textoDeAtrasos, tonoDeAtrasos } from "../lib/atrasos";
 import { TarjetaCuenta } from "./TarjetaCuenta";
 
-// Umbral de color (rotulación), no una regla del negocio.
-const ATRASOS_ALTOS = 5;
 const ENCABEZADOS: ReadonlyArray<readonly [string, boolean]> = [
   ["Estado", false],
   ["Cliente", false],
@@ -19,10 +18,9 @@ const ENCABEZADOS: ReadonlyArray<readonly [string, boolean]> = [
 ];
 
 function Atrasos({ n }: { n: number }) {
-  if (n === 0) return <span className="text-[12px] text-dsm-ok">Al corriente</span>;
   return (
-    <span className={cn("text-[12px]", n >= ATRASOS_ALTOS ? "text-dsm-rojo" : "text-dsm-ambar")}>
-      {`${n} ${n === 1 ? "atraso" : "atrasos"}`}
+    <span className={cn("text-[12px]", CLASE_TONO_ATRASOS[tonoDeAtrasos(n)])}>
+      {textoDeAtrasos(n)}
     </span>
   );
 }

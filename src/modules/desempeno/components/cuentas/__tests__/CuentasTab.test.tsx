@@ -70,6 +70,15 @@ describe("CuentasTab", () => {
     expect(onAbrirCuenta).toHaveBeenCalledWith(expect.objectContaining({ ventaId: 13791100 }));
   });
 
+  it("atrasos negativos (cuenta adelantada) se pintan 'Al corriente' en verde, como el teléfono", async () => {
+    const port = new FakeDesempenoPort();
+    port.cuentasResponse = makeCuentasSemana({ cuentas: [makeCuenta({ numAtrasos: -6 })] });
+    montar(port);
+    const celda = await screen.findByText("Al corriente");
+    expect(celda).toHaveClass("text-dsm-ok");
+    expect(screen.queryByText(/-6/)).not.toBeInTheDocument();
+  });
+
   it("una cuenta sin docto_pv_id no se puede abrir", async () => {
     const user = userEvent.setup();
     const port = new FakeDesempenoPort();
