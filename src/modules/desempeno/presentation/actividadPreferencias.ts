@@ -35,7 +35,8 @@ export const COLUMNAS_POR_DEFECTO: ClaveColumna[] = [
   "fotos",
   "gps",
 ];
-export const CLAVE_COLUMNAS = "desempeno.actividad.columnas.v1";
+export const CLAVE_COLUMNAS = "desempeno.actividad.columnas.v2";
+const CLAVE_COLUMNAS_V1 = "desempeno.actividad.columnas.v1";
 export const CLAVE_VISTAS = "desempeno.actividad.vistas.v1";
 
 export type VistaGuardada = {
@@ -95,4 +96,32 @@ function esVistaGuardada(x: unknown): x is VistaGuardada {
 
 export function esListaDeVistas(v: unknown): v is VistaGuardada[] {
   return Array.isArray(v) && v.every(esVistaGuardada);
+}
+
+function leerLista(almacen: Storage, clave: string): ClaveColumna[] | null {
+  try {
+    const crudo = almacen.getItem(clave);
+    if (crudo === null) return null;
+    const valor: unknown = JSON.parse(crudo);
+    return esListaDeColumnas(valor) ? valor : null;
+  } catch {
+    return null;
+  }
+}
+
+// D28: v2 manda. Si sólo hay v1 (guardada cuando "nota" no existía), gana
+// "nota" una única vez y se guarda en v2; si luego la oculta, v2 se respeta.
+// v1 no se borra. Una lista ilegible se ignora (null = por defecto).
+export function leerColumnasGuardadas(almacen: Storage): ClaveColumna[] | null {
+  const v2 = leerLista(almacen, CLAVE_COLUMNAS);
+  if (v2 !== null) return v2;
+  const v1 = leerLista(almacen, CLAVE_COLUMNAS_V1);
+  if (v1 === null) return null;
+  const migrada = v1.includes("nota") ? v1 : [...v1, "nota" as const];
+  try {
+    almacen.setItem(CLAVE_COLUMNAS, JSON.stringify(migrada));
+  } catch {
+    // Sin almacenamiento: la migración vive sólo esta sesión.
+  }
+  return migrada;
 }

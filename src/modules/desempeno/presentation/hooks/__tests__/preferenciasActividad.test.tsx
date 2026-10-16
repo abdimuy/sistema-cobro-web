@@ -33,6 +33,11 @@ describe("vistas guardadas y columnas (por computadora)", () => {
     );
   });
 
+  it("el hook migra una lista v1 sin nota (D28)", () => {
+    localStorage.setItem("desempeno.actividad.columnas.v1", JSON.stringify(["tipo", "hora"]));
+    expect(renderHook(() => useColumnasActividad()).result.current.columnas).toEqual(["tipo", "hora", "nota"]);
+  });
+
   it("una vista con filtros de otra forma (versión vieja o editada a mano) se descarta", () => {
     const buena = {
       id: "mi-1",
