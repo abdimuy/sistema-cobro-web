@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,7 +33,7 @@ function fechaCorta(iso: string): string {
 export function ZonasExcluidasScreen() {
   const { zonas, isLoading, error, guardando, errorAccion, excluir, quitar, limpiarErrorAccion } =
     useZonasExcluidasDesempeno();
-  const { opciones } = useOpcionesZonasCajas();
+  const { opciones, refresh: refrescarOpciones } = useOpcionesZonasCajas();
   const puedeAdministrar = usePuedeAdministrarConfig();
 
   const [agregando, setAgregando] = useState(false);
@@ -44,6 +44,15 @@ export function ZonasExcluidasScreen() {
     const excluidas = new Set(zonas.map((z) => z.zonaId));
     return opciones.zonas.filter((z) => !excluidas.has(z.id));
   }, [zonas, opciones.zonas]);
+
+  // Si la zona elegida ya no existe, se relee el catálogo para que salga del combobox.
+  const codigoErrorAccion = errorAccion?.code;
+  useEffect(() => {
+    if (codigoErrorAccion === "zona_no_existe") {
+      setElegida(null);
+      refrescarOpciones();
+    }
+  }, [codigoErrorAccion, errorAccion, refrescarOpciones]);
 
   const cerrarAgregar = () => {
     setAgregando(false);

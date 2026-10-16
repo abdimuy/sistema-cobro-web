@@ -111,6 +111,50 @@ describe("ZonasExcluidasScreen", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("la zona seleccionada ya no existe");
   });
 
+  it("doble clic en Excluir con la acción pendiente hace una sola llamada", async () => {
+    const user = userEvent.setup();
+    const port = armar();
+    port.excluirZonaDesempenoResponse = () => new Promise(() => {});
+    renderScreen(port);
+    await screen.findByText("MAYOREO");
+
+    await user.click(await screen.findByRole("button", { name: "Excluir zona" }));
+    await user.click(within(await screen.findByRole("listbox")).getByText("ZONA CENTRO — MORELIA"));
+    const boton = screen.getByRole("button", { name: "Excluir" });
+    await user.click(boton);
+    await user.click(boton);
+
+    expect(port.excluirZonaDesempenoCalls).toHaveLength(1);
+  });
+
+  it("tras zona_no_existe se relee el catálogo y la zona sale del combobox", async () => {
+    const user = userEvent.setup();
+    const port = armar();
+    let catalogo = makeFakeOpcionesZonasCajas({
+      zonas: [
+        { id: 23301, nombre: "MAYOREO" },
+        { id: 12, nombre: "ZONA CENTRO — MORELIA" },
+      ],
+    });
+    port.listarOpcionesZonasCajasResponse = () => catalogo;
+    port.throwOnNext.excluirZonaDesempeno = new DomainError(
+      "zona_no_existe",
+      "la zona seleccionada ya no existe",
+    );
+    renderScreen(port);
+    await screen.findByText("MAYOREO");
+
+    await user.click(await screen.findByRole("button", { name: "Excluir zona" }));
+    await user.click(within(await screen.findByRole("listbox")).getByText("ZONA CENTRO — MORELIA"));
+    catalogo = makeFakeOpcionesZonasCajas({ zonas: [{ id: 23301, nombre: "MAYOREO" }] });
+    await user.click(screen.getByRole("button", { name: "Excluir" }));
+
+    await waitFor(() => expect(port.listarOpcionesZonasCajasCalls).toHaveLength(2));
+    await waitFor(() =>
+      expect(within(screen.getByRole("listbox")).queryByText("ZONA CENTRO — MORELIA")).not.toBeInTheDocument(),
+    );
+  });
+
   it("sin config:administrar no hay botones de agregar ni quitar", async () => {
     const port = armar();
     port.listarPermisosActualesResponse = ["config:leer"];

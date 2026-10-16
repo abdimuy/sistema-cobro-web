@@ -12,6 +12,8 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   vendedor_lista_id_no_pertenece:
     "el identificador de vendedor seleccionado no existe en Microsip",
   usuario_no_existe: "el usuario ya no existe",
+  // El 403 de Huma (requirePerm) no trae code=: llega como http_403.
+  http_403: "no tienes permiso para esta acción",
   zona_no_existe: "la zona seleccionada ya no existe",
   zona_excluida_invalida: "la zona seleccionada no es válida",
   caja_no_existe: "la caja seleccionada no existe en Microsip",
