@@ -13,6 +13,7 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
     "el identificador de vendedor seleccionado no existe en Microsip",
   usuario_no_existe: "el usuario ya no existe",
   zona_no_existe: "la zona seleccionada ya no existe",
+  zona_excluida_invalida: "la zona seleccionada no es válida",
   caja_no_existe: "la caja seleccionada no existe en Microsip",
   cajero_no_existe: "el cajero seleccionado no existe en Microsip",
   vendedor_no_existe: "el vendedor seleccionado no existe en Microsip",

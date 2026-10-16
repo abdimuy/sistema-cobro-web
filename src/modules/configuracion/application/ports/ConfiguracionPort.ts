@@ -3,6 +3,7 @@ import type {
   OpcionesZonasCajas,
   VendedorAsignacion,
   ZonaCajaAsignacion,
+  ZonaExcluidaDesempeno,
 } from "../../domain/entities";
 
 // AsignarVendedorInput carries the three lista-id slots to write.
@@ -46,4 +47,11 @@ export interface ConfiguracionPort {
     input: AsignarZonaCajaInput,
     signal?: AbortSignal,
   ): Promise<ZonaCajaAsignacion>;
+
+  listarZonasExcluidasDesempeno(signal?: AbortSignal): Promise<ZonaExcluidaDesempeno[]>;
+  excluirZonaDesempeno(zonaId: number, signal?: AbortSignal): Promise<ZonaExcluidaDesempeno>;
+  quitarZonaExcluidaDesempeno(zonaId: number, signal?: AbortSignal): Promise<void>;
+
+  // Códigos de permiso del usuario actual (GET /v2/me), p. ej. "config:administrar".
+  listarPermisosActuales(signal?: AbortSignal): Promise<string[]>;
 }

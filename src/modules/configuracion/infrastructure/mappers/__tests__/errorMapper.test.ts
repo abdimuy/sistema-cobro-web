@@ -129,4 +129,10 @@ describe("apperrorToDomainError (configuracion)", () => {
     expect(domainError.code).toBe("error_inesperado");
     expect(domainError.message).toBe("algo falló");
   });
+
+  it("mapea zona_excluida_invalida (422) con mensaje en español", () => {
+    const e = apperrorToDomainError(makeHumaAxiosError(422, "zona inválida", "zona_excluida_invalida"));
+    expect(e.code).toBe("zona_excluida_invalida");
+    expect(e.message).toBe("la zona seleccionada no es válida");
+  });
 });

@@ -4,6 +4,7 @@ import { UsuariosRolesContainer } from "@/modules/usuariosRoles/presentation/com
 import { UsuariosRolesScreen } from "@/modules/usuariosRoles/components/UsuariosRolesScreen";
 import { VendedoresScreen } from "./vendedores/VendedoresScreen";
 import { ZonasCajasScreen } from "./zonasCajas/ZonasCajasScreen";
+import { ZonasExcluidasScreen } from "./desempeno/ZonasExcluidasScreen";
 
 // ConfiguracionShell hosts the Configuración area's tabs. "Usuarios y roles"
 // is gated on isSuperAdmin() — role management is stricter than the
@@ -28,6 +29,7 @@ export function ConfiguracionShell() {
         <TabsList>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="zonas-cajas">Zonas y cajas</TabsTrigger>
+          <TabsTrigger value="desempeno">Desempeño</TabsTrigger>
           {mostrarUsuariosRoles && <TabsTrigger value="usuarios-roles">Usuarios y roles</TabsTrigger>}
         </TabsList>
         <TabsContent value="vendedores">
@@ -35,6 +37,9 @@ export function ConfiguracionShell() {
         </TabsContent>
         <TabsContent value="zonas-cajas">
           <ZonasCajasScreen />
+        </TabsContent>
+        <TabsContent value="desempeno">
+          <ZonasExcluidasScreen />
         </TabsContent>
         {mostrarUsuariosRoles && (
           <TabsContent value="usuarios-roles">

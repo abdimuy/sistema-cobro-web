@@ -9,14 +9,18 @@ import type {
   OpcionesZonasCajas,
   VendedorAsignacion,
   ZonaCajaAsignacion,
+  ZonaExcluidaDesempeno,
 } from "../../domain/entities";
 import type {
   AsignarVendedorResponseDTO,
   AsignarZonaCajaResponseDTO,
   OpcionesVendedorResponseDTO,
+  MeResponseDTO,
   OpcionesZonasCajasDTO,
   VendedoresListResponseDTO,
+  ZonaExcluidaDesempenoDTO,
   ZonasCajasListResponseDTO,
+  ZonasExcluidasDesempenoListResponseDTO,
 } from "./dtos";
 import { dtoToVendedorAsignacion } from "../mappers/dtoToVendedorAsignacion";
 import { dtoToIdentidadMicrosip } from "../mappers/dtoToIdentidadMicrosip";
@@ -24,6 +28,7 @@ import { domainToAsignarBody } from "../mappers/domainToAsignarBody";
 import { dtoToZonaCajaAsignacion } from "../mappers/dtoToZonaCajaAsignacion";
 import { dtoToOpcionesZonasCajas } from "../mappers/dtoToOpcionesZonasCajas";
 import { domainToAsignarZonaCajaBody } from "../mappers/domainToAsignarZonaCajaBody";
+import { dtoToZonaExcluidaDesempeno } from "../mappers/dtoToZonaExcluidaDesempeno";
 import { apperrorToDomainError } from "../mappers/errorMapper";
 
 // HttpConfiguracionAdapter is the production implementation of
@@ -122,6 +127,51 @@ export class HttpConfiguracionAdapter implements ConfiguracionPort {
         { signal },
       );
       return dtoToZonaCajaAsignacion(data.item);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async listarZonasExcluidasDesempeno(signal?: AbortSignal): Promise<ZonaExcluidaDesempeno[]> {
+    try {
+      const { data } = await this.client.get<ZonasExcluidasDesempenoListResponseDTO>(
+        "/config/desempeno/zonas-excluidas",
+        { signal },
+      );
+      return data.items.map(dtoToZonaExcluidaDesempeno);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async excluirZonaDesempeno(zonaId: number, signal?: AbortSignal): Promise<ZonaExcluidaDesempeno> {
+    try {
+      const { data } = await this.client.put<ZonaExcluidaDesempenoDTO>(
+        `/config/desempeno/zonas-excluidas/${encodeURIComponent(String(zonaId))}`,
+        undefined,
+        { signal },
+      );
+      return dtoToZonaExcluidaDesempeno(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async quitarZonaExcluidaDesempeno(zonaId: number, signal?: AbortSignal): Promise<void> {
+    try {
+      await this.client.delete(
+        `/config/desempeno/zonas-excluidas/${encodeURIComponent(String(zonaId))}`,
+        { signal },
+      );
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async listarPermisosActuales(signal?: AbortSignal): Promise<string[]> {
+    try {
+      const { data } = await this.client.get<MeResponseDTO>("/me", { signal });
+      return Array.isArray(data.permisos) ? data.permisos : [];
     } catch (e) {
       throw apperrorToDomainError(e);
     }

@@ -95,3 +95,20 @@ export type AsignarZonaCajaBodyDTO = {
 export type AsignarZonaCajaResponseDTO = {
   item: ZonaCajaAsignacionDTO;
 };
+
+// ZonaExcluidaDesempenoDTO matches one item of
+// GET /v2/config/desempeno/zonas-excluidas y el cuerpo del PUT.
+export type ZonaExcluidaDesempenoDTO = {
+  zona_id: number;
+  zona_nombre: string;
+  created_at: string;
+};
+
+export type ZonasExcluidasDesempenoListResponseDTO = {
+  items: ZonaExcluidaDesempenoDTO[];
+};
+
+// MeResponseDTO: sólo lo que Configuración necesita de GET /v2/me.
+export type MeResponseDTO = {
+  permisos?: string[];
+};
