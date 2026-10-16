@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { mensajeErrorFotos } from "@/lib/errorDePermiso";
 import { AuthenticatedImage, VentaImagenLightbox, type FuenteImagen } from "@/modules/ventasLocales";
 import { useClientesPort } from "../../presentation/context/ClientesContext";
 import { useImagenesPago } from "../../presentation/hooks/useImagenesPago";
@@ -32,7 +33,7 @@ export function PagoFotos({ pagoRecibidoId }: { pagoRecibidoId: string | null })
     <section>
       <h4 className={TITULO}>{imagenes.length > 0 ? `Fotos · ${imagenes.length}` : "Fotos"}</h4>
       {isLoading && <Skeleton className="h-24 w-full" />}
-      {error && <p className="text-[12px] text-muted-foreground">No se pudieron cargar las fotos</p>}
+      {error && <p className="text-[12px] text-muted-foreground">{mensajeErrorFotos(error)}</p>}
       {!isLoading && !error && imagenes.length === 0 && (
         <p className="font-mono text-[11px] italic text-muted-foreground">No se tomaron fotos</p>
       )}

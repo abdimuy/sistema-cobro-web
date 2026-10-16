@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { mensajeErrorFotos } from "@/lib/errorDePermiso";
 // Imports directos (no el index de detalle) para no arrastrar todo el modal de ventas.
 import { AuthenticatedImage, VentaImagenLightbox, type FuenteImagen } from "@/modules/ventasLocales";
 import type { RefImagenes } from "../../domain/entities";
@@ -25,7 +26,7 @@ export function GaleriaFotos({
   if (refImagenes === null) {
     return <p className="font-mono text-[11px] italic text-muted-foreground">{mensajeSinFotos}</p>;
   }
-  if (error) return <p className="text-[12px] text-muted-foreground">No se pudieron cargar las fotos</p>;
+  if (error) return <p className="text-[12px] text-muted-foreground">{mensajeErrorFotos(error)}</p>;
   if (isLoading || imagenes === null) return <Skeleton className="h-20 w-full" />;
   if (imagenes.length === 0) {
     return <p className="font-mono text-[11px] italic text-muted-foreground">{mensajeSinFotos}</p>;
