@@ -33,3 +33,15 @@ export const CUERPO_422_SIN_LINEA = {
 };
 
 export const DETAIL_422 = DETAIL;
+
+/**
+ * POST /v2/ventas/{id}/aplicar con zona distinta: json.Marshal(mapAppError(
+ * domain.ErrVentaZonaNoCoincideCliente)), generado el 2026-10-16. No hay
+ * `code` de primer nivel.
+ */
+export const CUERPO_422_ZONA = {
+  title: "Unprocessable Entity",
+  status: 422,
+  detail: "la zona de la venta no coincide con la del cliente en microsip",
+  errors: [{ message: "code=venta_zona_no_coincide_cliente" }],
+};

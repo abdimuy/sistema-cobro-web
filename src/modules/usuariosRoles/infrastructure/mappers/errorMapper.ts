@@ -1,5 +1,6 @@
 import axios from "axios";
 import { DomainError } from "../../domain/errors";
+import { codigoDeError } from "@/lib/codigoDeError";
 
 // Map of backend apperror codes → user-friendly Spanish messages. The codes
 // come from internal/auth/domain/errors.go (and internal/auth/infra/
@@ -37,7 +38,7 @@ export function apperrorToDomainError(err: unknown): DomainError {
     const data = (err.response?.data ?? {}) as Record<string, unknown>;
 
     const code =
-      (typeof data.code === "string" && data.code) ||
+      codigoDeError(data) ||
       (err.code === "ECONNABORTED" ? "timeout" : null) ||
       (err.message?.toLowerCase().includes("network") ? "network_error" : null) ||
       `http_${err.response?.status ?? "error"}`;

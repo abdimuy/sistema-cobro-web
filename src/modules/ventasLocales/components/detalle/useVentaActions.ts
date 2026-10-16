@@ -7,6 +7,7 @@ import { aplicarVenta } from "@/services/api/aplicarVenta";
 import { cancelarVenta } from "@/services/api/cancelarVenta";
 import { VentaV2 } from "@/services/api/ventaV2Types";
 import { conLineaRechazada } from "@/lib/lineaRechazada";
+import { codigoDeError } from "@/lib/codigoDeError";
 
 type ActionKey = "revisar" | "aprobar" | "regresar" | "aplicar" | "cancelar";
 
@@ -19,7 +20,8 @@ interface Options {
 export const errorMessage = (err: unknown): string => {
   if (typeof err === "object" && err && "response" in err) {
     const resp = (err as { response?: { data?: { code?: string; detail?: string; title?: string } } }).response;
-    if (resp?.data?.code === "venta_zona_no_coincide_cliente") {
+    // El código viaja como "code=…" en errors[] (venthttp/auth.go, mapAppError).
+    if (codigoDeError(resp?.data) === "venta_zona_no_coincide_cliente") {
       return "La zona de la venta no coincide con la del cliente en Microsip.";
     }
     return conLineaRechazada(

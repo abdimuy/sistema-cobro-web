@@ -1,5 +1,6 @@
 import axios from "axios";
 import { DomainError } from "../../domain/errors";
+import { codigoDeError } from "@/lib/codigoDeError";
 
 // Mensajes propios solo para lo que el servidor no explica. Lo demás usa el
 // `detail` en español que manda msp-api.
@@ -7,22 +8,6 @@ const MENSAJES: Record<string, string> = {
   network_error: "no hay conexión con el servidor",
   timeout: "el servidor tardó demasiado en responder",
 };
-
-// msp-api manda los errores de Huma como { detail, errors: [{ message: "code=..." }] }
-// (internal/rutas/infra/rutashttp/auth.go:mapAppError). También se acepta
-// `code` plano (Problem Details) y "code: mensaje".
-function codigoHuma(data: Record<string, unknown>): string | null {
-  if (!Array.isArray(data.errors)) return null;
-  for (const e of data.errors) {
-    const m = e && typeof e === "object" ? (e as { message?: unknown }).message : null;
-    if (typeof m !== "string") continue;
-    const igual = /^code=([a-z0-9_]+)$/.exec(m);
-    if (igual) return igual[1];
-    const dosPuntos = /^([a-z0-9_]+):/.exec(m);
-    if (dosPuntos) return dosPuntos[1];
-  }
-  return null;
-}
 
 export function apperrorToDomainError(err: unknown): DomainError {
   if (err instanceof DomainError) return err;
@@ -34,7 +19,7 @@ export function apperrorToDomainError(err: unknown): DomainError {
     const raw = err.response.data;
     const data = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
     const code =
-      (typeof data.code === "string" && data.code) || codigoHuma(data) || `http_${err.response.status}`;
+      codigoDeError(data) || `http_${err.response.status}`;
     const mensaje =
       (typeof data.detail === "string" && data.detail) ||
       (typeof data.message === "string" && data.message) ||

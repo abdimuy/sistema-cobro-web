@@ -1,6 +1,6 @@
 // Códigos con los que llega un 403 a los mappers de error de cada módulo:
 // - `http_403`: el servidor no mandó código legible (p. ej. el 403 de Huma de
-//   desempeno:ver, o el mapper de clientes, que no lee "code=...").
+//   desempeno:ver, que no trae "code=...").
 // - `permiso_denegado`: writePlainError de cobranza/visitas/ventas en msp-api.
 // - `permission_denied`: el authz de msp-api (apperror.NewForbidden).
 // - `forbidden`: forma Problem Details con `code` plano.

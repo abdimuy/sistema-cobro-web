@@ -1,5 +1,6 @@
 import axios from "axios";
 import { DomainError } from "../../domain/errors";
+import { codigoDeError } from "@/lib/codigoDeError";
 
 const SESION_EXPIRADA = "sesión expirada; vuelve a entrar";
 const SIN_PERMISO = "no tienes permisos para registrar usuarios";
@@ -117,7 +118,7 @@ export function apperrorToDomainError(err: unknown): DomainError {
     // salieron de `response.Error` — un proxy inverso, el túnel, o el 404/405
     // en texto plano de chi. Cualquier error del API trae `code`.
     const code =
-      (typeof data.code === "string" && data.code) ||
+      codigoDeError(data) ||
       (err.code === "ECONNABORTED" ? "timeout" : null) ||
       (err.message?.toLowerCase().includes("network") ? "network_error" : null) ||
       `http_${err.response?.status ?? "error"}`;

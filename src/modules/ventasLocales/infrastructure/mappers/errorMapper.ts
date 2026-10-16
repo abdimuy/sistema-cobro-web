@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { DomainError } from "../../domain/errors";
 import { conLineaRechazada } from "@/lib/lineaRechazada";
+import { codigoDeError } from "@/lib/codigoDeError";
 
 export function mapAxiosError(err: unknown): DomainError {
   if (axios.isAxiosError(err)) {
@@ -9,9 +10,7 @@ export function mapAxiosError(err: unknown): DomainError {
 
     // Try to extract a backend-supplied code first.
     const code =
-      (typeof data?.code === "string" && data.code) ||
-      // Huma RFC 7807 errors put the title in "title" and details under "errors":
-      extractCodeFromHuma(data) ||
+      codigoDeError(data) ||
       (ax.code === "ECONNABORTED" ? "timeout" : null) ||
       (ax.message?.toLowerCase().includes("network") ? "network_error" : null) ||
       `http_${ax.response?.status ?? "error"}`;
@@ -28,25 +27,4 @@ export function mapAxiosError(err: unknown): DomainError {
   if (err instanceof DomainError) return err;
   if (err instanceof Error) return new DomainError("error_inesperado", err.message);
   return new DomainError("error_inesperado", String(err));
-}
-
-function extractCodeFromHuma(data: Record<string, unknown> | undefined): string | null {
-  // El servidor (internal/ventas/infra/venthttp/auth.go, mapAppError) manda el
-  // código de dominio en el detalle como `code=<codigo>`, con el mensaje en
-  // español en `detail`. La forma vieja `codigo: mensaje` se sigue aceptando.
-  if (!data || !Array.isArray(data.errors)) return null;
-  for (const e of data.errors) {
-    if (e && typeof e === "object" && typeof (e as { message?: unknown }).message === "string") {
-      const m = (e as { message: string }).message;
-      if (m.startsWith("code=")) {
-        const code = m.slice("code=".length).trim();
-        if (/^[a-z0-9_]+$/.test(code)) return code;
-      }
-      const colonIdx = m.indexOf(":");
-      if (colonIdx > 0 && /^[a-z_]+$/.test(m.slice(0, colonIdx))) {
-        return m.slice(0, colonIdx);
-      }
-    }
-  }
-  return null;
 }

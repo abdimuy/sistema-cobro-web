@@ -1,5 +1,6 @@
 import axios from "axios";
 import { DomainError } from "../../domain/errors";
+import { codigoDeError } from "@/lib/codigoDeError";
 
 // Map of backend apperror codes → user-friendly Spanish messages.
 // The codes are stable; the messages are presentation-layer copy.
@@ -16,8 +17,7 @@ export function apperrorToDomainError(err: unknown): DomainError {
     const data = (err.response?.data ?? {}) as Record<string, unknown>;
 
     const code =
-      (typeof data.code === "string" && data.code) ||
-      extractCodeFromHuma(data) ||
+      codigoDeError(data) ||
       (err.code === "ECONNABORTED" ? "timeout" : null) ||
       (err.message?.toLowerCase().includes("network") ? "network_error" : null) ||
       `http_${err.response?.status ?? "error"}`;
@@ -37,24 +37,4 @@ export function apperrorToDomainError(err: unknown): DomainError {
     return new DomainError("error_inesperado", err.message);
   }
   return new DomainError("error_inesperado", String(err));
-}
-
-function extractCodeFromHuma(
-  data: Record<string, unknown> | undefined,
-): string | null {
-  if (!data || !Array.isArray(data.errors)) return null;
-  for (const e of data.errors) {
-    if (
-      e &&
-      typeof e === "object" &&
-      typeof (e as { message?: unknown }).message === "string"
-    ) {
-      const m = (e as { message: string }).message;
-      const colonIdx = m.indexOf(":");
-      if (colonIdx > 0 && /^[a-z_]+$/.test(m.slice(0, colonIdx))) {
-        return m.slice(0, colonIdx);
-      }
-    }
-  }
-  return null;
 }

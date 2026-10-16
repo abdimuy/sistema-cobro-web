@@ -4,6 +4,7 @@ import {
   CUERPO_422_ARTICULO,
   CUERPO_422_COMBO,
   CUERPO_422_SIN_LINEA,
+  CUERPO_422_ZONA,
   DETAIL_422,
 } from "@/lib/__tests__/cuerposVentas422";
 
@@ -63,5 +64,13 @@ describe("errorMessage · línea rechazada (cuerpo real de mapAppError)", () => 
 
   it("422 sin línea: sólo el detalle, como antes", () => {
     expect(errorMessage({ response: { data: CUERPO_422_SIN_LINEA } })).toBe(CUERPO_422_SIN_LINEA.detail);
+  });
+});
+
+describe("errorMessage · código del cuerpo real", () => {
+  it("zona distinta al aplicar (code= en errors[], sin code de primer nivel): mensaje propio", () => {
+    expect(errorMessage({ response: { data: CUERPO_422_ZONA } })).toBe(
+      "La zona de la venta no coincide con la del cliente en Microsip.",
+    );
   });
 });
