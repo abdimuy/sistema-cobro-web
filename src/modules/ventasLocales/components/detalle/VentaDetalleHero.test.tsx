@@ -126,3 +126,25 @@ describe("VentaDetalleHero — los montos son TOTALES, y lo dicen", () => {
     expect(screen.getByText("Total corto plazo")).toBeInTheDocument();
   });
 });
+
+describe("VentaDetalleHero — totales según tipo de venta", () => {
+  it("CONTADO: sólo el total de contado, sin corto plazo ni anual en $0", () => {
+    render(
+      <VentaDetalleHero
+        venta={makeVenta({ tipo_venta: "CONTADO", montos: { anual: "0", corto_plazo: "0", contado: "3485" } })}
+      />,
+    );
+    expect(screen.getAllByText("Total contado").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Total corto plazo")).not.toBeInTheDocument();
+    expect(screen.queryByText("Total anual")).not.toBeInTheDocument();
+    expect(screen.queryByText("$0")).not.toBeInTheDocument();
+  });
+
+  it("CRÉDITO: anual, contado y corto plazo", () => {
+    render(<VentaDetalleHero venta={makeVenta({ tipo_venta: "CREDITO" })} />);
+    expect(screen.getByText("Total anual")).toBeInTheDocument();
+    expect(screen.getByText("Total contado")).toBeInTheDocument();
+    expect(screen.getByText("Total corto plazo")).toBeInTheDocument();
+    expect(screen.getByText("$1,200")).toBeInTheDocument();
+  });
+});

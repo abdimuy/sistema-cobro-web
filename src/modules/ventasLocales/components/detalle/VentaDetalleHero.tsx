@@ -94,8 +94,14 @@ export const VentaDetalleHero = ({ venta }: Props) => {
 
       <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border/60 pt-5 font-mono text-[12px] tabular text-muted-foreground">
         <Item label="Total contado" value={fmtShort(venta.montos.contado)} />
-        <Sep />
-        <Item label="Total corto plazo" value={fmtShort(venta.montos.corto_plazo)} />
+        {/* En CONTADO los totales de corto plazo y anual valen 0 (líneas
+            0/0/contado): mostrarlos pintaba "Total corto plazo $0". */}
+        {venta.tipo_venta !== "CONTADO" && (
+          <>
+            <Sep />
+            <Item label="Total corto plazo" value={fmtShort(venta.montos.corto_plazo)} />
+          </>
+        )}
         {venta.plan_credito && (
           <>
             <Sep />
