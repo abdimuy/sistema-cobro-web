@@ -46,10 +46,14 @@ export function ControlHorario() {
         className={SELECT}
         disabled={!conHorario}
         value={actual.hasta}
-        onChange={(e) => setHorario({ desde: actual.desde, hasta: e.target.value })}
+        onChange={(e) => {
+          // El servidor exige desde < hasta: un fin <= inicio se ignora.
+          if (e.target.value <= actual.desde) return;
+          setHorario({ desde: actual.desde, hasta: e.target.value });
+        }}
       >
         {FINES_HORARIO.map((h) => (
-          <option key={h} value={h}>
+          <option key={h} value={h} disabled={h <= actual.desde}>
             {h}
           </option>
         ))}

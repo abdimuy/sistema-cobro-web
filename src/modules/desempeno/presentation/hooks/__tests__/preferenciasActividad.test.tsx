@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { useVistasGuardadas } from "../useVistasGuardadas";
 import { useColumnasActividad } from "../useColumnasActividad";
@@ -36,6 +36,17 @@ describe("vistas guardadas y columnas (por computadora)", () => {
   it("el hook migra una lista v1 sin nota (D28)", () => {
     localStorage.setItem("desempeno.actividad.columnas.v1", JSON.stringify(["tipo", "hora"]));
     expect(renderHook(() => useColumnasActividad()).result.current.columnas).toEqual(["tipo", "hora", "nota"]);
+  });
+
+  it("si localStorage lanza al leerse, el hook usa las columnas por defecto", () => {
+    const espia = vi.spyOn(window, "localStorage", "get").mockImplementation(() => {
+      throw new Error("bloqueado");
+    });
+    try {
+      expect(renderHook(() => useColumnasActividad()).result.current.columnas).toEqual(COLUMNAS_POR_DEFECTO);
+    } finally {
+      espia.mockRestore();
+    }
   });
 
   it("una vista con filtros de otra forma (versión vieja o editada a mano) se descarta", () => {

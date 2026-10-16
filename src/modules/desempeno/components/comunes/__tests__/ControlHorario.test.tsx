@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DesempenoProvider } from "../../../presentation/context/DesempenoProvider";
 import { FakeDesempenoPort } from "../../../application/__tests__/fakeDesempenoPort";
@@ -43,6 +43,22 @@ describe("ControlHorario (D21)", () => {
     await userEvent.selectOptions(screen.getByLabelText("Inicio de horario"), "20:00");
     expect(screen.getByLabelText("Inicio de horario")).toHaveValue("20:00");
     expect(screen.getByLabelText("Fin de horario")).toHaveValue("21:00");
+  });
+
+  it("el fin no admite valores iguales o menores al inicio", async () => {
+    render(
+      <DesempenoProvider port={new FakeDesempenoPort()}>
+        <ControlHorario />
+      </DesempenoProvider>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Horario" }));
+    const fin = screen.getByLabelText("Fin de horario");
+    expect(within(fin).getByRole<HTMLOptionElement>("option", { name: "07:00" }).disabled).toBe(true);
+    expect(within(fin).getByRole<HTMLOptionElement>("option", { name: "08:00" }).disabled).toBe(true);
+    expect(within(fin).getByRole<HTMLOptionElement>("option", { name: "08:30" }).disabled).toBe(false);
+    fireEvent.change(fin, { target: { value: "07:00" } });
+    expect(fin).toHaveValue("18:00");
+    expect(screen.getByLabelText("Inicio de horario")).toHaveValue("08:00");
   });
 });
 
