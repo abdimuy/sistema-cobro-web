@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { DomainError } from "../../domain/errors";
+import { conLineaRechazada } from "@/lib/lineaRechazada";
 
 export function mapAxiosError(err: unknown): DomainError {
   if (axios.isAxiosError(err)) {
@@ -22,7 +23,7 @@ export function mapAxiosError(err: unknown): DomainError {
       ax.message ||
       "error de red";
 
-    return new DomainError(code, message);
+    return new DomainError(code, conLineaRechazada(message, data));
   }
   if (err instanceof DomainError) return err;
   if (err instanceof Error) return new DomainError("error_inesperado", err.message);

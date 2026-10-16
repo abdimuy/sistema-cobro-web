@@ -6,6 +6,7 @@ import { regresarBorradorVenta } from "@/services/api/regresarBorradorVenta";
 import { aplicarVenta } from "@/services/api/aplicarVenta";
 import { cancelarVenta } from "@/services/api/cancelarVenta";
 import { VentaV2 } from "@/services/api/ventaV2Types";
+import { conLineaRechazada } from "@/lib/lineaRechazada";
 
 type ActionKey = "revisar" | "aprobar" | "regresar" | "aplicar" | "cancelar";
 
@@ -21,7 +22,10 @@ export const errorMessage = (err: unknown): string => {
     if (resp?.data?.code === "venta_zona_no_coincide_cliente") {
       return "La zona de la venta no coincide con la del cliente en Microsip.";
     }
-    return resp?.data?.detail ?? resp?.data?.title ?? "Error inesperado del servidor";
+    return conLineaRechazada(
+      resp?.data?.detail ?? resp?.data?.title ?? "Error inesperado del servidor",
+      resp?.data,
+    );
   }
   return err instanceof Error ? err.message : "Error inesperado";
 };

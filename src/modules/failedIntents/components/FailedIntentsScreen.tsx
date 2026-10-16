@@ -33,6 +33,7 @@ type EnvioEditado =
   | { kind: "json"; body: unknown }
   | { kind: "multipart"; manifest: Manifest; uploads: UploadMap };
 import { ConfirmarAccionDialog } from "./ConfirmarAccionDialog";
+import { conLineaRechazadaDeTexto } from "@/lib/lineaRechazada";
 import { avisoDe, type AccionMutante } from "./accionesCopy";
 import { LINEA, SUPERFICIE, TEXTO_2, ACENTO_TEXTO } from "./paleta";
 
@@ -124,7 +125,10 @@ export function FailedIntentsScreen() {
         });
       } else {
         toast.warning("El reenvío volvió a fallar", {
-          description: `El servidor respondió ${r.replayHttpStatus}`,
+          description: conLineaRechazadaDeTexto(
+            `El servidor respondió ${r.replayHttpStatus}`,
+            r.replayBodyPreview,
+          ),
           id: `replay-fail-${selectedId}`,
         });
       }
