@@ -35,7 +35,6 @@ interface Props {
 
 export function PagoModal({ clienteId, doctoCcId, onClose, onAbrirVenta, onAbrirCliente }: Props) {
   const { detalle, isLoading, error } = usePagoDetalle(clienteId, doctoCcId);
-  const hasMapsKey = Boolean(import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
 
   if (doctoCcId === null) return null;
 
@@ -193,28 +192,17 @@ export function PagoModal({ clienteId, doctoCcId, onClose, onAbrirVenta, onAbrir
                     Ubicación
                   </h4>
                   <div className="h-[150px] overflow-hidden rounded-md border border-border/40">
-                    {hasMapsKey ? (
-                      <Suspense
-                        fallback={
-                          <div className="flex h-full items-center justify-center bg-muted/30">
-                            <span className="font-mono text-[11px] text-muted-foreground/60">
-                              Cargando mapa…
-                            </span>
-                          </div>
-                        }
-                      >
-                        <FichaMapEmbed lat={detalle.lat} lng={detalle.lon} />
-                      </Suspense>
-                    ) : (
-                      <div
-                        className="flex h-full items-center justify-center bg-muted/30"
-                        data-testid="mapa-no-disponible"
-                      >
-                        <p className="font-mono text-[11px] text-muted-foreground/60">
-                          Mapa no disponible
-                        </p>
-                      </div>
-                    )}
+                    <Suspense
+                      fallback={
+                        <div className="flex h-full items-center justify-center bg-muted/30">
+                          <span className="font-mono text-[11px] text-muted-foreground/60">
+                            Cargando mapa…
+                          </span>
+                        </div>
+                      }
+                    >
+                      <FichaMapEmbed lat={detalle.lat} lng={detalle.lon} />
+                    </Suspense>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
                     <p className="font-mono text-[10px] text-muted-foreground">

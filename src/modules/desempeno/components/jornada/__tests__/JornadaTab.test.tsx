@@ -132,10 +132,11 @@ describe("JornadaTab", () => {
     expect(screen.getByText("1 sin GPS")).toBeInTheDocument();
   });
 
-  it("mapa sin llave: aviso, no se rompe", async () => {
+  it("mapa con la variable de Maps vacía (como en producción): pinta el mapa, no el aviso", async () => {
     vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "");
     montar();
-    expect(await screen.findByText("Mapa no disponible")).toBeInTheDocument();
+    expect(await screen.findByTestId("mapa-google")).toHaveTextContent("1,3,4,5");
+    expect(screen.queryByText("Mapa no disponible")).not.toBeInTheDocument();
   });
 
   it("navegar días: anterior, chips de la semana y no se pasa de hoy", async () => {

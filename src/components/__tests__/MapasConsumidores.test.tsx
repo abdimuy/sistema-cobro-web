@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const cargarGoogleMaps = vi.fn();
 vi.mock("@/components/maps/cargadorGoogleMaps", () => ({
   cargarGoogleMaps: (...args: unknown[]) => cargarGoogleMaps(...args),
-  LLAVE_GOOGLE_MAPS: "llave",
+  obtenerLlaveGoogleMaps: () => "llave",
 }));
 vi.mock("@/lib/bitacora", () => ({ registrar: vi.fn() }));
 vi.mock("@react-google-maps/api", () => ({

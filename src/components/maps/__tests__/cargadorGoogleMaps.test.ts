@@ -1,7 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   cargarGoogleMaps,
+  LLAVE_GOOGLE_MAPS,
   NOMBRE_CALLBACK_MAPS,
+  obtenerLlaveGoogleMaps,
   reiniciarCargadorGoogleMaps,
 } from "../cargadorGoogleMaps";
 
@@ -65,5 +67,25 @@ describe("cargarGoogleMaps", () => {
     ventana.google = { maps: {} };
     ventana[NOMBRE_CALLBACK_MAPS]!();
     await expect(segunda).resolves.toBeUndefined();
+  });
+});
+
+describe("obtenerLlaveGoogleMaps", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("con la variable de entorno vacía (como en .env.production) devuelve la constante", () => {
+    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "");
+    expect(LLAVE_GOOGLE_MAPS.length).toBeGreaterThan(0);
+    expect(obtenerLlaveGoogleMaps()).toBe(LLAVE_GOOGLE_MAPS);
+  });
+
+  it("con la variable sólo con espacios devuelve la constante", () => {
+    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "   ");
+    expect(obtenerLlaveGoogleMaps()).toBe(LLAVE_GOOGLE_MAPS);
+  });
+
+  it("con la variable con valor, gana la variable", () => {
+    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", " llave-de-entorno ");
+    expect(obtenerLlaveGoogleMaps()).toBe("llave-de-entorno");
   });
 });

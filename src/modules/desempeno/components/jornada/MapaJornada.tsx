@@ -28,7 +28,6 @@ export function MapaJornada({
   });
   // Rótulo de dibujo: cuántas actividades vinieron sin GPS (bandera del API).
   const sinGps = actividades.filter((a) => !a.conGps).length;
-  const hayLlave = Boolean(import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
   return (
     <div className="overflow-hidden rounded-[14px] bg-dsm-tarjeta shadow-sm ring-1 ring-border">
       <div className="flex items-center justify-between px-[18px] py-3">
@@ -37,12 +36,10 @@ export function MapaJornada({
       </div>
       {puntos.length === 0 ? (
         <p className={AVISO}>Sin ubicaciones este día</p>
-      ) : hayLlave ? (
+      ) : (
         <Suspense fallback={<p className={AVISO}>Cargando mapa…</p>}>
           <MapaJornadaGoogle puntos={puntos} onSeleccionar={onSeleccionar} />
         </Suspense>
-      ) : (
-        <p className={AVISO}>Mapa no disponible</p>
       )}
       <div className="flex justify-between gap-3 px-[18px] py-2 text-[11px] text-muted-foreground">
         <span>Números en orden de captura · dónde se registró</span>

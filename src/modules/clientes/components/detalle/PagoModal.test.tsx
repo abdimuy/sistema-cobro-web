@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ClientesProvider } from "../../presentation/context/ClientesContext";
@@ -37,6 +37,8 @@ function renderModal(
 describe("PagoModal", () => {
   let port: FakeClientesPort;
 
+  afterEach(() => vi.unstubAllEnvs());
+
   beforeEach(() => {
     port = new FakeClientesPort();
     port.obtenerPagoDetalleResponse = makeFakePagoDetalle();
@@ -60,18 +62,13 @@ describe("PagoModal", () => {
     expect(screen.getAllByText("ABONO").length).toBeGreaterThan(0);
   });
 
-  it("shows GPS section when lat/lon present (fallback: mapa-no-disponible because no API key)", async () => {
+  it("con lat/lon y la variable de Maps vacía pinta el mapa, no 'Mapa no disponible'", async () => {
+    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "");
     renderModal(port, { doctoCcId: 70234 });
-    await waitFor(() =>
-      expect(screen.getAllByText("AB-00234").length).toBeGreaterThan(0),
-    );
-    // The map container or fallback must be present
-    const fallback = screen.queryByTestId("mapa-no-disponible");
-    const mockMap = screen.queryByTestId("mock-map");
-    // One or the other should exist
-    expect(fallback ?? mockMap).not.toBeNull();
-    // Also check coords are shown
-    expect(screen.getByText(/19.4326/)).toBeInTheDocument();
+    expect(await screen.findByTestId("mock-map")).toBeInTheDocument();
+    expect(screen.queryByTestId("mapa-no-disponible")).not.toBeInTheDocument();
+    expect(screen.queryByText("Mapa no disponible")).not.toBeInTheDocument();
+    expect(screen.getByText("19.4326, -99.1332")).toBeInTheDocument();
   });
 
   it("hides GPS section when lat/lon are null", async () => {

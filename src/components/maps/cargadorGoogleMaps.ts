@@ -15,6 +15,19 @@
 // Misma llave que usaba <LoadScript> en App.tsx.
 export const LLAVE_GOOGLE_MAPS = "AIzaSyCASwsCJvFm7dGajUWlVg19PmS8JVPqRaY";
 
+/**
+ * Única fuente de la llave de Maps para toda la app. Si el build trae
+ * `VITE_GOOGLE_MAPS_API_KEY` con valor, gana esa; si viene vacía (como en
+ * `.env.production` y `.env.development`) se usa la constante. Antes cada mapa
+ * leía la variable por su cuenta y, al venir vacía, todos mostraban
+ * "Mapa no disponible".
+ */
+export function obtenerLlaveGoogleMaps(): string {
+  const deEntorno: unknown = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  if (typeof deEntorno === "string" && deEntorno.trim() !== "") return deEntorno.trim();
+  return LLAVE_GOOGLE_MAPS;
+}
+
 export const NOMBRE_CALLBACK_MAPS = "__mspGoogleMapsListo";
 
 type VentanaConMaps = Window & {

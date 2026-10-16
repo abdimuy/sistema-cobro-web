@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const cargarGoogleMaps = vi.fn();
 vi.mock("../cargadorGoogleMaps", () => ({
   cargarGoogleMaps: (...args: unknown[]) => cargarGoogleMaps(...args),
-  LLAVE_GOOGLE_MAPS: "llave-de-prueba",
+  obtenerLlaveGoogleMaps: () => "llave-de-prueba",
 }));
 const registrar = vi.fn();
 vi.mock("@/lib/bitacora", () => ({

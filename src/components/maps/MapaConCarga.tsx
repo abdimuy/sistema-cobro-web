@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { registrar } from "@/lib/bitacora";
-import { cargarGoogleMaps, LLAVE_GOOGLE_MAPS } from "./cargadorGoogleMaps";
+import { cargarGoogleMaps, obtenerLlaveGoogleMaps } from "./cargadorGoogleMaps";
 
 type Estado = "cargando" | "listo" | "error";
 
@@ -22,7 +22,7 @@ export function MapaConCarga({ children, alto = "100%" }: Props) {
   useEffect(() => {
     let vigente = true;
     setEstado("cargando");
-    cargarGoogleMaps(LLAVE_GOOGLE_MAPS).then(
+    cargarGoogleMaps(obtenerLlaveGoogleMaps()).then(
       () => {
         if (vigente) setEstado("listo");
       },

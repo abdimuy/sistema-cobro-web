@@ -1,12 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { LLAVE_GOOGLE_MAPS } from "@/components/maps/cargadorGoogleMaps";
 import { FichaMapEmbed } from "./FichaMapEmbed";
 
-// Mock @react-google-maps/api to avoid real network calls and SDK loading.
-// We control isLoaded/loadError via the mock factory return value.
-const mockUseLoadScript = vi.fn();
+// Sólo se sustituye la descarga del script; obtenerLlaveGoogleMaps es la real,
+// para comprobar qué llave recibe el cargador con la variable vacía.
+const cargarGoogleMaps = vi.fn();
+vi.mock("@/components/maps/cargadorGoogleMaps", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/components/maps/cargadorGoogleMaps")>()),
+  cargarGoogleMaps: (...args: unknown[]) => cargarGoogleMaps(...args),
+}));
+vi.mock("@/lib/bitacora", () => ({ registrar: vi.fn() }));
 vi.mock("@react-google-maps/api", () => ({
-  useLoadScript: (...args: unknown[]) => mockUseLoadScript(...args),
   GoogleMap: ({
     children,
     mapContainerStyle,
@@ -19,47 +25,41 @@ vi.mock("@react-google-maps/api", () => ({
     </div>
   ),
   Marker: ({ position }: { position: { lat: number; lng: number } }) => (
-    <div
-      data-testid="map-marker"
-      data-lat={position.lat}
-      data-lng={position.lng}
-    />
+    <div data-testid="map-marker" data-lat={position.lat} data-lng={position.lng} />
   ),
 }));
 
 describe("FichaMapEmbed", () => {
   beforeEach(() => {
-    mockUseLoadScript.mockReturnValue({ isLoaded: true, loadError: undefined });
+    cargarGoogleMaps.mockReset();
+    // Como en .env.production / .env.development: la variable viene vacía.
+    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "");
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
-  it("renders map and marker when script is loaded and key is present", () => {
-    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "fake-key-123");
+  it("con la variable vacía pide Maps con la llave de cargadorGoogleMaps y pinta el mapa", async () => {
+    cargarGoogleMaps.mockResolvedValue(undefined);
     render(<FichaMapEmbed lat={19.4326} lng={-99.1332} />);
-    expect(screen.getByTestId("google-map")).toBeInTheDocument();
-    expect(screen.getByTestId("map-marker")).toBeInTheDocument();
+    expect(await screen.findByTestId("google-map")).toBeInTheDocument();
+    expect(screen.getByTestId("map-marker")).toHaveAttribute("data-lat", "19.4326");
+    expect(cargarGoogleMaps).toHaveBeenCalledWith(LLAVE_GOOGLE_MAPS);
+    expect(screen.queryByText("Mapa no disponible")).not.toBeInTheDocument();
   });
 
-  // Note: the no-key fallback now lives in FichaUbicacion (which gates whether
-  // FichaMapEmbed mounts at all). See FichaUbicacion.test.tsx.
-
-  it("renders graceful fallback when loadError is set", () => {
-    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "fake-key-123");
-    mockUseLoadScript.mockReturnValue({
-      isLoaded: false,
-      loadError: new Error("network failure"),
-    });
-    render(<FichaMapEmbed lat={19.4326} lng={-99.1332} />);
-    expect(screen.getByTestId("mapa-no-disponible")).toBeInTheDocument();
-  });
-
-  it("renders loading state when script not yet loaded", () => {
-    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "fake-key-123");
-    mockUseLoadScript.mockReturnValue({ isLoaded: false, loadError: undefined });
+  it("muestra 'Cargando mapa…' mientras el script carga", () => {
+    cargarGoogleMaps.mockReturnValue(new Promise<void>(() => {}));
     render(<FichaMapEmbed lat={19.4326} lng={-99.1332} />);
     expect(screen.getByText("Cargando mapa…")).toBeInTheDocument();
+    expect(screen.queryByTestId("google-map")).not.toBeInTheDocument();
+  });
+
+  it("si el script falla ofrece Reintentar y al reintentar pinta el mapa", async () => {
+    cargarGoogleMaps.mockRejectedValueOnce(new Error("sin red")).mockResolvedValueOnce(undefined);
+    render(<FichaMapEmbed lat={19.4326} lng={-99.1332} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Reintentar" }));
+    expect(await screen.findByTestId("google-map")).toBeInTheDocument();
   });
 });

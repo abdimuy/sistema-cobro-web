@@ -51,9 +51,9 @@ function renderUbicacion(ubicacion: UbicacionCliente) {
 }
 
 describe("FichaUbicacion", () => {
-  // A maps key must be present for the embed to mount (see component gate).
+  // Como en .env.production: la variable viene vacía y el mapa debe salir igual.
   beforeEach(() => {
-    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "fake-key-123");
+    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "");
   });
 
   afterEach(() => {
@@ -94,12 +94,11 @@ describe("FichaUbicacion", () => {
     expect(screen.queryByTestId("ficha-map-embed")).not.toBeInTheDocument();
   });
 
-  it('renders "Mapa no disponible" (no embed) when disponible=true but no API key', () => {
-    vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "");
+  it("con la variable de Maps vacía monta el mapa, no el aviso 'Mapa no disponible'", () => {
     renderUbicacion(WITH_LOCATION);
-    expect(screen.getByTestId("mapa-no-disponible")).toBeInTheDocument();
-    expect(screen.getByText("Mapa no disponible")).toBeInTheDocument();
-    expect(screen.queryByTestId("ficha-map-embed")).not.toBeInTheDocument();
+    expect(screen.getByTestId("ficha-map-embed")).toBeInTheDocument();
+    expect(screen.queryByText("Mapa no disponible")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("mapa-no-disponible")).not.toBeInTheDocument();
   });
 
   it('does not render "Abrir en Google Maps" link when disponible=false', () => {
