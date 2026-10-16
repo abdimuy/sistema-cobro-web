@@ -21,6 +21,8 @@ interface ProductosTabProps {
   productos: ProductoFormData[];
   combos: ComboFormData[];
   almacenes: AlmacenesFormData;
+  /** Tipo de la venta: decide los precios de un producto agregado. */
+  tipoVenta: "CONTADO" | "CREDITO";
   errors: ValidationError[];
   onAddProducto: (p: Omit<ProductoFormData, "id" | "isNew" | "isDeleted">) => void;
   onUpdateProducto: (
@@ -62,6 +64,7 @@ export const ProductosTab = ({
   productos,
   combos,
   almacenes,
+  tipoVenta,
   errors,
   onAddProducto,
   onUpdateProducto,
@@ -209,6 +212,7 @@ export const ProductosTab = ({
         almacenes={almacenes}
         combo={comboDestino}
         productosExistentes={productos}
+        tipoVenta={tipoVenta}
         onAgregar={(p) => {
           onAddProducto(p);
           setShowAddProductoPanel(false);

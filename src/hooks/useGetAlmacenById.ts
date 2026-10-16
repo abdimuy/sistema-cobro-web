@@ -15,6 +15,19 @@ export interface ArticuloAlmacen {
   LINEA_ARTICULO_ID: number;
   LINEA_ARTICULO: string;
   PRECIOS: string;
+  /**
+   * Forma estructurada de msp-api (E-INF-017): sólo los tres tipos,
+   * clasificados por PRECIO_EMPRESA_ID. Ausente en servidores viejos.
+   */
+  PRECIOS_ORDENADOS?: PrecioOrdenado[];
+}
+
+export interface PrecioOrdenado {
+  tipo: "contado" | "corto_plazo" | "largo_plazo";
+  precio_empresa_id: number;
+  nombre: string;
+  /** Decimal exacto como texto, p. ej. "3485.000000". */
+  precio: string;
 }
 
 // Wire shapes returned by the Go backend (snake_case). Translated below
@@ -33,6 +46,7 @@ interface ArticuloAlmacenWire {
   linea_articulo_id: number;
   linea_articulo: string;
   precios: string;
+  precios_ordenados?: PrecioOrdenado[];
 }
 
 interface ArticulosResponse {
@@ -65,6 +79,7 @@ const fromArticuloWire = (w: ArticuloAlmacenWire): ArticuloAlmacen => ({
   LINEA_ARTICULO_ID: w.linea_articulo_id,
   LINEA_ARTICULO: w.linea_articulo,
   PRECIOS: w.precios,
+  ...(Array.isArray(w.precios_ordenados) ? { PRECIOS_ORDENADOS: w.precios_ordenados } : {}),
 });
 
 const useGetAlmacenById = (almacenId: number | null, comparation: string = ""): UseGetAlmacenByIdReturn => {
@@ -129,6 +144,9 @@ const useGetAlmacenById = (almacenId: number | null, comparation: string = ""): 
 
   useEffect(() => {
     fetchAlmacen();
+    // fetchAlmacen se recrea en cada render; meterla aquí recargaría sin fin.
+    // Sólo cambia de verdad con almacenId y comparation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [almacenId, comparation]);
 
   return { almacen, articulos, loading, error, refetch: fetchAlmacen };

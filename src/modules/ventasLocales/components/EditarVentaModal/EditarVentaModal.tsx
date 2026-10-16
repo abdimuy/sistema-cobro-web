@@ -375,6 +375,7 @@ const EditarVentaModal = ({ venta, open, onOpenChange, onSuccess }: Props) => {
                         productos={formData.productos}
                         combos={formData.combos}
                         almacenes={formData.almacenes}
+                        tipoVenta={formData.financiero.tipoVenta}
                         errors={errors}
                         onAddProducto={addProducto}
                         onUpdateProducto={updateProducto}

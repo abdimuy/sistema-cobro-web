@@ -43,7 +43,8 @@ vi.mock("@/hooks/useGetAlmacenById", () => ({
         EXISTENCIAS: 4,
         LINEA_ARTICULO_ID: 1,
         LINEA_ARTICULO: "SALAS",
-        PRECIOS: '{"PRECIO_LISTA":1800,"PRECIO_CORTO_PLAZO":1600,"PRECIO_CONTADO":1400}',
+        // Forma real del API: cadena "<lista>:<precio>" separada por comas.
+        PRECIOS: "Precio de lista:1800.000000,Precio 4 Meses:1600.000000,Precio 1 Meses:1400.000000",
       },
     ],
     loading: false,

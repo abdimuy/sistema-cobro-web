@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import useGetAlmacenById from "@/hooks/useGetAlmacenById";
 import type { ArticuloAlmacen } from "@/hooks/useGetAlmacenById";
+import { leerPreciosCatalogo, preciosParaLinea, type TipoVenta } from "./preciosCatalogo";
 import type {
   ProductoFormData,
   AlmacenesFormData,
@@ -30,31 +31,12 @@ interface AgregarProductoPanelProps {
   /** Cuando viene, el producto nace DENTRO de este combo. */
   combo?: ComboDestino | null;
   productosExistentes: ProductoFormData[];
+  /** Decide qué precios lleva la línea nueva (ver preciosParaLinea). */
+  tipoVenta: TipoVenta;
   onAgregar: (p: Omit<ProductoFormData, "id" | "isNew" | "isDeleted">) => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const parsePrecios = (
-  preciosStr: string,
-): { precioAnual: number; precioCortoPlazo: number; precioContado: number } => {
-  try {
-    if (preciosStr.startsWith("{")) {
-      const parsed = JSON.parse(preciosStr) as Record<string, number>;
-      return {
-        precioAnual:
-          parsed.PRECIO_LISTA || parsed.precioLista || parsed.precioAnual || 0,
-        precioCortoPlazo:
-          parsed.PRECIO_CORTO_PLAZO || parsed.precioCortoPlazo || 0,
-        precioContado: parsed.PRECIO_CONTADO || parsed.precioContado || 0,
-      };
-    }
-    const precio = parseFloat(preciosStr) || 0;
-    return { precioAnual: precio, precioCortoPlazo: precio, precioContado: precio };
-  } catch {
-    return { precioAnual: 0, precioCortoPlazo: 0, precioContado: 0 };
-  }
-};
 
 const fmtMoney = (n: number): string =>
   new Intl.NumberFormat("es-MX", {
@@ -68,12 +50,13 @@ const fmtMoney = (n: number): string =>
 
 interface ArticuloRowProps {
   articulo: ArticuloAlmacen;
+  tipoVenta: TipoVenta;
   disabled: boolean;
   onSelect: () => void;
 }
 
-const ArticuloRow = ({ articulo, disabled, onSelect }: ArticuloRowProps) => {
-  const precios = parsePrecios(articulo.PRECIOS);
+const ArticuloRow = ({ articulo, tipoVenta, disabled, onSelect }: ArticuloRowProps) => {
+  const precios = leerPreciosCatalogo(articulo);
 
   return (
     <div
@@ -97,17 +80,26 @@ const ArticuloRow = ({ articulo, disabled, onSelect }: ArticuloRowProps) => {
         )}
       </div>
       <div className="text-right flex-shrink-0 space-y-0.5">
-        {precios.precioAnual > 0 && (
-          <p className="font-mono text-[11px] text-foreground">
-            {fmtMoney(precios.precioAnual)}
-          </p>
-        )}
-        {precios.precioCortoPlazo > 0 &&
-          precios.precioCortoPlazo !== precios.precioAnual && (
-            <p className="font-mono text-[10px] text-muted-foreground">
-              CP {fmtMoney(precios.precioCortoPlazo)}
+        {tipoVenta === "CONTADO" ? (
+          precios.contado !== null && (
+            <p className="font-mono text-[11px] text-foreground">
+              Contado {fmtMoney(precios.contado)}
             </p>
-          )}
+          )
+        ) : (
+          <>
+            {precios.largo !== null && (
+              <p className="font-mono text-[11px] text-foreground">
+                {fmtMoney(precios.largo)}
+              </p>
+            )}
+            {precios.corto !== null && precios.corto !== precios.largo && (
+              <p className="font-mono text-[10px] text-muted-foreground">
+                CP {fmtMoney(precios.corto)}
+              </p>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -121,9 +113,11 @@ export const AgregarProductoPanel = ({
   almacenes,
   combo = null,
   productosExistentes,
+  tipoVenta,
   onAgregar,
 }: AgregarProductoPanelProps) => {
   const [search, setSearch] = useState("");
+  const [errorPrecio, setErrorPrecio] = useState<string | null>(null);
 
   // Dentro de un combo, el catálogo sale del almacén del combo; fuera, del
   // par por defecto de la venta.
@@ -154,11 +148,18 @@ export const AgregarProductoPanel = ({
 
   const handleClose = () => {
     setSearch("");
+    setErrorPrecio(null);
     onOpenChange(false);
   };
 
   const handleSelect = (articulo: ArticuloAlmacen) => {
-    const precios = parsePrecios(articulo.PRECIOS);
+    const resultado = preciosParaLinea(leerPreciosCatalogo(articulo), tipoVenta);
+    if (!resultado.ok) {
+      setErrorPrecio(`${articulo.ARTICULO}: ${resultado.error}`);
+      return;
+    }
+    const { precios } = resultado;
+    setErrorPrecio(null);
     onAgregar({
       articuloId: articulo.ARTICULO_ID,
       articulo: articulo.ARTICULO,
@@ -236,6 +237,15 @@ export const AgregarProductoPanel = ({
                 />
               </div>
 
+              {errorPrecio !== null && (
+                <div
+                  role="alert"
+                  className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-[12px] text-destructive"
+                >
+                  {errorPrecio}
+                </div>
+              )}
+
               {/* Results */}
               {loading ? (
                 <div className="flex items-center justify-center py-12">
@@ -257,6 +267,7 @@ export const AgregarProductoPanel = ({
                     <ArticuloRow
                       key={articulo.ARTICULO_ID}
                       articulo={articulo}
+                      tipoVenta={tipoVenta}
                       disabled={productosExistentesIds.has(articulo.ARTICULO_ID)}
                       onSelect={() => handleSelect(articulo)}
                     />

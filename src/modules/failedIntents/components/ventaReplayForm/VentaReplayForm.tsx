@@ -285,7 +285,7 @@ function FormBranch({
   // La regla vive ahora en un solo lugar, el mismo que usa el editor de
   // ventas locales.
   const preciosCalculados = preciosDeLineas(s.formData.productos, s.formData.combos);
-  const diffSections = buildDiffSections(activeProductsCount, activeVendedoresCount);
+  const diffSections = buildDiffSections();
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -336,6 +336,7 @@ function FormBranch({
               productos={s.formData.productos}
               combos={s.formData.combos}
               almacenes={s.formData.almacenes}
+              tipoVenta={s.formData.financiero.tipoVenta}
               errors={s.errors}
               onAddProducto={s.addProducto}
               onUpdateProducto={s.updateProducto}
@@ -367,10 +368,7 @@ function FormBranch({
 
 type TabId = "resumen" | "cliente" | "plan" | "productos" | "vendedores";
 
-function buildDiffSections(
-  _productosCount: number,
-  _vendedoresCount: number,
-): Array<{ label: string; differs: boolean }> {
+function buildDiffSections(): Array<{ label: string; differs: boolean }> {
   // We don't compute real diff sections in replay-with — there is no
   // "original" to diff against, only what the operator is composing.
   return [
