@@ -10,9 +10,13 @@ import {
   makeUsuarioSinConfigurar,
   makeUsuarioTablero,
 } from "../../../application/__tests__/fakeDesempenoPort";
-import type { UsuarioTablero } from "../../../domain/entities";
+import type { FichaUsuario, UsuarioTablero } from "../../../domain/entities";
 
-function montar(pestana: PestanaFicha = "jornada", usuario: UsuarioTablero = makeUsuarioTablero()) {
+function montar(
+  pestana: PestanaFicha = "jornada",
+  usuario: UsuarioTablero = makeUsuarioTablero(),
+  ficha: Partial<FichaUsuario> = {},
+) {
   const props = {
     onCambiarPestana: vi.fn(),
     onCambiarDia: vi.fn(),
@@ -22,7 +26,7 @@ function montar(pestana: PestanaFicha = "jornada", usuario: UsuarioTablero = mak
   };
   renderConDesempeno(
     <FichaScreen
-      ficha={makeFichaUsuario({ usuario })}
+      ficha={makeFichaUsuario({ usuario, ...ficha })}
       carga={{ tipo: "lista" }}
       opcionesRegistro={[{ valor: "uid-juan", etiqueta: "Juan Carlos Méndez" }]}
       pestana={pestana}
@@ -47,6 +51,16 @@ describe("FichaScreen", () => {
     expect(screen.getByText("46 de 209")).toBeInTheDocument();
     expect(screen.getByText("65.9%")).toBeInTheDocument();
     expect(screen.queryByText(/total/i)).not.toBeInTheDocument();
+  });
+
+  it("los chips de día de la Jornada salen de ficha.diasNavegables (eje del servidor)", () => {
+    montar("jornada", makeUsuarioTablero(), {
+      inicioSemanaDia: "2026-10-12",
+      diasNavegables: ["2026-10-12", "2026-10-13", "2026-10-14"],
+    });
+    expect(screen.getByRole("button", { name: "lun 12" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "mar 13" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "vie 9" })).not.toBeInTheDocument();
   });
 
   it("lo que falta por cobrar es el cobro.falta del API, y la hora de los datos es generado_at", () => {
