@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Cuenta } from "../../domain/entities";
 import { diaDeNegocioDe, dinero2, fechaCorta, horaCorta } from "../lib/format";
@@ -17,6 +18,10 @@ const ENCABEZADOS: ReadonlyArray<readonly [string, boolean]> = [
   ["Última actividad", false],
 ];
 
+// D26: no pintar cientos de filas de golpe.
+export const FILAS_INICIALES = 60;
+export const FILAS_POR_TANDA = 60;
+
 function Atrasos({ n }: { n: number }) {
   return (
     <span className={cn("text-[12px]", CLASE_TONO_ATRASOS[tonoDeAtrasos(n)])}>
@@ -32,6 +37,26 @@ export function TablaCuentas({
   cuentas: readonly Cuenta[];
   onAbrir: (c: Cuenta) => void;
 }) {
+  const [visibles, setVisibles] = useState(FILAS_INICIALES);
+  const centinela = useRef<HTMLTableRowElement | null>(null);
+
+  useEffect(() => setVisibles(FILAS_INICIALES), [cuentas]);
+
+  useEffect(() => {
+    const nodo = centinela.current;
+    if (!nodo || visibles >= cuentas.length) return;
+    const obs = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((e) => e.isIntersecting)) {
+          setVisibles((v) => Math.min(v + FILAS_POR_TANDA, cuentas.length));
+        }
+      },
+      { rootMargin: "400px" },
+    );
+    obs.observe(nodo);
+    return () => obs.disconnect();
+  }, [visibles, cuentas.length]);
+
   return (
     <div className="overflow-x-auto rounded-[14px] bg-dsm-tarjeta shadow-sm ring-1 ring-border">
       <table className="w-full">
@@ -51,11 +76,12 @@ export function TablaCuentas({
           </tr>
         </thead>
         <tbody>
-          {cuentas.map((c) => {
+          {cuentas.slice(0, visibles).map((c) => {
             const abrible = c.doctoPvId !== null;
             return (
               <tr
                 key={c.ventaId}
+                data-testid="fila-cuenta"
                 aria-disabled={abrible ? undefined : "true"}
                 title={abrible ? undefined : "Sin detalle de venta"}
                 tabIndex={abrible ? 0 : undefined}
@@ -113,6 +139,7 @@ export function TablaCuentas({
               </tr>
             );
           })}
+          {visibles < cuentas.length && <tr ref={centinela} aria-hidden="true" />}
         </tbody>
       </table>
     </div>
