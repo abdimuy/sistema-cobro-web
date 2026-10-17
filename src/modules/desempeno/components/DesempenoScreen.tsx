@@ -143,9 +143,6 @@ function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar
     );
   }
 
-  // La ficha sólo conoce a su usuario: el filtro "Registró" ofrece a ese usuario
-  // y Oficina (el resto de la zona exigiría pedir el tablero de la flota).
-  const opcionesRegistro = [{ valor: usuario.uid, etiqueta: usuario.nombre }];
   const carga: CargaFicha = vigente
     ? { tipo: "lista" }
     : error
@@ -157,7 +154,6 @@ function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar
       <FichaScreen
         ficha={base}
         carga={carga}
-        opcionesRegistro={opcionesRegistro}
         pestana={pestana}
         dia={dia}
         onCambiarPestana={(p) => cambiarParam("pestana", p)}
