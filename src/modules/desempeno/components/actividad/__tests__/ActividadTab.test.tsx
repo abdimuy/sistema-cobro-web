@@ -140,7 +140,7 @@ describe("ActividadTab", () => {
       await screen.findByText("Ningún movimiento con estos filtros");
       const select = screen.getByLabelText("Registró") as HTMLSelectElement;
       expect(select.value).toBe("uid-lupita");
-      expect(opcionesDelFiltro()).toEqual(["Todos", "GUADALUPE ROMERO NAVA"]);
+      expect(opcionesDelFiltro()).toEqual(["Todos", "GUADALUPE ROMERO NAVA", "JUAN CARLOS MENDEZ", "Oficina"]);
 
       // Y se sale con "Todos".
       await user.selectOptions(select, "");

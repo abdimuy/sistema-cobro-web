@@ -19,10 +19,11 @@ export function recordarNombres(
   let siguiente: Record<string, string> | null = null;
   for (const a of items) {
     const v = valorRegistro(a);
-    if (v === null || v === REGISTRADO_POR_OFICINA) continue;
-    if ((siguiente ?? previos)[v] !== a.registradoPor.nombre) {
+    if (v === null) continue;
+    const nombre = v === REGISTRADO_POR_OFICINA ? "Oficina" : a.registradoPor.nombre;
+    if ((siguiente ?? previos)[v] !== nombre) {
       siguiente ??= { ...previos };
-      siguiente[v] = a.registradoPor.nombre;
+      siguiente[v] = nombre;
     }
   }
   return siguiente ?? previos;
@@ -44,6 +45,10 @@ export function opcionesRegistro(
     if (v === null) continue;
     if (v === REGISTRADO_POR_OFICINA) hayOficina = true;
     else if (!personas.has(v)) personas.set(v, a.registradoPor.nombre);
+  }
+  for (const [v, nombre] of Object.entries(nombres)) {
+    if (v === REGISTRADO_POR_OFICINA) hayOficina = true;
+    else if (!personas.has(v)) personas.set(v, nombre);
   }
   for (const v of seleccion) {
     if (v === REGISTRADO_POR_OFICINA) hayOficina = true;
