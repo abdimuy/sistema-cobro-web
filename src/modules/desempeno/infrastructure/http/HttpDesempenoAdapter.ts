@@ -9,6 +9,7 @@ import type {
 import type {
   Catalogos,
   CuentasSemana,
+  FichaUsuario,
   FiltrosActividad,
   ImagenAdjunta,
   Jornada,
@@ -16,11 +17,12 @@ import type {
   RefImagenes,
   Tablero,
 } from "../../domain/entities";
-import type { CatalogosDTO, CuentasDTO, ImagenDTO, JornadaDTO, PaginaActividadDTO, TableroDTO } from "./dtos";
+import type { CatalogosDTO, CuentasDTO, FichaUsuarioDTO, ImagenDTO, JornadaDTO, PaginaActividadDTO, TableroDTO } from "./dtos";
 import { paramsDeActividad, paramsDeCuentas, paramsDeJornada, type Params } from "./params";
 import {
   dtoToCatalogos,
   dtoToCuentas,
+  dtoToFichaUsuario,
   dtoToImagen,
   dtoToJornada,
   dtoToPaginaActividad,
@@ -56,6 +58,19 @@ export class HttpDesempenoAdapter implements DesempenoPort {
         signal,
       });
       return dtoToTablero(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async obtenerUsuario(uid: string, c: ConsultaTablero, signal?: AbortSignal): Promise<FichaUsuario> {
+    try {
+      const { data } = await this.client.get<FichaUsuarioDTO>(`${USUARIOS}/${encodeURIComponent(uid)}`, {
+        params: { periodo: c.periodo, ...paramsDeJornada(c) },
+        paramsSerializer: SERIALIZAR,
+        signal,
+      });
+      return dtoToFichaUsuario(data);
     } catch (e) {
       throw apperrorToDomainError(e);
     }

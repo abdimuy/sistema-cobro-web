@@ -3,6 +3,7 @@ import {
   dtoToActividad,
   dtoToCatalogos,
   dtoToCuentas,
+  dtoToFichaUsuario,
   dtoToImagen,
   dtoToJornada,
   dtoToPaginaActividad,
@@ -13,6 +14,7 @@ import {
   actividadVisitaDTO,
   catalogosDTO,
   cuentasDTO,
+  fichaUsuarioDTO,
   imagenesDTO,
   jornadaDTO,
   lineaDTO,
@@ -167,7 +169,10 @@ const usuarioConfigurado: UsuarioTablero = {
   noAplicados: { n: 2, importe: "300.00" },
   visitas: 13,
   cobertura: { conAlgo: 186, total: 232 },
-  coberturaPorSegmento: { sinVisitar: 40, volver: 20, despues: 3, pagados: 140, sinNada: 46 },
+  semanaVencida: false,
+  ultimoMovimiento: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z" },
+  coberturaPorColumna: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46 },
+  promedioDiario: { dias: 6, minutosActivos: 310, pagosImporte: "1433.33", visitas: 2.17 },
   cobro: { cobrado: "8600.00", esperado: "13050.00", falta: "4450.00", pct: "65.90" },
   lineas: [linea],
 };
@@ -196,13 +201,18 @@ const usuarioSinConfigurar: UsuarioTablero = {
   noAplicados: cero,
   visitas: 0,
   cobertura: { conAlgo: 0, total: 0 },
-  coberturaPorSegmento: { sinVisitar: 0, volver: 0, despues: 0, pagados: 0, sinNada: 0 },
+  semanaVencida: false,
+  ultimoMovimiento: null,
+  coberturaPorColumna: { porVisitar: 0, noPaga: 0, pagados: 0, sinNada: 0 },
+  promedioDiario: null,
   cobro: { cobrado: "0.00", esperado: "0.00", falta: "0.00", pct: null },
   lineas: [],
 };
 
 const tablero: Tablero = {
   generadoAt: "2026-10-14T22:40:00Z",
+  hoy: "2026-10-14",
+  eje: { desdeHora: 6, hastaHora: 21 },
   periodo: "hoy",
   pausaMin: 45,
   usuarios: [usuarioConfigurado, usuarioSinConfigurar],
@@ -213,6 +223,9 @@ const jornada: Jornada = {
   fecha: "2026-10-14",
   pausaMin: 45,
   generadoAt: "2026-10-14T22:40:00Z",
+  hoy: "2026-10-14",
+  eje: { desdeHora: 6, hastaHora: 21 },
+  horario: null,
   actividades: [actividadPago, actividadVisita],
   linea,
   senales: [
@@ -232,14 +245,14 @@ const jornada: Jornada = {
     pausas: { n: 1, minutos: 72, enCurso: false },
     pagos: { n: 31, importe: "8600.00" },
     visitas: 13,
-    condonaciones: 2,
+    condonaciones: { n: 1, importe: "50.00" },
     clientes: 41,
   },
 };
 
 const cuentas: CuentasSemana = {
   inicioSemana: "2026-10-09T13:46:00Z",
-  conteos: { sinVisitar: 40, volver: 20, despues: 3, pagados: 140, sinNada: 46, total: 232 },
+  conteos: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46, total: 232 },
   cuentas: [
     {
       ventaId: 13785217,
@@ -252,7 +265,7 @@ const cuentas: CuentasSemana = {
       trato: "pagado",
       etiqueta: "Pagó esta semana",
       detalle: "No hace falta volver",
-      segmento: "pagados",
+      columna: "pagados",
       conAlgo: true,
       determinadoPor: "pago:15082369",
       ultimaActividad: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T16:31:00Z" },
@@ -273,7 +286,7 @@ const cuentas: CuentasSemana = {
       trato: "sin_trabajar",
       etiqueta: "Sin tocar",
       detalle: "Nadie fue esta semana",
-      segmento: "sin_visitar",
+      columna: "por_visitar",
       conAlgo: false,
       determinadoPor: null,
       ultimaActividad: null,
@@ -334,7 +347,7 @@ describe("DTO del contrato → dominio (objeto completo)", () => {
   it("tablero: usuario configurado y no configurado, sin totales del equipo", () => {
     const t = dtoToTablero(tableroDTO);
     expect(t).toEqual(tablero);
-    expect(Object.keys(t)).toEqual(["generadoAt", "periodo", "pausaMin", "usuarios"]);
+    expect(Object.keys(t)).toEqual(["generadoAt", "hoy", "eje", "periodo", "pausaMin", "usuarios"]);
   });
 
   it("motivo inicio_semana_futuro (contrato v2.1) es una fila no configurada, no un error", () => {
@@ -414,7 +427,8 @@ describe("un código que el contrato no conoce es un error, no un dato", () => {
     ["senal.tipo", () => dtoToJornada({ ...jornadaDTO, senales: [{ ...jornadaDTO.senales[0], tipo: "rara" }] }), /senal\.tipo/],
     ["cuenta.estado", () => dtoToCuentas({ ...cuentasDTO, cuentas: [{ ...cuentasDTO.cuentas[0], estado: "liquidada" }] }), /cuenta\.estado/],
     ["cuenta.trato", () => dtoToCuentas({ ...cuentasDTO, cuentas: [{ ...cuentasDTO.cuentas[0], trato: "deposito" }] }), /cuenta\.trato/],
-    ["cuenta.segmento", () => dtoToCuentas({ ...cuentasDTO, cuentas: [{ ...cuentasDTO.cuentas[0], segmento: "sin_nada" }] }), /cuenta\.segmento/],
+    ["cuenta.columna (sin_nada no es columna)", () => dtoToCuentas({ ...cuentasDTO, cuentas: [{ ...cuentasDTO.cuentas[0], columna: "sin_nada" }] }), /cuenta\.columna/],
+    ["cuenta.columna (segmento v2.1)", () => dtoToCuentas({ ...cuentasDTO, cuentas: [{ ...cuentasDTO.cuentas[0], columna: "volver" }] }), /cuenta\.columna/],
     ["cuenta.ultima_actividad.tipo", () => dtoToCuentas({ ...cuentasDTO, cuentas: [{ ...cuentasDTO.cuentas[0], ultima_actividad: { id: "x", tipo: "llamada", hora: "2026-10-14T16:31:00Z" } }] }), /cuenta\.ultima_actividad\.tipo/],
     ["catalogos.formas_cobro.codigo", () => dtoToCatalogos({ ...catalogosDTO, formas_cobro: [{ codigo: "deposito", etiqueta: "Depósito" }] }), /formas_cobro/],
     ["catalogos.tipos_visita.estado", () => dtoToCatalogos({ ...catalogosDTO, tipos_visita: [{ literal: "x", estado: "raro", grupo: "x" }] }), /tipos_visita/],
@@ -463,5 +477,111 @@ describe("una respuesta incompleta o con tipos equivocados es DomainError, no Ty
     const dto = copia(actividadPagoDTO) as unknown as Record<string, unknown>;
     dto.hora = null;
     esRespuestaInvalida(() => dtoToActividad(roto(dto)), /hora/);
+  });
+});
+
+// Contrato v2.2 §8 (E-INF-018): columnas, semana vencida, último movimiento,
+// promedio diario, hoy, eje, horario y condonaciones con importe.
+describe("contrato v2.2", () => {
+  // Copia del objeto sin la clave: simula un servidor que omite el campo.
+  const sin = (o: object, clave: string): Record<string, unknown> => {
+    const c = { ...o } as Record<string, unknown>;
+    delete c[clave];
+    return c;
+  };
+  const u0 = tableroDTO.usuarios[0];
+
+  it("lee columnas, semana vencida, último movimiento, promedio, hoy y eje", () => {
+    const t = dtoToTablero(tableroDTO);
+    expect(t.hoy).toBe("2026-10-14");
+    expect(t.eje).toEqual({ desdeHora: 6, hastaHora: 21 });
+    const u = t.usuarios[0];
+    expect(u.coberturaPorColumna).toEqual({ porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46 });
+    expect(u.semanaVencida).toBe(false);
+    expect(u.ultimoMovimiento).toEqual({ id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z" });
+    expect(u.promedioDiario).toEqual({ dias: 6, minutosActivos: 310, pagosImporte: "1433.33", visitas: 2.17 });
+    expect(t.usuarios[1].promedioDiario).toBeNull();
+    expect(t.usuarios[1].ultimoMovimiento).toBeNull();
+  });
+
+  it("rechaza una respuesta v2.1 (cobertura_por_segmento sin columnas)", () => {
+    const sinColumnas = sin(u0, "cobertura_por_columna");
+    const v21 = {
+      ...tableroDTO,
+      usuarios: [{ ...sinColumnas, cobertura_por_segmento: { sin_visitar: 1, volver: 0, despues: 0, pagados: 0, sin_nada: 1 } }],
+    };
+    esRespuestaInvalida(() => dtoToTablero(v21 as never), /cobertura_por_columna/);
+  });
+
+  it.each([
+    ["hoy", (t: Record<string, unknown>) => delete t.hoy, /hoy/],
+    ["eje", (t: Record<string, unknown>) => delete t.eje, /eje/],
+  ])("tablero sin %s es inválido", (_c, quitar, campo) => {
+    const t = copia(tableroDTO) as unknown as Record<string, unknown>;
+    quitar(t);
+    esRespuestaInvalida(() => dtoToTablero(t as never), campo);
+  });
+
+  it.each([
+    ["semana_vencida", /semana_vencida/],
+    ["ultimo_movimiento", /ultimo_movimiento/],
+    ["promedio_diario", /promedio_diario/],
+  ])("usuario sin %s es inválido (no se inventa un valor)", (clave, campo) => {
+    const resto = sin(u0, clave);
+    esRespuestaInvalida(() => dtoToTablero({ ...tableroDTO, usuarios: [resto] } as never), campo);
+  });
+
+  it("tipos equivocados en campos nuevos son inválidos", () => {
+    esRespuestaInvalida(() => dtoToTablero({ ...tableroDTO, usuarios: [{ ...u0, semana_vencida: "no" }] } as never), /semana_vencida/);
+    esRespuestaInvalida(() => dtoToTablero({ ...tableroDTO, usuarios: [{ ...u0, promedio_diario: { ...u0.promedio_diario!, pagos_importe: 1433.33 } }] } as never), /pagos_importe/);
+    esRespuestaInvalida(() => dtoToTablero({ ...tableroDTO, usuarios: [{ ...u0, promedio_diario: { ...u0.promedio_diario!, visitas: "2.17" } }] } as never), /promedio_diario\.visitas/);
+    esRespuestaInvalida(() => dtoToTablero({ ...tableroDTO, eje: { desde_hora: "6", hasta_hora: 21 } } as never), /eje\.desde_hora/);
+    esRespuestaInvalida(() => dtoToTablero({ ...tableroDTO, usuarios: [{ ...u0, ultimo_movimiento: { id: "x", tipo: "llamada", hora: "2026-10-14T22:10:00Z" } }] } as never), /ultimo_movimiento\.tipo/);
+  });
+
+  it("una cuenta sin columna (v2.1) es inválida", () => {
+    const v21 = sin(cuentasDTO.cuentas[0], "columna");
+    esRespuestaInvalida(() => dtoToCuentas({ ...cuentasDTO, cuentas: [v21 as never] }), /cuenta\.columna/);
+  });
+
+  it("conteos de cuentas en columnas", () => {
+    expect(dtoToCuentas(cuentasDTO).conteos).toEqual({ porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46, total: 232 });
+  });
+
+  it("rechaza una columna desconocida en una cuenta", () => {
+    esRespuestaInvalida(() => dtoToCuentas({ ...cuentasDTO, cuentas: [{ ...cuentasDTO.cuentas[0], columna: "volver" }] }), /columna/);
+  });
+
+  it("condonaciones de la jornada traen importe; hoy, eje y horario", () => {
+    const j = dtoToJornada(jornadaDTO);
+    expect(j.resumen.condonaciones).toEqual({ n: 1, importe: "50.00" });
+    expect(j.hoy).toBe("2026-10-14");
+    expect(j.eje).toEqual({ desdeHora: 6, hastaHora: 21 });
+    expect(j.horario).toBeNull();
+    const conHorario = dtoToJornada({ ...jornadaDTO, horario: { desde_hora: "08:00", hasta_hora: "18:30" } });
+    expect(conHorario.horario).toEqual({ desdeHora: "08:00", hastaHora: "18:30" });
+  });
+
+  it("condonaciones como entero (v2.1) es inválido en la jornada", () => {
+    esRespuestaInvalida(
+      () => dtoToJornada({ ...jornadaDTO, resumen: { ...jornadaDTO.resumen, condonaciones: 2 } } as never),
+      /resumen\.condonaciones/,
+    );
+  });
+
+  it("ficha por usuario con días navegables", () => {
+    const f = dtoToFichaUsuario(fichaUsuarioDTO);
+    expect(f.diasNavegables[f.diasNavegables.length - 1]).toBe(f.hoy);
+    expect(f.inicioSemanaDia).toBe("2026-10-09");
+    expect(f.eje).toEqual({ desdeHora: 6, hastaHora: 21 });
+    expect(f.usuario.uid).toBe("abc123");
+    expect(f.periodo).toBe("hoy");
+    expect(dtoToFichaUsuario({ ...fichaUsuarioDTO, inicio_semana_dia: null }).inicioSemanaDia).toBeNull();
+  });
+
+  it("ficha sin dias_navegables o con un día que no es texto es inválida", () => {
+    const sinDias = sin(fichaUsuarioDTO, "dias_navegables");
+    esRespuestaInvalida(() => dtoToFichaUsuario(sinDias as never), /dias_navegables/);
+    esRespuestaInvalida(() => dtoToFichaUsuario({ ...fichaUsuarioDTO, dias_navegables: [20261014] } as never), /dias_navegables/);
   });
 });

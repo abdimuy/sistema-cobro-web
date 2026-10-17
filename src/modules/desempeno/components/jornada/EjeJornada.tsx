@@ -19,7 +19,7 @@ function conteoDe(jornada: Jornada, tipo: TipoActividad): number {
   const r = jornada.resumen;
   if (tipo === "pago") return r.pagos.n;
   if (tipo === "visita") return r.visitas;
-  return r.condonaciones;
+  return r.condonaciones.n;
 }
 const HORAS = Array.from(
   { length: HORA_FIN_EJE - HORA_INICIO_EJE + 1 },

@@ -166,7 +166,7 @@ export function TableroFila({
         <InfoRapida contenido={<TarjetaCuentas usuario={u} />}>
           <span tabIndex={0} className="block cursor-help">
             <span className="text-[13px]">
-              <span className={DISPARADOR}>Faltan</span> <b className="font-medium">{u.coberturaPorSegmento.sinNada}</b>{" "}
+              <span className={DISPARADOR}>Faltan</span> <b className="font-medium">{u.coberturaPorColumna.sinNada}</b>{" "}
               de {u.cobertura.total}
             </span>
             <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-muted">

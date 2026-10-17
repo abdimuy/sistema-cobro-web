@@ -31,12 +31,30 @@ export type PagosPorForma = {
   readonly cheque: Conteo;
 };
 
-export type CoberturaPorSegmento = {
-  readonly sinVisitar: number;
-  readonly volver: number;
-  readonly despues: number;
+// Contrato v2.2 (D18): por_visitar + no_paga + pagados == cobertura.total;
+// `sinNada` es el filtro de cobertura (total − con_algo), no una columna.
+export type CoberturaPorColumna = {
+  readonly porVisitar: number;
+  readonly noPaga: number;
   readonly pagados: number;
   readonly sinNada: number;
+};
+
+export type Eje = { readonly desdeHora: number; readonly hastaHora: number };
+
+export type UltimoMovimiento = {
+  readonly id: string;
+  readonly tipo: TipoActividad;
+  readonly hora: string;
+};
+
+// Promedio por día de la semana en curso; null en periodo "hoy" y en semana
+// vencida. `visitas` es decimal (2 cifras) y `pagosImporte` dinero en string.
+export type PromedioDiario = {
+  readonly dias: number;
+  readonly minutosActivos: number;
+  readonly pagosImporte: string;
+  readonly visitas: number;
 };
 
 // Cobro de la semana del usuario. `falta` (esperado − cobrado) lo calcula el
@@ -50,7 +68,7 @@ export type CobroSemana = {
 };
 
 // UsuarioTablero: una fila del tablero = un usuario de Firestore (D1). Sin
-// totales del equipo (D14). `cobertura`, `coberturaPorSegmento` y `cobro` son
+// totales del equipo (D14). `cobertura`, `coberturaPorColumna` y `cobro` son
 // siempre de la semana del usuario aunque el periodo sea "hoy" (contrato §2).
 // Un usuario no configurado trae métricas en cero, `lineas = []` y puede traer
 // `zonaId`, `zonaNombre`, `inicioSemana` y `cobro.pct` en null.
@@ -77,14 +95,33 @@ export type UsuarioTablero = {
   readonly noAplicados: Conteo;
   readonly visitas: number;
   readonly cobertura: { readonly conAlgo: number; readonly total: number };
-  readonly coberturaPorSegmento: CoberturaPorSegmento;
+  readonly semanaVencida: boolean;
+  readonly ultimoMovimiento: UltimoMovimiento | null;
+  readonly coberturaPorColumna: CoberturaPorColumna;
+  readonly promedioDiario: PromedioDiario | null;
   readonly cobro: CobroSemana;
   readonly lineas: readonly LineaDelDia[];
 };
 
 export type Tablero = {
   readonly generadoAt: string;
+  readonly hoy: string;
+  readonly eje: Eje;
   readonly periodo: Periodo;
   readonly pausaMin: number;
   readonly usuarios: readonly UsuarioTablero[];
+};
+
+// FichaUsuario: GET /v2/desempeno/usuarios/{uid} (contrato v2.2 §8). Un solo
+// usuario con su eje, el día de inicio de semana y los días navegables que
+// calcula el servidor.
+export type FichaUsuario = {
+  readonly generadoAt: string;
+  readonly hoy: string;
+  readonly periodo: Periodo;
+  readonly pausaMin: number;
+  readonly eje: Eje;
+  readonly usuario: UsuarioTablero;
+  readonly inicioSemanaDia: string | null;
+  readonly diasNavegables: readonly string[];
 };

@@ -216,7 +216,7 @@ describe("JornadaTab", () => {
   it("los conteos de los carriles del eje son los del resumen del API, no renglones contados", async () => {
     const port = new FakeDesempenoPort();
     port.jornadaResponse = makeJornada({
-      resumen: { ...makeJornada().resumen, pagos: { n: 31, importe: "8600.00" }, visitas: 13, condonaciones: 2 },
+      resumen: { ...makeJornada().resumen, pagos: { n: 31, importe: "8600.00" }, visitas: 13, condonaciones: { n: 2, importe: "100.00" } },
     });
     montar({ port });
     await screen.findAllByTestId("eje-punto");

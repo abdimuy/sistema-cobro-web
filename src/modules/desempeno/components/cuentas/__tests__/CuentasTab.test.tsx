@@ -20,10 +20,10 @@ function montar(port = new FakeDesempenoPort(), onAbrirCuenta = vi.fn()) {
 const ultima = (port: FakeDesempenoPort) => port.cuentasCalls[port.cuentasCalls.length - 1].consulta;
 
 describe("CuentasTab", () => {
-  it("abre en Sin visitar, ordenado por más atrasos", async () => {
+  it("abre en Por visitar (D18), ordenado por más atrasos", async () => {
     const { port } = montar();
     await screen.findByText("GERARDO XICALE ANALCO");
-    expect(ultima(port)).toEqual({ segmento: "sin_visitar", q: "", orden: "atrasos", dir: "desc" });
+    expect(ultima(port)).toEqual({ columna: "por_visitar", q: "", orden: "atrasos", dir: "desc" });
     expect(port.cuentasCalls[0].uid).toBe("uid-juan");
   });
 
@@ -34,9 +34,26 @@ describe("CuentasTab", () => {
     expect(within(screen.getByRole("button", { name: /Pagados/ })).getByText("140")).toBeInTheDocument();
     expect(within(screen.getByRole("button", { name: /Sin nada/ })).getByText("46")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /Pagados/ }));
-    await waitFor(() => expect(ultima(port).segmento).toBe("pagados"));
+    await waitFor(() => expect(ultima(port).columna).toBe("pagados"));
     await user.click(screen.getByRole("button", { name: /Sin nada/ }));
-    await waitFor(() => expect(ultima(port).segmento).toBe("sin_nada"));
+    await waitFor(() => expect(ultima(port).columna).toBe("sin_nada"));
+  });
+
+  // D18 / E-INF-018: tres columnas del servidor y "Sin nada" como filtro aparte.
+  it("pinta Por visitar, No paga, Pagados y el filtro Sin nada aparte", async () => {
+    const user = userEvent.setup();
+    const { port } = montar();
+    await screen.findByText("GERARDO XICALE ANALCO");
+    for (const etiqueta of ["Por visitar", "No paga", "Pagados", "Sin nada"]) {
+      expect(screen.getByRole("button", { name: new RegExp(etiqueta) })).toBeInTheDocument();
+    }
+    expect(screen.queryByRole("button", { name: /Volver|Después|Sin visitar/ })).not.toBeInTheDocument();
+    expect(within(screen.getByRole("button", { name: /Por visitar/ })).getByText("66")).toBeInTheDocument();
+    expect(within(screen.getByRole("button", { name: /No paga/ })).getByText("3")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /No paga/ }));
+    await waitFor(() => expect(ultima(port).columna).toBe("no_paga"));
+    await user.click(screen.getByRole("button", { name: /Sin nada/ }));
+    await waitFor(() => expect(ultima(port).columna).toBe("sin_nada"));
   });
 
   it("orden y búsqueda viajan al API", async () => {
@@ -101,7 +118,7 @@ describe("CuentasTab", () => {
       "desempeno_usuario_sin_inicio_semana",
       "el usuario no tiene inicio de semana",
     );
-    await user.click(screen.getByRole("button", { name: /Volver/ }));
+    await user.click(screen.getByRole("button", { name: /No paga/ }));
     expect(await screen.findByText("el usuario no tiene inicio de semana")).toBeInTheDocument();
   });
 

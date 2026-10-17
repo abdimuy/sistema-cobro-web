@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   esEstadoCuenta,
-  esSegmento,
+  COLUMNAS,
+  ETIQUETA_COLUMNA,
+  esColumna,
   esTrato,
   ESTADOS_CUENTA,
   TRATOS,
@@ -35,9 +37,14 @@ describe("catálogos del contrato", () => {
     expect(esEstadoCuenta(3)).toBe(false);
     expect(esTrato("sin_trabajar")).toBe(true);
     expect(esTrato("falta")).toBe(false);
-    expect(esSegmento("sin_visitar")).toBe(true);
-    // "sin_nada" es un filtro de la pestaña, no un segmento del contrato.
-    expect(esSegmento("sin_nada")).toBe(false);
+    expect(esColumna("no_paga")).toBe(true);
+    // "sin_nada" es un filtro de la pestaña, no una columna del contrato (DA-3).
+    expect(esColumna("sin_nada")).toBe(false);
+    // Los segmentos de v2.1 ya no existen.
+    expect(esColumna("volver")).toBe(false);
+    expect(esColumna("sin_visitar")).toBe(false);
+    expect(COLUMNAS).toEqual(["por_visitar", "no_paga", "pagados"]);
+    expect(ETIQUETA_COLUMNA).toEqual({ por_visitar: "Por visitar", no_paga: "No paga", pagados: "Pagados" });
   });
 
   it("las formas de cobro son los códigos del contrato v2 §1 (no existe Depósito)", () => {

@@ -26,9 +26,17 @@ export const TRATOS = [
 ] as const;
 export type Trato = (typeof TRATOS)[number];
 
-export const SEGMENTOS = ["sin_visitar", "volver", "despues", "pagados"] as const;
-export type Segmento = (typeof SEGMENTOS)[number];
+// Columnas del contrato v2.2 (D18): la columna de cada cuenta la decide el
+// servidor; "sin nada" no es columna sino un filtro de cobertura (DA-3).
+export const COLUMNAS = ["por_visitar", "no_paga", "pagados"] as const;
+export type Columna = (typeof COLUMNAS)[number];
+
+export const ETIQUETA_COLUMNA: Record<Columna, string> = {
+  por_visitar: "Por visitar",
+  no_paga: "No paga",
+  pagados: "Pagados",
+};
 
 export const esEstadoCuenta = (v: unknown): v is EstadoCuenta => esUno(ESTADOS_CUENTA, v);
 export const esTrato = (v: unknown): v is Trato => esUno(TRATOS, v);
-export const esSegmento = (v: unknown): v is Segmento => esUno(SEGMENTOS, v);
+export const esColumna = (v: unknown): v is Columna => esUno(COLUMNAS, v);

@@ -9,7 +9,8 @@ import type {
   PaginaActividad,
   Periodo,
   RefImagenes,
-  SegmentoFiltro,
+  ColumnaFiltro,
+  FichaUsuario,
   Tablero,
 } from "../../domain/entities";
 
@@ -24,7 +25,7 @@ export type ConsultaJornada = {
 export type ConsultaTablero = ConsultaJornada & { readonly periodo: Periodo };
 
 export type ConsultaCuentas = {
-  readonly segmento: SegmentoFiltro | null;
+  readonly columna: ColumnaFiltro | null;
   readonly q: string;
   readonly orden: OrdenCuentas;
   readonly dir: Direccion;
@@ -39,6 +40,8 @@ export type PaginaSolicitada = {
 // cumple en producción; FakeDesempenoPort en pruebas y mientras no hay API.
 export interface DesempenoPort {
   obtenerTablero(consulta: ConsultaTablero, signal?: AbortSignal): Promise<Tablero>;
+  // GET /v2/desempeno/usuarios/{uid} (contrato v2.2): un usuario con eje y días navegables.
+  obtenerUsuario(uid: string, consulta: ConsultaTablero, signal?: AbortSignal): Promise<FichaUsuario>;
   obtenerJornada(
     uid: string,
     fecha: string,

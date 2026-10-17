@@ -42,7 +42,7 @@ function valor(u: UsuarioTablero, clave: ClaveOrdenTablero): string | number | n
     case "visitas":
       return u.visitas;
     case "faltan":
-      return u.coberturaPorSegmento.sinNada;
+      return u.coberturaPorColumna.sinNada;
     case "cobro":
       return u.cobro.pct === null ? null : Number(u.cobro.pct);
   }

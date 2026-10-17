@@ -100,7 +100,7 @@ describe("FichaScreen", () => {
       "jornada",
       makeUsuarioTablero({
         cobertura: { conAlgo: 186, total: 232 },
-        coberturaPorSegmento: { sinVisitar: 46, volver: 20, despues: 3, pagados: 140, sinNada: 50 },
+        coberturaPorColumna: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 50 },
         cobro: { cobrado: "8600.00", esperado: "13050.00", falta: "4000.00", pct: "61.00" },
       }),
     );

@@ -87,13 +87,46 @@ describe("HttpDesempenoAdapter", () => {
     expect(url?.searchParams.has("tipo")).toBe(false);
   });
 
-  it("cuentas: segmento sin_nada", async () => {
+  it("cuentas: columna sin_nada, nunca segmento", async () => {
     let url: URL | undefined;
     server.use(...desempenoHandlers({ vistoPor: (u) => (url = u) }));
-    const c = await adapter().obtenerCuentas("abc123", { segmento: "sin_nada", q: "", orden: "atrasos", dir: "desc" });
-    expect(url?.searchParams.get("segmento")).toBe("sin_nada");
+    const c = await adapter().obtenerCuentas("abc123", { columna: "sin_nada", q: "", orden: "atrasos", dir: "desc" });
+    expect(url?.searchParams.get("columna")).toBe("sin_nada");
+    expect(url?.searchParams.has("segmento")).toBe(false);
     expect(url?.searchParams.has("q")).toBe(false);
     expect(c.conteos.total).toBe(232);
+  });
+
+  it("usuario: GET /v2/desempeno/usuarios/<uid> con periodo, pausa y contrato", async () => {
+    let url: URL | undefined;
+    server.use(...desempenoHandlers({ vistoPor: (u) => (url = u) }));
+    const f = await adapter().obtenerUsuario("abc 123", { periodo: "semana", pausaMin: 30, horario: { desde: "08:00", hasta: "18:00" } });
+    expect(url?.pathname).toBe("/v2/desempeno/usuarios/abc%20123");
+    expect(url?.searchParams.get("periodo")).toBe("semana");
+    expect(url?.searchParams.get("pausa_min")).toBe("30");
+    expect(url?.searchParams.get("desde_hora")).toBe("08:00");
+    expect(f.diasNavegables).toHaveLength(6);
+  });
+
+  // E-INF-018: sin contrato=2.2 el servidor sirve v2.1; toda petición por usuario lo manda.
+  it("toda petición a /v2/desempeno/usuarios* manda contrato=2.2", async () => {
+    const vistas: URL[] = [];
+    server.use(...desempenoHandlers({ vistoPor: (u) => vistas.push(u) }));
+    const a = adapter();
+    const consulta = { periodo: "hoy" as const, pausaMin: 45, horario: null };
+    await a.obtenerTablero(consulta);
+    await a.obtenerUsuario("abc123", consulta);
+    await a.obtenerJornada("abc123", "2026-10-14", { pausaMin: 45, horario: null });
+    await a.listarActividad("abc123", FILTROS_ACTIVIDAD_INICIALES, { cursor: null, limit: 100 });
+    await a.obtenerCuentas("abc123", { columna: null, q: "", orden: "cliente", dir: "asc" });
+    expect(vistas.map((u) => u.pathname)).toEqual([
+      "/v2/desempeno/usuarios",
+      "/v2/desempeno/usuarios/abc123",
+      "/v2/desempeno/usuarios/abc123/jornada",
+      "/v2/desempeno/usuarios/abc123/actividad",
+      "/v2/desempeno/usuarios/abc123/cuentas",
+    ]);
+    for (const u of vistas) expect(u.searchParams.get("contrato"), u.pathname).toBe("2.2");
   });
 
   it("catálogos: GET /v2/desempeno/catalogos", async () => {

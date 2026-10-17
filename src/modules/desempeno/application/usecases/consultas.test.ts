@@ -40,7 +40,7 @@ describe("casos de uso de desempeño (pass-through al puerto)", () => {
 
   it("obtenerCuentas, listarImagenes y descargarImagen reenvían sus argumentos", async () => {
     const port = new FakeDesempenoPort();
-    const consulta = { segmento: "sin_nada" as const, q: "", orden: "atrasos" as const, dir: "desc" as const };
+    const consulta = { columna: "sin_nada" as const, q: "", orden: "atrasos" as const, dir: "desc" as const };
     const ref = { tipo: "visita" as const, visitaId: "v-1" };
     await obtenerCuentas(port, "uid-juan", consulta);
     await listarImagenes(port, ref);

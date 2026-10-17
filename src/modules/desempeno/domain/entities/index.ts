@@ -38,12 +38,16 @@ export type {
   MotivoNoConfigurado,
   UltimaActividadUsuario,
   PagosPorForma,
-  CoberturaPorSegmento,
+  CoberturaPorColumna,
+  Eje,
+  UltimoMovimiento,
+  PromedioDiario,
   CobroSemana,
   UsuarioTablero,
   Tablero,
+  FichaUsuario,
 } from "./Tablero";
-export type { ResumenJornada, Jornada } from "./Jornada";
+export type { ResumenJornada, HorarioEco, Jornada } from "./Jornada";
 export {
   ORDENES_ACTIVIDAD,
   REGISTRADO_POR_OFICINA,
@@ -63,7 +67,7 @@ export type {
   Cuenta,
   ConteosCuentas,
   CuentasSemana,
-  SegmentoFiltro,
+  ColumnaFiltro,
   OrdenCuentas,
 } from "./Cuentas";
 export type { ImagenAdjunta } from "./Imagen";

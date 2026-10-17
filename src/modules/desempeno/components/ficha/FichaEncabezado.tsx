@@ -99,7 +99,7 @@ export function FichaEncabezado({
         />
         <Cifra
           titulo="Faltan"
-          valor={u.configurado ? `${u.coberturaPorSegmento.sinNada} de ${u.cobertura.total}` : "—"}
+          valor={u.configurado ? `${u.coberturaPorColumna.sinNada} de ${u.cobertura.total}` : "—"}
         />
         <Cifra
           titulo="% cobro semana"
