@@ -1,10 +1,10 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Settings } from "lucide-react";
-import type { Actividad, Cuenta, Jornada, Tablero } from "../domain/entities";
-import { useTablero } from "../presentation/hooks/useTablero";
+import type { Actividad, Cuenta, FichaUsuario, Jornada } from "../domain/entities";
+import { useUsuario } from "../presentation/hooks/useUsuario";
 import { usePreferencias } from "../presentation/context/usePreferencias";
-import { horaCorta, hoyDeNegocio } from "./lib/format";
+import { horaCorta } from "./lib/format";
 import { mensajeSinConfigurar } from "./lib/motivoNoConfigurado";
 import { ErrorConReintento, EstadoVacio } from "./comunes/Estados";
 import { TableroScreen } from "./tablero/TableroScreen";
@@ -12,6 +12,8 @@ import { LineaActividad } from "./linea/LineaActividad";
 import { SelectorVista } from "./linea/SelectorVista";
 import { Leyenda } from "./linea/Leyenda";
 import { FichaScreen } from "./ficha/FichaScreen";
+import { FichaEsqueleto } from "./ficha/FichaEsqueleto";
+import type { CargaFicha } from "./ficha/FichaEncabezado";
 import { esPestana, type PestanaFicha } from "./ficha/pestanas";
 import { RUTA_CONFIGURAR_USUARIO } from "./ficha/sinConfigurar";
 import { describirActividades, type RefVenta } from "./jornada/describirActividades";
@@ -36,20 +38,33 @@ export function DesempenoScreen({ puedeConfigurar }: { puedeConfigurar: boolean 
 // leyenda (carril 1), y las fotos y la pila de modales (carril 3).
 function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar: boolean }) {
   const [params, setParams] = useSearchParams();
-  const { tablero: recibido, error, refresh } = useTablero();
-  // Al cambiar Hoy/Semana (otra consulta) useCargaRemota borra los datos; la
-  // ficha conserva el último tablero recibido mientras llega el nuevo para no
-  // desmontarse (lo tecleado en Actividad se pierde). Las cifras siguen
-  // rotuladas con el periodo de SUS datos (tablero.periodo), nunca con el nuevo.
-  const [ultimo, setUltimo] = useState<Tablero | null>(null);
-  if (recibido && recibido !== ultimo) setUltimo(recibido);
-  const tablero = recibido ?? ultimo;
+  const { periodo } = usePreferencias();
+  const { ficha, error, refresh } = useUsuario(uid);
+  // Al cambiar Hoy/Semana (otra consulta) useCargaRemota borra la ficha. Se
+  // recuerda la última SÓLO para sostener el marco (nombre, zona, pestañas, lo
+  // tecleado en Actividad); sus cifras nunca se pintan bajo otro periodo (D23).
+  const [ultima, setUltima] = useState<FichaUsuario | null>(null);
+  if (ficha && ficha !== ultima) setUltima(ficha);
+  const candidata = ficha ?? ultima;
+  const base = candidata && candidata.usuario.uid === uid ? candidata : null;
+  const vigente = ficha && ficha.periodo === periodo ? ficha : null;
+  const cargando = vigente === null && error === null;
+  const [lento, setLento] = useState(false);
+  useEffect(() => {
+    if (!cargando) {
+      setLento(false);
+      return undefined;
+    }
+    const t = window.setTimeout(() => setLento(true), 1000);
+    return () => window.clearTimeout(t);
+  }, [cargando, periodo]);
   const { vista, horario } = usePreferencias();
   const [pila, setPila] = useState<ModalFicha[]>([]);
-  const hoy = hoyDeNegocio();
   const crudaPestana = params.get("pestana");
   const pestana: PestanaFicha = esPestana(crudaPestana) ? crudaPestana : "jornada";
   const crudoDia = params.get("dia") ?? "";
+  // `hoy` es el del servidor (D10): la Mac no decide qué día es.
+  const hoy = base?.hoy ?? "";
   const dia = FORMATO_DIA.test(crudoDia) && crudoDia <= hoy ? crudoDia : hoy;
 
   const cambiarParam = useCallback(
@@ -68,30 +83,52 @@ function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar
   );
   const volver = () => setParams({});
 
-  if (!tablero) {
-    if (error) {
+  const volverAlEquipo = (
+    <button
+      type="button"
+      onClick={volver}
+      className="h-9 rounded-full px-4 text-[13px] ring-1 ring-border hover:bg-muted"
+    >
+      Volver al equipo
+    </button>
+  );
+
+  if (!base) {
+    if (error?.code === "desempeno_usuario_not_found") {
       return (
-        <div className="p-10">
-          <ErrorConReintento titulo="No se pudo cargar la ficha" mensaje={error.message} onReintentar={refresh} />
+        <div className="flex flex-col items-center gap-3 p-10">
+          <EstadoVacio
+            titulo="No encontramos a este usuario"
+            detalle="Puede que ya no tenga acceso o cambió de zona."
+          />
+          {volverAlEquipo}
         </div>
       );
     }
-    return <div aria-busy="true" className="m-10 h-48 animate-pulse rounded-[14px] bg-dsm-tarjeta" />;
+    if (error?.code === "desempeno_zona_excluida") {
+      return (
+        <div className="flex flex-col items-center gap-3 p-10">
+          <EstadoVacio titulo="Zona excluida" detalle={error.message} />
+          {volverAlEquipo}
+        </div>
+      );
+    }
+    if (error) {
+      return (
+        <div className="p-10">
+          <ErrorConReintento titulo="No se pudo cargar" mensaje={error.message} onReintentar={refresh} />
+        </div>
+      );
+    }
+    return <FichaEsqueleto completo />;
   }
-  const usuario = tablero.usuarios.find((u) => u.uid === uid);
-  if (!usuario || !usuario.configurado) {
+  const usuario = base.usuario;
+  if (!usuario.configurado) {
     return (
       <div className="flex flex-col items-center gap-3 p-10">
-        <EstadoVacio
-          titulo={usuario ? usuario.nombre : "No encontramos a este usuario"}
-          detalle={
-            usuario
-              ? mensajeSinConfigurar(usuario.motivoNoConfigurado)
-              : "Puede que ya no tenga acceso o cambió de zona."
-          }
-        />
+        <EstadoVacio titulo={usuario.nombre} detalle={mensajeSinConfigurar(usuario.motivoNoConfigurado)} />
         <div className="flex items-center gap-2">
-          {usuario && puedeConfigurar && (
+          {puedeConfigurar && (
             <Link
               to={RUTA_CONFIGURAR_USUARIO}
               className="inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-[13px] ring-1 ring-border hover:bg-muted"
@@ -100,42 +137,39 @@ function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar
               Configurar en Usuarios
             </Link>
           )}
-          <button
-            type="button"
-            onClick={volver}
-            className="h-9 rounded-full px-4 text-[13px] ring-1 ring-border hover:bg-muted"
-          >
-            Volver al equipo
-          </button>
+          {volverAlEquipo}
         </div>
       </div>
     );
   }
 
-  const opcionesRegistro = tablero.usuarios
-    .filter((u) => u.configurado && u.zonaId === usuario.zonaId)
-    .map((u) => ({ valor: u.uid, etiqueta: u.nombre }));
+  // La ficha sólo conoce a su usuario: el filtro "Registró" ofrece a ese usuario
+  // y Oficina (el resto de la zona exigiría pedir el tablero de la flota).
+  const opcionesRegistro = [{ valor: usuario.uid, etiqueta: usuario.nombre }];
+  const carga: CargaFicha = vigente
+    ? { tipo: "lista" }
+    : error
+      ? { tipo: "error", mensaje: error.message, onReintentar: refresh }
+      : { tipo: "cargando", mensaje: lento ? (periodo === "semana" ? "Cargando semana…" : "Cargando hoy…") : null };
 
   return (
     <>
       <FichaScreen
-        usuario={usuario}
-        periodo={tablero.periodo}
-        generadoAt={tablero.generadoAt}
+        ficha={base}
+        carga={carga}
         opcionesRegistro={opcionesRegistro}
         pestana={pestana}
         dia={dia}
-        hoy={hoy}
         onCambiarPestana={(p) => cambiarParam("pestana", p)}
         onCambiarDia={(d) => cambiarParam("dia", d)}
         onVolver={volver}
         aviso={
-          error && (
+          error && vigente && (
             <div
               role="status"
               className="flex items-center justify-between rounded-full bg-dsm-ambar-fondo px-4 py-2 text-[13px] text-dsm-ambar"
             >
-              {`No se pudo actualizar · datos de ${horaCorta(tablero.generadoAt)}`}
+              {`No se pudo actualizar · datos de ${horaCorta(base.generadoAt)}`}
               <button type="button" onClick={refresh} className="underline underline-offset-2">
                 Reintentar
               </button>

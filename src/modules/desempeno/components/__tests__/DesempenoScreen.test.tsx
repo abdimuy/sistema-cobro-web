@@ -1,12 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { DesempenoScreen } from "../DesempenoScreen";
+import { DomainError } from "../../domain/errors";
+import type { FichaUsuario } from "../../domain/entities";
 import { DesempenoProvider } from "../../presentation/context/DesempenoProvider";
 import {
   FakeDesempenoPort,
-  makeTablero,
+  makeFichaUsuario,
   makeUsuarioSinConfigurar,
   makeUsuarioTablero,
 } from "../../application/__tests__/fakeDesempenoPort";
@@ -135,7 +137,7 @@ describe("DesempenoScreen (carriles conectados)", () => {
     expect(screen.getByTestId("venta-modal")).toHaveTextContent("1610045-9950");
   });
 
-  it("Actividad: 'Registró' ofrece solo usuarios de la misma zona y Oficina", async () => {
+  it("Actividad: 'Registró' ofrece al usuario de la ficha y Oficina", async () => {
     montar("/?usuario=uid-juan&pestana=actividad");
     const select = await screen.findByLabelText("Registró");
     expect(within(select).getByRole("option", { name: "Juan Carlos Méndez" })).toBeInTheDocument();
@@ -145,22 +147,26 @@ describe("DesempenoScreen (carriles conectados)", () => {
 
   it("usuario inexistente: lo dice y ofrece volver al equipo", async () => {
     const user = userEvent.setup();
-    montar("/?usuario=uid-nadie");
+    const port = new FakeDesempenoPort();
+    port.throwOnNext.obtenerUsuario = new DomainError("desempeno_usuario_not_found", "no existe el usuario");
+    montar("/?usuario=uid-nadie", port);
     expect(await screen.findByText("No encontramos a este usuario")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Volver al equipo" }));
     expect(screen.getByTestId("ubicacion")).toHaveTextContent(/^\/$/);
   });
 
   it("usuario sin zona: explica por qué no hay ficha y enlaza a Usuarios", async () => {
-    montar("/?usuario=uid-norma");
+    const port = new FakeDesempenoPort();
+    port.usuarioResponse = makeFichaUsuario({ usuario: makeUsuarioSinConfigurar() });
+    montar("/?usuario=uid-norma", port);
     expect(await screen.findByText(/No tiene zona asignada/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Configurar/ })).toHaveAttribute("href", "/settings");
   });
 
   it("inicio de semana en el futuro (contrato v2.1): lo explica, sin enlace si no puede configurar", async () => {
     const port = new FakeDesempenoPort();
-    port.tableroResponse = makeTablero({
-      usuarios: [makeUsuarioTablero(), makeUsuarioSinConfigurar({ motivoNoConfigurado: "inicio_semana_futuro" })],
+    port.usuarioResponse = makeFichaUsuario({
+      usuario: makeUsuarioSinConfigurar({ motivoNoConfigurado: "inicio_semana_futuro" }),
     });
     montar("/?usuario=uid-norma", port, false);
     expect(await screen.findByText(/Su inicio de semana todavía no llega/)).toBeInTheDocument();
@@ -173,10 +179,10 @@ describe("DesempenoScreen (carriles conectados)", () => {
     const port = montar("/?usuario=uid-juan&pestana=actividad");
     const buscar = await screen.findByLabelText("Buscar cliente o folio");
     await user.type(buscar, "JUANA");
-    // La consulta de Semana se queda en vuelo: mientras, la ficha sigue ahí.
-    port.tableroResponse = () =>
+    // La consulta de Semana se queda en vuelo: mientras, el marco sigue ahí.
+    port.usuarioResponse = () =>
       new Promise((r) => {
-        liberar = () => r(makeTablero({ periodo: "semana" }));
+        liberar = () => r(makeFichaUsuario({ periodo: "semana" }));
       });
     await user.click(screen.getByRole("button", { name: "Semana" }));
     expect(screen.getByRole("heading", { name: "Juan Carlos Méndez" })).toBeInTheDocument();
@@ -186,26 +192,159 @@ describe("DesempenoScreen (carriles conectados)", () => {
     expect(screen.getByLabelText("Buscar cliente o folio")).toHaveValue("JUANA");
   });
 
-  it("si falla la recarga con datos previos: aviso discreto con la hora de los datos, la ficha sigue", async () => {
-    const user = userEvent.setup();
-    const port = montar("/?usuario=uid-juan&pestana=actividad");
+  it("la ficha pide sólo a su usuario, nunca el tablero de la flota (T20)", async () => {
+    const port = montar("/?usuario=uid-juan");
     await screen.findByRole("heading", { name: "Juan Carlos Méndez" });
-    port.throwOnNext.obtenerTablero = new Error("se cayó");
-    port.tableroResponse = makeTablero({ periodo: "semana" });
-    await user.click(screen.getByRole("button", { name: "Semana" }));
-    expect(await screen.findByText("No se pudo actualizar · datos de 16:40")).toBeInTheDocument();
-    expect(screen.queryByText("No se pudo cargar la ficha")).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Juan Carlos Méndez" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Reintentar" }));
-    expect(await screen.findByText("Cobrado en la semana")).toBeInTheDocument();
-    expect(screen.queryByText(/No se pudo actualizar/)).not.toBeInTheDocument();
+    expect(port.tableroCalls).toHaveLength(0);
+    expect(port.usuarioCalls[port.usuarioCalls.length - 1]?.uid).toBe("uid-juan");
   });
 
-  it("si el tablero no carga, la ficha muestra el error con Reintentar", async () => {
+  it("toggle a Semana: se marca al instante, las cifras pasan a esqueleto, 'Cargando semana…' tras 1 s, nunca la cifra de Hoy (T20, D23)", async () => {
+    const user = userEvent.setup();
+    const port = montar("/?usuario=uid-juan");
+    expect(await screen.findByText("$8,600")).toBeInTheDocument();
+    let soltar: (f: FichaUsuario) => void = () => {};
+    port.usuarioResponse = () =>
+      new Promise<FichaUsuario>((r) => {
+        soltar = r;
+      });
+    await user.click(screen.getByRole("button", { name: "Semana" }));
+    expect(screen.getByRole("button", { name: "Semana" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByText("$8,600")).not.toBeInTheDocument();
+    expect(screen.getByTestId("ficha-esqueleto")).toBeInTheDocument();
+    expect(screen.getByRole("tablist")).toBeInTheDocument();
+    expect(screen.queryByText("Cargando semana…")).not.toBeInTheDocument();
+    expect(await screen.findByText("Cargando semana…", {}, { timeout: 2500 })).toBeInTheDocument();
+    expect(screen.queryByText("$8,600")).not.toBeInTheDocument();
+    act(() =>
+      soltar(
+        makeFichaUsuario({
+          periodo: "semana",
+          usuario: makeUsuarioTablero({ pagos: { n: 20, importe: "3000.00" } }),
+        }),
+      ),
+    );
+    expect(await screen.findByText("$3,000")).toBeInTheDocument();
+    expect(screen.queryByTestId("ficha-esqueleto")).not.toBeInTheDocument();
+  });
+
+  it("respuesta fuera de orden: la de Semana llega tarde, ya con Hoy elegido, y no se pinta (Review Focus 4)", async () => {
+    const user = userEvent.setup();
+    const port = montar("/?usuario=uid-juan");
+    await screen.findByText("$8,600");
+    const pendientes: Array<(f: FichaUsuario) => void> = [];
+    port.usuarioResponse = () =>
+      new Promise<FichaUsuario>((r) => {
+        pendientes.push(r);
+      });
+    await user.click(screen.getByRole("button", { name: "Semana" }));
+    await user.click(screen.getByRole("button", { name: "Hoy" }));
+    await act(async () => {
+      pendientes[0](
+        makeFichaUsuario({
+          periodo: "semana",
+          usuario: makeUsuarioTablero({ pagos: { n: 20, importe: "3000.00" } }),
+        }),
+      );
+    });
+    expect(screen.queryByText("$3,000")).not.toBeInTheDocument();
+    expect(screen.queryByText("$8,600")).not.toBeInTheDocument();
+    await act(async () => {
+      pendientes[1](makeFichaUsuario({ periodo: "hoy" }));
+    });
+    expect(await screen.findByText("$8,600")).toBeInTheDocument();
+  });
+
+  it("si falla la carga: 'No se pudo cargar' con Reintentar", async () => {
+    const user = userEvent.setup();
     const port = new FakeDesempenoPort();
-    port.throwOnNext.obtenerTablero = new Error("se cayó");
+    port.throwOnNext.obtenerUsuario = new DomainError("desempeno_no_disponible", "la base de datos no respondió a tiempo");
     montar("/?usuario=uid-juan", port);
-    expect(await screen.findByText("No se pudo cargar la ficha")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Reintentar/ })).toBeInTheDocument();
+    expect(await screen.findByText("No se pudo cargar")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    expect(await screen.findByRole("heading", { name: "Juan Carlos Méndez" })).toBeInTheDocument();
+    expect(port.usuarioCalls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("si falla la carga de Semana con el marco puesto: 'No se pudo cargar' y Reintentar sin cifras de Hoy", async () => {
+    const user = userEvent.setup();
+    const port = montar("/?usuario=uid-juan");
+    await screen.findByText("$8,600");
+    port.throwOnNext.obtenerUsuario = new DomainError("desempeno_no_disponible", "la base de datos no respondió a tiempo");
+    port.usuarioResponse = makeFichaUsuario({ periodo: "semana" });
+    await user.click(screen.getByRole("button", { name: "Semana" }));
+    expect(await screen.findByText("No se pudo cargar")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Juan Carlos Méndez" })).toBeInTheDocument();
+    expect(screen.queryByText("$8,600")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    expect(await screen.findByText("Cobrado en la semana")).toBeInTheDocument();
+  });
+
+  it("si falla la actualización con datos del mismo periodo: aviso discreto con la hora de los datos, la ficha sigue", async () => {
+    const port = new FakeDesempenoPort();
+    montar("/?usuario=uid-juan&pestana=actividad", port);
+    await screen.findByRole("heading", { name: "Juan Carlos Méndez" });
+    // El tick de cada minuto reintenta la misma consulta (refresh).
+    port.throwOnNext.obtenerUsuario = new Error("se cayó");
+    vi.useRealTimers();
+    // refresh se dispara con el botón Reintentar del aviso, que solo existe tras fallar:
+    // se fuerza con la visibilidad de la ventana (useCadaMinuto refresca al volver).
+    await act(async () => {
+      Object.defineProperty(document, "hidden", { value: true, configurable: true });
+      document.dispatchEvent(new Event("visibilitychange"));
+      Object.defineProperty(document, "hidden", { value: false, configurable: true });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(await screen.findByText("No se pudo actualizar · datos de 16:40")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Juan Carlos Méndez" })).toBeInTheDocument();
+  });
+
+  it("semana vencida: aviso con inicio y último movimiento, tarjetas en — y sin cifras (T20, D19)", async () => {
+    const port = new FakeDesempenoPort();
+    port.usuarioResponse = makeFichaUsuario({
+      usuario: makeUsuarioTablero({
+        semanaVencida: true,
+        inicioSemana: "2025-11-11T14:00:00Z",
+        ultimoMovimiento: { id: "visita:x", tipo: "visita", hora: "2026-09-05T16:00:00Z" },
+        pagos: { n: 0, importe: "0.00" },
+      }),
+    });
+    montar("/?usuario=uid-juan", port);
+    expect(
+      await screen.findByText("Semana vencida · inicio mar 11 nov · último movimiento sáb 5 sep"),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(7);
+    expect(screen.queryByText("$0")).not.toBeInTheDocument();
+  });
+
+  it("semana vencida sin movimiento en 92 días lo dice", async () => {
+    const port = new FakeDesempenoPort();
+    port.usuarioResponse = makeFichaUsuario({
+      usuario: makeUsuarioTablero({ semanaVencida: true, ultimoMovimiento: null }),
+    });
+    montar("/?usuario=uid-juan", port);
+    expect(await screen.findByText(/último movimiento sin movimiento en 92 días/)).toBeInTheDocument();
+  });
+
+  it("el día de la URL se acota con el hoy del servidor, no con el reloj de la Mac (T20, D10)", async () => {
+    // Ya es 16 en UTC y en la Mac simulada, todavía 15 en CDMX: el servidor dice 15.
+    vi.setSystemTime(new Date("2026-10-16T05:30:00Z"));
+    const port = new FakeDesempenoPort();
+    port.usuarioResponse = makeFichaUsuario({ hoy: "2026-10-15" });
+    montar("/?usuario=uid-juan&dia=2026-10-16", port);
+    await screen.findByRole("heading", { name: "Juan Carlos Méndez" });
+    await screen.findByRole("list", { name: "Movimientos en orden" });
+    expect(port.jornadaCalls[port.jornadaCalls.length - 1]?.fecha).toBe("2026-10-15");
+  });
+
+  it("usuario de zona excluida (409): lo dice con el mensaje del servidor y ofrece volver", async () => {
+    const port = new FakeDesempenoPort();
+    port.throwOnNext.obtenerUsuario = new DomainError(
+      "desempeno_zona_excluida",
+      "la zona del usuario está excluida de desempeño",
+    );
+    montar("/?usuario=uid-juan", port);
+    expect(await screen.findByText("la zona del usuario está excluida de desempeño")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Volver al equipo" })).toBeInTheDocument();
   });
 });

@@ -6,6 +6,7 @@ import type { PestanaFicha } from "../pestanas";
 import { esPestana } from "../pestanas";
 import { renderConDesempeno } from "../../../test/renderConDesempeno";
 import {
+  makeFichaUsuario,
   makeUsuarioSinConfigurar,
   makeUsuarioTablero,
 } from "../../../application/__tests__/fakeDesempenoPort";
@@ -21,13 +22,11 @@ function montar(pestana: PestanaFicha = "jornada", usuario: UsuarioTablero = mak
   };
   renderConDesempeno(
     <FichaScreen
-      usuario={usuario}
-      periodo="hoy"
-      generadoAt="2026-10-14T22:40:00Z"
+      ficha={makeFichaUsuario({ usuario })}
+      carga={{ tipo: "lista" }}
       opcionesRegistro={[{ valor: "uid-juan", etiqueta: "Juan Carlos Méndez" }]}
       pestana={pestana}
       dia="2026-10-14"
-      hoy="2026-10-14"
       {...props}
     />,
   );

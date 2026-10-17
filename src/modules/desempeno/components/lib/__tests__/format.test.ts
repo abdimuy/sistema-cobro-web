@@ -79,9 +79,19 @@ describe("duraciones, dinero y textos", () => {
 });
 
 describe("textoInicioSemana (fecha y hora de la oficina)", () => {
-  it("mismo día: hace 0 d", () => {
+  it("mismo día de negocio que hoy: termina en \"· hoy\", no en \"hace 0 d\" (D28)", () => {
     expect(textoInicioSemana("2026-10-15T14:12:00Z", "2026-10-15")).toBe(
-      "Semana desde jue 15 oct, 08:12 · hace 0 d",
+      "Semana desde jue 15 oct, 08:12 · hoy",
+    );
+    // 23:00Z = 17:00 en CDMX: sigue siendo el 15, aunque la hora aún no llegue.
+    expect(textoInicioSemana("2026-10-15T23:00:00Z", "2026-10-15")).toBe(
+      "Semana desde jue 15 oct, 17:00 · hoy",
+    );
+  });
+
+  it("días anteriores siguen en \"hace N d\"", () => {
+    expect(textoInicioSemana("2026-10-12T14:00:00Z", "2026-10-15")).toBe(
+      "Semana desde lun 12 oct, 08:00 · hace 3 d",
     );
   });
 

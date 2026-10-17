@@ -1,6 +1,10 @@
 import type { MotivoNoConfigurado, Periodo, UsuarioTablero } from "../../domain/entities";
 import { dinero, duracionCorta, horaCorta, porcentaje, textoInicioSemana } from "../lib/format";
 import { Link } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorConReintento } from "../comunes/Estados";
+import { AvisoSemanaVencida } from "./AvisoSemanaVencida";
+import { FichaEsqueleto } from "./FichaEsqueleto";
 import { PuntoEstado } from "../comunes/PuntoEstado";
 import { SegmentoPeriodo } from "../comunes/SegmentoPeriodo";
 import { RUTA_CONFIGURAR_USUARIO } from "./sinConfigurar";
@@ -10,6 +14,18 @@ const ESTADO = {
   sin_actividad: "Sin actividad",
   no_ha_empezado: "No ha empezado",
 } as const;
+
+// "No ha empezado" es un estado de hoy: en Semana se rotula como tal.
+function textoEstado(estado: keyof typeof ESTADO, periodo: Periodo): string {
+  return estado === "no_ha_empezado" && periodo === "semana" ? "Hoy sin actividad" : ESTADO[estado];
+}
+
+// Estado de la carga de las cifras (D23): el marco no se desmonta; las cifras
+// son esqueleto mientras llega el periodo pedido y nunca se pinta otro.
+export type CargaFicha =
+  | { tipo: "lista" }
+  | { tipo: "cargando"; mensaje: string | null }
+  | { tipo: "error"; mensaje: string; onReintentar: () => void };
 
 const MOTIVO: Record<MotivoNoConfigurado, string> = {
   sin_zona: "falta la zona",
@@ -36,13 +52,20 @@ export function FichaEncabezado({
   usuario: u,
   periodo,
   hoy,
+  carga = { tipo: "lista" },
 }: {
   usuario: UsuarioTablero;
   periodo: Periodo;
   hoy: string;
+  carga?: CargaFicha;
 }) {
+  const lista = carga.tipo === "lista";
+  // Semana vencida (D19): sin cifras que leer; el servidor ya mandó ceros.
+  const sinCifras = lista && u.semanaVencida;
+  const NADA = "—";
   return (
     <>
+      {sinCifras && <AvisoSemanaVencida u={u} />}
       <header className="flex flex-wrap items-end justify-between gap-6">
         <div>
           <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
@@ -68,7 +91,7 @@ export function FichaEncabezado({
             {u.inicioSemana && <span>{textoInicioSemana(u.inicioSemana, hoy)}</span>}
             <span className="inline-flex items-center gap-1.5 rounded-full bg-dsm-tarjeta px-2.5 py-0.5 text-foreground ring-1 ring-border">
               <PuntoEstado estado={u.estadoAhora} />
-              {ESTADO[u.estadoAhora]}
+              {textoEstado(u.estadoAhora, periodo)}
             </span>
             {u.estadoAhora === "sin_actividad" && u.estadoDesde && (
               <span className="font-mono text-[11px]">{`desde ${horaCorta(u.estadoDesde)}`}</span>
@@ -80,33 +103,65 @@ export function FichaEncabezado({
           <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
             {periodo === "hoy" ? "Cobrado hoy" : "Cobrado en la semana"}
           </span>
-          <span className="font-serif text-[72px] leading-none tracking-[-0.03em] tabular">
-            {dinero(u.pagos.importe)}
-          </span>
+          {lista ? (
+            <span className="font-serif text-[72px] leading-none tracking-[-0.03em] tabular">
+              {sinCifras ? NADA : dinero(u.pagos.importe)}
+            </span>
+          ) : (
+            <Skeleton className="h-[72px] w-56" />
+          )}
         </div>
       </header>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-3">
-        <Cifra
-          titulo="Horas activas"
-          valor={u.minutosActivos > 0 ? duracionCorta(u.minutosActivos) : "—"}
+      {carga.tipo === "cargando" && (
+        <>
+          <FichaEsqueleto />
+          {carga.mensaje && (
+            <p role="status" className="text-[13px] text-muted-foreground">
+              {carga.mensaje}
+            </p>
+          )}
+        </>
+      )}
+      {carga.tipo === "error" && (
+        <ErrorConReintento
+          titulo="No se pudo cargar"
+          mensaje={carga.mensaje}
+          onReintentar={carga.onReintentar}
         />
-        <Cifra titulo="Pausas" valor={`${u.pausas.n} · ${duracionCorta(u.pausas.minutos)}`} />
-        <Cifra titulo="Pagos" valor={String(u.pagos.n)} />
-        <Cifra titulo="Visitas" valor={String(u.visitas)} />
-        <Cifra
-          titulo="Condonaciones"
-          valor={`${u.condonaciones.n} · ${dinero(u.condonaciones.importe)}`}
-        />
-        <Cifra
-          titulo="Faltan"
-          valor={u.configurado ? `${u.coberturaPorColumna.sinNada} de ${u.cobertura.total}` : "—"}
-        />
-        <Cifra
-          titulo="% cobro semana"
-          valor={porcentaje(u.cobro.pct)}
-          nota={u.cobro.pct !== null ? `por cobrar ${dinero(u.cobro.falta)}` : undefined}
-        />
-      </div>
+      )}
+      {lista && (
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-3">
+          <Cifra
+            titulo="Horas activas"
+            valor={sinCifras || u.minutosActivos <= 0 ? NADA : duracionCorta(u.minutosActivos)}
+          />
+          <Cifra
+            titulo="Pausas"
+            valor={sinCifras ? NADA : `${u.pausas.n} · ${duracionCorta(u.pausas.minutos)}`}
+          />
+          <Cifra titulo="Pagos" valor={sinCifras ? NADA : String(u.pagos.n)} />
+          <Cifra titulo="Visitas" valor={sinCifras ? NADA : String(u.visitas)} />
+          <Cifra
+            titulo="Condonaciones"
+            valor={sinCifras ? NADA : `${u.condonaciones.n} · ${dinero(u.condonaciones.importe)}`}
+          />
+          <Cifra
+            titulo="Faltan"
+            valor={
+              u.configurado && !sinCifras
+                ? `${u.coberturaPorColumna.sinNada} de ${u.cobertura.total}`
+                : NADA
+            }
+          />
+          <Cifra
+            titulo="% cobro semana"
+            valor={sinCifras ? NADA : porcentaje(u.cobro.pct)}
+            nota={
+              !sinCifras && u.cobro.pct !== null ? `por cobrar ${dinero(u.cobro.falta)}` : undefined
+            }
+          />
+        </div>
+      )}
     </>
   );
 }
