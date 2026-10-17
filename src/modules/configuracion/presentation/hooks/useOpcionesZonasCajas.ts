@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { OpcionesZonasCajas } from "../../domain/entities";
 import { DomainError } from "../../domain/errors";
 import { useConfiguracionPort } from "../context/ConfiguracionContext";
@@ -9,6 +9,7 @@ export type UseOpcionesZonasCajasReturn = {
   opciones: OpcionesZonasCajas;
   isLoading: boolean;
   error: DomainError | null;
+  refresh: () => void;
 };
 
 const EMPTY_OPCIONES: OpcionesZonasCajas = {
@@ -28,6 +29,8 @@ export function useOpcionesZonasCajas(): UseOpcionesZonasCajasReturn {
   const [opciones, setOpciones] = useState<OpcionesZonasCajas>(EMPTY_OPCIONES);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<DomainError | null>(null);
+
+  const [tick, setTick] = useState(0);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -52,7 +55,9 @@ export function useOpcionesZonasCajas(): UseOpcionesZonasCajasReturn {
       });
 
     return () => ctrl.abort();
-  }, [port]);
+  }, [port, tick]);
 
-  return { opciones, isLoading, error };
+  const refresh = useCallback(() => setTick((t) => t + 1), []);
+
+  return { opciones, isLoading, error, refresh };
 }

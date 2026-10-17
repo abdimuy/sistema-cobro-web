@@ -8,6 +8,7 @@ import type {
   OpcionesZonasCajas,
   VendedorAsignacion,
   ZonaCajaAsignacion,
+  ZonaExcluidaDesempeno,
 } from "../../domain/entities";
 
 // FakeConfiguracionPort is a hand-rolled in-memory implementation of
@@ -21,6 +22,10 @@ export class FakeConfiguracionPort implements ConfiguracionPort {
   listarZonasCajasCalls: Array<{ signal?: AbortSignal }> = [];
   listarOpcionesZonasCajasCalls: Array<{ signal?: AbortSignal }> = [];
   asignarZonaCajaCalls: Array<{ input: AsignarZonaCajaInput; signal?: AbortSignal }> = [];
+  listarZonasExcluidasDesempenoCalls: Array<{ signal?: AbortSignal }> = [];
+  excluirZonaDesempenoCalls: Array<{ zonaId: number; signal?: AbortSignal }> = [];
+  quitarZonaExcluidaDesempenoCalls: Array<{ zonaId: number; signal?: AbortSignal }> = [];
+  listarPermisosActualesCalls: Array<{ signal?: AbortSignal }> = [];
 
   listarVendedoresResponse: VendedorAsignacion[] | (() => VendedorAsignacion[]) = [];
   listarOpcionesResponse: IdentidadMicrosip[] | (() => IdentidadMicrosip[]) = [];
@@ -34,6 +39,16 @@ export class FakeConfiguracionPort implements ConfiguracionPort {
   asignarZonaCajaResponse:
     | ZonaCajaAsignacion
     | ((input: AsignarZonaCajaInput) => ZonaCajaAsignacion) = makeFakeZonaCajaAsignacion();
+
+  listarZonasExcluidasDesempenoResponse:
+    | ZonaExcluidaDesempeno[]
+    | (() => ZonaExcluidaDesempeno[] | Promise<ZonaExcluidaDesempeno[]>) = [];
+  excluirZonaDesempenoResponse:
+    | ZonaExcluidaDesempeno
+    | ((zonaId: number) => ZonaExcluidaDesempeno | Promise<ZonaExcluidaDesempeno>) =
+    makeFakeZonaExcluidaDesempeno();
+  quitarZonaExcluidaDesempenoResponse: (() => Promise<void> | void) | null = null;
+  listarPermisosActualesResponse: string[] = ["config:leer", "config:administrar"];
 
   // When set, the next call to that method throws this error.
   throwOnNext: Partial<Record<keyof ConfiguracionPort, Error>> = {};
@@ -92,6 +107,35 @@ export class FakeConfiguracionPort implements ConfiguracionPort {
     if (e) throw e;
     const r = this.asignarZonaCajaResponse;
     return typeof r === "function" ? r(input) : r;
+  }
+
+  async listarZonasExcluidasDesempeno(signal?: AbortSignal): Promise<ZonaExcluidaDesempeno[]> {
+    this.listarZonasExcluidasDesempenoCalls.push({ signal });
+    const e = this.takeThrow("listarZonasExcluidasDesempeno");
+    if (e) throw e;
+    return resolve(this.listarZonasExcluidasDesempenoResponse);
+  }
+
+  async excluirZonaDesempeno(zonaId: number, signal?: AbortSignal): Promise<ZonaExcluidaDesempeno> {
+    this.excluirZonaDesempenoCalls.push({ zonaId, signal });
+    const e = this.takeThrow("excluirZonaDesempeno");
+    if (e) throw e;
+    const r = this.excluirZonaDesempenoResponse;
+    return typeof r === "function" ? r(zonaId) : r;
+  }
+
+  async quitarZonaExcluidaDesempeno(zonaId: number, signal?: AbortSignal): Promise<void> {
+    this.quitarZonaExcluidaDesempenoCalls.push({ zonaId, signal });
+    const e = this.takeThrow("quitarZonaExcluidaDesempeno");
+    if (e) throw e;
+    await this.quitarZonaExcluidaDesempenoResponse?.();
+  }
+
+  async listarPermisosActuales(signal?: AbortSignal): Promise<string[]> {
+    this.listarPermisosActualesCalls.push({ signal });
+    const e = this.takeThrow("listarPermisosActuales");
+    if (e) throw e;
+    return this.listarPermisosActualesResponse;
   }
 
   private takeThrow(method: keyof ConfiguracionPort): Error | undefined {
@@ -169,6 +213,17 @@ export function makeFakeOpcionesZonasCajas(
       { id: 801, nombre: "RUBÉN ALEJANDRO CASTILLO PEÑA" },
       { id: 802, nombre: "GABRIELA MONTSERRAT LEÓN RAMOS" },
     ],
+  };
+  return { ...base, ...overrides };
+}
+
+export function makeFakeZonaExcluidaDesempeno(
+  overrides: Partial<ZonaExcluidaDesempeno> = {},
+): ZonaExcluidaDesempeno {
+  const base: ZonaExcluidaDesempeno = {
+    zonaId: 23301,
+    zonaNombre: "MAYOREO",
+    createdAt: "2026-10-01T18:00:00Z",
   };
   return { ...base, ...overrides };
 }

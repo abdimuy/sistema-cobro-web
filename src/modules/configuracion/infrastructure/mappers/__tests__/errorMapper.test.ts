@@ -129,4 +129,34 @@ describe("apperrorToDomainError (configuracion)", () => {
     expect(domainError.code).toBe("error_inesperado");
     expect(domainError.message).toBe("algo falló");
   });
+
+  it("mapea zona_excluida_invalida (422) con mensaje en español", () => {
+    const e = apperrorToDomainError(makeHumaAxiosError(422, "zona inválida", "zona_excluida_invalida"));
+    expect(e.code).toBe("zona_excluida_invalida");
+    expect(e.message).toBe("la zona seleccionada no es válida");
+  });
+
+  it("403 de requirePerm (cuerpo real de Huma, sin code=) da http_403 con mensaje claro", () => {
+    const err = Object.assign(new Error("Request failed with status code 403"), {
+      isAxiosError: true,
+      response: {
+        status: 403,
+        data: {
+          title: "permiso denegado",
+          status: 403,
+          detail: "el principal no tiene el permiso requerido",
+          errors: [
+            {
+              message: "el principal no tiene el permiso requerido",
+              location: "header.authorization",
+              value: "config:administrar",
+            },
+          ],
+        },
+      },
+    });
+    const e = apperrorToDomainError(err);
+    expect(e.code).toBe("http_403");
+    expect(e.message).toBe("no tienes permiso para esta acción");
+  });
 });
