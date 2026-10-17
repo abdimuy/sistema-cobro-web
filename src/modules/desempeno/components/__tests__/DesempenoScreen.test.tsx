@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
 import { DesempenoScreen } from "../DesempenoScreen";
 import { DomainError } from "../../domain/errors";
 import type { FichaUsuario } from "../../domain/entities";
@@ -36,6 +36,15 @@ function Ubicacion() {
   return <div data-testid="ubicacion">{`${l.pathname}${l.search}`}</div>;
 }
 
+function IrA({ ruta }: { ruta: string }) {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => navigate(ruta)}>
+      ir-a-otra-ficha
+    </button>
+  );
+}
+
 function montar(ruta = "/", port = new FakeDesempenoPort(), puedeConfigurar = true) {
   render(
     <MemoryRouter initialEntries={[ruta]}>
@@ -43,6 +52,7 @@ function montar(ruta = "/", port = new FakeDesempenoPort(), puedeConfigurar = tr
         <DesempenoScreen puedeConfigurar={puedeConfigurar} />
       </DesempenoProvider>
       <Ubicacion />
+      <IrA ruta="/?usuario=uid-otro" />
     </MemoryRouter>,
   );
   return port;
@@ -74,6 +84,19 @@ describe("DesempenoScreen (carriles conectados)", () => {
     expect(screen.getByRole("tab", { name: "Jornada" })).toHaveAttribute("aria-selected", "true");
     await screen.findByRole("list", { name: "Movimientos en orden" });
     expect(port.jornadaCalls[port.jornadaCalls.length - 1]).toMatchObject({ uid: "uid-juan", fecha: "2026-10-13" });
+  });
+
+  it("al pasar a otra ficha no queda abierto el modal de la anterior", async () => {
+    const user = userEvent.setup();
+    const port = montar("/?usuario=uid-juan&dia=2026-10-14");
+    await user.click(await screen.findByText("JUANA ANDRADE LECHUGA"));
+    expect(screen.getByTestId("pago-modal")).toBeInTheDocument();
+    port.usuarioResponse = makeFichaUsuario({
+      usuario: makeUsuarioTablero({ uid: "uid-otro", nombre: "Otra Persona" }),
+    });
+    fireEvent.click(screen.getByRole("button", { name: "ir-a-otra-ficha", hidden: true }));
+    expect(await screen.findByRole("heading", { name: "Otra Persona" })).toBeInTheDocument();
+    expect(screen.queryByTestId("pago-modal")).not.toBeInTheDocument();
   });
 
   it("un día inválido o futuro en la URL cae en hoy", async () => {

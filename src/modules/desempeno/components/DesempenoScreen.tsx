@@ -31,7 +31,7 @@ export function DesempenoScreen({ puedeConfigurar }: { puedeConfigurar: boolean 
   if (!uid) {
     return <TableroScreen onAbrirUsuario={(u) => setParams({ usuario: u })} puedeConfigurar={puedeConfigurar} />;
   }
-  return <FichaConectada uid={uid} puedeConfigurar={puedeConfigurar} />;
+  return <FichaConectada key={uid} uid={uid} puedeConfigurar={puedeConfigurar} />;
 }
 
 // Une los carriles: ficha (carril 2) con la línea, el selector "Vista" y la
