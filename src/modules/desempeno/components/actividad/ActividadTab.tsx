@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   FILTROS_ACTIVIDAD_INICIALES,
   LIMITE_PAGINA_ACTIVIDAD,
@@ -20,11 +20,11 @@ import { VistasActividad } from "./VistasActividad";
 import { MenuColumnas } from "./MenuColumnas";
 import { TablaActividad, type EtiquetasForma } from "./TablaActividad";
 import { AGRUPACIONES, ORDEN_PARA_AGRUPAR, type Agrupacion } from "./agrupar";
+import { opcionesRegistro, recordarNombres } from "./opcionesRegistro";
 import { VISTAS_PREDEFINIDAS } from "./vistasPredefinidas";
 
 export type ActividadTabProps = {
   usuario: UsuarioTablero;
-  opcionesRegistro: ReadonlyArray<{ valor: string; etiqueta: string }>;
   onAbrirActividad: (a: Actividad) => void;
   /** Abre el detalle de venta de Clientes con el `docto_pv_id` del API. */
   onAbrirVenta?: AbrirVenta;
@@ -35,7 +35,6 @@ export type ActividadTabProps = {
 // Sin exportación a Excel en esta fase (Apéndice A del plan).
 export function ActividadTab({
   usuario,
-  opcionesRegistro,
   onAbrirActividad,
   onAbrirVenta,
   renderFotos,
@@ -50,6 +49,14 @@ export function ActividadTab({
   const etiquetasForma = useMemo<EtiquetasForma>(
     () => Object.fromEntries((catalogos?.formasCobro ?? []).map((f) => [f.codigo, f.etiqueta])),
     [catalogos],
+  );
+
+  // El filtro "Registró" ofrece a quienes aparecen en lo cargado (opcion B).
+  const [nombres, setNombres] = useState<Readonly<Record<string, string>>>({});
+  useEffect(() => setNombres((n) => recordarNombres(n, actividad.items)), [actividad.items]);
+  const opciones = useMemo(
+    () => opcionesRegistro(actividad.items, filtros.registradoPor, nombres),
+    [actividad.items, filtros.registradoPor, nombres],
   );
 
   const cambiar = useCallback((parcial: Partial<FiltrosActividad>) => {
@@ -108,7 +115,7 @@ export function ActividadTab({
         filtros={filtros}
         catalogos={catalogos}
         inicioSemana={usuario.inicioSemana}
-        opcionesRegistro={opcionesRegistro}
+        opcionesRegistro={opciones}
         onCambiar={cambiar}
         onLimpiar={() => aplicarVista("todo")}
       />

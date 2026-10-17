@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { DesempenoScreen } from "../DesempenoScreen";
@@ -137,11 +137,13 @@ describe("DesempenoScreen (carriles conectados)", () => {
     expect(screen.getByTestId("venta-modal")).toHaveTextContent("1610045-9950");
   });
 
-  it("Actividad: 'Registró' ofrece al usuario de la ficha y Oficina", async () => {
+  it("Actividad: 'Registró' ofrece a quienes aparecen en los movimientos cargados", async () => {
     montar("/?usuario=uid-juan&pestana=actividad");
     const select = await screen.findByLabelText("Registró");
-    expect(within(select).getByRole("option", { name: "Juan Carlos Méndez" })).toBeInTheDocument();
-    expect(within(select).getByRole("option", { name: "Oficina" })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(within(select).getByRole("option", { name: "JUAN CARLOS MENDEZ" })).toBeInTheDocument(),
+    );
+    expect(within(select).queryByRole("option", { name: "Oficina" })).not.toBeInTheDocument();
     expect(within(select).queryByRole("option", { name: "Rosa Isela Pacheco" })).not.toBeInTheDocument();
   });
 

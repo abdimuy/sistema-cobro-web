@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { Search, X } from "lucide-react";
 import { rangoDeDiasDeNegocio } from "@/utils/tiempoDeNegocio";
 import {
-  REGISTRADO_POR_OFICINA,
   type Catalogos,
   type FiltrosActividad,
   type FormaCobro,
   type TipoActividad,
   type TipoVisitaCatalogo,
 } from "../../domain/entities";
+import type { OpcionRegistro } from "./opcionesRegistro";
 import { diaDeNegocioDe, fechaCorta, sumarDias } from "../lib/format";
 
 const SELECT =
@@ -22,7 +22,7 @@ type Props = {
   catalogos: Catalogos | null;
   /** Inicio de semana del usuario: el rango que usa el API si no hay fechas. */
   inicioSemana: string | null;
-  opcionesRegistro: ReadonlyArray<{ valor: string; etiqueta: string }>;
+  opcionesRegistro: ReadonlyArray<OpcionRegistro>;
   onCambiar: (parcial: Partial<FiltrosActividad>) => void;
   onLimpiar: () => void;
 };
@@ -195,7 +195,6 @@ export function FiltrosActividadBar({
           onChange={(e) => onCambiar({ registradoPor: e.target.value ? [e.target.value] : [] })}
         >
           <option value="">Todos</option>
-          <option value={REGISTRADO_POR_OFICINA}>Oficina</option>
           {opcionesRegistro.map((o) => (
             <option key={o.valor} value={o.valor}>
               {o.etiqueta}

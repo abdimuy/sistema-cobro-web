@@ -20,7 +20,6 @@ export type FichaScreenProps = {
    */
   ficha: FichaUsuario;
   carga: CargaFicha;
-  opcionesRegistro: ReadonlyArray<{ valor: string; etiqueta: string }>;
   pestana: PestanaFicha;
   dia: string;
   onCambiarPestana: (p: PestanaFicha) => void;
@@ -122,7 +121,6 @@ export function FichaScreen(p: FichaScreenProps) {
         {p.pestana === "actividad" && (
           <ActividadTab
             usuario={usuario}
-            opcionesRegistro={p.opcionesRegistro}
             onAbrirActividad={p.onAbrirActividad}
             onAbrirVenta={p.onAbrirVenta}
             renderFotos={p.renderFotos}

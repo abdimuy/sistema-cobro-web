@@ -28,7 +28,6 @@ function montar(
     <FichaScreen
       ficha={makeFichaUsuario({ usuario, ...ficha })}
       carga={{ tipo: "lista" }}
-      opcionesRegistro={[{ valor: "uid-juan", etiqueta: "Juan Carlos Méndez" }]}
       pestana={pestana}
       dia="2026-10-14"
       {...props}

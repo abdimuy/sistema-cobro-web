@@ -8,16 +8,18 @@ import {
   makeActividadPago,
   makeActividadVisita,
   makeCatalogos,
+  makeRegistradoPor,
   makePaginaActividad,
   makeUsuarioTablero,
 } from "../../../application/__tests__/fakeDesempenoPort";
 import { DomainError } from "../../../domain/errors";
 import { CLAVE_COLUMNAS } from "../../../presentation/actividadPreferencias";
 
-const OPCIONES_REGISTRO = [
-  { valor: "uid-juan", etiqueta: "Juan Carlos Méndez" },
-  { valor: "uid-lupita", etiqueta: "Guadalupe Romero Nava" },
-];
+const LUPITA = { usuarioUid: "uid-lupita", cobradorId: 11600, nombre: "GUADALUPE ROMERO NAVA", origen: "app" as const };
+const OFICINA = { usuarioUid: null, cobradorId: null, nombre: "Oficina", origen: "oficina" as const };
+
+const opcionesDelFiltro = () =>
+  within(screen.getByLabelText("Registró")).getAllByRole("option").map((o) => o.textContent);
 
 function montar(
   port = new FakeDesempenoPort(),
@@ -27,7 +29,6 @@ function montar(
   renderConDesempeno(
     <ActividadTab
       usuario={makeUsuarioTablero()}
-      opcionesRegistro={OPCIONES_REGISTRO}
       onAbrirActividad={onAbrirActividad}
       onAbrirVenta={onAbrirVenta}
     />,
@@ -83,8 +84,68 @@ describe("ActividadTab", () => {
       expect(ultimaConsulta(port).tiposVisita).toEqual(["Casa cerrada con candado"]),
     );
 
-    await user.selectOptions(screen.getByLabelText("Registró"), "oficina");
-    await waitFor(() => expect(ultimaConsulta(port).registradoPor).toEqual(["oficina"]));
+    await user.selectOptions(screen.getByLabelText("Registró"), "uid-juan");
+    await waitFor(() => expect(ultimaConsulta(port).registradoPor).toEqual(["uid-juan"]));
+  });
+
+  describe("filtro Registró: sale de los movimientos cargados", () => {
+    const mezcla = () =>
+      makePaginaActividad({
+        items: [
+          makeActividadPago({ id: "pago:1", registradoPor: makeRegistradoPor({ usuarioUid: "uid-juan", nombre: "JUAN CARLOS MENDEZ" }) }),
+          makeActividadPago({ id: "pago:2", registradoPor: OFICINA }),
+          makeActividadPago({ id: "pago:3", registradoPor: LUPITA }),
+          makeActividadVisita({ id: "visita:4", registradoPor: LUPITA }),
+          makeActividadPago({ id: "pago:5", registradoPor: makeRegistradoPor({ usuarioUid: null, cobradorId: 99, nombre: "SIN UID" }) }),
+        ],
+      });
+
+    it("ofrece a cada registrador una vez, por nombre, y Oficina al final", async () => {
+      const port = new FakeDesempenoPort();
+      port.actividadResponse = mezcla();
+      montar(port);
+      await waitFor(() =>
+        expect(opcionesDelFiltro()).toEqual(["Todos", "GUADALUPE ROMERO NAVA", "JUAN CARLOS MENDEZ", "Oficina"]),
+      );
+    });
+
+    it("sin movimientos de oficina no hay opción Oficina", async () => {
+      montar();
+      await screen.findByText("JUANA ANDRADE LECHUGA");
+      expect(opcionesDelFiltro()).toEqual(["Todos", "JUAN CARLOS MENDEZ"]);
+    });
+
+    it("elegir Oficina manda oficina al API", async () => {
+      const user = userEvent.setup();
+      const port = new FakeDesempenoPort();
+      port.actividadResponse = mezcla();
+      montar(port);
+      await waitFor(() => expect(opcionesDelFiltro()).toContain("Oficina"));
+      await user.selectOptions(screen.getByLabelText("Registró"), "oficina");
+      await waitFor(() => expect(ultimaConsulta(port).registradoPor).toEqual(["oficina"]));
+    });
+
+    it("si la persona elegida ya no aparece en el rango, sigue visible y seleccionada con su nombre", async () => {
+      const user = userEvent.setup();
+      const port = new FakeDesempenoPort();
+      port.actividadResponse = mezcla();
+      montar(port);
+      await waitFor(() => expect(opcionesDelFiltro()).toContain("GUADALUPE ROMERO NAVA"));
+      await user.selectOptions(screen.getByLabelText("Registró"), "uid-lupita");
+      await waitFor(() => expect(ultimaConsulta(port).registradoPor).toEqual(["uid-lupita"]));
+
+      // El rango nuevo no trae nada de ella: ni movimientos ni opción propia.
+      port.actividadResponse = makePaginaActividad({ items: [], totales: { n: 0, importe: "0.00", porTipo: { pago: 0, visita: 0, condonacion: 0 } } });
+      fireEvent.change(screen.getByLabelText("Del"), { target: { value: "2026-10-01" } });
+      await screen.findByText("Ningún movimiento con estos filtros");
+      const select = screen.getByLabelText("Registró") as HTMLSelectElement;
+      expect(select.value).toBe("uid-lupita");
+      expect(opcionesDelFiltro()).toEqual(["Todos", "GUADALUPE ROMERO NAVA"]);
+
+      // Y se sale con "Todos".
+      await user.selectOptions(select, "");
+      await waitFor(() => expect(ultimaConsulta(port).registradoPor).toEqual([]));
+    });
   });
 
   it("sin catálogos no se inventan opciones y la tabla sigue", async () => {
