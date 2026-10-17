@@ -125,14 +125,16 @@ export function primerNombre(nombre: string): string {
 
 /**
  * Rótulo del inicio de semana con fecha y hora de la oficina:
- * ("2026-10-15T14:12:00Z", "2026-10-15") → "Semana desde jue 15 oct, 08:12 · hace 0 d".
+ * ("2026-10-15T14:12:00Z", "2026-10-15") → "Semana desde jue 15 oct, 08:12 · hoy".
  * `hace N d` son días de calendario del negocio entre el inicio y `hoy`
- * (rotulación, no una cifra del negocio). Si el inicio cae después de `hoy`,
- * se omite el "hace".
+ * (rotulación, no una cifra del negocio). Si el inicio es del mismo día de
+ * negocio que `hoy` termina en "· hoy"; si cae después, se omite el "hace".
+ * `hoy` es el del servidor (`ficha.hoy`, `tablero.hoy`), nunca el de la Mac.
  */
 export function textoInicioSemana(inicioIso: string, hoy: string): string {
   const dia = diaDeNegocioDe(inicioIso);
   const base = `Semana desde ${fechaCorta(dia)}, ${horaCorta(inicioIso)}`;
   if (dia > hoy) return base;
+  if (dia === hoy) return `${base} · hoy`;
   return `${base} · hace ${diasEntre(dia, hoy).length - 1} d`;
 }

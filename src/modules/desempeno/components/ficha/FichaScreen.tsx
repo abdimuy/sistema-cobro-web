@@ -1,25 +1,28 @@
 import type { ReactNode } from "react";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Actividad, Cuenta, Jornada, Periodo, UsuarioTablero } from "../../domain/entities";
+import type { Actividad, Cuenta, FichaUsuario, Jornada } from "../../domain/entities";
+import { usePreferencias } from "../../presentation/context/usePreferencias";
 import { horaCorta } from "../lib/format";
 import { AvisoPantallaAngosta } from "../comunes/Estados";
 import type { AbrirVenta } from "../jornada/describirActividades";
 import { JornadaTab } from "../jornada/JornadaTab";
 import { ActividadTab } from "../actividad/ActividadTab";
 import { CuentasTab } from "../cuentas/CuentasTab";
-import { FichaEncabezado } from "./FichaEncabezado";
+import { FichaEncabezado, type CargaFicha } from "./FichaEncabezado";
 import type { PestanaFicha } from "./pestanas";
 
 export type FichaScreenProps = {
-  usuario: UsuarioTablero;
-  periodo: Periodo;
-  /** `generado_at` del tablero: hora de los datos del encabezado. */
-  generadoAt: string;
+  /**
+   * Ficha del usuario (contrato v2.2 §8). Con `carga` distinta de "lista" es la
+   * última recibida y sólo sostiene el marco (nombre, zona, pestañas): sus
+   * cifras no se pintan (D23).
+   */
+  ficha: FichaUsuario;
+  carga: CargaFicha;
   opcionesRegistro: ReadonlyArray<{ valor: string; etiqueta: string }>;
   pestana: PestanaFicha;
   dia: string;
-  hoy: string;
   onCambiarPestana: (p: PestanaFicha) => void;
   onCambiarDia: (dia: string) => void;
   onVolver: () => void;
@@ -40,10 +43,15 @@ export type FichaScreenProps = {
 };
 
 export function FichaScreen(p: FichaScreenProps) {
+  const { periodo: periodoElegido } = usePreferencias();
+  const usuario = p.ficha.usuario;
+  const hoy = p.ficha.hoy;
+  // Las cifras llevan el periodo de SUS datos; el rótulo de una carga, el elegido.
+  const periodo = p.carga.tipo === "lista" ? p.ficha.periodo : periodoElegido;
   const pestanas: ReadonlyArray<readonly [PestanaFicha, string, string | null]> = [
     ["jornada", "Jornada", null],
     ["actividad", "Actividad de la zona", null],
-    ["cuentas", "Cuentas de la semana", String(p.usuario.ventasUniverso)],
+    ["cuentas", "Cuentas de la semana", String(usuario.ventasUniverso)],
   ];
   return (
     <section className="flex min-h-full flex-col gap-6 bg-dsm-canvas px-10 pb-24 pt-9">
@@ -57,14 +65,14 @@ export function FichaScreen(p: FichaScreenProps) {
           Equipo
         </button>
         <span className="text-muted-foreground/60">/</span>
-        <span>{p.usuario.nombre}</span>
+        <span>{usuario.nombre}</span>
         <span className="ml-auto font-mono text-[11px] text-muted-foreground">
-          {`Datos de las ${horaCorta(p.generadoAt)}`}
+          {`Datos de las ${horaCorta(p.ficha.generadoAt)}`}
         </span>
       </nav>
       {p.aviso}
       <AvisoPantallaAngosta />
-      <FichaEncabezado usuario={p.usuario} periodo={p.periodo} hoy={p.hoy} />
+      <FichaEncabezado usuario={usuario} periodo={periodo} hoy={hoy} carga={p.carga} />
       <div
         role="tablist"
         aria-label="Secciones de la ficha"
@@ -98,9 +106,9 @@ export function FichaScreen(p: FichaScreenProps) {
       >
         {p.pestana === "jornada" && (
           <JornadaTab
-            usuario={p.usuario}
+            usuario={usuario}
             dia={p.dia}
-            hoy={p.hoy}
+            hoy={hoy}
             onCambiarDia={p.onCambiarDia}
             onAbrirActividad={p.onAbrirActividad}
             onAbrirVenta={p.onAbrirVenta}
@@ -111,7 +119,7 @@ export function FichaScreen(p: FichaScreenProps) {
         )}
         {p.pestana === "actividad" && (
           <ActividadTab
-            usuario={p.usuario}
+            usuario={usuario}
             opcionesRegistro={p.opcionesRegistro}
             onAbrirActividad={p.onAbrirActividad}
             onAbrirVenta={p.onAbrirVenta}
@@ -119,7 +127,7 @@ export function FichaScreen(p: FichaScreenProps) {
           />
         )}
         {p.pestana === "cuentas" && (
-          <CuentasTab usuario={p.usuario} onAbrirCuenta={p.onAbrirCuenta} />
+          <CuentasTab usuario={usuario} onAbrirCuenta={p.onAbrirCuenta} />
         )}
       </div>
     </section>
