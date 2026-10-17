@@ -17,7 +17,7 @@ describe("Registró: unión de lo visto en la ficha", () => {
     const port = new FakeDesempenoPort();
     const todos = [JUAN, OFICINA, LUPITA];
     port.actividadResponse = () => {
-      const f = port.actividadCalls.at(-1)!.filtros as FiltrosActividad;
+      const f = port.actividadCalls[port.actividadCalls.length - 1]!.filtros as FiltrosActividad;
       const quien = f.registradoPor[0];
       const items = todos
         .filter((r) => !quien || (quien === "oficina" ? r.origen === "oficina" : r.usuarioUid === quien))
@@ -27,9 +27,9 @@ describe("Registró: unión de lo visto en la ficha", () => {
     renderConDesempeno(<ActividadTab usuario={makeUsuarioTablero()} onAbrirActividad={() => {}} />, { port });
     await waitFor(() => expect(opciones()).toEqual(["Todos", "GUADALUPE ROMERO NAVA", "JUAN CARLOS MENDEZ", "Oficina"]));
     await user.selectOptions(screen.getByLabelText("Registró"), "uid-lupita");
-    await waitFor(() => expect(port.actividadCalls.at(-1)!.filtros.registradoPor).toEqual(["uid-lupita"]));
+    await waitFor(() => expect(port.actividadCalls[port.actividadCalls.length - 1]!.filtros.registradoPor).toEqual(["uid-lupita"]));
     expect(opciones()).toEqual(["Todos", "GUADALUPE ROMERO NAVA", "JUAN CARLOS MENDEZ", "Oficina"]);
     await user.selectOptions(screen.getByLabelText("Registró"), "uid-juan");
-    await waitFor(() => expect(port.actividadCalls.at(-1)!.filtros.registradoPor).toEqual(["uid-juan"]));
+    await waitFor(() => expect(port.actividadCalls[port.actividadCalls.length - 1]!.filtros.registradoPor).toEqual(["uid-juan"]));
   });
 });
