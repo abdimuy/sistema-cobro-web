@@ -2,18 +2,22 @@ import { useCallback, useState } from "react";
 import {
   CLAVE_COLUMNAS,
   CLAVES_COLUMNA,
+  leerColumnasGuardadas,
   COLUMNAS_POR_DEFECTO,
-  esListaDeColumnas,
   type ClaveColumna,
 } from "../actividadPreferencias";
-import { escribirLocal, leerLocal } from "./lib/almacenLocal";
+import { escribirLocal } from "./lib/almacenLocal";
 
 // Columnas visibles de la pestaña Actividad, por computadora. Nunca queda la
 // tabla sin columnas.
 export function useColumnasActividad() {
-  const [columnas, setColumnas] = useState<ClaveColumna[]>(() =>
-    leerLocal(CLAVE_COLUMNAS, COLUMNAS_POR_DEFECTO, esListaDeColumnas),
-  );
+  const [columnas, setColumnas] = useState<ClaveColumna[]>(() => {
+    try {
+      return leerColumnasGuardadas(window.localStorage) ?? COLUMNAS_POR_DEFECTO;
+    } catch {
+      return COLUMNAS_POR_DEFECTO;
+    }
+  });
 
   const fijar = useCallback((nuevas: readonly ClaveColumna[]) => {
     if (nuevas.length === 0) return;

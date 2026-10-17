@@ -1,9 +1,8 @@
 import { cn } from "@/lib/utils";
 import { HORARIO_PREDETERMINADO } from "../../presentation/preferencias";
+import { FINES_HORARIO, INICIOS_HORARIO, finTrasInicio } from "../../presentation/opcionesHorario";
 import { usePreferencias } from "../../presentation/context/usePreferencias";
 
-const INICIOS = ["07:00", "07:30", "08:00", "08:30", "09:00"];
-const FINES = ["17:00", "17:30", "18:00", "18:30", "19:00"];
 const SELECT = "h-9 rounded-full bg-dsm-tarjeta pl-3.5 pr-7 text-[13px] ring-1 ring-border disabled:opacity-50";
 
 // ControlHorario (D7): interruptor y rango del horario que viaja en la
@@ -30,9 +29,12 @@ export function ControlHorario() {
         className={SELECT}
         disabled={!conHorario}
         value={actual.desde}
-        onChange={(e) => setHorario({ desde: e.target.value, hasta: actual.hasta })}
+        onChange={(e) => setHorario({
+            desde: e.target.value,
+            hasta: finTrasInicio(e.target.value, actual.hasta),
+          })}
       >
-        {INICIOS.map((h) => (
+        {INICIOS_HORARIO.map((h) => (
           <option key={h} value={h}>
             {h}
           </option>
@@ -44,10 +46,14 @@ export function ControlHorario() {
         className={SELECT}
         disabled={!conHorario}
         value={actual.hasta}
-        onChange={(e) => setHorario({ desde: actual.desde, hasta: e.target.value })}
+        onChange={(e) => {
+          // El servidor exige desde < hasta: un fin <= inicio se ignora.
+          if (e.target.value <= actual.desde) return;
+          setHorario({ desde: actual.desde, hasta: e.target.value });
+        }}
       >
-        {FINES.map((h) => (
-          <option key={h} value={h}>
+        {FINES_HORARIO.map((h) => (
+          <option key={h} value={h} disabled={h <= actual.desde}>
             {h}
           </option>
         ))}
