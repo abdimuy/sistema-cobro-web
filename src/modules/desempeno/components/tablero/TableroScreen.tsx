@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useTablero } from "../../presentation/hooks/useTablero";
 import { usePreferencias } from "../../presentation/context/usePreferencias";
 import { diaDeNegocioDe, fechaLarga, horaCorta } from "../lib/format";
-import { MARCAS_EJE, posicionMinutos } from "../lib/escala";
+import { EJE_POR_OMISION, escalaDe } from "../lib/escala";
 import { AvisoPantallaAngosta, ErrorConReintento, EstadoVacio, FilasCargando } from "../comunes/Estados";
 import { TableroToolbar } from "./TableroToolbar";
 import { TableroFila } from "./TableroFila";
@@ -67,6 +67,8 @@ export function TableroScreen({
   const [q, setQ] = useState("");
   const [orden, setOrden] = useState<OrdenTablero>(ORDEN_TABLERO_INICIAL);
 
+  const eje = tablero?.eje ?? EJE_POR_OMISION;
+  const escala = useMemo(() => escalaDe(eje), [eje]);
   const configurados = useMemo(
     () => ordenarUsuarios(filtrarUsuarios(tablero?.usuarios.filter((u) => u.configurado) ?? [], q), orden),
     [tablero, q, orden],
@@ -132,15 +134,15 @@ export function TableroScreen({
                 <Encabezado clave="ahora" texto="Ahora" orden={orden} onOrdenar={onOrdenar} />
                 <th className="relative h-7 px-2 text-left font-normal">
                   <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground">
-                    {tablero?.periodo === "semana" ? "Jornada por día" : "Jornada 7–20 h"}
+                    {tablero?.periodo === "semana" ? "Jornada por día" : `Jornada ${eje.desdeHora}–${eje.hastaHora} h`}
                   </span>
                   {tablero?.periodo !== "semana" && (
                     <span aria-hidden className="absolute inset-x-2 bottom-0 h-3">
-                      {MARCAS_EJE.map((h) => (
+                      {escala.marcas.map((h) => (
                         <span
                           key={h}
                           className="absolute -translate-x-1/2 font-mono text-[9.5px] text-muted-foreground"
-                          style={{ left: `${posicionMinutos(h * 60)}%` }}
+                          style={{ left: `${escala.posicionMinutos(h * 60)}%` }}
                         >
                           {h}
                         </span>
@@ -164,6 +166,7 @@ export function TableroScreen({
                     key={u.uid}
                     usuario={u}
                     periodo={tablero.periodo}
+                    eje={tablero.eje}
                     pausaMin={tablero.pausaMin}
                     horario={horario}
                     vista={vista}

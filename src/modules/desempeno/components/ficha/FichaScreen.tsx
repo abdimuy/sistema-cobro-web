@@ -20,6 +20,9 @@ export type FichaScreenProps = {
   pestana: PestanaFicha;
   dia: string;
   hoy: string;
+  /** Los calcula el servidor (ficha v2.2, T20 los conecta); el cliente no los deriva. */
+  inicioSemanaDia: string | null;
+  diasNavegables: readonly string[];
   onCambiarPestana: (p: PestanaFicha) => void;
   onCambiarDia: (dia: string) => void;
   onVolver: () => void;
@@ -101,6 +104,8 @@ export function FichaScreen(p: FichaScreenProps) {
             usuario={p.usuario}
             dia={p.dia}
             hoy={p.hoy}
+            inicioSemanaDia={p.inicioSemanaDia}
+            diasNavegables={p.diasNavegables}
             onCambiarDia={p.onCambiarDia}
             onAbrirActividad={p.onAbrirActividad}
             onAbrirVenta={p.onAbrirVenta}

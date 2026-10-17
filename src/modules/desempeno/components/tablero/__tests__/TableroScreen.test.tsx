@@ -42,6 +42,14 @@ describe("TableroScreen", () => {
     expect(within(juan).getByText("Semana desde vie 9 oct, 07:46 · hace 5 d")).toBeInTheDocument();
   });
 
+  it("el rótulo y las marcas del eje salen del eje del tablero (E-INF-018)", async () => {
+    const port = new FakeDesempenoPort();
+    port.tableroResponse = makeTablero({ eje: { desdeHora: 6, hastaHora: 21 } });
+    montar(port);
+    expect(await screen.findByText("Jornada 6–21 h")).toBeInTheDocument();
+    expect(screen.queryByText("Jornada 7–20 h")).not.toBeInTheDocument();
+  });
+
   it("sin inicio de semana lo dice; sin permiso no hay enlace", async () => {
     const port = new FakeDesempenoPort();
     port.tableroResponse = makeTablero({

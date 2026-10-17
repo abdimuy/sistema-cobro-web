@@ -126,6 +126,9 @@ function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar
         pestana={pestana}
         dia={dia}
         hoy={hoy}
+        // TODO(T20): la ficha v2.2 (obtenerUsuario) trae ambos; hasta entonces no hay chips de día.
+        inicioSemanaDia={null}
+        diasNavegables={[]}
         onCambiarPestana={(p) => cambiarParam("pestana", p)}
         onCambiarDia={(d) => cambiarParam("dia", d)}
         onVolver={volver}
@@ -150,6 +153,7 @@ function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar
         renderFotos={(a) => <CeldaFotos actividad={a} />}
         renderLinea={(j: Jornada, ahora) => (
           <LineaActividad
+            eje={j.eje}
             linea={j.linea}
             vista={vista}
             pausaMin={j.pausaMin}

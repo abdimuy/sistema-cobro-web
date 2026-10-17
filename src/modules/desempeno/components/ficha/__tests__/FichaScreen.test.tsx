@@ -8,8 +8,13 @@ import { renderConDesempeno } from "../../../test/renderConDesempeno";
 import {
   makeUsuarioSinConfigurar,
   makeUsuarioTablero,
+  makeFichaUsuario,
 } from "../../../application/__tests__/fakeDesempenoPort";
 import type { UsuarioTablero } from "../../../domain/entities";
+
+const FICHA = makeFichaUsuario();
+// Lo que manda el servidor (ficha v2.2); el cliente no lo deriva.
+const DIAS_FICHA = { inicioSemanaDia: FICHA.inicioSemanaDia, diasNavegables: FICHA.diasNavegables };
 
 function montar(pestana: PestanaFicha = "jornada", usuario: UsuarioTablero = makeUsuarioTablero()) {
   const props = {
@@ -28,6 +33,7 @@ function montar(pestana: PestanaFicha = "jornada", usuario: UsuarioTablero = mak
       pestana={pestana}
       dia="2026-10-14"
       hoy="2026-10-14"
+      {...DIAS_FICHA}
       {...props}
     />,
   );

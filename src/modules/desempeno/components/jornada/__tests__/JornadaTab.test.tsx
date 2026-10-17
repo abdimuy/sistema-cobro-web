@@ -10,9 +10,14 @@ import {
   makeActividadVisita,
   makeJornada,
   makeUsuarioTablero,
+  makeFichaUsuario,
 } from "../../../application/__tests__/fakeDesempenoPort";
 import { DomainError } from "../../../domain/errors";
 import { UN_MINUTO_MS } from "../../../presentation/hooks/lib/useCadaMinuto";
+
+const FICHA = makeFichaUsuario();
+// Lo que manda el servidor (ficha v2.2); el cliente no lo deriva.
+const DIAS_FICHA = { inicioSemanaDia: FICHA.inicioSemanaDia, diasNavegables: FICHA.diasNavegables };
 
 vi.mock("../MapaJornadaGoogle", () => ({
   MapaJornadaGoogle: ({ puntos }: { puntos: Array<{ n: number }> }) => (
@@ -35,6 +40,7 @@ function montar(
       usuario={makeUsuarioTablero()}
       dia={opciones.dia ?? "2026-10-14"}
       hoy="2026-10-14"
+      {...DIAS_FICHA}
       onCambiarDia={onCambiarDia}
       onAbrirActividad={onAbrirActividad}
       onAbrirVenta={opciones.onAbrirVenta}
@@ -171,6 +177,7 @@ describe("JornadaTab", () => {
         usuario={makeUsuarioTablero()}
         dia="2026-10-14"
         hoy="2026-10-14"
+        {...DIAS_FICHA}
         onCambiarDia={vi.fn()}
         onAbrirActividad={vi.fn()}
         renderLinea={(j, ahora) => (
@@ -192,6 +199,7 @@ describe("JornadaTab", () => {
         usuario={makeUsuarioTablero()}
         dia="2026-10-13"
         hoy="2026-10-14"
+        {...DIAS_FICHA}
         onCambiarDia={vi.fn()}
         onAbrirActividad={vi.fn()}
         renderLinea={(_j, ahora) => <div data-testid="hueco-linea">{String(ahora)}</div>}
@@ -225,6 +233,14 @@ describe("JornadaTab", () => {
     expect(carril("Pagos 31")).toBeInTheDocument();
     expect(carril("Visitas 13")).toBeInTheDocument();
     expect(carril("Condonaciones 2")).toBeInTheDocument();
+  });
+
+  it("los totales viven en el encabezado de la línea: ya no hay textos sueltos de resumen (E-INF-018)", async () => {
+    montar();
+    await screen.findAllByTestId("eje-punto");
+    expect(screen.queryByText(/activas · pausas de/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/pagos? · .* visitas? · .* condonacion/)).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Línea del día" })).toBeInTheDocument();
   });
 
   it("eje: el punto se coloca en la hora de la oficina (14:20Z = 08:20)", async () => {
@@ -363,6 +379,7 @@ describe("JornadaTab", () => {
               usuario={makeUsuarioTablero()}
               dia="2026-10-14"
               hoy="2026-10-14"
+              {...DIAS_FICHA}
               onCambiarDia={vi.fn()}
               onAbrirActividad={vi.fn()}
             />
