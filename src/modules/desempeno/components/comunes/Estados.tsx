@@ -1,6 +1,5 @@
 import { MonitorSmartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useEsPantallaAngosta } from "../../presentation/hooks/lib/useEsPantallaAngosta";
 
 export function ErrorConReintento({
@@ -40,21 +39,5 @@ export function AvisoPantallaAngosta() {
       <MonitorSmartphone aria-hidden className="h-3.5 w-3.5" />
       Ventana angosta: ensánchala para leer la línea del día completa
     </div>
-  );
-}
-
-export function FilasCargando({ filas, columnas }: { filas: number; columnas: number }) {
-  return (
-    <>
-      {Array.from({ length: filas }).map((_, i) => (
-        <tr key={i} data-testid="fila-cargando">
-          {Array.from({ length: columnas }).map((__, j) => (
-            <td key={j} className="px-2 py-4">
-              <Skeleton className="h-4 w-full" />
-            </td>
-          ))}
-        </tr>
-      ))}
-    </>
   );
 }

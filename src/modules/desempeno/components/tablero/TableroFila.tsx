@@ -6,11 +6,11 @@ import {
   dinero,
   duracionCorta,
   fechaCorta,
-  horaCorta,
   plural,
   porcentaje,
   textoInicioSemana,
 } from "../lib/format";
+import { textoAhora } from "./textoAhora";
 import { InfoRapida } from "../comunes/InfoRapida";
 import { PuntoEstado } from "../comunes/PuntoEstado";
 import { LineaActividad } from "../linea/LineaActividad";
@@ -25,12 +25,6 @@ import {
 
 const CELDA = "border-y border-border bg-dsm-tarjeta px-2 py-3.5 align-middle";
 const DISPARADOR = "cursor-help underline decoration-dotted decoration-foreground/25 underline-offset-[3px]";
-
-function textoAhora(u: UsuarioTablero): string {
-  if (u.estadoAhora === "activo") return "Activo";
-  if (u.estadoAhora === "sin_actividad") return `Desde ${u.estadoDesde ? horaCorta(u.estadoDesde) : "—"}`;
-  return "No ha empezado";
-}
 
 // TableroFila: un usuario configurado. El nombre, el estado y las celdas de
 // cifras abren su popover con ratón o teclado (tabIndex 0, D17); los de la
@@ -90,10 +84,10 @@ export function TableroFila({
         )}
       </td>
       <td className={CELDA}>
-        <InfoRapida contenido={<TarjetaAhora usuario={u} pausaMin={pausaMin} />}>
+        <InfoRapida contenido={<TarjetaAhora usuario={u} pausaMin={pausaMin} periodo={periodo} />}>
           <span tabIndex={0} className="inline-flex cursor-help items-center gap-2 text-[13px]">
             <PuntoEstado estado={u.estadoAhora} />
-            {textoAhora(u)}
+            {textoAhora(u, periodo)}
           </span>
         </InfoRapida>
       </td>
