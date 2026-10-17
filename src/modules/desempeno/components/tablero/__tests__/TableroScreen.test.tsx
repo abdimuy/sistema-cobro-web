@@ -7,6 +7,7 @@ import {
   FakeDesempenoPort,
   makeLinea,
   makeTablero,
+  makeTramo,
   makeUsuarioSinConfigurar,
   makeUsuarioTablero,
 } from "../../../application/__tests__/fakeDesempenoPort";
@@ -175,6 +176,26 @@ describe("TableroScreen", () => {
     await screen.findByText("Juan Carlos Méndez");
     expect(port.tableroCalls[0]?.consulta.pausaMin).toBe(75);
     expect(screen.getByRole("spinbutton", { name: "Minutos de pausa" })).toHaveValue(75);
+  });
+
+  it("las filas usan el eje del tablero, no el de omisión", async () => {
+    const port = new FakeDesempenoPort();
+    // 18:00Z = 12:00 en CDMX. Eje 5–22 h: (12-5)/17 = 41.18 %. Con 7–20 sería 38.46 %.
+    port.tableroResponse = makeTablero({
+      eje: { desdeHora: 5, hastaHora: 22 },
+      usuarios: [
+        makeUsuarioTablero({
+          lineas: [
+            makeLinea({ tramos: [makeTramo({ desde: "2026-10-14T18:00:00Z", hasta: "2026-10-14T19:00:00Z" })] }),
+          ],
+        }),
+      ],
+    });
+    montar(port);
+    const fila = (await screen.findByText("Juan Carlos Méndez")).closest("tr")!;
+    expect(screen.getByText("Jornada 5–22 h")).toBeInTheDocument();
+    const tramo = within(fila).getByTestId("tramo");
+    expect(parseFloat(tramo.style.left)).toBeCloseTo((7 / 17) * 100, 1);
   });
 
   it("en Semana la línea se pinta por día con su etiqueta", async () => {
