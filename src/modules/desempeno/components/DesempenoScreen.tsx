@@ -184,6 +184,7 @@ function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar
         renderFotos={(a) => <CeldaFotos actividad={a} />}
         renderLinea={(j: Jornada, ahora) => (
           <LineaActividad
+            eje={j.eje}
             linea={j.linea}
             vista={vista}
             pausaMin={j.pausaMin}

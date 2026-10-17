@@ -1,4 +1,4 @@
-import type { Periodo, UsuarioTablero } from "../../domain/entities";
+import type { Eje, Periodo, UsuarioTablero } from "../../domain/entities";
 import type { Horario } from "../../application/ports/DesempenoPort";
 import type { VistaLinea } from "../../presentation/preferencias";
 import {
@@ -38,6 +38,7 @@ function textoAhora(u: UsuarioTablero): string {
 export function TableroFila({
   usuario: u,
   periodo,
+  eje,
   pausaMin,
   horario,
   vista,
@@ -46,6 +47,8 @@ export function TableroFila({
 }: {
   usuario: UsuarioTablero;
   periodo: Periodo;
+  /** Eje único del tablero: todas las filas alineadas (spec §3.4). */
+  eje: Eje;
   pausaMin: number;
   horario: Horario | null;
   vista: VistaLinea;
@@ -98,6 +101,7 @@ export function TableroFila({
         {u.lineas.length === 0 ? (
           <div className="relative">
             <LineaActividad
+              eje={eje}
               linea={null}
               vista={vista}
               pausaMin={pausaMin}
@@ -110,6 +114,7 @@ export function TableroFila({
           </div>
         ) : periodo === "hoy" ? (
           <LineaActividad
+            eje={eje}
             linea={u.lineas[0]}
             vista={vista}
             pausaMin={pausaMin}
@@ -121,6 +126,7 @@ export function TableroFila({
             {u.lineas.map((l) => (
               <div key={l.dia} className="min-w-0 flex-1">
                 <LineaActividad
+                  eje={eje}
                   linea={l}
                   vista={vista}
                   pausaMin={pausaMin}

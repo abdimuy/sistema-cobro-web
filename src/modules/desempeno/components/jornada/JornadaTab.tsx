@@ -5,11 +5,9 @@ import { useJornada } from "../../presentation/hooks/useJornada";
 import { usePreferencias } from "../../presentation/context/usePreferencias";
 import {
   diaDeNegocioDe,
-  duracionCorta,
   fechaCorta,
   fechaLarga,
   horaCorta,
-  plural,
   sumarDias,
 } from "../lib/format";
 import { ErrorConReintento, EstadoVacio } from "../comunes/Estados";
@@ -28,6 +26,9 @@ export type JornadaTabProps = {
   usuario: UsuarioTablero;
   dia: string;
   hoy: string;
+  /** Inicio de semana y días navegables: los calcula el servidor (ficha v2.2). */
+  inicioSemanaDia: string | null;
+  diasNavegables: readonly string[];
   onCambiarDia: (dia: string) => void;
   onAbrirActividad: (a: Actividad) => void;
   /** Abre el detalle de venta de Clientes con el `docto_pv_id` del API. */
@@ -47,6 +48,8 @@ export function JornadaTab({
   usuario,
   dia,
   hoy,
+  inicioSemanaDia,
+  diasNavegables,
   onCambiarDia,
   onAbrirActividad,
   onAbrirVenta,
@@ -74,25 +77,19 @@ export function JornadaTab({
     return () => window.removeEventListener("keydown", alTeclado);
   }, [dia, hoy, onCambiarDia]);
 
-  const r = jornada?.resumen;
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-4">
         <NavegadorDia
           dia={dia}
           hoy={hoy}
-          inicioSemanaDia={usuario.inicioSemana ? diaDeNegocioDe(usuario.inicioSemana) : null}
+          inicioSemanaDia={inicioSemanaDia}
+          diasNavegables={diasNavegables}
           onCambiar={onCambiarDia}
         />
         <ControlUmbralPausa valor={pausaMin} onCambiar={setPausaMin} />
         <ControlHorario />
         {controlesLinea}
-        {jornada && r?.primeraActividad && (
-          <span className="text-xs text-muted-foreground">
-            {`${horaCorta(r.primeraActividad)} – ${esHoy || !r.ultimaActividad ? "ahora" : horaCorta(r.ultimaActividad)} · ${duracionCorta(r.minutosActivos)} activas · pausas de ${jornada.pausaMin} min o más`}
-          </span>
-        )}
       </div>
 
       {error && !jornada && esErrorSinConfigurar(error) && (
@@ -145,9 +142,6 @@ export function JornadaTab({
                     <List aria-hidden className="h-3.5 w-3.5" />
                     Movimientos en orden
                   </h3>
-                  <span className="font-mono text-[11px] text-muted-foreground">
-                    {`${plural(jornada.resumen.pagos.n, "pago", "pagos")} · ${plural(jornada.resumen.visitas, "visita", "visitas")} · ${plural(jornada.resumen.condonaciones.n, "condonación", "condonaciones")}`}
-                  </span>
                 </div>
                 <ListaJornada
                   actividades={jornada.actividades}

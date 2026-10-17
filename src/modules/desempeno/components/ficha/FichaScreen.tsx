@@ -109,6 +109,8 @@ export function FichaScreen(p: FichaScreenProps) {
             usuario={usuario}
             dia={p.dia}
             hoy={hoy}
+            inicioSemanaDia={p.ficha.inicioSemanaDia}
+            diasNavegables={p.ficha.diasNavegables}
             onCambiarDia={p.onCambiarDia}
             onAbrirActividad={p.onAbrirActividad}
             onAbrirVenta={p.onAbrirVenta}

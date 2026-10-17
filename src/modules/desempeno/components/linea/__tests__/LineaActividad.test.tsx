@@ -6,6 +6,7 @@ import { makeLinea, makePausa, makePorHora, makeTramo } from "../../../applicati
 
 const base = {
   linea: makeLinea(),
+  eje: { desdeHora: 7, hastaHora: 20 },
   pausaMin: 45,
   horario: null,
   ahora: null,
@@ -121,6 +122,18 @@ describe("LineaActividad — Por hora y Bloques + hora", () => {
 
     expect(await screen.findByText("10:00–11:00")).toBeInTheDocument();
     expect(screen.getByText("1 · $150")).toBeInTheDocument();
+  });
+
+  it("con eje 5–22 la barra de cada hora mide 1/17 y la de las 05:00 arranca en 0 (E-INF-018)", () => {
+    const porHora = Array.from({ length: 17 }, (_, i) => ({
+      hora: 5 + i, pagos: 0, visitas: 0, condonaciones: 0, importe: "0.00",
+    }));
+    render(<LineaActividad {...base} eje={{ desdeHora: 5, hastaHora: 22 }} linea={makeLinea({ porHora })} vista="por_hora" />);
+    const barras = screen.getAllByTestId("barra-hora");
+    expect(barras).toHaveLength(17);
+    expect(parseFloat(barras[0].style.width)).toBeCloseTo(100 / 17, 3);
+    expect(parseFloat(barras[0].style.left)).toBe(0);
+    expect(parseFloat(barras[1].style.left)).toBeCloseTo(100 / 17, 3);
   });
 
   it("una hora vacía lo dice", async () => {
