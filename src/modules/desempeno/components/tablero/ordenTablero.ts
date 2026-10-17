@@ -1,4 +1,4 @@
-import type { UsuarioTablero } from "../../domain/entities";
+import type { Periodo, UsuarioTablero } from "../../domain/entities";
 import { sinAcentos } from "../lib/format";
 
 // Orden y búsqueda de filas YA recibidas. Number() sobre los decimales del API
@@ -24,8 +24,19 @@ export const ORDEN_TABLERO_INICIAL: OrdenTablero = { clave: "zona", dir: 1 };
 const ASCENDENTES: readonly ClaveOrdenTablero[] = ["nombre", "zona", "ahora", "faltan"];
 const RANGO_AHORA = { activo: 0, sin_actividad: 1, no_ha_empezado: 2 } as const;
 
-// null = sin dato (p. ej. % de cobro sin esperado): siempre al final.
-function valor(u: UsuarioTablero, clave: ClaveOrdenTablero): string | number | null {
+// Columnas que en Semana ordenan por el promedio diario que manda el servidor
+// (T19): el total de la semana castiga a quien lleva menos días.
+export const CLAVES_CON_PROMEDIO: readonly ClaveOrdenTablero[] = ["horas", "pagos", "visitas"];
+
+// null = sin dato (p. ej. % de cobro sin esperado, sin promedio): siempre al final.
+export function valor(u: UsuarioTablero, clave: ClaveOrdenTablero, periodo: Periodo): string | number | null {
+  if (periodo === "semana" && CLAVES_CON_PROMEDIO.includes(clave)) {
+    const p = u.promedioDiario;
+    if (p === null) return null;
+    if (clave === "horas") return p.minutosActivos;
+    if (clave === "pagos") return Number(p.pagosImporte);
+    return p.visitas;
+  }
   switch (clave) {
     case "nombre":
       return u.nombre;
@@ -51,10 +62,11 @@ function valor(u: UsuarioTablero, clave: ClaveOrdenTablero): string | number | n
 export function ordenarUsuarios(
   usuarios: readonly UsuarioTablero[],
   orden: OrdenTablero,
+  periodo: Periodo,
 ): UsuarioTablero[] {
   return [...usuarios].sort((a, b) => {
-    const x = valor(a, orden.clave);
-    const y = valor(b, orden.clave);
+    const x = valor(a, orden.clave, periodo);
+    const y = valor(b, orden.clave, periodo);
     if (x === null || y === null) return x === y ? 0 : x === null ? 1 : -1;
     const c =
       typeof x === "string" && typeof y === "string"

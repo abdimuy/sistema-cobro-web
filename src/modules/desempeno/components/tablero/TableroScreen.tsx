@@ -1,15 +1,20 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { Periodo } from "../../domain/entities";
 import { useTablero } from "../../presentation/hooks/useTablero";
 import { usePreferencias } from "../../presentation/context/usePreferencias";
 import { diaDeNegocioDe, fechaLarga, horaCorta } from "../lib/format";
 import { EJE_POR_OMISION, escalaDe } from "../lib/escala";
-import { AvisoPantallaAngosta, ErrorConReintento, EstadoVacio, FilasCargando } from "../comunes/Estados";
+import { AvisoPantallaAngosta, ErrorConReintento, EstadoVacio } from "../comunes/Estados";
 import { TableroToolbar } from "./TableroToolbar";
 import { TableroFila } from "./TableroFila";
 import { FilaSinConfigurar } from "./FilaSinConfigurar";
+import { FilaVencida } from "./FilaVencida";
+import { FilaEsqueleto } from "./FilaEsqueleto";
+import { InfoRapida } from "../comunes/InfoRapida";
 import {
+  CLAVES_CON_PROMEDIO,
   filtrarUsuarios,
   ORDEN_TABLERO_INICIAL,
   ordenarUsuarios,
@@ -19,6 +24,8 @@ import {
 } from "./ordenTablero";
 
 const COLUMNAS = 9;
+const FILAS_ESQUELETO = 8;
+const ESPERA_MENSAJE_MS = 1000;
 
 function Encabezado({
   clave,
@@ -26,28 +33,34 @@ function Encabezado({
   orden,
   onOrdenar,
   derecha,
+  periodo,
 }: {
   clave: ClaveOrdenTablero;
   texto: string;
   orden: OrdenTablero;
   onOrdenar: (c: ClaveOrdenTablero) => void;
   derecha?: boolean;
+  periodo: Periodo;
 }) {
   const activa = orden.clave === clave;
   const Icono = activa ? (orden.dir === 1 ? ArrowUp : ArrowDown) : ChevronsUpDown;
+  const porPromedio = periodo === "semana" && CLAVES_CON_PROMEDIO.includes(clave);
+  const boton = (
+    <button
+      type="button"
+      onClick={() => onOrdenar(clave)}
+      className="inline-flex items-center gap-1 font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground hover:text-foreground"
+    >
+      {texto}
+      <Icono aria-hidden className={cn("h-3 w-3", !activa && "opacity-40")} />
+    </button>
+  );
   return (
     <th
       aria-sort={activa ? (orden.dir === 1 ? "ascending" : "descending") : "none"}
       className={cn("h-7 px-2 font-normal", derecha ? "text-right" : "text-left")}
     >
-      <button
-        type="button"
-        onClick={() => onOrdenar(clave)}
-        className="inline-flex items-center gap-1 font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground hover:text-foreground"
-      >
-        {texto}
-        <Icono aria-hidden className={cn("h-3 w-3", !activa && "opacity-40")} />
-      </button>
+      {porPromedio ? <InfoRapida contenido="Ordena por promedio diario">{boton}</InfoRapida> : boton}
     </th>
   );
 }
@@ -62,16 +75,40 @@ export function TableroScreen({
   onAbrirUsuario: (uid: string) => void;
   puedeConfigurar: boolean;
 }) {
-  const { tablero, isLoading, error, refresh } = useTablero();
-  const { vista, horario } = usePreferencias();
+  const { tablero: recibido, isLoading, error, refresh } = useTablero();
+  const { vista, horario, periodo } = usePreferencias();
   const [q, setQ] = useState("");
   const [orden, setOrden] = useState<OrdenTablero>(ORDEN_TABLERO_INICIAL);
+  const [verVencidas, setVerVencidas] = useState(false);
+
+  // Carga honesta (D23, Review Focus 4): sólo se pintan cifras cuyo `periodo`
+  // coincide con el elegido; la respuesta de otro periodo se trata como ausente.
+  const tablero = recibido && recibido.periodo === periodo ? recibido : null;
+  const cargando = tablero === null && error === null;
+  const [lento, setLento] = useState(false);
+  useEffect(() => {
+    if (!cargando) {
+      setLento(false);
+      return undefined;
+    }
+    const t = window.setTimeout(() => setLento(true), ESPERA_MENSAJE_MS);
+    return () => window.clearTimeout(t);
+  }, [cargando, periodo]);
 
   const eje = tablero?.eje ?? EJE_POR_OMISION;
   const escala = useMemo(() => escalaDe(eje), [eje]);
   const configurados = useMemo(
-    () => ordenarUsuarios(filtrarUsuarios(tablero?.usuarios.filter((u) => u.configurado) ?? [], q), orden),
-    [tablero, q, orden],
+    () =>
+      ordenarUsuarios(
+        filtrarUsuarios(tablero?.usuarios.filter((u) => u.configurado && !u.semanaVencida) ?? [], q),
+        orden,
+        periodo,
+      ),
+    [tablero, q, orden, periodo],
+  );
+  const vencidas = useMemo(
+    () => filtrarUsuarios(tablero?.usuarios.filter((u) => u.configurado && u.semanaVencida) ?? [], q),
+    [tablero, q],
   );
   const sinConfigurar = useMemo(
     () => filtrarUsuarios(tablero?.usuarios.filter((u) => !u.configurado) ?? [], q),
@@ -91,7 +128,11 @@ export function TableroScreen({
               ? tablero.periodo === "hoy"
                 ? `${fechaLarga(diaDeNegocioDe(tablero.generadoAt))} · ${horaCorta(tablero.generadoAt)}`
                 : "Semana en curso · cada quien desde su inicio de semana"
-              : null}
+              : lento && !error
+                ? periodo === "semana"
+                  ? "Cargando semana…"
+                  : "Cargando hoy…"
+                : null}
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -124,14 +165,14 @@ export function TableroScreen({
       )}
 
       {error && !tablero ? (
-        <ErrorConReintento titulo="No se pudo cargar el tablero" mensaje={error.message} onReintentar={refresh} />
+        <ErrorConReintento titulo="No se pudo cargar" mensaje={error.message} onReintentar={refresh} />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full border-separate border-spacing-y-2">
             <thead>
               <tr>
-                <Encabezado clave="nombre" texto="Cobrador" orden={orden} onOrdenar={onOrdenar} />
-                <Encabezado clave="ahora" texto="Ahora" orden={orden} onOrdenar={onOrdenar} />
+                <Encabezado periodo={periodo} clave="nombre" texto="Cobrador" orden={orden} onOrdenar={onOrdenar} />
+                <Encabezado periodo={periodo} clave="ahora" texto="Ahora" orden={orden} onOrdenar={onOrdenar} />
                 <th className="relative h-7 px-2 text-left font-normal">
                   <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground">
                     {tablero?.periodo === "semana" ? "Jornada por día" : `Jornada ${eje.desdeHora}–${eje.hastaHora} h`}
@@ -150,16 +191,18 @@ export function TableroScreen({
                     </span>
                   )}
                 </th>
-                <Encabezado clave="horas" texto="Horas activas" orden={orden} onOrdenar={onOrdenar} derecha />
-                <Encabezado clave="pausas" texto="Pausas" orden={orden} onOrdenar={onOrdenar} derecha />
-                <Encabezado clave="pagos" texto="Pagos" orden={orden} onOrdenar={onOrdenar} derecha />
-                <Encabezado clave="visitas" texto="Visitas" orden={orden} onOrdenar={onOrdenar} derecha />
-                <Encabezado clave="faltan" texto="Cuentas semana" orden={orden} onOrdenar={onOrdenar} />
-                <Encabezado clave="cobro" texto="% cobro" orden={orden} onOrdenar={onOrdenar} derecha />
+                <Encabezado periodo={periodo} clave="horas" texto="Horas activas" orden={orden} onOrdenar={onOrdenar} derecha />
+                <Encabezado periodo={periodo} clave="pausas" texto="Pausas" orden={orden} onOrdenar={onOrdenar} derecha />
+                <Encabezado periodo={periodo} clave="pagos" texto="Pagos" orden={orden} onOrdenar={onOrdenar} derecha />
+                <Encabezado periodo={periodo} clave="visitas" texto="Visitas" orden={orden} onOrdenar={onOrdenar} derecha />
+                <Encabezado periodo={periodo} clave="faltan" texto="Cuentas semana" orden={orden} onOrdenar={onOrdenar} />
+                <Encabezado periodo={periodo} clave="cobro" texto="% cobro" orden={orden} onOrdenar={onOrdenar} derecha />
               </tr>
             </thead>
             <tbody>
-              {isLoading && !tablero && <FilasCargando filas={5} columnas={COLUMNAS} />}
+              {!tablero &&
+                !error &&
+                Array.from({ length: FILAS_ESQUELETO }).map((_, i) => <FilaEsqueleto key={i} />)}
               {tablero &&
                 configurados.map((u) => (
                   <TableroFila
@@ -178,6 +221,25 @@ export function TableroScreen({
                 sinConfigurar.map((u) => (
                   <FilaSinConfigurar key={u.uid} usuario={u} puedeConfigurar={puedeConfigurar} columnas={COLUMNAS} />
                 ))}
+              {tablero && vencidas.length > 0 && (
+                <tr>
+                  <td colSpan={COLUMNAS} className="pt-2">
+                    <button
+                      type="button"
+                      aria-expanded={verVencidas}
+                      onClick={() => setVerVencidas((v) => !v)}
+                      className="text-[13px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                    >
+                      {`${verVencidas ? "Ocultar" : "Ver"} ${vencidas.length} sin actividad reciente`}
+                    </button>
+                  </td>
+                </tr>
+              )}
+              {tablero &&
+                verVencidas &&
+                vencidas.map((u) => (
+                  <FilaVencida key={u.uid} usuario={u} hoy={tablero.hoy} columnas={COLUMNAS} onAbrir={onAbrirUsuario} />
+                ))}
               {tablero && tablero.usuarios.length === 0 && (
                 <tr>
                   <td colSpan={COLUMNAS}>
@@ -185,7 +247,7 @@ export function TableroScreen({
                   </td>
                 </tr>
               )}
-              {tablero && tablero.usuarios.length > 0 && configurados.length + sinConfigurar.length === 0 && (
+              {tablero && tablero.usuarios.length > 0 && configurados.length + vencidas.length + sinConfigurar.length === 0 && (
                 <tr>
                   <td colSpan={COLUMNAS}>
                     <EstadoVacio titulo={`Nadie coincide con “${q}”`} detalle="Busca por nombre, zona o correo." />

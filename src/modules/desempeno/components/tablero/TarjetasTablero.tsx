@@ -39,11 +39,19 @@ export function TarjetaUsuario({ usuario: u }: { usuario: UsuarioTablero }) {
   );
 }
 
-export function TarjetaAhora({ usuario: u, pausaMin }: { usuario: UsuarioTablero; pausaMin: number }) {
+export function TarjetaAhora({
+  usuario: u,
+  pausaMin,
+  periodo,
+}: {
+  usuario: UsuarioTablero;
+  pausaMin: number;
+  periodo: Periodo;
+}) {
   if (u.estadoAhora === "no_ha_empezado" || !u.ultima) {
     return (
       <>
-        <TarjetaTitulo>No ha empezado</TarjetaTitulo>
+        <TarjetaTitulo>{periodo === "semana" ? "Hoy sin actividad" : "No ha empezado"}</TarjetaTitulo>
         <TarjetaSub>{`última actividad: ${cuando(u.ultimaActividad)}`}</TarjetaSub>
       </>
     );

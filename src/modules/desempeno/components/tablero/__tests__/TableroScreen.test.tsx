@@ -10,11 +10,18 @@ import {
   makeUsuarioSinConfigurar,
   makeUsuarioTablero,
 } from "../../../application/__tests__/fakeDesempenoPort";
+import type { PreferenciasDesempeno } from "../../../presentation/preferencias";
 import { DomainError } from "../../../domain/errors";
 
-function montar(port = new FakeDesempenoPort(), onAbrirUsuario = vi.fn(), puedeConfigurar = true) {
+function montar(
+  port = new FakeDesempenoPort(),
+  onAbrirUsuario = vi.fn(),
+  puedeConfigurar = true,
+  preferencias: Partial<PreferenciasDesempeno> = {},
+) {
   renderConDesempeno(<TableroScreen onAbrirUsuario={onAbrirUsuario} puedeConfigurar={puedeConfigurar} />, {
     port,
+    preferencias,
   });
   return { port, onAbrirUsuario };
 }
@@ -95,7 +102,7 @@ describe("TableroScreen", () => {
           }),
         ],
       });
-      montar(port);
+      montar(port, vi.fn(), true, { periodo });
       await screen.findByText("Rosa Isela Pacheco");
       const texto = document.body.textContent ?? "";
       const numero = (n: string) => new RegExp(`(^|[^\\d:.,])${n}([^\\d:.,]|$)`);
@@ -178,7 +185,7 @@ describe("TableroScreen", () => {
         makeUsuarioTablero({ lineas: [makeLinea({ dia: "2026-10-13" }), makeLinea({ dia: "2026-10-14" })] }),
       ],
     });
-    montar(port);
+    montar(port, vi.fn(), true, { periodo: "semana" });
     const fila = (await screen.findByText("Juan Carlos Méndez")).closest("tr")!;
     expect(within(fila).getAllByTestId("linea-actividad")).toHaveLength(2);
     expect(within(fila).getByText("mar 13 oct")).toBeInTheDocument();
@@ -288,7 +295,7 @@ describe("TableroScreen", () => {
       "no se pudo consultar a los usuarios",
     );
     montar(port);
-    expect(await screen.findByText("No se pudo cargar el tablero")).toBeInTheDocument();
+    expect(await screen.findByText("No se pudo cargar")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(await screen.findByText("Juan Carlos Méndez")).toBeInTheDocument();
   });
@@ -442,7 +449,7 @@ describe("TableroScreen", () => {
         makeUsuarioTablero({ lineas: [makeLinea({ dia: "2026-10-13" }), makeLinea({ dia: "2026-10-14" })] }),
       ],
     });
-    montar(port);
+    montar(port, vi.fn(), true, { periodo: "semana" });
     const fila = (await screen.findByText("Juan Carlos Méndez")).closest("tr")!;
     const [martes, miercoles] = within(fila).getAllByTestId("linea-actividad");
     expect(within(martes).queryByTestId("marca-ahora")).not.toBeInTheDocument();
