@@ -94,7 +94,7 @@ describe("HttpDesempenoAdapter", () => {
     expect(url?.searchParams.get("columna")).toBe("sin_nada");
     expect(url?.searchParams.has("segmento")).toBe(false);
     expect(url?.searchParams.has("q")).toBe(false);
-    expect(c.conteos.total).toBe(232);
+    expect(c.conteos.total).toBe(209);
   });
 
   it("usuario: GET /v2/desempeno/usuarios/<uid> con periodo, pausa y contrato", async () => {

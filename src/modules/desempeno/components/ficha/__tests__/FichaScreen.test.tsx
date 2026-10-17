@@ -45,7 +45,7 @@ describe("FichaScreen", () => {
     expect(screen.getByText("Activo")).toBeInTheDocument();
     expect(screen.getByText("Cobrado hoy")).toBeInTheDocument();
     expect(screen.getByText("$8,600")).toBeInTheDocument();
-    expect(screen.getByText("46 de 232")).toBeInTheDocument();
+    expect(screen.getByText("46 de 209")).toBeInTheDocument();
     expect(screen.getByText("65.9%")).toBeInTheDocument();
     expect(screen.queryByText(/total/i)).not.toBeInTheDocument();
   });

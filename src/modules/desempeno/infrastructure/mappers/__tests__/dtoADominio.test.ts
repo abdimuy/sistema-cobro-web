@@ -151,7 +151,7 @@ const usuarioConfigurado: UsuarioTablero = {
   configurado: true,
   motivoNoConfigurado: null,
   inicioSemana: "2026-10-09T13:46:00Z",
-  ventasUniverso: 232,
+  ventasUniverso: 209,
   estadoAhora: "activo",
   estadoDesde: "2026-10-14T22:10:00Z",
   ultima: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z", clienteNombre: "JUANA ANDRADE LECHUGA" },
@@ -168,7 +168,7 @@ const usuarioConfigurado: UsuarioTablero = {
   condonaciones: { n: 1, importe: "120.00" },
   noAplicados: { n: 2, importe: "300.00" },
   visitas: 13,
-  cobertura: { conAlgo: 186, total: 232 },
+  cobertura: { conAlgo: 163, total: 209 },
   semanaVencida: false,
   ultimoMovimiento: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z" },
   coberturaPorColumna: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46 },
@@ -252,7 +252,7 @@ const jornada: Jornada = {
 
 const cuentas: CuentasSemana = {
   inicioSemana: "2026-10-09T13:46:00Z",
-  conteos: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46, total: 232 },
+  conteos: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46, total: 209 },
   cuentas: [
     {
       ventaId: 13785217,
@@ -545,7 +545,7 @@ describe("contrato v2.2", () => {
   });
 
   it("conteos de cuentas en columnas", () => {
-    expect(dtoToCuentas(cuentasDTO).conteos).toEqual({ porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46, total: 232 });
+    expect(dtoToCuentas(cuentasDTO).conteos).toEqual({ porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46, total: 209 });
   });
 
   it("rechaza una columna desconocida en una cuenta", () => {
@@ -577,6 +577,40 @@ describe("contrato v2.2", () => {
     expect(f.usuario.uid).toBe("abc123");
     expect(f.periodo).toBe("hoy");
     expect(dtoToFichaUsuario({ ...fichaUsuarioDTO, inicio_semana_dia: null }).inicioSemanaDia).toBeNull();
+  });
+
+  it("jornada sin hoy es inválida", () => {
+    esRespuestaInvalida(() => dtoToJornada(sin(jornadaDTO, "hoy") as never), /jornada\.hoy/);
+  });
+
+  it("jornada sin eje es inválida (no se rellena con 7–20)", () => {
+    esRespuestaInvalida(() => dtoToJornada(sin(jornadaDTO, "eje") as never), /jornada\.eje/);
+  });
+
+  it("horario ausente es inválido; null explícito sí vale", () => {
+    esRespuestaInvalida(() => dtoToJornada(sin(jornadaDTO, "horario") as never), /horario/);
+    expect(dtoToJornada({ ...jornadaDTO, horario: null }).horario).toBeNull();
+  });
+
+  it("ficha sin inicio_semana_dia es inválida; null explícito sí vale", () => {
+    esRespuestaInvalida(() => dtoToFichaUsuario(sin(fichaUsuarioDTO, "inicio_semana_dia") as never), /inicio_semana_dia/);
+    expect(dtoToFichaUsuario({ ...fichaUsuarioDTO, inicio_semana_dia: null }).inicioSemanaDia).toBeNull();
+  });
+
+  it.each([
+    ["desde_hora fraccionaria", { desde_hora: 6.5, hasta_hora: 21 }, /eje\.desde_hora/],
+    ["desde_hora 24", { desde_hora: 24, hasta_hora: 24 }, /eje\.desde_hora/],
+    ["desde_hora negativa", { desde_hora: -1, hasta_hora: 21 }, /eje\.desde_hora/],
+    ["hasta_hora 0", { desde_hora: 0, hasta_hora: 0 }, /eje\.hasta_hora/],
+    ["hasta_hora 25", { desde_hora: 6, hasta_hora: 25 }, /eje\.hasta_hora/],
+    ["hasta_hora fraccionaria", { desde_hora: 6, hasta_hora: 20.5 }, /eje\.hasta_hora/],
+  ])("eje con %s es inválido", (_n, eje, campo) => {
+    esRespuestaInvalida(() => dtoToTablero({ ...tableroDTO, eje } as never), campo);
+  });
+
+  it("eje en los bordes 0–1 y 23–24 es válido", () => {
+    expect(dtoToTablero({ ...tableroDTO, eje: { desde_hora: 0, hasta_hora: 1 } }).eje).toEqual({ desdeHora: 0, hastaHora: 1 });
+    expect(dtoToTablero({ ...tableroDTO, eje: { desde_hora: 23, hasta_hora: 24 } }).eje).toEqual({ desdeHora: 23, hastaHora: 24 });
   });
 
   it("ficha sin dias_navegables o con un día que no es texto es inválida", () => {

@@ -282,10 +282,10 @@ export function makeUsuarioTablero(overrides: Partial<UsuarioTablero> = {}): Usu
     condonaciones: { n: 0, importe: "0.00" },
     noAplicados: { n: 0, importe: "0.00" },
     visitas: 13,
-    cobertura: { conAlgo: 186, total: 232 },
+    cobertura: { conAlgo: 163, total: 209 },
     semanaVencida: false,
     ultimoMovimiento: { id: "pago:15082401", tipo: "condonacion", hora: "2026-10-14T16:40:00Z" },
-    coberturaPorColumna: { porVisitar: 66, noPaga: 20, pagados: 140, sinNada: 46 },
+    coberturaPorColumna: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46 },
     promedioDiario: null,
     cobro: { cobrado: "8600.00", esperado: "13050.00", falta: "4450.00", pct: "65.90" },
     lineas: [makeLinea()],
@@ -514,7 +514,7 @@ export function makeFichaUsuario(overrides: Partial<FichaUsuario> = {}): FichaUs
 export function makeCuentasSemana(overrides: Partial<CuentasSemana> = {}): CuentasSemana {
   return {
     inicioSemana: "2026-10-09T13:46:00Z",
-    conteos: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46, total: 232 },
+    conteos: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46, total: 209 },
     cuentas: [makeCuenta(), makeCuentaSinTocar()],
     ...overrides,
   };

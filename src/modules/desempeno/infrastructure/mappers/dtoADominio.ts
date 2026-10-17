@@ -230,7 +230,12 @@ function leerSenal(v: unknown): Senal {
 
 function leerEje(v: unknown, campo: string): Eje {
   const o = obj(v, campo);
-  return { desdeHora: numero(o.desde_hora, `${campo}.desde_hora`), hastaHora: numero(o.hasta_hora, `${campo}.hasta_hora`) };
+  const desdeHora = numero(o.desde_hora, `${campo}.desde_hora`);
+  const hastaHora = numero(o.hasta_hora, `${campo}.hasta_hora`);
+  // Contrato §8: desde_hora entero 0–23, hasta_hora entero 1–24.
+  if (!Number.isInteger(desdeHora) || desdeHora < 0 || desdeHora > 23) throw invalida(`${campo}.desde_hora`);
+  if (!Number.isInteger(hastaHora) || hastaHora < 1 || hastaHora > 24) throw invalida(`${campo}.hasta_hora`);
+  return { desdeHora, hastaHora };
 }
 
 function leerColumnas(v: unknown, campo: string): CoberturaPorColumna {

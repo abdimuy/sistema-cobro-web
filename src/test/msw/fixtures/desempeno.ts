@@ -139,7 +139,7 @@ export const tableroDTO: TableroDTO = {
       configurado: true,
       motivo_no_configurado: null,
       inicio_semana: "2026-10-09T13:46:00Z",
-      ventas_universo: 232,
+      ventas_universo: 209,
       estado_ahora: "activo",
       estado_desde: "2026-10-14T22:10:00Z",
       ultima: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z", cliente_nombre: "JUANA ANDRADE LECHUGA" },
@@ -156,7 +156,7 @@ export const tableroDTO: TableroDTO = {
       condonaciones: { n: 1, importe: "120.00" },
       no_aplicados: { n: 2, importe: "300.00" },
       visitas: 13,
-      cobertura: { con_algo: 186, total: 232 },
+      cobertura: { con_algo: 163, total: 209 },
       semana_vencida: false,
       ultimo_movimiento: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z" },
       cobertura_por_columna: { por_visitar: 66, no_paga: 3, pagados: 140, sin_nada: 46 },
@@ -241,7 +241,7 @@ export const paginaActividadDTO: PaginaActividadDTO = {
 
 export const cuentasDTO: CuentasDTO = {
   inicio_semana: "2026-10-09T13:46:00Z",
-  conteos: { por_visitar: 66, no_paga: 3, pagados: 140, sin_nada: 46, total: 232 },
+  conteos: { por_visitar: 66, no_paga: 3, pagados: 140, sin_nada: 46, total: 209 },
   cuentas: [
     {
       venta_id: 13785217,
