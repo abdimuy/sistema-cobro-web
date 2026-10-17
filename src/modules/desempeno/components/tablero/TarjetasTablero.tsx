@@ -1,4 +1,5 @@
 import type { Periodo, UsuarioTablero } from "../../domain/entities";
+import { ETIQUETA_COLUMNA } from "../../domain/values/estadoCuenta";
 import { diaDeNegocioDe, dinero, duracionCorta, fechaCorta, horaCorta, plural, porcentaje } from "../lib/format";
 import { TIPO_ACTIVIDAD_META } from "../lib/tipoActividadMeta";
 import {
@@ -120,7 +121,7 @@ export function TarjetaPagos({ usuario: u, periodo }: { usuario: UsuarioTablero;
 }
 
 export function TarjetaCuentas({ usuario: u }: { usuario: UsuarioTablero }) {
-  const s = u.coberturaPorSegmento;
+  const s = u.coberturaPorColumna;
   const total = u.cobertura.total;
   return (
     <>
@@ -128,10 +129,9 @@ export function TarjetaCuentas({ usuario: u }: { usuario: UsuarioTablero }) {
       <TarjetaSub>{`${total} ventas en su universo`}</TarjetaSub>
       <TarjetaBarras
         filas={[
-          { etiqueta: "Sin visitar", n: s.sinVisitar, total, clase: "bg-foreground/70" },
-          { etiqueta: "Volver", n: s.volver, total, clase: "bg-dsm-ambar" },
-          { etiqueta: "Después", n: s.despues, total, clase: "bg-dsm-violeta" },
-          { etiqueta: "Pagados", n: s.pagados, total, clase: "bg-dsm-ok" },
+          { etiqueta: ETIQUETA_COLUMNA.por_visitar, n: s.porVisitar, total, clase: "bg-foreground/70" },
+          { etiqueta: ETIQUETA_COLUMNA.no_paga, n: s.noPaga, total, clase: "bg-dsm-ambar" },
+          { etiqueta: ETIQUETA_COLUMNA.pagados, n: s.pagados, total, clase: "bg-dsm-ok" },
           { etiqueta: "Sin nada", n: s.sinNada, total, clase: "bg-dsm-rojo" },
         ]}
       />

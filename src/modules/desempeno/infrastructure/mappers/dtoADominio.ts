@@ -7,24 +7,30 @@ import {
   esTipoSenal,
   type Actividad,
   type Catalogos,
+  type CoberturaPorColumna,
   type Conteo,
   type CuentasSemana,
+  type Eje,
+  type FichaUsuario,
   type ImagenAdjunta,
   type Jornada,
   type LineaDelDia,
   type PaginaActividad,
+  type PromedioDiario,
   type ResumenPausas,
   type Senal,
   type Tablero,
+  type UltimoMovimiento,
   type UsuarioTablero,
 } from "../../domain/entities";
-import { esEstadoCuenta, esSegmento, esTrato } from "../../domain/values/estadoCuenta";
+import { esColumna, esEstadoCuenta, esTrato } from "../../domain/values/estadoCuenta";
 import { esUno } from "../../domain/values/esUno";
 import { DomainError } from "../../domain/errors";
 import type {
   ActividadDTO,
   CatalogosDTO,
   CuentasDTO,
+  FichaUsuarioDTO,
   ImagenDTO,
   JornadaDTO,
   LineaDelDiaDTO,
@@ -32,7 +38,7 @@ import type {
   TableroDTO,
 } from "../http/dtos";
 
-// Mapeo DTO (contrato v2, snake_case) → dominio (camelCase). Solo renombra y
+// Mapeo DTO (contrato v2.2, snake_case) → dominio (camelCase). Solo renombra y
 // valida: no calcula nada (D10). El JSON llega sin garantías de tipo, así que
 // cada campo se lee con un lector que comprueba su forma. Un campo faltante,
 // de otro tipo o un código fuera del contrato es un error del servidor, no un
@@ -222,12 +228,49 @@ function leerSenal(v: unknown): Senal {
   };
 }
 
+function leerEje(v: unknown, campo: string): Eje {
+  const o = obj(v, campo);
+  const desdeHora = numero(o.desde_hora, `${campo}.desde_hora`);
+  const hastaHora = numero(o.hasta_hora, `${campo}.hasta_hora`);
+  // Contrato §8: desde_hora entero 0–23, hasta_hora entero 1–24.
+  if (!Number.isInteger(desdeHora) || desdeHora < 0 || desdeHora > 23) throw invalida(`${campo}.desde_hora`);
+  if (!Number.isInteger(hastaHora) || hastaHora < 1 || hastaHora > 24) throw invalida(`${campo}.hasta_hora`);
+  return { desdeHora, hastaHora };
+}
+
+function leerColumnas(v: unknown, campo: string): CoberturaPorColumna {
+  const o = obj(v, campo);
+  return {
+    porVisitar: numero(o.por_visitar, `${campo}.por_visitar`),
+    noPaga: numero(o.no_paga, `${campo}.no_paga`),
+    pagados: numero(o.pagados, `${campo}.pagados`),
+    sinNada: numero(o.sin_nada, `${campo}.sin_nada`),
+  };
+}
+
+function leerPromedio(v: unknown, campo: string): PromedioDiario | null {
+  if (v === null) return null;
+  const o = obj(v, campo);
+  return {
+    dias: numero(o.dias, `${campo}.dias`),
+    minutosActivos: numero(o.minutos_activos, `${campo}.minutos_activos`),
+    pagosImporte: dinero(o.pagos_importe, `${campo}.pagos_importe`),
+    visitas: numero(o.visitas, `${campo}.visitas`),
+  };
+}
+
+function leerMovimiento(v: unknown, campo: string): UltimoMovimiento | null {
+  if (v === null) return null;
+  const o = obj(v, campo);
+  return { id: texto(o.id, `${campo}.id`), tipo: codigo(o.tipo, esTipoActividad, `${campo}.tipo`), hora: texto(o.hora, `${campo}.hora`) };
+}
+
 function leerUsuario(v: unknown): UsuarioTablero {
   const d = obj(v, "usuario");
   const ultima = d.ultima === null ? null : obj(d.ultima, "ultima");
   const ppf = obj(d.pagos_por_forma, "pagos_por_forma");
   const cob = obj(d.cobertura, "cobertura");
-  const seg = obj(d.cobertura_por_segmento, "cobertura_por_segmento");
+  const columnas = leerColumnas(d.cobertura_por_columna, "cobertura_por_columna");
   const cobro = obj(d.cobro, "cobro");
   return {
     uid: texto(d.uid, "usuario.uid"),
@@ -264,13 +307,10 @@ function leerUsuario(v: unknown): UsuarioTablero {
     noAplicados: conteo(d.no_aplicados, "no_aplicados"),
     visitas: numero(d.visitas, "visitas"),
     cobertura: { conAlgo: numero(cob.con_algo, "cobertura.con_algo"), total: numero(cob.total, "cobertura.total") },
-    coberturaPorSegmento: {
-      sinVisitar: numero(seg.sin_visitar, "cobertura_por_segmento.sin_visitar"),
-      volver: numero(seg.volver, "cobertura_por_segmento.volver"),
-      despues: numero(seg.despues, "cobertura_por_segmento.despues"),
-      pagados: numero(seg.pagados, "cobertura_por_segmento.pagados"),
-      sinNada: numero(seg.sin_nada, "cobertura_por_segmento.sin_nada"),
-    },
+    semanaVencida: booleano(d.semana_vencida, "semana_vencida"),
+    ultimoMovimiento: leerMovimiento(d.ultimo_movimiento, "ultimo_movimiento"),
+    coberturaPorColumna: columnas,
+    promedioDiario: leerPromedio(d.promedio_diario, "promedio_diario"),
     cobro: {
       cobrado: dinero(cobro.cobrado, "cobro.cobrado"),
       esperado: dinero(cobro.esperado, "cobro.esperado"),
@@ -293,10 +333,32 @@ export function dtoToTablero(dto: TableroDTO): Tablero {
   const d = obj(dto, "tablero");
   return {
     generadoAt: texto(d.generado_at, "generado_at"),
+    hoy: texto(d.hoy, "hoy"),
+    eje: leerEje(d.eje, "eje"),
     periodo: codigo(d.periodo, esPeriodo, "periodo"),
     pausaMin: numero(d.pausa_min, "pausa_min"),
     usuarios: lista(d.usuarios, "usuarios").map(leerUsuario),
   };
+}
+
+export function dtoToFichaUsuario(dto: FichaUsuarioDTO): FichaUsuario {
+  const d = obj(dto, "ficha");
+  return {
+    generadoAt: texto(d.generado_at, "generado_at"),
+    hoy: texto(d.hoy, "hoy"),
+    periodo: codigo(d.periodo, esPeriodo, "periodo"),
+    pausaMin: numero(d.pausa_min, "pausa_min"),
+    eje: leerEje(d.eje, "eje"),
+    usuario: leerUsuario(d.usuario),
+    inicioSemanaDia: textoONulo(d.inicio_semana_dia, "inicio_semana_dia"),
+    diasNavegables: lista(d.dias_navegables, "dias_navegables").map((x) => texto(x, "dias_navegables")),
+  };
+}
+
+function leerHorario(v: unknown): { desdeHora: string; hastaHora: string } | null {
+  if (v === null) return null;
+  const o = obj(v, "jornada.horario");
+  return { desdeHora: texto(o.desde_hora, "horario.desde_hora"), hastaHora: texto(o.hasta_hora, "horario.hasta_hora") };
 }
 
 export function dtoToJornada(dto: JornadaDTO): Jornada {
@@ -307,6 +369,9 @@ export function dtoToJornada(dto: JornadaDTO): Jornada {
     fecha: texto(d.fecha, "jornada.fecha"),
     pausaMin: numero(d.pausa_min, "jornada.pausa_min"),
     generadoAt: texto(d.generado_at, "jornada.generado_at"),
+    hoy: texto(d.hoy, "jornada.hoy"),
+    eje: leerEje(d.eje, "jornada.eje"),
+    horario: leerHorario(d.horario),
     actividades: lista(d.actividades, "jornada.actividades").map(leerActividad),
     linea: leerLinea(d.linea, "linea"),
     senales: lista(d.senales, "jornada.senales").map(leerSenal),
@@ -317,7 +382,7 @@ export function dtoToJornada(dto: JornadaDTO): Jornada {
       pausas: resumenPausas(r.pausas, "resumen.pausas"),
       pagos: conteo(r.pagos, "resumen.pagos"),
       visitas: numero(r.visitas, "resumen.visitas"),
-      condonaciones: numero(r.condonaciones, "resumen.condonaciones"),
+      condonaciones: conteo(r.condonaciones, "resumen.condonaciones"),
       clientes: numero(r.clientes, "resumen.clientes"),
     },
   };
@@ -348,9 +413,8 @@ export function dtoToCuentas(dto: CuentasDTO): CuentasSemana {
   return {
     inicioSemana: texto(d.inicio_semana, "inicio_semana"),
     conteos: {
-      sinVisitar: numero(k.sin_visitar, "conteos.sin_visitar"),
-      volver: numero(k.volver, "conteos.volver"),
-      despues: numero(k.despues, "conteos.despues"),
+      porVisitar: numero(k.por_visitar, "conteos.por_visitar"),
+      noPaga: numero(k.no_paga, "conteos.no_paga"),
       pagados: numero(k.pagados, "conteos.pagados"),
       sinNada: numero(k.sin_nada, "conteos.sin_nada"),
       total: numero(k.total, "conteos.total"),
@@ -369,7 +433,7 @@ export function dtoToCuentas(dto: CuentasDTO): CuentasSemana {
         trato: codigo(c.trato, esTrato, "cuenta.trato"),
         etiqueta: texto(c.etiqueta, "cuenta.etiqueta"),
         detalle: texto(c.detalle, "cuenta.detalle"),
-        segmento: c.segmento === null ? null : codigo(c.segmento, esSegmento, "cuenta.segmento"),
+        columna: codigo(c.columna, esColumna, "cuenta.columna"),
         conAlgo: booleano(c.con_algo, "cuenta.con_algo"),
         determinadoPor: textoONulo(c.determinado_por, "cuenta.determinado_por"),
         ultimaActividad: ua && {

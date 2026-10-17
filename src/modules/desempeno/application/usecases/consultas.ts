@@ -1,6 +1,7 @@
 import type {
   Catalogos,
   CuentasSemana,
+  FichaUsuario,
   FiltrosActividad,
   ImagenAdjunta,
   Jornada,
@@ -26,6 +27,15 @@ export function obtenerTablero(
   signal?: AbortSignal,
 ): Promise<Tablero> {
   return port.obtenerTablero(consulta, signal);
+}
+
+export function obtenerUsuario(
+  port: DesempenoPort,
+  uid: string,
+  consulta: ConsultaTablero,
+  signal?: AbortSignal,
+): Promise<FichaUsuario> {
+  return port.obtenerUsuario(uid, consulta, signal);
 }
 
 export function obtenerJornada(

@@ -45,7 +45,7 @@ describe("FichaScreen", () => {
     expect(screen.getByText("Activo")).toBeInTheDocument();
     expect(screen.getByText("Cobrado hoy")).toBeInTheDocument();
     expect(screen.getByText("$8,600")).toBeInTheDocument();
-    expect(screen.getByText("46 de 232")).toBeInTheDocument();
+    expect(screen.getByText("46 de 209")).toBeInTheDocument();
     expect(screen.getByText("65.9%")).toBeInTheDocument();
     expect(screen.queryByText(/total/i)).not.toBeInTheDocument();
   });
@@ -100,7 +100,7 @@ describe("FichaScreen", () => {
       "jornada",
       makeUsuarioTablero({
         cobertura: { conAlgo: 186, total: 232 },
-        coberturaPorSegmento: { sinVisitar: 46, volver: 20, despues: 3, pagados: 140, sinNada: 50 },
+        coberturaPorColumna: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 50 },
         cobro: { cobrado: "8600.00", esperado: "13050.00", falta: "4000.00", pct: "61.00" },
       }),
     );

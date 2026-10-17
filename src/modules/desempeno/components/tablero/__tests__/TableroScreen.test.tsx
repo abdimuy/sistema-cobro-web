@@ -206,13 +206,15 @@ describe("TableroScreen", () => {
     expect(screen.getByText("Cuenta como pausa: pasaron 45 min o más sin movimientos.")).toBeInTheDocument();
   });
 
-  it("popover de cuentas con los segmentos del API", async () => {
+  it("popover de cuentas con las columnas del API (D18)", async () => {
     const user = userEvent.setup();
     montar();
     const fila = (await screen.findByText("Juan Carlos Méndez")).closest("tr")!;
     await user.hover(within(fila).getByText("Faltan"));
     expect(await screen.findByText("Cuentas de la semana")).toBeInTheDocument();
-    expect(screen.getByText("Sin visitar")).toBeInTheDocument();
+    expect(screen.getByText("Por visitar")).toBeInTheDocument();
+    expect(screen.getByText("No paga")).toBeInTheDocument();
+    expect(screen.queryByText("Volver")).not.toBeInTheDocument();
     expect(screen.getByText("140")).toBeInTheDocument();
   });
 
@@ -320,7 +322,7 @@ describe("TableroScreen", () => {
         makeUsuarioTablero({
           cobro: { cobrado: "8600.00", esperado: "13050.00", falta: "1234.00", pct: "65.90" },
           cobertura: { conAlgo: 186, total: 232 },
-          coberturaPorSegmento: { sinVisitar: 46, volver: 20, despues: 3, pagados: 140, sinNada: 7 },
+          coberturaPorColumna: { porVisitar: 53, noPaga: 3, pagados: 140, sinNada: 7 },
         }),
       ],
     });

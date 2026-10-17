@@ -7,10 +7,11 @@ import type {
   CuentasSemana,
   Direccion,
   OrdenCuentas,
-  SegmentoFiltro,
+  ColumnaFiltro,
   UsuarioTablero,
 } from "../../domain/entities";
 import type { ConsultaCuentas } from "../../application/ports/DesempenoPort";
+import { COLUMNAS, ETIQUETA_COLUMNA, type Columna } from "../../domain/values/estadoCuenta";
 import { useCuentas } from "../../presentation/hooks/useCuentas";
 import { ErrorConReintento, EstadoVacio } from "../comunes/Estados";
 import { InfoRapida, TarjetaNota, TarjetaTitulo } from "../comunes/InfoRapida";
@@ -18,12 +19,14 @@ import { EstadoSinConfigurar } from "../ficha/EstadoSinConfigurar";
 import { esErrorSinConfigurar } from "../ficha/sinConfigurar";
 import { TablaCuentas } from "./TablaCuentas";
 
-const PILDORAS: ReadonlyArray<readonly [SegmentoFiltro, string, keyof ConteosCuentas]> = [
-  ["sin_visitar", "Sin visitar", "sinVisitar"],
-  ["volver", "Volver", "volver"],
-  ["despues", "Después", "despues"],
-  ["pagados", "Pagados", "pagados"],
-];
+const CLAVE_CONTEO: Record<Columna, keyof ConteosCuentas> = {
+  por_visitar: "porVisitar",
+  no_paga: "noPaga",
+  pagados: "pagados",
+};
+const PILDORAS: ReadonlyArray<readonly [Columna, string, keyof ConteosCuentas]> = COLUMNAS.map(
+  (c) => [c, ETIQUETA_COLUMNA[c], CLAVE_CONTEO[c]] as const,
+);
 
 const ORDENES: Record<string, { texto: string; orden: OrdenCuentas; dir: Direccion }> = {
   atrasos: { texto: "Más atrasos", orden: "atrasos", dir: "desc" },
@@ -35,7 +38,7 @@ const ESPERA_BUSQUEDA_MS = 300;
 const PILDORA =
   "inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-[12.5px] ring-1 ring-border";
 
-// Cuentas de la semana del usuario (contrato §5). Segmentos y estados los
+// Cuentas de la semana del usuario (contrato §8). Columnas y estados los
 // calcula el servidor igual que el teléfono (D5, D6); los conteos de las
 // pastillas son los del API.
 export function CuentasTab({
@@ -45,7 +48,7 @@ export function CuentasTab({
   usuario: UsuarioTablero;
   onAbrirCuenta: (c: Cuenta) => void;
 }) {
-  const [segmento, setSegmento] = useState<SegmentoFiltro>("sin_visitar");
+  const [columna, setColumna] = useState<ColumnaFiltro>("por_visitar");
   const [clave, setClave] = useState("atrasos");
   const [escrito, setEscrito] = useState("");
   const [q, setQ] = useState("");
@@ -56,8 +59,8 @@ export function CuentasTab({
   }, [escrito]);
 
   const consulta = useMemo<ConsultaCuentas>(
-    () => ({ segmento, q, orden: ORDENES[clave].orden, dir: ORDENES[clave].dir }),
-    [segmento, q, clave],
+    () => ({ columna, q, orden: ORDENES[clave].orden, dir: ORDENES[clave].dir }),
+    [columna, q, clave],
   );
   const { cuentas, isLoading, error, refresh } = useCuentas(usuario.uid, consulta);
   // Los conteos son de toda la semana (no dependen de la pastilla): mientras
@@ -77,11 +80,11 @@ export function CuentasTab({
             <button
               key={valor}
               type="button"
-              aria-pressed={segmento === valor}
-              onClick={() => setSegmento(valor)}
+              aria-pressed={columna === valor}
+              onClick={() => setColumna(valor)}
               className={cn(
                 PILDORA,
-                segmento === valor ? "bg-foreground text-background" : "bg-dsm-tarjeta hover:bg-muted",
+                columna === valor ? "bg-foreground text-background" : "bg-dsm-tarjeta hover:bg-muted",
               )}
             >
               {texto}
@@ -99,11 +102,11 @@ export function CuentasTab({
           >
             <button
               type="button"
-              aria-pressed={segmento === "sin_nada"}
-              onClick={() => setSegmento("sin_nada")}
+              aria-pressed={columna === "sin_nada"}
+              onClick={() => setColumna("sin_nada")}
               className={cn(
                 PILDORA,
-                segmento === "sin_nada"
+                columna === "sin_nada"
                   ? "bg-foreground text-background"
                   : "bg-dsm-tarjeta hover:bg-muted",
               )}

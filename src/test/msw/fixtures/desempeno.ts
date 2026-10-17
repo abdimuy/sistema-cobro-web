@@ -2,6 +2,7 @@ import type {
   ActividadDTO,
   CatalogosDTO,
   CuentasDTO,
+  FichaUsuarioDTO,
   ImagenDTO,
   JornadaDTO,
   LineaDelDiaDTO,
@@ -124,6 +125,8 @@ export const lineaDTO: LineaDelDiaDTO = {
 
 export const tableroDTO: TableroDTO = {
   generado_at: "2026-10-14T22:40:00Z",
+  hoy: "2026-10-14",
+  eje: { desde_hora: 6, hasta_hora: 21 },
   periodo: "hoy",
   pausa_min: 45,
   usuarios: [
@@ -136,7 +139,7 @@ export const tableroDTO: TableroDTO = {
       configurado: true,
       motivo_no_configurado: null,
       inicio_semana: "2026-10-09T13:46:00Z",
-      ventas_universo: 232,
+      ventas_universo: 209,
       estado_ahora: "activo",
       estado_desde: "2026-10-14T22:10:00Z",
       ultima: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z", cliente_nombre: "JUANA ANDRADE LECHUGA" },
@@ -153,8 +156,11 @@ export const tableroDTO: TableroDTO = {
       condonaciones: { n: 1, importe: "120.00" },
       no_aplicados: { n: 2, importe: "300.00" },
       visitas: 13,
-      cobertura: { con_algo: 186, total: 232 },
-      cobertura_por_segmento: { sin_visitar: 40, volver: 20, despues: 3, pagados: 140, sin_nada: 46 },
+      cobertura: { con_algo: 163, total: 209 },
+      semana_vencida: false,
+      ultimo_movimiento: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z" },
+      cobertura_por_columna: { por_visitar: 66, no_paga: 3, pagados: 140, sin_nada: 46 },
+      promedio_diario: { dias: 6, minutos_activos: 310, pagos_importe: "1433.33", visitas: 2.17 },
       cobro: { cobrado: "8600.00", esperado: "13050.00", falta: "4450.00", pct: "65.90" },
       lineas: [lineaDTO],
     },
@@ -185,7 +191,10 @@ export const tableroDTO: TableroDTO = {
       no_aplicados: { n: 0, importe: "0.00" },
       visitas: 0,
       cobertura: { con_algo: 0, total: 0 },
-      cobertura_por_segmento: { sin_visitar: 0, volver: 0, despues: 0, pagados: 0, sin_nada: 0 },
+      semana_vencida: false,
+      ultimo_movimiento: null,
+      cobertura_por_columna: { por_visitar: 0, no_paga: 0, pagados: 0, sin_nada: 0 },
+      promedio_diario: null,
       cobro: { cobrado: "0.00", esperado: "0.00", falta: "0.00", pct: null },
       lineas: [],
     },
@@ -197,6 +206,9 @@ export const jornadaDTO: JornadaDTO = {
   fecha: "2026-10-14",
   pausa_min: 45,
   generado_at: "2026-10-14T22:40:00Z",
+  hoy: "2026-10-14",
+  eje: { desde_hora: 6, hasta_hora: 21 },
+  horario: null,
   actividades: [actividadPagoDTO, actividadVisitaDTO],
   linea: lineaDTO,
   senales: [
@@ -216,7 +228,7 @@ export const jornadaDTO: JornadaDTO = {
     pausas: { n: 1, minutos: 72, en_curso: false },
     pagos: { n: 31, importe: "8600.00" },
     visitas: 13,
-    condonaciones: 2,
+    condonaciones: { n: 1, importe: "50.00" },
     clientes: 41,
   },
 };
@@ -229,7 +241,7 @@ export const paginaActividadDTO: PaginaActividadDTO = {
 
 export const cuentasDTO: CuentasDTO = {
   inicio_semana: "2026-10-09T13:46:00Z",
-  conteos: { sin_visitar: 40, volver: 20, despues: 3, pagados: 140, sin_nada: 46, total: 232 },
+  conteos: { por_visitar: 66, no_paga: 3, pagados: 140, sin_nada: 46, total: 209 },
   cuentas: [
     {
       venta_id: 13785217,
@@ -242,7 +254,7 @@ export const cuentasDTO: CuentasDTO = {
       trato: "pagado",
       etiqueta: "Pagó esta semana",
       detalle: "No hace falta volver",
-      segmento: "pagados",
+      columna: "pagados",
       con_algo: true,
       determinado_por: "pago:15082369",
       ultima_actividad: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T16:31:00Z" },
@@ -263,7 +275,7 @@ export const cuentasDTO: CuentasDTO = {
       trato: "sin_trabajar",
       etiqueta: "Sin tocar",
       detalle: "Nadie fue esta semana",
-      segmento: "sin_visitar",
+      columna: "por_visitar",
       con_algo: false,
       determinado_por: null,
       ultima_actividad: null,
@@ -299,3 +311,16 @@ export const imagenesDTO: ImagenDTO[] = [
     updated_at: "2026-10-14T16:31:10Z",
   },
 ];
+
+// GET /v2/desempeno/usuarios/{uid} (contrato v2.2 §8): el usuario es el primero
+// del tablero; días navegables del 09 al 14 (hoy incluido).
+export const fichaUsuarioDTO: FichaUsuarioDTO = {
+  generado_at: "2026-10-14T22:40:00Z",
+  hoy: "2026-10-14",
+  periodo: "hoy",
+  pausa_min: 45,
+  eje: { desde_hora: 6, hasta_hora: 21 },
+  usuario: tableroDTO.usuarios[0],
+  inicio_semana_dia: "2026-10-09",
+  dias_navegables: ["2026-10-09", "2026-10-10", "2026-10-11", "2026-10-12", "2026-10-13", "2026-10-14"],
+};

@@ -3,6 +3,7 @@ import type {
   Catalogos,
   Cuenta,
   CuentasSemana,
+  FichaUsuario,
   FiltrosActividad,
   HoraDelDia,
   ImagenAdjunta,
@@ -281,8 +282,11 @@ export function makeUsuarioTablero(overrides: Partial<UsuarioTablero> = {}): Usu
     condonaciones: { n: 0, importe: "0.00" },
     noAplicados: { n: 0, importe: "0.00" },
     visitas: 13,
-    cobertura: { conAlgo: 186, total: 232 },
-    coberturaPorSegmento: { sinVisitar: 46, volver: 20, despues: 3, pagados: 140, sinNada: 46 },
+    cobertura: { conAlgo: 163, total: 209 },
+    semanaVencida: false,
+    ultimoMovimiento: { id: "pago:15082401", tipo: "condonacion", hora: "2026-10-14T16:40:00Z" },
+    coberturaPorColumna: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46 },
+    promedioDiario: null,
     cobro: { cobrado: "8600.00", esperado: "13050.00", falta: "4450.00", pct: "65.90" },
     lineas: [makeLinea()],
     ...overrides,
@@ -321,7 +325,10 @@ export function makeUsuarioSinConfigurar(
     noAplicados: { n: 0, importe: "0.00" },
     visitas: 0,
     cobertura: { conAlgo: 0, total: 0 },
-    coberturaPorSegmento: { sinVisitar: 0, volver: 0, despues: 0, pagados: 0, sinNada: 0 },
+    semanaVencida: false,
+    ultimoMovimiento: null,
+    coberturaPorColumna: { porVisitar: 0, noPaga: 0, pagados: 0, sinNada: 0 },
+    promedioDiario: null,
     cobro: { cobrado: "0.00", esperado: "0.00", falta: "0.00", pct: null },
     lineas: [],
     ...overrides,
@@ -331,6 +338,8 @@ export function makeUsuarioSinConfigurar(
 export function makeTablero(overrides: Partial<Tablero> = {}): Tablero {
   return {
     generadoAt: "2026-10-14T22:40:00Z",
+    hoy: "2026-10-14",
+    eje: { desdeHora: 7, hastaHora: 20 },
     periodo: "hoy",
     pausaMin: 45,
     usuarios: [
@@ -345,7 +354,7 @@ export function makeTablero(overrides: Partial<Tablero> = {}): Tablero {
         estadoDesde: "2026-10-14T21:05:00Z",
         pagos: { n: 24, importe: "5100.00" },
         cobertura: { conAlgo: 185, total: 246 },
-        coberturaPorSegmento: { sinVisitar: 61, volver: 18, despues: 4, pagados: 163, sinNada: 61 },
+        coberturaPorColumna: { porVisitar: 79, noPaga: 4, pagados: 163, sinNada: 61 },
         cobro: { cobrado: "5100.00", esperado: "11800.00", falta: "6700.00", pct: "43.22" },
         ventasUniverso: 246,
       }),
@@ -373,6 +382,9 @@ export function makeJornada(overrides: Partial<Jornada> = {}): Jornada {
     fecha: "2026-10-14",
     pausaMin: 45,
     generadoAt: "2026-10-14T22:40:00Z",
+    hoy: "2026-10-14",
+    eje: { desdeHora: 7, hastaHora: 20 },
+    horario: null,
     actividades: [
       makeActividadPago(),
       makeActividadVisita(),
@@ -418,7 +430,7 @@ export function makeJornada(overrides: Partial<Jornada> = {}): Jornada {
       pausas: { n: 1, minutos: 72, enCurso: false },
       pagos: { n: 3, importe: "450.00" },
       visitas: 1,
-      condonaciones: 1,
+      condonaciones: { n: 1, importe: "50.00" },
       clientes: 5,
     },
     ...overrides,
@@ -448,7 +460,7 @@ export function makeCuenta(overrides: Partial<Cuenta> = {}): Cuenta {
     trato: "pagado",
     etiqueta: "Pagó esta semana",
     detalle: "No hace falta volver",
-    segmento: "pagados",
+    columna: "pagados",
     conAlgo: true,
     determinadoPor: "pago:15082369",
     ultimaActividad: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T14:20:00Z" },
@@ -473,7 +485,7 @@ export function makeCuentaSinTocar(overrides: Partial<Cuenta> = {}): Cuenta {
     trato: "sin_trabajar",
     etiqueta: "Falta pasar",
     detalle: "Todavía no vas",
-    segmento: "sin_visitar",
+    columna: "por_visitar",
     conAlgo: false,
     determinadoPor: null,
     ultimaActividad: null,
@@ -485,10 +497,24 @@ export function makeCuentaSinTocar(overrides: Partial<Cuenta> = {}): Cuenta {
   });
 }
 
+export function makeFichaUsuario(overrides: Partial<FichaUsuario> = {}): FichaUsuario {
+  return {
+    generadoAt: "2026-10-14T22:40:00Z",
+    hoy: "2026-10-14",
+    periodo: "hoy",
+    pausaMin: 45,
+    eje: { desdeHora: 7, hastaHora: 20 },
+    usuario: makeUsuarioTablero(),
+    inicioSemanaDia: "2026-10-09",
+    diasNavegables: ["2026-10-09", "2026-10-10", "2026-10-11", "2026-10-12", "2026-10-13", "2026-10-14"],
+    ...overrides,
+  };
+}
+
 export function makeCuentasSemana(overrides: Partial<CuentasSemana> = {}): CuentasSemana {
   return {
     inicioSemana: "2026-10-09T13:46:00Z",
-    conteos: { sinVisitar: 46, volver: 20, despues: 3, pagados: 140, sinNada: 46, total: 232 },
+    conteos: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46, total: 209 },
     cuentas: [makeCuenta(), makeCuentaSinTocar()],
     ...overrides,
   };
@@ -541,12 +567,14 @@ export class FakeDesempenoPort implements DesempenoPort {
   tableroCalls: Array<{ consulta: ConsultaTablero }> = [];
   jornadaCalls: Array<{ uid: string; fecha: string; consulta: ConsultaJornada }> = [];
   actividadCalls: Array<{ uid: string; filtros: FiltrosActividad; pagina: PaginaSolicitada }> = [];
+  usuarioCalls: Array<{ uid: string; consulta: ConsultaTablero }> = [];
   cuentasCalls: Array<{ uid: string; consulta: ConsultaCuentas }> = [];
   catalogosCalls = 0;
   imagenesCalls: Array<{ ref: RefImagenes }> = [];
   descargarCalls: Array<{ ref: RefImagenes; imagenId: string }> = [];
 
   tableroResponse: Respuesta<Tablero> = makeTablero();
+  usuarioResponse: Respuesta<FichaUsuario> = makeFichaUsuario();
   jornadaResponse: Respuesta<Jornada> = makeJornada();
   actividadResponse:
     | PaginaActividad
@@ -564,6 +592,12 @@ export class FakeDesempenoPort implements DesempenoPort {
     this.tableroCalls.push({ consulta });
     this.lanzarSiToca("obtenerTablero");
     return resolver(this.tableroResponse);
+  }
+
+  async obtenerUsuario(uid: string, consulta: ConsultaTablero): Promise<FichaUsuario> {
+    this.usuarioCalls.push({ uid, consulta });
+    this.lanzarSiToca("obtenerUsuario");
+    return resolver(this.usuarioResponse);
   }
 
   async obtenerJornada(uid: string, fecha: string, consulta: ConsultaJornada): Promise<Jornada> {

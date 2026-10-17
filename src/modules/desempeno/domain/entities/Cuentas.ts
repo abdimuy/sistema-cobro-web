@@ -1,4 +1,4 @@
-import type { EstadoCuenta, Segmento, Trato } from "../values/estadoCuenta";
+import type { Columna, EstadoCuenta, Trato } from "../values/estadoCuenta";
 import type { Direccion } from "./ActividadZona";
 import type { TipoActividad } from "./Actividad";
 
@@ -20,7 +20,7 @@ export type Cuenta = {
   readonly trato: Trato;
   readonly etiqueta: string;
   readonly detalle: string;
-  readonly segmento: Segmento | null;
+  readonly columna: Columna;
   readonly conAlgo: boolean;
   readonly determinadoPor: string | null;
   readonly ultimaActividad: UltimaActividadCuenta | null;
@@ -32,9 +32,8 @@ export type Cuenta = {
 };
 
 export type ConteosCuentas = {
-  readonly sinVisitar: number;
-  readonly volver: number;
-  readonly despues: number;
+  readonly porVisitar: number;
+  readonly noPaga: number;
   readonly pagados: number;
   readonly sinNada: number;
   readonly total: number;
@@ -46,7 +45,7 @@ export type CuentasSemana = {
   readonly cuentas: readonly Cuenta[];
 };
 
-export type SegmentoFiltro = Segmento | "sin_nada";
+export type ColumnaFiltro = Columna | "sin_nada";
 
 export const ORDENES_CUENTAS = ["cliente", "saldo", "atrasos", "ultima_actividad"] as const;
 export type OrdenCuentas = (typeof ORDENES_CUENTAS)[number];

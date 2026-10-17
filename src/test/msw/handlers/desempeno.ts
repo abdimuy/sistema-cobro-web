@@ -2,6 +2,7 @@ import { http, HttpResponse } from "msw";
 import {
   catalogosDTO,
   cuentasDTO,
+  fichaUsuarioDTO,
   imagenesDTO,
   jornadaDTO,
   paginaActividadDTO,
@@ -26,6 +27,7 @@ function responder<T>(cuerpo: T, op: Opciones, request: Request) {
 export function desempenoHandlers(op: Opciones = {}) {
   return [
     http.get(`${DESEMPENO_BASE}/desempeno/usuarios`, ({ request }) => responder(tableroDTO, op, request)),
+    http.get(`${DESEMPENO_BASE}/desempeno/usuarios/:uid`, ({ request }) => responder(fichaUsuarioDTO, op, request)),
     http.get(`${DESEMPENO_BASE}/desempeno/usuarios/:uid/jornada`, ({ request }) => responder(jornadaDTO, op, request)),
     http.get(`${DESEMPENO_BASE}/desempeno/usuarios/:uid/actividad`, ({ request }) =>
       responder(paginaActividadDTO, op, request),

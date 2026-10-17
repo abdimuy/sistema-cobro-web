@@ -1,4 +1,4 @@
-// DTOs de /v2/desempeno/* — nombres JSON EXACTOS del contrato v2
+// DTOs de /v2/desempeno/* — nombres JSON EXACTOS del contrato v2.2 (§8)
 // (docs/superpowers/specs/2026-10-14-desempeno-contratos.md en msp-api).
 // Los enums llegan como string y el mapper los valida. `null` explícito: el
 // API nunca omite un campo (contrato §0), salvo `descripcion` de las fotos.
@@ -102,6 +102,12 @@ export type SenalDTO = {
 
 export type ResumenPausasDTO = { n: number; minutos: number; en_curso: boolean };
 
+export type EjeDTO = { desde_hora: number; hasta_hora: number };
+
+export type UltimoMovimientoDTO = { id: string; tipo: string; hora: string };
+
+export type PromedioDiarioDTO = { dias: number; minutos_activos: number; pagos_importe: string; visitas: number };
+
 export type UsuarioTableroDTO = {
   uid: string;
   nombre: string;
@@ -125,16 +131,33 @@ export type UsuarioTableroDTO = {
   no_aplicados: ConteoDTO;
   visitas: number;
   cobertura: { con_algo: number; total: number };
-  cobertura_por_segmento: { sin_visitar: number; volver: number; despues: number; pagados: number; sin_nada: number };
+  semana_vencida: boolean;
+  ultimo_movimiento: UltimoMovimientoDTO | null;
+  cobertura_por_columna: { por_visitar: number; no_paga: number; pagados: number; sin_nada: number };
+  promedio_diario: PromedioDiarioDTO | null;
   cobro: { cobrado: string; esperado: string; falta: string; pct: string | null };
   lineas: LineaDelDiaDTO[];
 };
 
 export type TableroDTO = {
   generado_at: string;
+  hoy: string;
+  eje: EjeDTO;
   periodo: string;
   pausa_min: number;
   usuarios: UsuarioTableroDTO[];
+};
+
+// GET /v2/desempeno/usuarios/{uid} (contrato v2.2 §8).
+export type FichaUsuarioDTO = {
+  generado_at: string;
+  hoy: string;
+  periodo: string;
+  pausa_min: number;
+  eje: EjeDTO;
+  usuario: UsuarioTableroDTO;
+  inicio_semana_dia: string | null;
+  dias_navegables: string[];
 };
 
 export type JornadaDTO = {
@@ -142,6 +165,9 @@ export type JornadaDTO = {
   fecha: string;
   pausa_min: number;
   generado_at: string;
+  hoy: string;
+  eje: EjeDTO;
+  horario: { desde_hora: string; hasta_hora: string } | null;
   actividades: ActividadDTO[];
   linea: LineaDelDiaDTO;
   senales: SenalDTO[];
@@ -152,7 +178,7 @@ export type JornadaDTO = {
     pausas: ResumenPausasDTO;
     pagos: ConteoDTO;
     visitas: number;
-    condonaciones: number;
+    condonaciones: ConteoDTO;
     clientes: number;
   };
 };
@@ -174,7 +200,7 @@ export type CuentaDTO = {
   trato: string;
   etiqueta: string;
   detalle: string;
-  segmento: string | null;
+  columna: string;
   con_algo: boolean;
   determinado_por: string | null;
   ultima_actividad: { id: string; tipo: string; hora: string } | null;
@@ -187,7 +213,7 @@ export type CuentaDTO = {
 
 export type CuentasDTO = {
   inicio_semana: string;
-  conteos: { sin_visitar: number; volver: number; despues: number; pagados: number; sin_nada: number; total: number };
+  conteos: { por_visitar: number; no_paga: number; pagados: number; sin_nada: number; total: number };
   cuentas: CuentaDTO[];
 };
 

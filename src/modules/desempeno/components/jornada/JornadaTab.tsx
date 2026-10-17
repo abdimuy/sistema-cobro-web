@@ -146,7 +146,7 @@ export function JornadaTab({
                     Movimientos en orden
                   </h3>
                   <span className="font-mono text-[11px] text-muted-foreground">
-                    {`${plural(jornada.resumen.pagos.n, "pago", "pagos")} · ${plural(jornada.resumen.visitas, "visita", "visitas")} · ${plural(jornada.resumen.condonaciones, "condonación", "condonaciones")}`}
+                    {`${plural(jornada.resumen.pagos.n, "pago", "pagos")} · ${plural(jornada.resumen.visitas, "visita", "visitas")} · ${plural(jornada.resumen.condonaciones.n, "condonación", "condonaciones")}`}
                   </span>
                 </div>
                 <ListaJornada
