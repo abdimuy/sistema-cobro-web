@@ -9,6 +9,9 @@ import { DesempenoProvider } from "../../presentation/context/DesempenoProvider"
 import {
   FakeDesempenoPort,
   makeFichaUsuario,
+  makeJornada,
+  makeLinea,
+  makeTramo,
   makeUsuarioSinConfigurar,
   makeUsuarioTablero,
 } from "../../application/__tests__/fakeDesempenoPort";
@@ -84,6 +87,20 @@ describe("DesempenoScreen (carriles conectados)", () => {
     expect(screen.getByRole("tab", { name: "Jornada" })).toHaveAttribute("aria-selected", "true");
     await screen.findByRole("list", { name: "Movimientos en orden" });
     expect(port.jornadaCalls[port.jornadaCalls.length - 1]).toMatchObject({ uid: "uid-juan", fecha: "2026-10-13" });
+  });
+
+  it("la línea del día usa el eje que manda el servidor, no uno fijo (E-INF eje)", async () => {
+    const port = new FakeDesempenoPort();
+    // 18:00Z = 12:00 en CDMX. Eje 5–22 h: (12-5)/17 = 41.18 %. Con 7–20 sería 38.46 %.
+    port.jornadaResponse = makeJornada({
+      eje: { desdeHora: 5, hastaHora: 22 },
+      linea: makeLinea({
+        tramos: [makeTramo({ desde: "2026-10-14T18:00:00Z", hasta: "2026-10-14T19:00:00Z" })],
+      }),
+    });
+    montar("/?usuario=uid-juan&dia=2026-10-14", port);
+    const tramo = await screen.findByTestId("tramo");
+    expect(parseFloat(tramo.style.left)).toBeCloseTo((7 / 17) * 100, 1);
   });
 
   it("al pasar a otra ficha no queda abierto el modal de la anterior", async () => {
