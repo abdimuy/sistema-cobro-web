@@ -360,6 +360,55 @@ describe("DesempenoScreen (carriles conectados)", () => {
     expect(screen.queryByText("$0")).not.toBeInTheDocument();
   });
 
+  // Etiqueta de un chip de día ("lun 12", "sáb 10"); ver NavegadorDia.
+  const CHIP_DIA = /^(lun|mar|mié|jue|vie|sáb|dom) \d{1,2}$/;
+
+  it("control positivo del patrón de chip: con días navegables sí los encuentra", async () => {
+    const port = new FakeDesempenoPort();
+    montar("/?usuario=uid-juan", port);
+    expect(await screen.findByText("JUANA ANDRADE LECHUGA")).toBeInTheDocument();
+    expect(screen.queryAllByRole("button", { name: CHIP_DIA })).toHaveLength(6);
+  });
+
+  // Decisión del dueño (2026-10-19): semana vencida = dias_navegables: [] del
+  // servidor; la ficha no pinta botones de día y la Jornada sigue en el día de
+  // hoy del servidor (o el de la URL), nunca en un día vacío.
+  it("semana vencida con dias_navegables []: sin chips de día, aviso visible y la jornada de hoy carga", async () => {
+    const port = new FakeDesempenoPort();
+    port.usuarioResponse = makeFichaUsuario({
+      usuario: makeUsuarioFicha({ semanaVencida: true, inicioSemana: "2025-11-11T14:00:00Z" }),
+      inicioSemanaDia: "2025-11-11",
+      diasNavegables: [],
+    });
+    montar("/?usuario=uid-juan", port);
+    expect(await screen.findByText(/^Semana vencida · inicio mar 11 nov/)).toBeInTheDocument();
+    expect(await screen.findByText("JUANA ANDRADE LECHUGA")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Inicio de semana" })).not.toBeInTheDocument();
+    expect(screen.queryAllByRole("button", { name: CHIP_DIA })).toHaveLength(0);
+    expect(port.jornadaCalls.length).toBeGreaterThan(0);
+    expect(port.jornadaCalls.every((c) => c.fecha === "2026-10-14")).toBe(true);
+    expect(document.querySelector(".animate-pulse")).toBeNull();
+  });
+
+  it("semana vencida con dias_navegables [] y la jornada en 409 semana_vencida: aviso propio, sin Reintentar ni chips", async () => {
+    const port = new FakeDesempenoPort();
+    port.usuarioResponse = makeFichaUsuario({
+      usuario: makeUsuarioFicha({ semanaVencida: true, inicioSemana: "2025-11-11T14:00:00Z" }),
+      inicioSemanaDia: "2025-11-11",
+      diasNavegables: [],
+    });
+    port.throwOnNext.obtenerJornada = new DomainError(
+      "desempeno_semana_vencida",
+      "el inicio de semana del usuario tiene más de 14 días",
+    );
+    montar("/?usuario=uid-juan", port);
+    expect(await screen.findByText("el inicio de semana del usuario tiene más de 14 días")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Inicio de semana" })).not.toBeInTheDocument();
+    expect(screen.queryAllByRole("button", { name: CHIP_DIA })).toHaveLength(0);
+    expect(document.querySelector(".animate-pulse")).toBeNull();
+  });
+
   it("semana vencida sin movimiento en 92 días lo dice", async () => {
     const port = new FakeDesempenoPort();
     port.usuarioResponse = makeFichaUsuario({

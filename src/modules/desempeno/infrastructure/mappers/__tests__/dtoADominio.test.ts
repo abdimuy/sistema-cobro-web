@@ -641,6 +641,11 @@ describe("contrato v2.2", () => {
     esRespuestaInvalida(() => dtoToFichaUsuario(sinDias as never), /dias_navegables/);
     esRespuestaInvalida(() => dtoToFichaUsuario({ ...fichaUsuarioDTO, dias_navegables: [20261014] } as never), /dias_navegables/);
   });
+
+  // Semana vencida (decisión del dueño, 2026-10-19): el servidor manda la lista vacía.
+  it("ficha con dias_navegables vacío es válida y queda vacía", () => {
+    expect(dtoToFichaUsuario({ ...fichaUsuarioDTO, dias_navegables: [] }).diasNavegables).toEqual([]);
+  });
 });
 
 // Contrato pulido 2 (ultimo_movimiento): el campo del tablero se calcula sólo

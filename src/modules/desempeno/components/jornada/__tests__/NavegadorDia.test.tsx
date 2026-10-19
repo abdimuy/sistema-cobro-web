@@ -46,6 +46,16 @@ describe("NavegadorDia (días navegables del servidor, E-INF-018)", () => {
     expect(screen.queryByRole("button", { name: "Inicio de semana" })).not.toBeInTheDocument();
   });
 
+  // Decisión del dueño (2026-10-19): con la semana vencida el servidor manda
+  // dias_navegables: [] y la ficha no lleva botones de día, tampoco "inicio".
+  it("sin días navegables (semana vencida) no hay ningún chip de día ni 'inicio'", () => {
+    montar({ diasNavegables: [] });
+    expect(screen.queryByRole("button", { name: "Inicio de semana" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button").filter((b) => b.hasAttribute("aria-pressed"))).toHaveLength(0);
+    // Las flechas siguen: la jornada sirve para cualquier día pasado.
+    expect(screen.getByRole("button", { name: "Día anterior" })).toBeInTheDocument();
+  });
+
   it("semana no vencida: los chips son los días que manda el servidor, sin 'inicio' repetido", () => {
     const semana = ["2026-10-09", "2026-10-10", "2026-10-11", "2026-10-12", "2026-10-13", HOY];
     montar({ inicioSemanaDia: "2026-10-09", diasNavegables: semana });

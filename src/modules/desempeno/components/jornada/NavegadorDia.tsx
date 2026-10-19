@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 import { fechaCorta, fechaLarga, sumarDias } from "../lib/format";
 
 // Flechas para cualquier día pasado (la jornada sirve para cualquier fecha,
-// spec §1) y chips para los días navegables que manda el servidor (E-INF-018):
-// con la semana vencida son los últimos 14 días, nunca los de una semana vieja.
+// spec §1) y chips para los días navegables que manda el servidor (E-INF-018).
 // Si el inicio de semana queda fuera de esa lista, un chip "inicio" lleva a él.
+// Con la semana vencida el servidor manda la lista vacía y no hay ningún chip,
+// tampoco "inicio" (decisión del dueño, 2026-10-19).
 export function NavegadorDia({
   dia,
   hoy,
@@ -20,7 +21,8 @@ export function NavegadorDia({
   onCambiar: (dia: string) => void;
 }) {
   const semana = diasNavegables;
-  const chipInicio = inicioSemanaDia !== null && !semana.includes(inicioSemanaDia);
+  const chipInicio =
+    semana.length > 0 && inicioSemanaDia !== null && !semana.includes(inicioSemanaDia);
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="flex items-center gap-1">
