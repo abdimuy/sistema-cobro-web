@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { List } from "lucide-react";
-import type { Actividad, Jornada, UsuarioTablero } from "../../domain/entities";
+import type { Actividad, Jornada, UsuarioDesempeno } from "../../domain/entities";
 import { useJornada } from "../../presentation/hooks/useJornada";
 import { usePreferencias } from "../../presentation/context/usePreferencias";
 import {
@@ -25,7 +25,7 @@ import { MapaJornada } from "./MapaJornada";
 import { ParaRevisar } from "./ParaRevisar";
 
 export type JornadaTabProps = {
-  usuario: UsuarioTablero;
+  usuario: UsuarioDesempeno;
   dia: string;
   hoy: string;
   /** Inicio de semana y días navegables: los calcula el servidor (ficha v2.2). */

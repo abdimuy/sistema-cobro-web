@@ -129,6 +129,44 @@ describe("HttpDesempenoAdapter", () => {
     for (const u of vistas) expect(u.searchParams.get("contrato"), u.pathname).toBe("2.2");
   });
 
+  // Contrato pulido 2 §3: ruta estática fuera de /usuarios/{uid}, contrato=2.2
+  // y los uids en UN parámetro separado por comas.
+  it("lote de último movimiento: GET /v2/desempeno/ultimo-movimiento?contrato=2.2&uids=a,b", async () => {
+    let url: URL | undefined;
+    server.use(...desempenoHandlers({ vistoPor: (u) => (url = u) }));
+    const r = await adapter().obtenerUltimosMovimientos(["abc123", "ghi789"]);
+    expect(url?.pathname).toBe("/v2/desempeno/ultimo-movimiento");
+    expect(url?.searchParams.get("contrato")).toBe("2.2");
+    expect(url?.searchParams.getAll("uids")).toEqual(["abc123,ghi789"]);
+    expect(r.porUid.get("abc123")).toEqual({ id: "visita:9d1e", tipo: "visita", hora: "2026-09-14T17:05:00Z" });
+    expect(r.porUid.get("ghi789")).toBeNull();
+  });
+
+  it("lote de último movimiento: una respuesta mal formada es desempeno_respuesta_invalida", async () => {
+    server.use(
+      http.get("*/v2/desempeno/ultimo-movimiento", () =>
+        HttpResponse.json({ generado_at: "2026-10-14T22:40:00Z", usuarios: [{ uid: "abc123" }] }),
+      ),
+    );
+    const e = await adapter().obtenerUltimosMovimientos(["abc123"]).catch((x: unknown) => x);
+    expect(e).toBeInstanceOf(DomainError);
+    expect((e as DomainError).code).toBe("desempeno_respuesta_invalida");
+  });
+
+  it("lote de último movimiento: el 422 llega como DomainError con su código", async () => {
+    server.use(
+      ...desempenoHandlers({
+        error: {
+          status: 422,
+          body: { title: "Unprocessable Entity", status: 422, detail: "parámetro inválido", errors: [{ message: "code=desempeno_parametro_invalido", location: "query.uids" }] },
+        },
+      }),
+    );
+    const e = await adapter().obtenerUltimosMovimientos(["abc123"]).catch((x: unknown) => x);
+    expect(e).toBeInstanceOf(DomainError);
+    expect((e as DomainError).code).toBe("desempeno_parametro_invalido");
+  });
+
   it("catálogos: GET /v2/desempeno/catalogos", async () => {
     let url: URL | undefined;
     server.use(...desempenoHandlers({ vistoPor: (u) => (url = u) }));

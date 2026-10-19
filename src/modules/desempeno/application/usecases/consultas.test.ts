@@ -7,6 +7,7 @@ import {
   obtenerCuentas,
   obtenerJornada,
   obtenerTablero,
+  obtenerUltimosMovimientos92Dias,
 } from "./consultas";
 import { FakeDesempenoPort, makeCatalogos, makeTablero } from "../__tests__/fakeDesempenoPort";
 import { FILTROS_ACTIVIDAD_INICIALES } from "../../domain/entities";
@@ -65,5 +66,49 @@ describe("casos de uso de desempeño (pass-through al puerto)", () => {
     const port = new FakeDesempenoPort();
     port.throwOnNext.obtenerTablero = new Error("se cayó");
     await expect(obtenerTablero(port, { periodo: "hoy", pausaMin: 45, horario: null })).rejects.toThrow("se cayó");
+  });
+});
+
+// Contrato pulido 2 §3–§4: el lote acepta de 1 a 100 uids; el escritorio parte
+// en trozos de 100 y une las respuestas. Sin uids no se llama.
+describe("obtenerUltimosMovimientos92Dias", () => {
+  const uids = (n: number) => Array.from({ length: n }, (_, i) => `u${i + 1}`);
+
+  it("sin uids no llama al puerto", async () => {
+    const port = new FakeDesempenoPort();
+    const r = await obtenerUltimosMovimientos92Dias(port, []);
+    expect(port.ultimosMovimientosCalls).toEqual([]);
+    expect(r.size).toBe(0);
+  });
+
+  it("100 uids van en una sola llamada", async () => {
+    const port = new FakeDesempenoPort();
+    await obtenerUltimosMovimientos92Dias(port, uids(100));
+    expect(port.ultimosMovimientosCalls.map((c) => c.uids.length)).toEqual([100]);
+  });
+
+  it("150 uids van en dos llamadas de 100 y 50, sin repetir, y se unen", async () => {
+    const port = new FakeDesempenoPort();
+    port.ultimosMovimientosResponse = (pedidos) => ({
+      generadoAt: "2026-10-14T22:40:00Z",
+      porUid: new Map(pedidos.map((u) => [u, null])),
+    });
+    const r = await obtenerUltimosMovimientos92Dias(port, uids(150));
+    const llamadas = port.ultimosMovimientosCalls.map((c) => c.uids);
+    expect(llamadas.map((l) => l.length)).toEqual([100, 50]);
+    expect(llamadas.flat()).toEqual(uids(150));
+    expect(r.size).toBe(150);
+  });
+
+  it("los uids repetidos se mandan una vez", async () => {
+    const port = new FakeDesempenoPort();
+    await obtenerUltimosMovimientos92Dias(port, ["a", "b", "a"]);
+    expect(port.ultimosMovimientosCalls.map((c) => c.uids)).toEqual([["a", "b"]]);
+  });
+
+  it("si un trozo falla, falla todo", async () => {
+    const port = new FakeDesempenoPort();
+    port.throwOnNext.obtenerUltimosMovimientos = new Error("se cayó");
+    await expect(obtenerUltimosMovimientos92Dias(port, uids(150))).rejects.toThrow("se cayó");
   });
 });

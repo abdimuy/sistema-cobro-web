@@ -9,6 +9,7 @@ import {
   makeFichaUsuario,
   makeUsuarioSinConfigurar,
   makeUsuarioTablero,
+  usuarioFichaDe,
 } from "../../../application/__tests__/fakeDesempenoPort";
 import type { FichaUsuario, UsuarioTablero } from "../../../domain/entities";
 
@@ -26,7 +27,7 @@ function montar(
   };
   renderConDesempeno(
     <FichaScreen
-      ficha={makeFichaUsuario({ usuario, ...ficha })}
+      ficha={makeFichaUsuario({ usuario: usuarioFichaDe(usuario), ...ficha })}
       carga={{ tipo: "lista" }}
       pestana={pestana}
       dia="2026-10-14"

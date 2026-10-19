@@ -1,4 +1,4 @@
-import type { MotivoNoConfigurado, Periodo, UsuarioTablero } from "../../domain/entities";
+import type { MotivoNoConfigurado, Periodo, UsuarioFicha } from "../../domain/entities";
 import { dinero, duracionCorta, horaCorta, porcentaje, textoInicioSemana } from "../lib/format";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,7 +54,7 @@ export function FichaEncabezado({
   hoy,
   carga = { tipo: "lista" },
 }: {
-  usuario: UsuarioTablero;
+  usuario: UsuarioFicha;
   periodo: Periodo;
   hoy: string;
   carga?: CargaFicha;

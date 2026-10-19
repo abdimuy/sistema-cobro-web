@@ -1,17 +1,30 @@
 import type { UsuarioTablero } from "../../domain/entities";
+import type { MovimientoFila } from "../../presentation/hooks/useUltimosMovimientos92Dias";
 import { diaDeNegocioDe, fechaCorta, textoInicioSemana } from "../lib/format";
 
 const CELDA = "border-y border-border bg-dsm-tarjeta px-2 py-3 align-middle";
+
+// Contrato pulido 2 §4. El texto sale SÓLO del lote de 92 días; el
+// `movimientoUltimos7Dias` del tablero (null = nada en 7 días) no se lee aquí.
+function textoMovimiento(m: MovimientoFila): string {
+  if (m.estado === "cargando") return "Último movimiento: …";
+  if (m.estado === "sin_dato") return "Último movimiento: —";
+  return m.movimiento
+    ? `Último movimiento: ${fechaCorta(diaDeNegocioDe(m.movimiento.hora))}`
+    : "Sin movimiento en 92 días";
+}
 
 // FilaVencida: semana vencida (D19). El servidor la marca y manda sin cifras;
 // aquí sólo se rotula cuándo fue su último movimiento.
 export function FilaVencida({
   usuario: u,
+  movimiento,
   hoy,
   columnas,
   onAbrir,
 }: {
   usuario: UsuarioTablero;
+  movimiento: MovimientoFila;
   hoy: string;
   columnas: number;
   onAbrir: (uid: string) => void;
@@ -42,9 +55,7 @@ export function FilaVencida({
         colSpan={columnas - 1}
         className={`${CELDA} rounded-r-[14px] border-r pr-[18px] text-[13px] text-muted-foreground`}
       >
-        {u.ultimoMovimiento
-          ? `Último movimiento: ${fechaCorta(diaDeNegocioDe(u.ultimoMovimiento.hora))}`
-          : "Sin movimiento en 92 días"}
+        {textoMovimiento(movimiento)}
       </td>
     </tr>
   );

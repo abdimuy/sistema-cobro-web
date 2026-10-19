@@ -8,7 +8,7 @@ import type {
   Direccion,
   OrdenCuentas,
   ColumnaFiltro,
-  UsuarioTablero,
+  UsuarioDesempeno,
 } from "../../domain/entities";
 import type { ConsultaCuentas } from "../../application/ports/DesempenoPort";
 import { COLUMNAS, ETIQUETA_COLUMNA, type Columna } from "../../domain/values/estadoCuenta";
@@ -47,7 +47,7 @@ export function CuentasTab({
   usuario,
   onAbrirCuenta,
 }: {
-  usuario: UsuarioTablero;
+  usuario: UsuarioDesempeno;
   onAbrirCuenta: (c: Cuenta) => void;
 }) {
   const [columna, setColumna] = useState<ColumnaFiltro>("por_visitar");

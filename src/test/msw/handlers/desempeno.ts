@@ -7,6 +7,7 @@ import {
   jornadaDTO,
   paginaActividadDTO,
   tableroDTO,
+  ultimosMovimientosDTO,
 } from "../fixtures/desempeno";
 
 export const DESEMPENO_BASE = "*/v2";
@@ -33,6 +34,9 @@ export function desempenoHandlers(op: Opciones = {}) {
       responder(paginaActividadDTO, op, request),
     ),
     http.get(`${DESEMPENO_BASE}/desempeno/usuarios/:uid/cuentas`, ({ request }) => responder(cuentasDTO, op, request)),
+    http.get(`${DESEMPENO_BASE}/desempeno/ultimo-movimiento`, ({ request }) =>
+      responder(ultimosMovimientosDTO, op, request),
+    ),
     http.get(`${DESEMPENO_BASE}/desempeno/catalogos`, ({ request }) => responder(catalogosDTO, op, request)),
     http.get(`${DESEMPENO_BASE}/cobranza/pagos/:id/imagenes`, ({ request }) => responder(imagenesDTO, op, request)),
     http.get(`${DESEMPENO_BASE}/visitas/:id/imagenes`, ({ request }) => responder(imagenesDTO, op, request)),

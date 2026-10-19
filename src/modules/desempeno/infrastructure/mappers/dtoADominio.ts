@@ -21,6 +21,9 @@ import {
   type Senal,
   type Tablero,
   type UltimoMovimiento,
+  type UltimosMovimientos92Dias,
+  type UsuarioDesempeno,
+  type UsuarioFicha,
   type UsuarioTablero,
 } from "../../domain/entities";
 import { esColumna, esEstadoCuenta, esTrato } from "../../domain/values/estadoCuenta";
@@ -36,6 +39,7 @@ import type {
   LineaDelDiaDTO,
   PaginaActividadDTO,
   TableroDTO,
+  UltimosMovimientosDTO,
 } from "../http/dtos";
 
 // Mapeo DTO (contrato v2.2, snake_case) → dominio (camelCase). Solo renombra y
@@ -265,8 +269,10 @@ function leerMovimiento(v: unknown, campo: string): UltimoMovimiento | null {
   return { id: texto(o.id, `${campo}.id`), tipo: codigo(o.tipo, esTipoActividad, `${campo}.tipo`), hora: texto(o.hora, `${campo}.hora`) };
 }
 
-function leerUsuario(v: unknown): UsuarioTablero {
-  const d = obj(v, "usuario");
+// Campos comunes del usuario. `ultimo_movimiento` se lee aparte porque su
+// significado depende del endpoint (contrato pulido 2): ver leerUsuarioTablero
+// y leerUsuarioFicha.
+function leerUsuario(d: Obj): UsuarioDesempeno {
   const ultima = d.ultima === null ? null : obj(d.ultima, "ultima");
   const ppf = obj(d.pagos_por_forma, "pagos_por_forma");
   const cob = obj(d.cobertura, "cobertura");
@@ -308,7 +314,6 @@ function leerUsuario(v: unknown): UsuarioTablero {
     visitas: numero(d.visitas, "visitas"),
     cobertura: { conAlgo: numero(cob.con_algo, "cobertura.con_algo"), total: numero(cob.total, "cobertura.total") },
     semanaVencida: booleano(d.semana_vencida, "semana_vencida"),
-    ultimoMovimiento: leerMovimiento(d.ultimo_movimiento, "ultimo_movimiento"),
     coberturaPorColumna: columnas,
     promedioDiario: leerPromedio(d.promedio_diario, "promedio_diario"),
     cobro: {
@@ -319,6 +324,18 @@ function leerUsuario(v: unknown): UsuarioTablero {
     },
     lineas: lista(d.lineas, "lineas").map((l) => leerLinea(l, "lineas")),
   };
+}
+
+// Tablero: etapas de 1 y 7 días; null = nada en 7 días (nunca "92 días").
+function leerUsuarioTablero(v: unknown): UsuarioTablero {
+  const d = obj(v, "usuario");
+  return { ...leerUsuario(d), movimientoUltimos7Dias: leerMovimiento(d.ultimo_movimiento, "ultimo_movimiento") };
+}
+
+// Ficha: etapas de 1, 7 y 92 días; null = sin movimiento en 92 días.
+function leerUsuarioFicha(v: unknown): UsuarioFicha {
+  const d = obj(v, "usuario");
+  return { ...leerUsuario(d), ultimoMovimiento92Dias: leerMovimiento(d.ultimo_movimiento, "ultimo_movimiento") };
 }
 
 export function dtoToActividad(d: ActividadDTO): Actividad {
@@ -337,7 +354,7 @@ export function dtoToTablero(dto: TableroDTO): Tablero {
     eje: leerEje(d.eje, "eje"),
     periodo: codigo(d.periodo, esPeriodo, "periodo"),
     pausaMin: numero(d.pausa_min, "pausa_min"),
-    usuarios: lista(d.usuarios, "usuarios").map(leerUsuario),
+    usuarios: lista(d.usuarios, "usuarios").map(leerUsuarioTablero),
   };
 }
 
@@ -349,10 +366,31 @@ export function dtoToFichaUsuario(dto: FichaUsuarioDTO): FichaUsuario {
     periodo: codigo(d.periodo, esPeriodo, "periodo"),
     pausaMin: numero(d.pausa_min, "pausa_min"),
     eje: leerEje(d.eje, "eje"),
-    usuario: leerUsuario(d.usuario),
+    usuario: leerUsuarioFicha(d.usuario),
     inicioSemanaDia: textoONulo(d.inicio_semana_dia, "inicio_semana_dia"),
     diasNavegables: lista(d.dias_navegables, "dias_navegables").map((x) => texto(x, "dias_navegables")),
   };
+}
+
+// Lote de último movimiento (contrato pulido 2 §3). Estricto: cada fila trae
+// `uid` y `ultimo_movimiento` (null explícito, nunca omitido). Un uid repetido
+// o que no se pidió es un error del servidor, no un dato: pintarlo pondría la
+// fecha de otro cobrador en una fila.
+export function dtoToUltimosMovimientos(
+  dto: UltimosMovimientosDTO,
+  solicitados: readonly string[],
+): UltimosMovimientos92Dias {
+  const d = obj(dto, "ultimo_movimiento_lote");
+  const pedidos = new Set(solicitados);
+  const porUid = new Map<string, UltimoMovimiento | null>();
+  const generadoAt = texto(d.generado_at, "generado_at");
+  for (const fila of lista(d.usuarios, "usuarios")) {
+    const f = obj(fila, "usuarios[]");
+    const uid = texto(f.uid, "usuarios[].uid");
+    if (!pedidos.has(uid) || porUid.has(uid)) throw invalida("usuarios[].uid");
+    porUid.set(uid, leerMovimiento(f.ultimo_movimiento, "ultimo_movimiento"));
+  }
+  return { generadoAt, porUid };
 }
 
 function leerHorario(v: unknown): { desdeHora: string; hastaHora: string } | null {

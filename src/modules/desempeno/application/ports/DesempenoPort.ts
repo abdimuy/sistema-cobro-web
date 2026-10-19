@@ -12,6 +12,7 @@ import type {
   ColumnaFiltro,
   FichaUsuario,
   Tablero,
+  UltimosMovimientos92Dias,
 } from "../../domain/entities";
 
 // Horario opcional de la consulta (D7): "HH:MM", ambos o ninguno.
@@ -42,6 +43,10 @@ export interface DesempenoPort {
   obtenerTablero(consulta: ConsultaTablero, signal?: AbortSignal): Promise<Tablero>;
   // GET /v2/desempeno/usuarios/{uid} (contrato v2.2): un usuario con eje y días navegables.
   obtenerUsuario(uid: string, consulta: ConsultaTablero, signal?: AbortSignal): Promise<FichaUsuario>;
+  // GET /v2/desempeno/ultimo-movimiento (contrato pulido 2 §3): UNA llamada con
+  // 1 a 100 uids (LIMITE_UIDS_LOTE_MOVIMIENTO). Partir en trozos le toca al caso
+  // de uso. `null` = sin movimiento en 92 días; uid ausente = no vino.
+  obtenerUltimosMovimientos(uids: readonly string[], signal?: AbortSignal): Promise<UltimosMovimientos92Dias>;
   obtenerJornada(
     uid: string,
     fecha: string,

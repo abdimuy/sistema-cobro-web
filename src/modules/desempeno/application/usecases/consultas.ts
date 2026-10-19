@@ -8,7 +8,9 @@ import type {
   PaginaActividad,
   RefImagenes,
   Tablero,
+  UltimoMovimiento,
 } from "../../domain/entities";
+import { LIMITE_UIDS_LOTE_MOVIMIENTO } from "../../domain/entities";
 import type {
   ConsultaCuentas,
   ConsultaJornada,
@@ -36,6 +38,26 @@ export function obtenerUsuario(
   signal?: AbortSignal,
 ): Promise<FichaUsuario> {
   return port.obtenerUsuario(uid, consulta, signal);
+}
+
+// Contrato pulido 2 §3–§4: el lote acepta de 1 a 100 uids. Se quitan los
+// repetidos, se parte en trozos de LIMITE_UIDS_LOTE_MOVIMIENTO (una llamada por
+// trozo) y se unen. Si un trozo falla, falla todo: nunca se pinta una mezcla
+// de fechas y "—" que parezca completa. Sin uids no se llama.
+export async function obtenerUltimosMovimientos92Dias(
+  port: DesempenoPort,
+  uids: readonly string[],
+  signal?: AbortSignal,
+): Promise<ReadonlyMap<string, UltimoMovimiento | null>> {
+  const unicos = [...new Set(uids)];
+  const trozos: string[][] = [];
+  for (let i = 0; i < unicos.length; i += LIMITE_UIDS_LOTE_MOVIMIENTO) {
+    trozos.push(unicos.slice(i, i + LIMITE_UIDS_LOTE_MOVIMIENTO));
+  }
+  const respuestas = await Promise.all(trozos.map((t) => port.obtenerUltimosMovimientos(t, signal)));
+  const porUid = new Map<string, UltimoMovimiento | null>();
+  for (const r of respuestas) for (const [uid, m] of r.porUid) porUid.set(uid, m);
+  return porUid;
 }
 
 export function obtenerJornada(

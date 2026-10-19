@@ -16,9 +16,19 @@ import type {
   PaginaActividad,
   RefImagenes,
   Tablero,
+  UltimosMovimientos92Dias,
 } from "../../domain/entities";
-import type { CatalogosDTO, CuentasDTO, FichaUsuarioDTO, ImagenDTO, JornadaDTO, PaginaActividadDTO, TableroDTO } from "./dtos";
-import { paramsDeActividad, paramsDeCuentas, paramsDeJornada, type Params } from "./params";
+import type {
+  CatalogosDTO,
+  CuentasDTO,
+  FichaUsuarioDTO,
+  ImagenDTO,
+  JornadaDTO,
+  PaginaActividadDTO,
+  TableroDTO,
+  UltimosMovimientosDTO,
+} from "./dtos";
+import { paramsDeActividad, paramsDeCuentas, paramsDeJornada, paramsDeUltimosMovimientos, type Params } from "./params";
 import {
   dtoToCatalogos,
   dtoToCuentas,
@@ -27,11 +37,14 @@ import {
   dtoToJornada,
   dtoToPaginaActividad,
   dtoToTablero,
+  dtoToUltimosMovimientos,
 } from "../mappers/dtoADominio";
 import { apperrorToDomainError, normalizarErrorBlob } from "../mappers/errorMapper";
 
 const USUARIOS = "/desempeno/usuarios";
 const CATALOGOS = "/desempeno/catalogos";
+// Ruta estática fuera de /usuarios/{uid} (contrato pulido 2 §3).
+const ULTIMO_MOVIMIENTO = "/desempeno/ultimo-movimiento";
 const SERIALIZAR = { indexes: null } as const;
 
 function rutaUsuario(uid: string, recurso: string): string {
@@ -71,6 +84,19 @@ export class HttpDesempenoAdapter implements DesempenoPort {
         signal,
       });
       return dtoToFichaUsuario(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async obtenerUltimosMovimientos(uids: readonly string[], signal?: AbortSignal): Promise<UltimosMovimientos92Dias> {
+    try {
+      const { data } = await this.client.get<UltimosMovimientosDTO>(ULTIMO_MOVIMIENTO, {
+        params: paramsDeUltimosMovimientos(uids),
+        paramsSerializer: SERIALIZAR,
+        signal,
+      });
+      return dtoToUltimosMovimientos(data, uids);
     } catch (e) {
       throw apperrorToDomainError(e);
     }

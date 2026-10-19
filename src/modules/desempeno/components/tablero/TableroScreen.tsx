@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Periodo } from "../../domain/entities";
 import { useTablero } from "../../presentation/hooks/useTablero";
+import { useUltimosMovimientos92Dias } from "../../presentation/hooks/useUltimosMovimientos92Dias";
 import { usePreferencias } from "../../presentation/context/usePreferencias";
 import { diaDeNegocioDe, fechaLarga, horaCorta } from "../lib/format";
 import { EJE_POR_OMISION, escalaDe } from "../lib/escala";
@@ -109,6 +110,16 @@ export function TableroScreen({
   const vencidas = useMemo(
     () => filtrarUsuarios(tablero?.usuarios.filter((u) => u.configurado && u.semanaVencida) ?? [], q),
     [tablero, q],
+  );
+  // Contrato pulido 2 §4: la fecha de 92 días de las vencidas se pide al abrir
+  // "Ver N", con TODAS las vencidas (sin el filtro de búsqueda, para no pedir
+  // otra vez en cada tecla). Cerrado no se pide nada.
+  const uidsVencidas = useMemo(
+    () => tablero?.usuarios.filter((u) => u.configurado && u.semanaVencida).map((u) => u.uid) ?? [],
+    [tablero],
+  );
+  const { movimientoDe } = useUltimosMovimientos92Dias(
+    verVencidas && uidsVencidas.length > 0 ? uidsVencidas : null,
   );
   const sinConfigurar = useMemo(
     () => filtrarUsuarios(tablero?.usuarios.filter((u) => !u.configurado) ?? [], q),
@@ -238,7 +249,14 @@ export function TableroScreen({
               {tablero &&
                 verVencidas &&
                 vencidas.map((u) => (
-                  <FilaVencida key={u.uid} usuario={u} hoy={tablero.hoy} columnas={COLUMNAS} onAbrir={onAbrirUsuario} />
+                  <FilaVencida
+                    key={u.uid}
+                    usuario={u}
+                    movimiento={movimientoDe(u.uid)}
+                    hoy={tablero.hoy}
+                    columnas={COLUMNAS}
+                    onAbrir={onAbrirUsuario}
+                  />
                 ))}
               {tablero && tablero.usuarios.length === 0 && (
                 <tr>

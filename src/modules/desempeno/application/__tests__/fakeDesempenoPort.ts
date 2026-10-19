@@ -17,6 +17,9 @@ import type {
   Senal,
   Tablero,
   Tramo,
+  UltimoMovimiento,
+  UltimosMovimientos92Dias,
+  UsuarioFicha,
   UsuarioTablero,
 } from "../../domain/entities";
 import type {
@@ -284,11 +287,29 @@ export function makeUsuarioTablero(overrides: Partial<UsuarioTablero> = {}): Usu
     visitas: 13,
     cobertura: { conAlgo: 163, total: 209 },
     semanaVencida: false,
-    ultimoMovimiento: { id: "pago:15082401", tipo: "condonacion", hora: "2026-10-14T16:40:00Z" },
+    movimientoUltimos7Dias: { id: "pago:15082401", tipo: "condonacion", hora: "2026-10-14T16:40:00Z" },
     coberturaPorColumna: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46 },
     promedioDiario: null,
     cobro: { cobrado: "8600.00", esperado: "13050.00", falta: "4450.00", pct: "65.90" },
     lineas: [makeLinea()],
+    ...overrides,
+  };
+}
+
+// Usuario de la ficha a partir de uno del tablero: quita el movimiento de 7
+// días y pone el de 92 (contrato pulido 2). Nunca copia uno en el otro.
+export function usuarioFichaDe(
+  u: UsuarioTablero,
+  ultimoMovimiento92Dias: UltimoMovimiento | null = null,
+): UsuarioFicha {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { movimientoUltimos7Dias, ...base } = u;
+  return { ...base, ultimoMovimiento92Dias };
+}
+
+export function makeUsuarioFicha(overrides: Partial<UsuarioFicha> = {}): UsuarioFicha {
+  return {
+    ...usuarioFichaDe(makeUsuarioTablero(), { id: "pago:15082401", tipo: "condonacion", hora: "2026-10-14T16:40:00Z" }),
     ...overrides,
   };
 }
@@ -326,7 +347,7 @@ export function makeUsuarioSinConfigurar(
     visitas: 0,
     cobertura: { conAlgo: 0, total: 0 },
     semanaVencida: false,
-    ultimoMovimiento: null,
+    movimientoUltimos7Dias: null,
     coberturaPorColumna: { porVisitar: 0, noPaga: 0, pagados: 0, sinNada: 0 },
     promedioDiario: null,
     cobro: { cobrado: "0.00", esperado: "0.00", falta: "0.00", pct: null },
@@ -504,7 +525,7 @@ export function makeFichaUsuario(overrides: Partial<FichaUsuario> = {}): FichaUs
     periodo: "hoy",
     pausaMin: 45,
     eje: { desdeHora: 7, hastaHora: 20 },
-    usuario: makeUsuarioTablero(),
+    usuario: makeUsuarioFicha(),
     inicioSemanaDia: "2026-10-09",
     diasNavegables: ["2026-10-09", "2026-10-10", "2026-10-11", "2026-10-12", "2026-10-13", "2026-10-14"],
     ...overrides,
@@ -570,6 +591,7 @@ export class FakeDesempenoPort implements DesempenoPort {
   usuarioCalls: Array<{ uid: string; consulta: ConsultaTablero }> = [];
   cuentasCalls: Array<{ uid: string; consulta: ConsultaCuentas }> = [];
   catalogosCalls = 0;
+  ultimosMovimientosCalls: Array<{ uids: readonly string[] }> = [];
   imagenesCalls: Array<{ ref: RefImagenes }> = [];
   descargarCalls: Array<{ ref: RefImagenes; imagenId: string }> = [];
 
@@ -582,6 +604,14 @@ export class FakeDesempenoPort implements DesempenoPort {
     makePaginaActividad();
   cuentasResponse: Respuesta<CuentasSemana> = makeCuentasSemana();
   catalogosResponse: Respuesta<Catalogos> = makeCatalogos();
+  // Por omisión el lote no trae a nadie (todos ausentes): cada prueba dice qué
+  // devuelve el servidor.
+  ultimosMovimientosResponse:
+    | UltimosMovimientos92Dias
+    | ((uids: readonly string[]) => UltimosMovimientos92Dias | Promise<UltimosMovimientos92Dias>) = {
+    generadoAt: "2026-10-14T22:40:00Z",
+    porUid: new Map(),
+  };
   imagenesResponse: Respuesta<ImagenAdjunta[]> = [makeImagen()];
   descargarResponse: Respuesta<Blob> = new Blob(["jpg"], { type: "image/jpeg" });
 
@@ -598,6 +628,13 @@ export class FakeDesempenoPort implements DesempenoPort {
     this.usuarioCalls.push({ uid, consulta });
     this.lanzarSiToca("obtenerUsuario");
     return resolver(this.usuarioResponse);
+  }
+
+  async obtenerUltimosMovimientos(uids: readonly string[]): Promise<UltimosMovimientos92Dias> {
+    this.ultimosMovimientosCalls.push({ uids: [...uids] });
+    this.lanzarSiToca("obtenerUltimosMovimientos");
+    const r = this.ultimosMovimientosResponse;
+    return typeof r === "function" ? r(uids) : r;
   }
 
   async obtenerJornada(uid: string, fecha: string, consulta: ConsultaJornada): Promise<Jornada> {

@@ -43,3 +43,9 @@ export function paramsDeCuentas(c: ConsultaCuentas): Params {
   if (c.q.trim() !== "") p.q = c.q.trim();
   return p;
 }
+
+// Contrato pulido 2 §3: los uids van en UN parámetro separado por comas (no
+// repetido), junto con contrato=2.2.
+export function paramsDeUltimosMovimientos(uids: readonly string[]): Params {
+  return { contrato: CONTRATO, uids: uids.join(",") };
+}

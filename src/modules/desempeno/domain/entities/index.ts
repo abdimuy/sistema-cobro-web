@@ -31,6 +31,7 @@ export {
   esEstadoAhora,
   MOTIVOS_NO_CONFIGURADO,
   esMotivoNoConfigurado,
+  LIMITE_UIDS_LOTE_MOVIMIENTO,
 } from "./Tablero";
 export type {
   Periodo,
@@ -43,9 +44,12 @@ export type {
   UltimoMovimiento,
   PromedioDiario,
   CobroSemana,
+  UsuarioDesempeno,
   UsuarioTablero,
+  UsuarioFicha,
   Tablero,
   FichaUsuario,
+  UltimosMovimientos92Dias,
 } from "./Tablero";
 export type { ResumenJornada, HorarioEco, Jornada } from "./Jornada";
 export {

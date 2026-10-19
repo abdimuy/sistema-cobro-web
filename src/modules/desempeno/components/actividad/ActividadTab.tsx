@@ -5,7 +5,7 @@ import {
   type Actividad,
   type FiltrosActividad,
   type OrdenActividad,
-  type UsuarioTablero,
+  type UsuarioDesempeno,
 } from "../../domain/entities";
 import { useActividad, useCatalogos } from "../../presentation/hooks/useActividad";
 import { useColumnasActividad } from "../../presentation/hooks/useColumnasActividad";
@@ -26,7 +26,7 @@ import { opcionesRegistro, recordarNombres } from "./opcionesRegistro";
 import { VISTAS_PREDEFINIDAS } from "./vistasPredefinidas";
 
 export type ActividadTabProps = {
-  usuario: UsuarioTablero;
+  usuario: UsuarioDesempeno;
   onAbrirActividad: (a: Actividad) => void;
   /** Abre el detalle de venta de Clientes con el `docto_pv_id` del API. */
   onAbrirVenta?: AbrirVenta;

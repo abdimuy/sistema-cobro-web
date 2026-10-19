@@ -13,7 +13,8 @@ import {
   makeLinea,
   makeTramo,
   makeUsuarioSinConfigurar,
-  makeUsuarioTablero,
+  makeUsuarioFicha,
+  usuarioFichaDe,
 } from "../../application/__tests__/fakeDesempenoPort";
 
 // Los modales de Clientes se sustituyen para leer con qué ids se abrieron.
@@ -109,7 +110,7 @@ describe("DesempenoScreen (carriles conectados)", () => {
     await user.click(await screen.findByText("JUANA ANDRADE LECHUGA"));
     expect(screen.getByTestId("pago-modal")).toBeInTheDocument();
     port.usuarioResponse = makeFichaUsuario({
-      usuario: makeUsuarioTablero({ uid: "uid-otro", nombre: "Otra Persona" }),
+      usuario: makeUsuarioFicha({ uid: "uid-otro", nombre: "Otra Persona" }),
     });
     fireEvent.click(screen.getByRole("button", { name: "ir-a-otra-ficha", hidden: true }));
     expect(await screen.findByRole("heading", { name: "Otra Persona" })).toBeInTheDocument();
@@ -199,7 +200,7 @@ describe("DesempenoScreen (carriles conectados)", () => {
 
   it("usuario sin zona: explica por qué no hay ficha y enlaza a Usuarios", async () => {
     const port = new FakeDesempenoPort();
-    port.usuarioResponse = makeFichaUsuario({ usuario: makeUsuarioSinConfigurar() });
+    port.usuarioResponse = makeFichaUsuario({ usuario: usuarioFichaDe(makeUsuarioSinConfigurar()) });
     montar("/?usuario=uid-norma", port);
     expect(await screen.findByText(/No tiene zona asignada/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Configurar/ })).toHaveAttribute("href", "/settings");
@@ -208,7 +209,7 @@ describe("DesempenoScreen (carriles conectados)", () => {
   it("inicio de semana en el futuro (contrato v2.1): lo explica, sin enlace si no puede configurar", async () => {
     const port = new FakeDesempenoPort();
     port.usuarioResponse = makeFichaUsuario({
-      usuario: makeUsuarioSinConfigurar({ motivoNoConfigurado: "inicio_semana_futuro" }),
+      usuario: usuarioFichaDe(makeUsuarioSinConfigurar({ motivoNoConfigurado: "inicio_semana_futuro" })),
     });
     montar("/?usuario=uid-norma", port, false);
     expect(await screen.findByText(/Su inicio de semana todavía no llega/)).toBeInTheDocument();
@@ -262,7 +263,7 @@ describe("DesempenoScreen (carriles conectados)", () => {
       soltar(
         makeFichaUsuario({
           periodo: "semana",
-          usuario: makeUsuarioTablero({ pagos: { n: 20, importe: "3000.00" } }),
+          usuario: makeUsuarioFicha({ pagos: { n: 20, importe: "3000.00" } }),
         }),
       ),
     );
@@ -285,7 +286,7 @@ describe("DesempenoScreen (carriles conectados)", () => {
       pendientes[0](
         makeFichaUsuario({
           periodo: "semana",
-          usuario: makeUsuarioTablero({ pagos: { n: 20, importe: "3000.00" } }),
+          usuario: makeUsuarioFicha({ pagos: { n: 20, importe: "3000.00" } }),
         }),
       );
     });
@@ -344,10 +345,10 @@ describe("DesempenoScreen (carriles conectados)", () => {
   it("semana vencida: aviso con inicio y último movimiento, tarjetas en — y sin cifras (T20, D19)", async () => {
     const port = new FakeDesempenoPort();
     port.usuarioResponse = makeFichaUsuario({
-      usuario: makeUsuarioTablero({
+      usuario: makeUsuarioFicha({
         semanaVencida: true,
         inicioSemana: "2025-11-11T14:00:00Z",
-        ultimoMovimiento: { id: "visita:x", tipo: "visita", hora: "2026-09-05T16:00:00Z" },
+        ultimoMovimiento92Dias: { id: "visita:x", tipo: "visita", hora: "2026-09-05T16:00:00Z" },
         pagos: { n: 0, importe: "0.00" },
       }),
     });
@@ -362,7 +363,7 @@ describe("DesempenoScreen (carriles conectados)", () => {
   it("semana vencida sin movimiento en 92 días lo dice", async () => {
     const port = new FakeDesempenoPort();
     port.usuarioResponse = makeFichaUsuario({
-      usuario: makeUsuarioTablero({ semanaVencida: true, ultimoMovimiento: null }),
+      usuario: makeUsuarioFicha({ semanaVencida: true, ultimoMovimiento92Dias: null }),
     });
     montar("/?usuario=uid-juan", port);
     expect(await screen.findByText(/último movimiento sin movimiento en 92 días/)).toBeInTheDocument();

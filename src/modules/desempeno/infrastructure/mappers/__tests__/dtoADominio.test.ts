@@ -8,6 +8,7 @@ import {
   dtoToJornada,
   dtoToPaginaActividad,
   dtoToTablero,
+  dtoToUltimosMovimientos,
 } from "../dtoADominio";
 import {
   actividadPagoDTO,
@@ -20,6 +21,7 @@ import {
   lineaDTO,
   paginaActividadDTO,
   tableroDTO,
+  ultimosMovimientosDTO,
 } from "../../../../../test/msw/fixtures/desempeno";
 import type {
   Actividad,
@@ -170,7 +172,7 @@ const usuarioConfigurado: UsuarioTablero = {
   visitas: 13,
   cobertura: { conAlgo: 163, total: 209 },
   semanaVencida: false,
-  ultimoMovimiento: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z" },
+  movimientoUltimos7Dias: { id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z" },
   coberturaPorColumna: { porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46 },
   promedioDiario: { dias: 6, minutosActivos: 310, pagosImporte: "1433.33", visitas: 2.17 },
   cobro: { cobrado: "8600.00", esperado: "13050.00", falta: "4450.00", pct: "65.90" },
@@ -202,7 +204,7 @@ const usuarioSinConfigurar: UsuarioTablero = {
   visitas: 0,
   cobertura: { conAlgo: 0, total: 0 },
   semanaVencida: false,
-  ultimoMovimiento: null,
+  movimientoUltimos7Dias: null,
   coberturaPorColumna: { porVisitar: 0, noPaga: 0, pagados: 0, sinNada: 0 },
   promedioDiario: null,
   cobro: { cobrado: "0.00", esperado: "0.00", falta: "0.00", pct: null },
@@ -518,10 +520,10 @@ describe("contrato v2.2", () => {
     const u = t.usuarios[0];
     expect(u.coberturaPorColumna).toEqual({ porVisitar: 66, noPaga: 3, pagados: 140, sinNada: 46 });
     expect(u.semanaVencida).toBe(false);
-    expect(u.ultimoMovimiento).toEqual({ id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z" });
+    expect(u.movimientoUltimos7Dias).toEqual({ id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z" });
     expect(u.promedioDiario).toEqual({ dias: 6, minutosActivos: 310, pagosImporte: "1433.33", visitas: 2.17 });
     expect(t.usuarios[1].promedioDiario).toBeNull();
-    expect(t.usuarios[1].ultimoMovimiento).toBeNull();
+    expect(t.usuarios[1].movimientoUltimos7Dias).toBeNull();
   });
 
   it("rechaza una respuesta v2.1 (cobertura_por_segmento sin columnas)", () => {
@@ -595,6 +597,7 @@ describe("contrato v2.2", () => {
     expect(f.inicioSemanaDia).toBe("2026-10-09");
     expect(f.eje).toEqual({ desdeHora: 6, hastaHora: 21 });
     expect(f.usuario.uid).toBe("abc123");
+    expect(f.usuario.ultimoMovimiento92Dias).toEqual({ id: "pago:15082369", tipo: "pago", hora: "2026-10-14T22:10:00Z" });
     expect(f.periodo).toBe("hoy");
     expect(dtoToFichaUsuario({ ...fichaUsuarioDTO, inicio_semana_dia: null }).inicioSemanaDia).toBeNull();
   });
@@ -637,5 +640,77 @@ describe("contrato v2.2", () => {
     const sinDias = sin(fichaUsuarioDTO, "dias_navegables");
     esRespuestaInvalida(() => dtoToFichaUsuario(sinDias as never), /dias_navegables/);
     esRespuestaInvalida(() => dtoToFichaUsuario({ ...fichaUsuarioDTO, dias_navegables: [20261014] } as never), /dias_navegables/);
+  });
+});
+
+// Contrato pulido 2 (ultimo_movimiento): el campo del tablero se calcula sólo
+// con 1 y 7 días (null = nada en 7 días) y el de la ficha con 1, 7 y 92 (null =
+// sin movimiento en 92 días). Cada uno sale con su propio nombre de dominio
+// para que el null del tablero nunca se lea como "92 días".
+describe("ultimo_movimiento: tablero (7 días) y ficha (92 días) no se confunden", () => {
+  it("el tablero no expone un campo de 92 días y la ficha no expone uno de 7", () => {
+    const u = dtoToTablero(tableroDTO).usuarios[1] as unknown as Record<string, unknown>;
+    expect(u.movimientoUltimos7Dias).toBeNull();
+    expect("ultimoMovimiento92Dias" in u).toBe(false);
+    expect("ultimoMovimiento" in u).toBe(false);
+    const f = dtoToFichaUsuario({ ...fichaUsuarioDTO, usuario: { ...fichaUsuarioDTO.usuario, ultimo_movimiento: null } });
+    const fu = f.usuario as unknown as Record<string, unknown>;
+    expect(fu.ultimoMovimiento92Dias).toBeNull();
+    expect("movimientoUltimos7Dias" in fu).toBe(false);
+    expect("ultimoMovimiento" in fu).toBe(false);
+  });
+});
+
+// GET /v2/desempeno/ultimo-movimiento (contrato pulido 2 §3): lector estricto.
+describe("lote de último movimiento (92 días)", () => {
+  const pedidos = ["abc123", "ghi789", "zzz000"];
+
+  it("lee fecha y null por uid; el uid que no vino queda ausente", () => {
+    const r = dtoToUltimosMovimientos(ultimosMovimientosDTO, pedidos);
+    expect(r.generadoAt).toBe("2026-10-14T22:40:00Z");
+    expect([...r.porUid.entries()]).toEqual([
+      ["abc123", { id: "visita:9d1e", tipo: "visita", hora: "2026-09-14T17:05:00Z" }],
+      ["ghi789", null],
+    ]);
+    expect(r.porUid.has("zzz000")).toBe(false);
+  });
+
+  it("usuarios vacío es válido", () => {
+    expect(dtoToUltimosMovimientos({ ...ultimosMovimientosDTO, usuarios: [] }, pedidos).porUid.size).toBe(0);
+  });
+
+  it.each([
+    ["sin generado_at", { usuarios: ultimosMovimientosDTO.usuarios }, /generado_at/],
+    ["sin usuarios", { generado_at: "2026-10-14T22:40:00Z" }, /usuarios/],
+    ["usuarios no es lista", { ...ultimosMovimientosDTO, usuarios: {} }, /usuarios/],
+    ["usuario que no es objeto", { ...ultimosMovimientosDTO, usuarios: ["abc123"] }, /usuarios/],
+    ["uid numérico", { ...ultimosMovimientosDTO, usuarios: [{ uid: 123, ultimo_movimiento: null }] }, /uid/],
+    ["sin ultimo_movimiento", { ...ultimosMovimientosDTO, usuarios: [{ uid: "abc123" }] }, /ultimo_movimiento/],
+    [
+      "tipo fuera del contrato",
+      { ...ultimosMovimientosDTO, usuarios: [{ uid: "abc123", ultimo_movimiento: { id: "x", tipo: "llamada", hora: "2026-09-14T17:05:00Z" } }] },
+      /ultimo_movimiento\.tipo/,
+    ],
+    [
+      "movimiento sin hora",
+      { ...ultimosMovimientosDTO, usuarios: [{ uid: "abc123", ultimo_movimiento: { id: "x", tipo: "pago" } }] },
+      /ultimo_movimiento\.hora/,
+    ],
+    [
+      "uid repetido",
+      { ...ultimosMovimientosDTO, usuarios: [{ uid: "abc123", ultimo_movimiento: null }, { uid: "abc123", ultimo_movimiento: null }] },
+      /uid/,
+    ],
+    [
+      "uid que no se pidió",
+      { ...ultimosMovimientosDTO, usuarios: [{ uid: "otro", ultimo_movimiento: null }] },
+      /uid/,
+    ],
+  ])("%s es inválido", (_n, dto, campo) => {
+    esRespuestaInvalida(() => dtoToUltimosMovimientos(roto(dto), pedidos), campo);
+  });
+
+  it("una respuesta que no es objeto es inválida", () => {
+    esRespuestaInvalida(() => dtoToUltimosMovimientos(roto(null), pedidos), /ultimo_movimiento_lote/);
   });
 });

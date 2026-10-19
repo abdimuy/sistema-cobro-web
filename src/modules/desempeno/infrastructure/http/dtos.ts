@@ -133,6 +133,10 @@ export type UsuarioTableroDTO = {
   visitas: number;
   cobertura: { con_algo: number; total: number };
   semana_vencida: boolean;
+  // Contrato pulido 2 (ultimo_movimiento): en el TABLERO se calcula sólo con
+  // 1 y 7 días y `null` = "nada en 7 días; la fecha de 92 días se pide aparte"
+  // (nunca "sin movimiento en 92 días"). En la FICHA se calcula con 1, 7 y 92
+  // días y `null` = "sin movimiento en 92 días". El mapper los separa.
   ultimo_movimiento: UltimoMovimientoDTO | null;
   cobertura_por_columna: { por_visitar: number; no_paga: number; pagados: number; sin_nada: number };
   promedio_diario: PromedioDiarioDTO | null;
@@ -159,6 +163,18 @@ export type FichaUsuarioDTO = {
   usuario: UsuarioTableroDTO;
   inicio_semana_dia: string | null;
   dias_navegables: string[];
+};
+
+// GET /v2/desempeno/ultimo-movimiento?contrato=2.2&uids=a,b (contrato pulido 2
+// §3). Entre 1 y 100 uids, separados por coma. Mismo cálculo que la ficha (1, 7
+// y 92 días): `null` = "sin movimiento en 92 días". Un uid inexistente, no
+// configurado o de zona excluida no aparece en `usuarios`. El orden es el de
+// `uids`, sin repetidos.
+export type UltimoMovimientoLoteDTO = { uid: string; ultimo_movimiento: UltimoMovimientoDTO | null };
+
+export type UltimosMovimientosDTO = {
+  generado_at: string;
+  usuarios: UltimoMovimientoLoteDTO[];
 };
 
 export type JornadaDTO = {

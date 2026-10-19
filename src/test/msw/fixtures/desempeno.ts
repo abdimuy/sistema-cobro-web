@@ -8,6 +8,7 @@ import type {
   LineaDelDiaDTO,
   PaginaActividadDTO,
   TableroDTO,
+  UltimosMovimientosDTO,
 } from "../../../modules/desempeno/infrastructure/http/dtos";
 
 // Copia de los ejemplos de 2026-10-14-desempeno-contratos.md (v2) con los "..."
@@ -323,4 +324,15 @@ export const fichaUsuarioDTO: FichaUsuarioDTO = {
   usuario: tableroDTO.usuarios[0],
   inicio_semana_dia: "2026-10-09",
   dias_navegables: ["2026-10-09", "2026-10-10", "2026-10-11", "2026-10-12", "2026-10-13", "2026-10-14"],
+};
+
+// GET /v2/desempeno/ultimo-movimiento (contrato pulido 2 §3): etapas 1, 7 y 92
+// días; `null` = sin movimiento en 92 días. "abc123" se movió hace 30 días: en
+// el tablero (sólo 1 y 7 días) saldría null, aquí trae fecha.
+export const ultimosMovimientosDTO: UltimosMovimientosDTO = {
+  generado_at: "2026-10-14T22:40:00Z",
+  usuarios: [
+    { uid: "abc123", ultimo_movimiento: { id: "visita:9d1e", tipo: "visita", hora: "2026-09-14T17:05:00Z" } },
+    { uid: "ghi789", ultimo_movimiento: null },
+  ],
 };

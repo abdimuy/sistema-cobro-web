@@ -67,12 +67,15 @@ export type CobroSemana = {
   readonly pct: string | null;
 };
 
-// UsuarioTablero: una fila del tablero = un usuario de Firestore (D1). Sin
+// UsuarioDesempeno: los campos que comparten la fila del tablero y la ficha.
+// El último movimiento NO está aquí: cada endpoint lo calcula con otro alcance
+// (contrato pulido 2, ultimo_movimiento) y cada uno lleva su propio nombre.
+// Una fila del tablero = un usuario de Firestore (D1). Sin
 // totales del equipo (D14). `cobertura`, `coberturaPorColumna` y `cobro` son
 // siempre de la semana del usuario aunque el periodo sea "hoy" (contrato §2).
 // Un usuario no configurado trae métricas en cero, `lineas = []` y puede traer
 // `zonaId`, `zonaNombre`, `inicioSemana` y `cobro.pct` en null.
-export type UsuarioTablero = {
+export type UsuarioDesempeno = {
   readonly uid: string;
   readonly nombre: string;
   readonly email: string;
@@ -96,11 +99,24 @@ export type UsuarioTablero = {
   readonly visitas: number;
   readonly cobertura: { readonly conAlgo: number; readonly total: number };
   readonly semanaVencida: boolean;
-  readonly ultimoMovimiento: UltimoMovimiento | null;
   readonly coberturaPorColumna: CoberturaPorColumna;
   readonly promedioDiario: PromedioDiario | null;
   readonly cobro: CobroSemana;
   readonly lineas: readonly LineaDelDia[];
+};
+
+// UsuarioTablero: fila de GET /v2/desempeno/usuarios. Su último movimiento se
+// calcula sólo con 1 y 7 días: `null` = "nada en los últimos 7 días; la fecha
+// de 92 días se consulta aparte" (lote). NUNCA significa "sin movimiento en 92
+// días", por eso no se llama como el de la ficha.
+export type UsuarioTablero = UsuarioDesempeno & {
+  readonly movimientoUltimos7Dias: UltimoMovimiento | null;
+};
+
+// UsuarioFicha: `usuario` de GET /v2/desempeno/usuarios/{uid}. Su último
+// movimiento se calcula con 1, 7 y 92 días: `null` = "sin movimiento en 92 días".
+export type UsuarioFicha = UsuarioDesempeno & {
+  readonly ultimoMovimiento92Dias: UltimoMovimiento | null;
 };
 
 export type Tablero = {
@@ -121,7 +137,20 @@ export type FichaUsuario = {
   readonly periodo: Periodo;
   readonly pausaMin: number;
   readonly eje: Eje;
-  readonly usuario: UsuarioTablero;
+  readonly usuario: UsuarioFicha;
   readonly inicioSemanaDia: string | null;
   readonly diasNavegables: readonly string[];
+};
+
+// GET /v2/desempeno/ultimo-movimiento (contrato pulido 2 §3): de 1 a 100 uids
+// por llamada.
+export const LIMITE_UIDS_LOTE_MOVIMIENTO = 100;
+
+// UltimosMovimientos92Dias: respuesta del lote. Mismo cálculo que la ficha
+// (1, 7 y 92 días): `null` = "sin movimiento en 92 días". Un uid que el
+// servidor no devolvió (no existe, no configurado o zona excluida) no está en
+// `porUid`; eso no es error y no significa "sin movimiento".
+export type UltimosMovimientos92Dias = {
+  readonly generadoAt: string;
+  readonly porUid: ReadonlyMap<string, UltimoMovimiento | null>;
 };

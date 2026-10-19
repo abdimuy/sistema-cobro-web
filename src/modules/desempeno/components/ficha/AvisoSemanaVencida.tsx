@@ -1,11 +1,12 @@
-import type { UsuarioTablero } from "../../domain/entities";
+import type { UsuarioFicha } from "../../domain/entities";
 import { diaDeNegocioDe, fechaCorta } from "../lib/format";
 
-// Semana vencida (D19): el servidor la marca; aquí solo se rotula.
-export function AvisoSemanaVencida({ u }: { u: UsuarioTablero }) {
+// Semana vencida (D19): el servidor la marca; aquí solo se rotula. El dato es
+// el de la ficha (1, 7 y 92 días): null = sin movimiento en 92 días.
+export function AvisoSemanaVencida({ u }: { u: UsuarioFicha }) {
   const inicio = u.inicioSemana ? fechaCorta(diaDeNegocioDe(u.inicioSemana)) : "sin fecha";
-  const movimiento = u.ultimoMovimiento
-    ? fechaCorta(diaDeNegocioDe(u.ultimoMovimiento.hora))
+  const movimiento = u.ultimoMovimiento92Dias
+    ? fechaCorta(diaDeNegocioDe(u.ultimoMovimiento92Dias.hora))
     : "sin movimiento en 92 días";
   return (
     <div
