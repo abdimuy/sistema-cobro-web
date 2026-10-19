@@ -60,6 +60,19 @@ describe("ModalActividadDetalle", () => {
     expect(screen.queryByText(/Depósito|Casa/)).not.toBeInTheDocument();
   });
 
+  it("pago sin forma_cobro_id: la forma dice 'sin forma'", () => {
+    const base = makeActividadPago();
+    renderConDesempeno(
+      <ModalActividadDetalle
+        actividad={{ ...base, pago: { ...base.pago!, formaCobro: "otra", formaCobroId: null } }}
+        onClose={vi.fn()}
+        onAbrirCliente={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("sin forma")).toBeInTheDocument();
+    expect(screen.queryByText("Otra")).not.toBeInTheDocument();
+  });
+
   it("pago capturado en oficina sin ubicación lo dice así", () => {
     const base = makeActividadPago();
     renderConDesempeno(

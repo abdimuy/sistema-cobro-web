@@ -24,7 +24,8 @@ export type RegistradoPor = {
 export type PagoDeActividad = {
   readonly importe: string;
   readonly formaCobro: FormaCobro;
-  readonly formaCobroId: number;
+  // null: el pago llegó sin forma de cobro (el API lo declara nullable).
+  readonly formaCobroId: number | null;
   readonly aplicado: boolean;
   readonly rechazado: boolean;
   readonly doctoCcId: number | null;

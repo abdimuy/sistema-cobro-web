@@ -148,7 +148,7 @@ function leerActividad(v: unknown): Actividad {
     pago: p && {
       importe: dinero(p.importe, "pago.importe"),
       formaCobro: codigo(p.forma_cobro, esFormaCobro, "pago.forma_cobro"),
-      formaCobroId: numero(p.forma_cobro_id, "pago.forma_cobro_id"),
+      formaCobroId: numeroONulo(p.forma_cobro_id, "pago.forma_cobro_id"),
       aplicado: booleano(p.aplicado, "pago.aplicado"),
       rechazado: booleano(p.rechazado, "pago.rechazado"),
       doctoCcId: numeroONulo(p.docto_cc_id, "pago.docto_cc_id"),

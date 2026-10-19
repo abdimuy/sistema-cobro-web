@@ -223,6 +223,22 @@ describe("ActividadTab", () => {
     expect(JSON.parse(localStorage.getItem(CLAVE_COLUMNAS)!)).toContain("forma");
   });
 
+  it("columna 'Forma de cobro': un pago sin forma_cobro_id dice 'sin forma'", async () => {
+    const user = userEvent.setup();
+    const port = new FakeDesempenoPort();
+    const base = makeActividadPago();
+    port.actividadResponse = makePaginaActividad({
+      items: [{ ...base, pago: { ...base.pago!, formaCobro: "otra", formaCobroId: null } }],
+    });
+    montar(port);
+    await screen.findByText("JUANA ANDRADE LECHUGA");
+    await user.click(screen.getByRole("button", { name: "Columnas" }));
+    await user.click(await screen.findByRole("checkbox", { name: "Forma de cobro" }));
+    const fila = screen.getByText("JUANA ANDRADE LECHUGA").closest("tr")!;
+    expect(within(fila).getByText("sin forma")).toBeInTheDocument();
+    expect(within(fila).queryByText("Otra")).not.toBeInTheDocument();
+  });
+
   it("'Llegó al servidor' marca la captura tardía que decidió el servidor", async () => {
     const user = userEvent.setup();
     montar();

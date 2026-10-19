@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { refImagenesDeActividad, type Actividad, type TipoActividad } from "../../domain/entities";
 import { diaDeNegocioDe, dinero2, fechaLarga, horaCorta } from "../lib/format";
-import { FORMA_COBRO_ETIQUETA } from "../lib/tipoActividadMeta";
+import { etiquetaFormaDePago } from "../lib/tipoActividadMeta";
 import { claveDeRef } from "../../presentation/hooks/useImagenes";
 import { GaleriaFotos } from "./GaleriaFotos";
 
@@ -106,7 +106,7 @@ export function ModalActividadDetalle({
             <Seccion titulo={esVisita ? "Visita" : "Cómo se pagó"}>
               <dl>
                 {a.visita && <Fila k="Tipo" v={a.visita.tipoVisita} />}
-                {a.pago && <Fila k="Forma" v={FORMA_COBRO_ETIQUETA[a.pago.formaCobro]} />}
+                {a.pago && <Fila k="Forma" v={etiquetaFormaDePago(a.pago)} />}
                 <Fila k="Venta" v={a.folio ?? "—"} />
               </dl>
             </Seccion>

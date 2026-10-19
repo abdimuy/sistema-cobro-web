@@ -1,5 +1,5 @@
 import { Banknote, DoorOpen, Percent, type LucideIcon } from "lucide-react";
-import type { FormaCobro, TipoActividad } from "../../domain/entities";
+import type { FormaCobro, PagoDeActividad, TipoActividad } from "../../domain/entities";
 
 export const TIPO_ACTIVIDAD_META: Record<
   TipoActividad,
@@ -35,6 +35,17 @@ export const FORMA_COBRO_ETIQUETA: Record<FormaCobro, string> = {
   condonacion: "Condonación",
   otra: "Otra",
 };
+
+// Etiqueta de la forma de un pago. Sin `formaCobroId` el pago no trae forma
+// (el API la declara nullable) y se dice así, no "Otra". `etiquetas` son las
+// del catálogo del servidor cuando ya cargaron.
+export function etiquetaFormaDePago(
+  pago: PagoDeActividad,
+  etiquetas: Partial<Record<FormaCobro, string>> = {},
+): string {
+  if (pago.formaCobroId === null) return "sin forma";
+  return etiquetas[pago.formaCobro] ?? FORMA_COBRO_ETIQUETA[pago.formaCobro];
+}
 
 // Los ids del contrato son "pago:<n>" o "visita:<uuid>" (contrato §1).
 export function etiquetaDeIdActividad(id: string): string {

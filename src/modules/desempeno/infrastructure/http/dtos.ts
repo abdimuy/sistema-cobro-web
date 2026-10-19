@@ -15,7 +15,8 @@ export type RegistradoPorDTO = {
 export type PagoActividadDTO = {
   importe: string;
   forma_cobro: string;
-  forma_cobro_id: number;
+  // msp-api desempenohttp/dto.go:20 es *int: llega null cuando el pago no trae forma.
+  forma_cobro_id: number | null;
   aplicado: boolean;
   rechazado: boolean;
   docto_cc_id: number | null;

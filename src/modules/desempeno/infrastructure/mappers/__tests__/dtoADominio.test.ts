@@ -401,6 +401,20 @@ describe("DTO del contrato → dominio (objeto completo)", () => {
     expect(dtoToActividad(dto).pago).toEqual({ ...actividadPago.pago, doctoCcId: null, pagoRecibidoId: null });
   });
 
+  // msp-api desempenohttp/dto.go:20 declara forma_cobro_id *int: puede llegar
+  // null (ya en v2.1). Un solo pago así no debe tumbar la página ni la jornada.
+  it("pago sin forma_cobro_id se lee como null y no rechaza la página ni la jornada", () => {
+    const dto = copia(actividadPagoDTO);
+    dto.pago = { ...dto.pago!, forma_cobro: "otra", forma_cobro_id: null };
+    expect(dtoToActividad(dto).pago).toEqual({ ...actividadPago.pago, formaCobro: "otra", formaCobroId: null });
+    const pagina = copia(paginaActividadDTO);
+    pagina.items = [dto, ...pagina.items];
+    expect(dtoToPaginaActividad(pagina).items[0].pago?.formaCobroId).toBeNull();
+    const jornada = copia(jornadaDTO);
+    jornada.actividades = [dto, ...jornada.actividades];
+    expect(dtoToJornada(jornada).actividades[0].pago?.formaCobroId).toBeNull();
+  });
+
   it("pago y visita ausentes se leen como null", () => {
     const dto = copia(actividadPagoDTO) as Partial<typeof actividadPagoDTO>;
     delete dto.visita;
@@ -471,6 +485,12 @@ describe("una respuesta incompleta o con tipos equivocados es DomainError, no Ty
     const dto2 = copia(actividadPagoDTO) as unknown as Record<string, unknown>;
     dto2.captura_tardia = 0;
     esRespuestaInvalida(() => dtoToActividad(roto(dto2)), /captura_tardia/);
+  });
+
+  it("forma_cobro_id que llega como texto sigue siendo inválido", () => {
+    const dto = copia(actividadPagoDTO) as unknown as { pago: { forma_cobro_id: unknown } };
+    dto.pago.forma_cobro_id = "157";
+    esRespuestaInvalida(() => dtoToActividad(roto(dto)), /pago\.forma_cobro_id/);
   });
 
   it("null donde el contrato no lo permite", () => {

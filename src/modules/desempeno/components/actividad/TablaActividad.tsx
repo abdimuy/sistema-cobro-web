@@ -5,7 +5,7 @@ import type { Actividad, FiltrosActividad, OrdenActividad } from "../../domain/e
 import type { ClaveColumna } from "../../presentation/actividadPreferencias";
 import { diaDeNegocioDe, fechaCorta, horaCorta } from "../lib/format";
 import type { FormaCobro } from "../../domain/entities";
-import { FORMA_COBRO_ETIQUETA } from "../lib/tipoActividadMeta";
+import { etiquetaFormaDePago } from "../lib/tipoActividadMeta";
 import { InfoRapida } from "../comunes/InfoRapida";
 import { IconoTipoActividad } from "../comunes/IconoTipoActividad";
 import { MontoActividad } from "../comunes/MontoActividad";
@@ -66,7 +66,7 @@ function Celda({
       return (
         <span>
           {a.pago && a.tipo === "pago"
-            ? (etiquetasForma[a.pago.formaCobro] ?? FORMA_COBRO_ETIQUETA[a.pago.formaCobro])
+            ? etiquetaFormaDePago(a.pago, etiquetasForma)
             : "—"}
         </span>
       );

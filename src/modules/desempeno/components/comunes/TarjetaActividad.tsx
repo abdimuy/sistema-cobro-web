@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { Actividad } from "../../domain/entities";
 import { diaDeNegocioDe, dinero2, fechaCorta, horaCorta } from "../lib/format";
-import { FORMA_COBRO_ETIQUETA, TIPO_ACTIVIDAD_META } from "../lib/tipoActividadMeta";
+import { TIPO_ACTIVIDAD_META, etiquetaFormaDePago } from "../lib/tipoActividadMeta";
 import { TarjetaFilas, TarjetaNota, TarjetaSub, TarjetaTitulo } from "./InfoRapida";
 
 const LARGO_NOTA = 70;
@@ -25,7 +25,7 @@ export function TarjetaActividad({ actividad: a }: { actividad: Actividad }) {
     ["Venta", a.folio ?? "—"],
   ];
   if (a.visita) filas.push(["Estado", a.visita.etiqueta]);
-  if (a.pago && a.tipo === "pago") filas.push(["Forma", FORMA_COBRO_ETIQUETA[a.pago.formaCobro]]);
+  if (a.pago && a.tipo === "pago") filas.push(["Forma", etiquetaFormaDePago(a.pago)]);
   filas.push(["Registró", a.registradoPor.nombre]);
   filas.push(["GPS", a.conGps ? "con ubicación" : "sin ubicación"]);
   filas.push(["Fotos", a.numFotos > 0 ? String(a.numFotos) : "—"]);

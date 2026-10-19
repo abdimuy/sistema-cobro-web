@@ -69,6 +69,13 @@ describe("TarjetaActividad", () => {
     expect(screen.queryByText(/tarde/)).not.toBeInTheDocument();
   });
 
+  it("un pago sin forma_cobro_id dice 'sin forma' en vez de una forma", () => {
+    const base = makeActividadPago();
+    render(<TarjetaActividad actividad={{ ...base, pago: { ...base.pago!, formaCobro: "otra", formaCobroId: null } }} />);
+    expect(screen.getByText("sin forma")).toBeInTheDocument();
+    expect(screen.queryByText("Otra")).not.toBeInTheDocument();
+  });
+
   it("una visita muestra resultado, nota y que no trae ubicación", () => {
     render(<TarjetaActividad actividad={makeActividadVisita()} />);
     expect(screen.getByText("Visita · No se encontraba")).toBeInTheDocument();
