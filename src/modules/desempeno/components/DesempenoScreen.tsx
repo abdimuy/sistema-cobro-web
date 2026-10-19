@@ -66,7 +66,10 @@ function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar
   const crudoDia = params.get("dia") ?? "";
   // `hoy` es el del servidor (D10): la Mac no decide qué día es.
   const hoy = base?.hoy ?? "";
-  const dia = FORMATO_DIA.test(crudoDia) && crudoDia <= hoy ? crudoDia : hoy;
+  // Semana vencida: el servidor manda dias_navegables vacío y no hay navegación
+  // por días; el ?dia= de la URL no cuenta y la Jornada es la de hoy.
+  const sinDias = base?.diasNavegables.length === 0;
+  const dia = !sinDias && FORMATO_DIA.test(crudoDia) && crudoDia <= hoy ? crudoDia : hoy;
 
   const cambiarParam = useCallback(
     (clave: string, valor: string) =>

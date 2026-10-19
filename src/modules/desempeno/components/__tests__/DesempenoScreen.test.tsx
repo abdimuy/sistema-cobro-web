@@ -420,6 +420,29 @@ describe("DesempenoScreen (carriles conectados)", () => {
     expect(document.querySelector(".animate-pulse")).toBeNull();
   });
 
+  // Sin navegación por días (decisión del coordinador): en la ficha vencida el
+  // ?dia= de la URL no cuenta; la Jornada carga el hoy del servidor.
+  it("semana vencida con ?dia= viejo en la URL: la jornada carga hoy y nunca pide ese día", async () => {
+    const port = new FakeDesempenoPort();
+    port.usuarioResponse = makeFichaUsuario({
+      usuario: makeUsuarioFicha({ semanaVencida: true, inicioSemana: "2025-11-11T14:00:00Z" }),
+      inicioSemanaDia: "2025-11-11",
+      diasNavegables: [],
+    });
+    montar("/?usuario=uid-juan&dia=2026-10-01", port);
+    expect(await screen.findByText("JUANA ANDRADE LECHUGA")).toBeInTheDocument();
+    expect(port.jornadaCalls.length).toBeGreaterThan(0);
+    expect(port.jornadaCalls.map((c) => c.fecha)).not.toContain("2026-10-01");
+    expect(port.jornadaCalls.every((c) => c.fecha === "2026-10-14")).toBe(true);
+  });
+
+  it("control positivo: en una ficha normal el ?dia= de la URL sí se respeta", async () => {
+    const port = new FakeDesempenoPort();
+    montar("/?usuario=uid-juan&dia=2026-10-01", port);
+    await waitFor(() => expect(port.jornadaCalls.length).toBeGreaterThan(0));
+    expect(port.jornadaCalls.every((c) => c.fecha === "2026-10-01")).toBe(true);
+  });
+
   it("semana vencida sin movimiento en 92 días lo dice", async () => {
     const port = new FakeDesempenoPort();
     port.usuarioResponse = makeFichaUsuario({
