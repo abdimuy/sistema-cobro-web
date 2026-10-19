@@ -368,6 +368,9 @@ describe("DesempenoScreen (carriles conectados)", () => {
     montar("/?usuario=uid-juan", port);
     expect(await screen.findByText("JUANA ANDRADE LECHUGA")).toBeInTheDocument();
     expect(screen.queryAllByRole("button", { name: CHIP_DIA })).toHaveLength(6);
+    expect(screen.getByRole("button", { name: "Día anterior" })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "ArrowLeft" });
+    expect(screen.getByTestId("ubicacion")).toHaveTextContent("dia=2026-10-13");
   });
 
   // Decisión del dueño (2026-10-19): semana vencida = dias_navegables: [] del
@@ -385,6 +388,10 @@ describe("DesempenoScreen (carriles conectados)", () => {
     expect(await screen.findByText("JUANA ANDRADE LECHUGA")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Inicio de semana" })).not.toBeInTheDocument();
     expect(screen.queryAllByRole("button", { name: CHIP_DIA })).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "Día anterior" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Día siguiente" })).not.toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "ArrowLeft" });
+    expect(screen.getByTestId("ubicacion")).not.toHaveTextContent("dia=");
     expect(port.jornadaCalls.length).toBeGreaterThan(0);
     expect(port.jornadaCalls.every((c) => c.fecha === "2026-10-14")).toBe(true);
     expect(document.querySelector(".animate-pulse")).toBeNull();
@@ -406,6 +413,10 @@ describe("DesempenoScreen (carriles conectados)", () => {
     expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Inicio de semana" })).not.toBeInTheDocument();
     expect(screen.queryAllByRole("button", { name: CHIP_DIA })).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "Día anterior" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Día siguiente" })).not.toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "ArrowLeft" });
+    expect(screen.getByTestId("ubicacion")).not.toHaveTextContent("dia=");
     expect(document.querySelector(".animate-pulse")).toBeNull();
   });
 

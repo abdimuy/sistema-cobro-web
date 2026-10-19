@@ -67,7 +67,10 @@ export function JornadaTab({
   const [resaltada, setResaltada] = useState<string | null>(null);
 
   // ← → cambian de día (mock), salvo dentro de un campo o con un modal abierto.
+  // Sin días navegables (semana vencida) no hay navegación por días.
+  const navegable = diasNavegables.length > 0;
   useEffect(() => {
+    if (!navegable) return;
     const alTeclado = (e: KeyboardEvent) => {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
       const destino = e.target as HTMLElement | null;
@@ -78,7 +81,7 @@ export function JornadaTab({
     };
     window.addEventListener("keydown", alTeclado);
     return () => window.removeEventListener("keydown", alTeclado);
-  }, [dia, hoy, onCambiarDia]);
+  }, [dia, hoy, onCambiarDia, navegable]);
 
   return (
     <div className="flex flex-col gap-4">

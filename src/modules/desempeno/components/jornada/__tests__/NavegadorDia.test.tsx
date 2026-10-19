@@ -51,9 +51,16 @@ describe("NavegadorDia (días navegables del servidor, E-INF-018)", () => {
   it("sin días navegables (semana vencida) no hay ningún chip de día ni 'inicio'", () => {
     montar({ diasNavegables: [] });
     expect(screen.queryByRole("button", { name: "Inicio de semana" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button").filter((b) => b.hasAttribute("aria-pressed"))).toHaveLength(0);
-    // Las flechas siguen: la jornada sirve para cualquier día pasado.
+    expect(screen.queryAllByRole("button").filter((b) => b.hasAttribute("aria-pressed"))).toHaveLength(0);
+    // Tampoco flechas: no hay navegación por días (decisión del coordinador).
+    expect(screen.queryByRole("button", { name: "Día anterior" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Día siguiente" })).not.toBeInTheDocument();
+  });
+
+  it("control positivo: con días navegables sí hay flechas", () => {
+    montar();
     expect(screen.getByRole("button", { name: "Día anterior" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Día siguiente" })).toBeInTheDocument();
   });
 
   it("semana no vencida: los chips son los días que manda el servidor, sin 'inicio' repetido", () => {
