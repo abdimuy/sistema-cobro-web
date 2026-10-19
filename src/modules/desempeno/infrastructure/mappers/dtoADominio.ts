@@ -1,11 +1,15 @@
 import {
   FORMAS_COBRO,
   TIPOS_ACTIVIDAD,
+  esEstadoCompromiso,
+  esTipoCompromiso,
   esEstadoAhora,
   esMotivoNoConfigurado,
   esPeriodo,
   esTipoSenal,
   type Actividad,
+  type Agenda,
+  type CompromisoDeVenta,
   type Catalogos,
   type CoberturaPorColumna,
   type Conteo,
@@ -31,6 +35,7 @@ import { esUno } from "../../domain/values/esUno";
 import { DomainError } from "../../domain/errors";
 import type {
   ActividadDTO,
+  AgendaDTO,
   CatalogosDTO,
   CuentasDTO,
   FichaUsuarioDTO,
@@ -520,4 +525,40 @@ export function dtoToImagen(dto: ImagenDTO): ImagenAdjunta {
     createdAt: texto(d.created_at, "imagen.created_at"),
     updatedAt: texto(d.updated_at, "imagen.updated_at"),
   };
+}
+
+// GET /v2/visitas/agenda (visitas P2, spec §5.5). El estado lo deriva el
+// servidor: un estado o tipo fuera del contrato, un monto que no sea entero de
+// centavos, dos compromisos para la misma venta o la agenda de otra zona son
+// respuesta inválida, no un dato. `columna` no se lee: la columna de la cuenta
+// ya la decide el servidor en /desempeno/.../cuentas.
+const DIA_CIVIL = /^\d{4}-\d{2}-\d{2}$/;
+const HORA_CIVIL = /^\d{2}:\d{2}$/;
+
+function conForma(v: unknown, forma: RegExp, campo: string): string {
+  const t = texto(v, campo);
+  if (!forma.test(t)) throw invalida(campo);
+  return t;
+}
+
+export function dtoToAgenda(dto: AgendaDTO, zonaId: number): Agenda {
+  const d = obj(dto, "agenda");
+  if (numero(d.zona_id, "agenda.zona_id") !== zonaId) throw invalida("agenda.zona_id");
+  const porVenta = new Map<number, CompromisoDeVenta>();
+  for (const x of lista(d.items, "agenda.items")) {
+    const it = obj(x, "agenda.item");
+    const monto = numeroONulo(it.monto_centavos, "agenda.item.monto_centavos");
+    if (monto !== null && !Number.isInteger(monto)) throw invalida("agenda.item.monto_centavos");
+    const c: CompromisoDeVenta = {
+      ventaId: numero(it.venta_id, "agenda.item.venta_id"),
+      tipo: codigo(it.tipo, esTipoCompromiso, "agenda.item.tipo"),
+      estado: codigo(it.estado, esEstadoCompromiso, "agenda.item.estado"),
+      dia: conForma(it.dia, DIA_CIVIL, "agenda.item.dia"),
+      hora: it.hora === null ? null : conForma(it.hora, HORA_CIVIL, "agenda.item.hora"),
+      montoCentavos: monto,
+    };
+    if (porVenta.has(c.ventaId)) throw invalida("agenda.item.venta_id");
+    porVenta.set(c.ventaId, c);
+  }
+  return porVenta;
 }

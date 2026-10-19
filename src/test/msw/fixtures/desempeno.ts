@@ -1,5 +1,6 @@
 import type {
   ActividadDTO,
+  AgendaDTO,
   CatalogosDTO,
   CuentasDTO,
   FichaUsuarioDTO,
@@ -334,5 +335,35 @@ export const ultimosMovimientosDTO: UltimosMovimientosDTO = {
   usuarios: [
     { uid: "abc123", ultimo_movimiento: { id: "visita:9d1e", tipo: "visita", hora: "2026-09-14T17:05:00Z" } },
     { uid: "ghi789", ultimo_movimiento: null },
+  ],
+};
+
+// GET /v2/visitas/agenda (visitas P2, spec §5.5) de la zona 21563 del primer
+// usuario del tablero. MARÍA ELENA (13790011) tiene una promesa vigente;
+// JUANA (13785217) una cita que el servidor ya cerró sin cumplir (no se pinta).
+export const agendaDTO: AgendaDTO = {
+  zona_id: 21563,
+  hoy: "2026-10-14",
+  items: [
+    {
+      venta_id: 13785217,
+      visita_id: "0b8f7a52-1c3e-4d8a-9e57-3f2a1b6c9d10",
+      tipo: "cita",
+      estado: "cerrada_sin_cumplir",
+      dia: "2026-09-25",
+      hora: "16:30",
+      monto_centavos: null,
+      columna: "",
+    },
+    {
+      venta_id: 13790011,
+      visita_id: "7c41e2d9-5a6b-4f80-b3c1-2d9e8f7a6b54",
+      tipo: "promesa",
+      estado: "vigente_futura",
+      dia: "2026-10-20",
+      hora: null,
+      monto_centavos: 15000,
+      columna: "no_paga",
+    },
   ],
 };

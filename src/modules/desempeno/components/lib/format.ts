@@ -43,6 +43,12 @@ export function fechaCorta(dia: string): string {
   return `${DIAS_CORTOS[f.getUTCDay()]} ${f.getUTCDate()} ${MESES_CORTOS[f.getUTCMonth()]}`;
 }
 
+/** "2026-10-20" → "20 oct" (día civil tal cual, sin zona). */
+export function diaMes(dia: string): string {
+  const f = aFecha(dia);
+  return `${f.getUTCDate()} ${MESES_CORTOS[f.getUTCMonth()]}`;
+}
+
 /** Avanza sobre el calendario, no sumando 24 h a un instante. */
 export function sumarDias(dia: string, n: number): string {
   const f = aFecha(dia);
@@ -97,6 +103,17 @@ export function dinero(raw: string): string {
 export function dinero2(raw: string): string {
   const n = Number(raw);
   return Number.isFinite(n) ? MXN.format(n) : raw;
+}
+
+/**
+ * Centavos enteros del API → "$150" o "$150.05". Pesos y centavos se separan
+ * con aritmética entera: el monto nunca pasa por un flotante con fracción.
+ */
+export function pesosDeCentavos(centavos: number): string {
+  const pesos = Math.trunc(centavos / 100);
+  const resto = Math.abs(centavos % 100);
+  const base = MXN_SIN_CENTAVOS.format(pesos);
+  return resto === 0 ? base : `${base}.${String(resto).padStart(2, "0")}`;
 }
 
 /** "65.90" → "65.9%"; null → "—". */

@@ -1,15 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
-import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import axios from "axios";
+import { MemoryRouter } from "react-router-dom";
 import { CuentasTab } from "../CuentasTab";
 import { renderConDesempeno } from "../../../test/renderConDesempeno";
 import {
   FakeDesempenoPort,
+  makeAgenda,
+  makeCompromiso,
   makeCuenta,
   makeCuentasSemana,
   makeUsuarioTablero,
 } from "../../../application/__tests__/fakeDesempenoPort";
 import { DomainError } from "../../../domain/errors";
+import { DesempenoProvider } from "../../../presentation/context/DesempenoProvider";
+import { HttpDesempenoAdapter } from "../../../infrastructure/http/HttpDesempenoAdapter";
+import { server } from "../../../../../test/msw/server";
+import { desempenoHandlers } from "../../../../../test/msw/handlers/desempeno";
 
 // Estas pruebas fijan el comportamiento con "No paga" encendido (P2 de
 // visitas); el apagado lo cubre components/__tests__/noPagaOculto.test.tsx.
@@ -213,5 +221,108 @@ describe("CuentasTab", () => {
     expect(within(fila).getByText("$150.50")).toBeInTheDocument();
     await user.hover(within(fila).getByText("Pagó esta semana"));
     expect(await screen.findByText("$150.50 de $150.50")).toBeInTheDocument();
+  });
+});
+
+// Visitas P2, Tarea 21: columna "Compromiso" con lo que deriva el servidor
+// (GET /v2/visitas/agenda). El escritorio no calcula el estado: solo lo rotula.
+describe("CuentasTab — columna Compromiso", () => {
+  const filaDe = async (nombre: string) => (await screen.findByText(nombre)).closest("tr")!;
+  const celdaDe = (fila: HTMLElement) => within(fila).getByTestId("celda-compromiso");
+
+  it("pide la agenda de la zona del usuario y pinta la promesa sólo en su venta", async () => {
+    const port = new FakeDesempenoPort();
+    port.agendaResponse = makeAgenda(makeCompromiso({ ventaId: 13791100 }));
+    montar(port);
+    const gerardo = await filaDe("GERARDO XICALE ANALCO");
+    expect(screen.getByRole("columnheader", { name: "Compromiso" })).toBeInTheDocument();
+    await waitFor(() => expect(celdaDe(gerardo)).toHaveTextContent("Promesa 20 oct · $150"));
+    expect(celdaDe(await filaDe("JUANA ANDRADE LECHUGA"))).toHaveTextContent(/^$/);
+    expect(port.agendaCalls).toEqual([{ zonaId: 21563, hoy: null }]);
+  });
+
+  it("cita con hora, cita sin hora e incumplida, tal como las manda el servidor", async () => {
+    const port = new FakeDesempenoPort();
+    port.cuentasResponse = makeCuentasSemana({
+      cuentas: [
+        makeCuenta({ ventaId: 1, clienteNombre: "ROSA MARÍA TECUANHUEY" }),
+        makeCuenta({ ventaId: 2, clienteNombre: "JOSÉ LUIS COYOTL" }),
+        makeCuenta({ ventaId: 3, clienteNombre: "PATRICIA ZEMPOALTECATL" }),
+      ],
+    });
+    port.agendaResponse = makeAgenda(
+      makeCompromiso({ ventaId: 1, tipo: "cita", dia: "2026-10-18", hora: "16:30", montoCentavos: null }),
+      makeCompromiso({ ventaId: 2, tipo: "cita", dia: "2026-10-18", hora: null, montoCentavos: null }),
+      // Día futuro con estado incumplida: se pinta lo que dijo el servidor.
+      makeCompromiso({ ventaId: 3, estado: "incumplida", dia: "2026-10-12" }),
+    );
+    montar(port);
+    await waitFor(async () =>
+      expect(celdaDe(await filaDe("ROSA MARÍA TECUANHUEY"))).toHaveTextContent("Cita 18 oct 16:30"),
+    );
+    expect(celdaDe(await filaDe("JOSÉ LUIS COYOTL"))).toHaveTextContent(/^Cita 18 oct$/);
+    expect(celdaDe(await filaDe("PATRICIA ZEMPOALTECATL"))).toHaveTextContent("Incumplida 12 oct");
+  });
+
+  it("cerrada_sin_cumplir no se pinta", async () => {
+    const port = new FakeDesempenoPort();
+    port.agendaResponse = makeAgenda(makeCompromiso({ ventaId: 13791100, estado: "cerrada_sin_cumplir" }));
+    montar(port);
+    const gerardo = await filaDe("GERARDO XICALE ANALCO");
+    await waitFor(() => expect(port.agendaCalls).toHaveLength(1));
+    await waitFor(() => expect(celdaDe(gerardo)).not.toHaveTextContent("·"));
+    expect(celdaDe(gerardo)).toHaveTextContent(/^$/);
+    expect(within(gerardo).queryByText(/Promesa|Incumplida|Cumplida/)).not.toBeInTheDocument();
+  });
+
+  it("si la agenda falla las cuentas se pintan igual y la celda no finge que no hay compromiso", async () => {
+    const port = new FakeDesempenoPort();
+    port.throwOnNext.obtenerAgenda = new DomainError("http_403", "permiso denegado");
+    montar(port);
+    const gerardo = await filaDe("GERARDO XICALE ANALCO");
+    await waitFor(() => expect(celdaDe(gerardo)).toHaveAttribute("title", "Sin dato"));
+    expect(celdaDe(gerardo)).toHaveTextContent("·");
+    expect(screen.queryByText("No se pudieron cargar las cuentas")).not.toBeInTheDocument();
+  });
+
+  it("usuario sin zona: no pide la agenda", async () => {
+    const port = new FakeDesempenoPort();
+    renderConDesempeno(
+      <CuentasTab usuario={makeUsuarioTablero({ zonaId: null })} onAbrirCuenta={vi.fn()} />,
+      { port },
+    );
+    await screen.findByText("GERARDO XICALE ANALCO");
+    expect(port.agendaCalls).toHaveLength(0);
+  });
+
+  it("el popover del chip repite el compromiso", async () => {
+    const user = userEvent.setup();
+    const port = new FakeDesempenoPort();
+    port.agendaResponse = makeAgenda(makeCompromiso({ ventaId: 13785217 }));
+    montar(port);
+    const juana = await filaDe("JUANA ANDRADE LECHUGA");
+    await waitFor(() => expect(celdaDe(juana)).toHaveTextContent("Promesa 20 oct · $150"));
+    await user.hover(within(juana).getByText("Pagó esta semana"));
+    await waitFor(() => expect(screen.getAllByText("Promesa 20 oct · $150")).toHaveLength(2));
+    // Encabezado de la tabla + renglón del popover.
+    expect(screen.getAllByText("Compromiso")).toHaveLength(2);
+  });
+
+  // Con MSW y el adaptador HTTP real: la agenda de la zona 21563 trae una
+  // promesa para MARÍA ELENA y una cita cerrada sin cumplir para JUANA.
+  it("con MSW: pinta la promesa de la agenda y nada en la cita cerrada", async () => {
+    let url: URL | undefined;
+    server.use(...desempenoHandlers({ vistoPor: (u) => { if (u.pathname.endsWith("/visitas/agenda")) url = u; } }));
+    render(
+      <MemoryRouter>
+        <DesempenoProvider port={new HttpDesempenoAdapter(axios.create({ baseURL: "http://api.test/v2" }))}>
+          <CuentasTab usuario={makeUsuarioTablero()} onAbrirCuenta={vi.fn()} />
+        </DesempenoProvider>
+      </MemoryRouter>,
+    );
+    const maria = await filaDe("MARÍA ELENA CUAUTLE TLAPA");
+    await waitFor(() => expect(celdaDe(maria)).toHaveTextContent("Promesa 20 oct · $150"));
+    expect(celdaDe(await filaDe("JUANA ANDRADE LECHUGA"))).toHaveTextContent(/^$/);
+    expect(url?.searchParams.get("zona_id")).toBe("21563");
   });
 });

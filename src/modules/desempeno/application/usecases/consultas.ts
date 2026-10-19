@@ -1,4 +1,5 @@
 import type {
+  Agenda,
   Catalogos,
   CuentasSemana,
   FichaUsuario,
@@ -111,4 +112,15 @@ export function descargarImagen(
   signal?: AbortSignal,
 ): Promise<Blob> {
   return port.descargarImagen(ref, imagenId, signal);
+}
+
+// Agenda de compromisos de la zona (visitas P2, spec §5.5). Pass-through: el
+// estado de cada compromiso lo deriva el servidor.
+export function obtenerAgenda(
+  port: DesempenoPort,
+  zonaId: number,
+  hoy: string | null,
+  signal?: AbortSignal,
+): Promise<Agenda> {
+  return port.obtenerAgenda(zonaId, hoy, signal);
 }

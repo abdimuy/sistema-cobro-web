@@ -7,6 +7,7 @@ import type {
   PaginaSolicitada,
 } from "../../application/ports/DesempenoPort";
 import type {
+  Agenda,
   Catalogos,
   CuentasSemana,
   FichaUsuario,
@@ -19,6 +20,7 @@ import type {
   UltimosMovimientos92Dias,
 } from "../../domain/entities";
 import type {
+  AgendaDTO,
   CatalogosDTO,
   CuentasDTO,
   FichaUsuarioDTO,
@@ -30,6 +32,7 @@ import type {
 } from "./dtos";
 import { paramsDeActividad, paramsDeCuentas, paramsDeJornada, paramsDeUltimosMovimientos, type Params } from "./params";
 import {
+  dtoToAgenda,
   dtoToCatalogos,
   dtoToCuentas,
   dtoToFichaUsuario,
@@ -45,6 +48,9 @@ const USUARIOS = "/desempeno/usuarios";
 const CATALOGOS = "/desempeno/catalogos";
 // Ruta estática fuera de /usuarios/{uid} (contrato pulido 2 §3).
 const ULTIMO_MOVIMIENTO = "/desempeno/ultimo-movimiento";
+// Agenda de compromisos de visitas (visitas P2, spec §5.5). No es de
+// /desempeno/: no lleva `contrato`.
+const AGENDA = "/visitas/agenda";
 const SERIALIZAR = { indexes: null } as const;
 
 function rutaUsuario(uid: string, recurso: string): string {
@@ -152,6 +158,17 @@ export class HttpDesempenoAdapter implements DesempenoPort {
     try {
       const { data } = await this.client.get<CatalogosDTO>(CATALOGOS, { signal });
       return dtoToCatalogos(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async obtenerAgenda(zonaId: number, hoy: string | null, signal?: AbortSignal): Promise<Agenda> {
+    try {
+      const params: Params = { zona_id: zonaId };
+      if (hoy) params.hoy = hoy;
+      const { data } = await this.client.get<AgendaDTO>(AGENDA, { params, signal });
+      return dtoToAgenda(data, zonaId);
     } catch (e) {
       throw apperrorToDomainError(e);
     }

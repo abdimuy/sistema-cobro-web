@@ -1,4 +1,5 @@
 import type {
+  Agenda,
   Catalogos,
   CuentasSemana,
   Direccion,
@@ -67,6 +68,10 @@ export interface DesempenoPort {
   // GET /v2/desempeno/catalogos (contrato v2 §4b): formas de cobro y tipos de
   // visita para armar los filtros de Actividad.
   obtenerCatalogos(signal?: AbortSignal): Promise<Catalogos>;
+  // GET /v2/visitas/agenda?zona_id=&hoy= (visitas P2, spec §5.5): compromiso
+  // vigente por venta de la zona con el estado que deriva el servidor. `hoy`
+  // null = el día de hoy del servidor (America/Mexico_City).
+  obtenerAgenda(zonaId: number, hoy: string | null, signal?: AbortSignal): Promise<Agenda>;
   listarImagenes(ref: RefImagenes, signal?: AbortSignal): Promise<ImagenAdjunta[]>;
   descargarImagen(
     ref: RefImagenes,

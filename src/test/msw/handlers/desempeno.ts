@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import {
+  agendaDTO,
   catalogosDTO,
   cuentasDTO,
   fichaUsuarioDTO,
@@ -39,6 +40,7 @@ export function desempenoHandlers(op: Opciones = {}) {
     ),
     http.get(`${DESEMPENO_BASE}/desempeno/catalogos`, ({ request }) => responder(catalogosDTO, op, request)),
     http.get(`${DESEMPENO_BASE}/cobranza/pagos/:id/imagenes`, ({ request }) => responder(imagenesDTO, op, request)),
+    http.get(`${DESEMPENO_BASE}/visitas/agenda`, ({ request }) => responder(agendaDTO, op, request)),
     http.get(`${DESEMPENO_BASE}/visitas/:id/imagenes`, ({ request }) => responder(imagenesDTO, op, request)),
   ];
 }

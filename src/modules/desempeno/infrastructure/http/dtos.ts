@@ -234,6 +234,27 @@ export type CuentasDTO = {
   cuentas: CuentaDTO[];
 };
 
+// GET /v2/visitas/agenda?zona_id=&hoy= (visitas P2, spec §5.5; msp-api
+// internal/visitas/infra/visitashttp/dto_agenda.go). Un item por venta con
+// compromiso; `estado` y `columna` los deriva el servidor. La nota de la visita
+// no viaja aquí.
+export type CompromisoAgendaDTO = {
+  venta_id: number;
+  visita_id: string;
+  tipo: string;
+  estado: string;
+  dia: string;
+  hora: string | null;
+  monto_centavos: number | null;
+  columna: string;
+};
+
+export type AgendaDTO = {
+  zona_id: number;
+  hoy: string;
+  items: CompromisoAgendaDTO[];
+};
+
 // GET /v2/desempeno/catalogos (contrato v2 §4b).
 export type CatalogosDTO = {
   formas_cobro: Array<{ codigo: string; etiqueta: string }>;

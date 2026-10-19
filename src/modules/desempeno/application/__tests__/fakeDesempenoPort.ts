@@ -1,6 +1,8 @@
 import type {
   Actividad,
+  Agenda,
   Catalogos,
+  CompromisoDeVenta,
   Cuenta,
   CuentasSemana,
   FichaUsuario,
@@ -576,6 +578,24 @@ export function makeImagen(overrides: Partial<ImagenAdjunta> = {}): ImagenAdjunt
   };
 }
 
+// makeCompromiso: una entrada de la agenda del servidor. El estado es el que
+// el servidor derivó; las pruebas lo fijan sin importar la fecha.
+export function makeCompromiso(overrides: Partial<CompromisoDeVenta> = {}): CompromisoDeVenta {
+  return {
+    ventaId: 13791100,
+    tipo: "promesa",
+    estado: "vigente_futura",
+    dia: "2026-10-20",
+    hora: null,
+    montoCentavos: 15000,
+    ...overrides,
+  };
+}
+
+export function makeAgenda(...compromisos: CompromisoDeVenta[]): Agenda {
+  return new Map(compromisos.map((c) => [c.ventaId, c]));
+}
+
 type Respuesta<T> = T | (() => T | Promise<T>);
 
 async function resolver<T>(r: Respuesta<T>): Promise<T> {
@@ -592,6 +612,7 @@ export class FakeDesempenoPort implements DesempenoPort {
   cuentasCalls: Array<{ uid: string; consulta: ConsultaCuentas }> = [];
   catalogosCalls = 0;
   ultimosMovimientosCalls: Array<{ uids: readonly string[] }> = [];
+  agendaCalls: Array<{ zonaId: number; hoy: string | null }> = [];
   imagenesCalls: Array<{ ref: RefImagenes }> = [];
   descargarCalls: Array<{ ref: RefImagenes; imagenId: string }> = [];
 
@@ -612,6 +633,8 @@ export class FakeDesempenoPort implements DesempenoPort {
     generadoAt: "2026-10-14T22:40:00Z",
     porUid: new Map(),
   };
+  // Por omisión la zona no tiene compromisos: cada prueba dice cuáles manda el servidor.
+  agendaResponse: Respuesta<Agenda> = new Map();
   imagenesResponse: Respuesta<ImagenAdjunta[]> = [makeImagen()];
   descargarResponse: Respuesta<Blob> = new Blob(["jpg"], { type: "image/jpeg" });
 
@@ -664,6 +687,12 @@ export class FakeDesempenoPort implements DesempenoPort {
     this.catalogosCalls++;
     this.lanzarSiToca("obtenerCatalogos");
     return resolver(this.catalogosResponse);
+  }
+
+  async obtenerAgenda(zonaId: number, hoy: string | null): Promise<Agenda> {
+    this.agendaCalls.push({ zonaId, hoy });
+    this.lanzarSiToca("obtenerAgenda");
+    return resolver(this.agendaResponse);
   }
 
   async listarImagenes(ref: RefImagenes): Promise<ImagenAdjunta[]> {

@@ -76,3 +76,10 @@ export type {
 } from "./Cuentas";
 export type { ImagenAdjunta } from "./Imagen";
 export type { Catalogos, FormaCobroCatalogo, TipoVisitaCatalogo } from "./Catalogos";
+export {
+  TIPOS_COMPROMISO,
+  esTipoCompromiso,
+  ESTADOS_COMPROMISO,
+  esEstadoCompromiso,
+} from "./Agenda";
+export type { TipoCompromiso, EstadoCompromiso, CompromisoDeVenta, Agenda } from "./Agenda";

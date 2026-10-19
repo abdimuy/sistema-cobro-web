@@ -13,6 +13,7 @@ import type {
 import type { ConsultaCuentas } from "../../application/ports/DesempenoPort";
 import { COLUMNAS, ETIQUETA_COLUMNA, type Columna } from "../../domain/values/estadoCuenta";
 import { useCuentas } from "../../presentation/hooks/useCuentas";
+import { useAgenda } from "../../presentation/hooks/useAgenda";
 import { ErrorConReintento, EstadoVacio } from "../comunes/Estados";
 import { InfoRapida, TarjetaNota, TarjetaTitulo } from "../comunes/InfoRapida";
 import { EstadoSinConfigurar } from "../ficha/EstadoSinConfigurar";
@@ -66,6 +67,9 @@ export function CuentasTab({
     [columna, q, clave],
   );
   const { cuentas, isLoading, error, refresh } = useCuentas(usuario.uid, consulta);
+  // Compromiso por venta (visitas P2, Tarea 21): la agenda de la zona del
+  // usuario con el hoy del servidor. No depende de la pastilla ni de la búsqueda.
+  const compromisoDe = useAgenda(usuario.zonaId, null);
   // Los conteos son de toda la semana (no dependen de la pastilla): mientras
   // llega la respuesta de otra pastilla se conservan los últimos recibidos para
   // que no parpadeen. La tabla sí espera a su respuesta.
@@ -176,7 +180,7 @@ export function CuentasTab({
           <EstadoVacio titulo="No hay cuentas en este grupo" />
         </div>
       ) : cuentas ? (
-        <TablaCuentas cuentas={cuentas.cuentas} onAbrir={onAbrirCuenta} />
+        <TablaCuentas cuentas={cuentas.cuentas} onAbrir={onAbrirCuenta} compromisoDe={compromisoDe} />
       ) : null}
     </div>
   );

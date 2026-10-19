@@ -6,6 +6,7 @@ import { desempenoHandlers } from "../../../../test/msw/handlers/desempeno";
 import { HttpDesempenoAdapter } from "./HttpDesempenoAdapter";
 import { FILTROS_ACTIVIDAD_INICIALES } from "../../domain/entities";
 import { DomainError } from "../../domain/errors";
+import { agendaDTO } from "../../../../test/msw/fixtures/desempeno";
 
 const adapter = () => new HttpDesempenoAdapter(axios.create({ baseURL: "http://api.test/v2" }));
 
@@ -224,5 +225,88 @@ describe("HttpDesempenoAdapter", () => {
     const e = await adapter().obtenerTablero({ periodo: "hoy", pausaMin: 45, horario: null }).catch((x: unknown) => x);
     expect(e).toBeInstanceOf(DomainError);
     expect((e as DomainError).code).toBe("desempeno_firestore_unavailable");
+  });
+
+  // Visitas P2, Tarea 21: la agenda del servidor (spec §5.5).
+  describe("agenda de compromisos", () => {
+    it("GET /v2/visitas/agenda?zona_id=21563 sin hoy y mapea por venta", async () => {
+      let url: URL | undefined;
+      server.use(...desempenoHandlers({ vistoPor: (u) => (url = u) }));
+      const agenda = await adapter().obtenerAgenda(21563, null);
+      expect(url?.pathname).toBe("/v2/visitas/agenda");
+      expect(url?.searchParams.get("zona_id")).toBe("21563");
+      expect(url?.searchParams.has("hoy")).toBe(false);
+      expect(url?.searchParams.has("contrato")).toBe(false);
+      expect(agenda.get(13790011)).toEqual({
+        ventaId: 13790011,
+        tipo: "promesa",
+        estado: "vigente_futura",
+        dia: "2026-10-20",
+        hora: null,
+        montoCentavos: 15000,
+      });
+      expect(agenda.get(13785217)).toMatchObject({ tipo: "cita", estado: "cerrada_sin_cumplir", hora: "16:30" });
+      expect(agenda.size).toBe(2);
+    });
+
+    it("manda hoy cuando se pide un día", async () => {
+      let url: URL | undefined;
+      server.use(...desempenoHandlers({ vistoPor: (u) => (url = u) }));
+      await adapter().obtenerAgenda(21563, "2026-10-14");
+      expect(url?.searchParams.get("zona_id")).toBe("21563");
+      expect(url?.searchParams.get("hoy")).toBe("2026-10-14");
+    });
+
+    const responderAgenda = (cuerpo: unknown) =>
+      server.use(http.get("*/v2/visitas/agenda", () => HttpResponse.json(cuerpo as Record<string, unknown>)));
+    const item = agendaDTO.items[1];
+
+    it.each([
+      ["un estado fuera del contrato", { ...item, estado: "reemplazada" }],
+      ["un tipo fuera del contrato", { ...item, tipo: "recordatorio" }],
+      ["un monto que no es entero de centavos", { ...item, monto_centavos: 150.5 }],
+      ["un día que no es AAAA-MM-DD", { ...item, dia: "20/10/2026" }],
+      ["una hora que no es HH:MM", { ...item, tipo: "cita", hora: "4:30 pm" }],
+      ["un venta_id ausente", { ...item, venta_id: undefined }],
+    ])("%s es desempeno_respuesta_invalida", async (_, malo) => {
+      responderAgenda({ ...agendaDTO, items: [malo] });
+      await expect(adapter().obtenerAgenda(21563, null)).rejects.toMatchObject({
+        code: "desempeno_respuesta_invalida",
+      });
+    });
+
+    it("dos compromisos para la misma venta es desempeno_respuesta_invalida", async () => {
+      responderAgenda({ ...agendaDTO, items: [item, { ...item, visita_id: "otra" }] });
+      await expect(adapter().obtenerAgenda(21563, null)).rejects.toMatchObject({
+        code: "desempeno_respuesta_invalida",
+      });
+    });
+
+    it("la agenda de otra zona es desempeno_respuesta_invalida", async () => {
+      responderAgenda({ ...agendaDTO, zona_id: 99 });
+      await expect(adapter().obtenerAgenda(21563, null)).rejects.toMatchObject({
+        code: "desempeno_respuesta_invalida",
+      });
+    });
+
+    // Forma real de visitashttp/auth.go requirePerm: 403 de Huma sin código.
+    it("el 403 sin cobranza:ver_pagos llega como DomainError http_403", async () => {
+      server.use(
+        ...desempenoHandlers({
+          error: {
+            status: 403,
+            body: {
+              title: "Forbidden",
+              status: 403,
+              detail: "permiso denegado",
+              errors: [{ message: "el principal no tiene el permiso requerido", location: "header.authorization" }],
+            },
+          },
+        }),
+      );
+      const e = await adapter().obtenerAgenda(21563, null).catch((x: unknown) => x);
+      expect(e).toBeInstanceOf(DomainError);
+      expect(e).toMatchObject({ code: "http_403", message: "permiso denegado" });
+    });
   });
 });

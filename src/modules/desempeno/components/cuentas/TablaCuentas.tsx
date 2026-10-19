@@ -7,6 +7,8 @@ import { ChipTrato } from "../comunes/ChipTrato";
 import { InfoRapida } from "../comunes/InfoRapida";
 import { CLASE_TONO_ATRASOS, textoDeAtrasos, tonoDeAtrasos } from "../lib/atrasos";
 import { TarjetaCuenta } from "./TarjetaCuenta";
+import type { CompromisoDe, CompromisoFila } from "../../presentation/hooks/useAgenda";
+import { CLASE_TONO_COMPROMISO, textoDeCompromiso, tonoDeCompromiso } from "../lib/compromiso";
 
 const ENCABEZADOS: ReadonlyArray<readonly [string, boolean]> = [
   ["Estado", false],
@@ -15,8 +17,35 @@ const ENCABEZADOS: ReadonlyArray<readonly [string, boolean]> = [
   ["Saldo", true],
   ["Semanal", true],
   ["Atrasos", false],
+  ["Compromiso", false],
   ["Última actividad", false],
 ];
+
+const SIN_AGENDA: CompromisoDe = () => ({ estado: "sin_dato" });
+
+// Visitas P2, Tarea 21: el compromiso vigente de la venta tal como lo deriva el
+// servidor. Vacío = la agenda llegó y la venta no tiene (o está cerrado sin
+// cumplir); "·" = la agenda aún no llega o falló, que no es lo mismo.
+function CeldaCompromiso({ fila }: { fila: CompromisoFila }) {
+  if (fila.estado !== "listo") {
+    return (
+      <td
+        data-testid="celda-compromiso"
+        title={fila.estado === "sin_dato" ? "Sin dato" : undefined}
+        className="px-3 py-2.5 text-[12px] text-muted-foreground"
+      >
+        ·
+      </td>
+    );
+  }
+  const c = fila.compromiso;
+  const texto = c && textoDeCompromiso(c);
+  return (
+    <td data-testid="celda-compromiso" className="whitespace-nowrap px-3 py-2.5 text-[12px]">
+      {c && texto ? <span className={CLASE_TONO_COMPROMISO[tonoDeCompromiso(c)]}>{texto}</span> : null}
+    </td>
+  );
+}
 
 // D26: no pintar cientos de filas de golpe.
 export const FILAS_INICIALES = 60;
@@ -33,9 +62,11 @@ function Atrasos({ n }: { n: number }) {
 export function TablaCuentas({
   cuentas,
   onAbrir,
+  compromisoDe = SIN_AGENDA,
 }: {
   cuentas: readonly Cuenta[];
   onAbrir: (c: Cuenta) => void;
+  compromisoDe?: CompromisoDe;
 }) {
   const [visibles, setVisibles] = useState(FILAS_INICIALES);
   const centinela = useRef<HTMLTableRowElement | null>(null);
@@ -78,6 +109,11 @@ export function TablaCuentas({
         <tbody>
           {cuentas.slice(0, visibles).map((c) => {
             const abrible = c.doctoPvId !== null;
+            const compromiso = compromisoDe(c.ventaId);
+            const textoCompromiso =
+              compromiso.estado === "listo" && compromiso.compromiso
+                ? textoDeCompromiso(compromiso.compromiso)
+                : null;
             return (
               <tr
                 key={c.ventaId}
@@ -103,7 +139,7 @@ export function TablaCuentas({
                 )}
               >
                 <td className="px-3 py-2.5">
-                  <InfoRapida contenido={<TarjetaCuenta cuenta={c} />}>
+                  <InfoRapida contenido={<TarjetaCuenta cuenta={c} compromiso={textoCompromiso} />}>
                     <span tabIndex={0} className="inline-block cursor-help">
                       <ChipTrato trato={c.trato} etiqueta={c.etiqueta} />
                     </span>
@@ -126,6 +162,7 @@ export function TablaCuentas({
                 <td className="px-3 py-2.5">
                   <Atrasos n={c.numAtrasos} />
                 </td>
+                <CeldaCompromiso fila={compromiso} />
                 <td className="px-3 py-2.5 text-[12px]">
                   {c.ultimaActividad ? (
                     <>
