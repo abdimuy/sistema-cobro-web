@@ -20,6 +20,7 @@ import { esErrorSinConfigurar } from "../ficha/sinConfigurar";
 import { tituloConflicto } from "../ficha/conflictos";
 import { EstadoConflicto } from "../ficha/EstadoConflicto";
 import { TablaCuentas } from "./TablaCuentas";
+import { MOSTRAR_NO_PAGA, noPagaVisible } from "../lib/noPaga";
 
 const CLAVE_CONTEO: Record<Columna, keyof ConteosCuentas> = {
   por_visitar: "porVisitar",
@@ -74,12 +75,19 @@ export function CuentasTab({
   }, [cuentas]);
   const conteos = (cuentas ?? (isLoading ? ultimas : null))?.conteos;
   const conflicto = tituloConflicto(error);
+  // Se decide con los últimos conteos recibidos: un error o una carga no
+  // esconden la pastilla en la que está parado el usuario.
+  const conNoPaga = noPagaVisible(MOSTRAR_NO_PAGA, (conteos ?? ultimas?.conteos)?.noPaga);
+  const pildoras = conNoPaga ? PILDORAS : PILDORAS.filter(([c]) => c !== "no_paga");
+  useEffect(() => {
+    if (!conNoPaga && columna === "no_paga") setColumna("por_visitar");
+  }, [conNoPaga, columna]);
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
-          {PILDORAS.map(([valor, texto, campo]) => (
+          {pildoras.map(([valor, texto, campo]) => (
             <button
               key={valor}
               type="button"

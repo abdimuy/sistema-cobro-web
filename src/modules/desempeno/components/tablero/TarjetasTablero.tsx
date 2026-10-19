@@ -2,6 +2,7 @@ import type { Periodo, UsuarioTablero } from "../../domain/entities";
 import { ETIQUETA_COLUMNA } from "../../domain/values/estadoCuenta";
 import { diaDeNegocioDe, dinero, duracionCorta, fechaCorta, horaCorta, plural, porcentaje } from "../lib/format";
 import { TIPO_ACTIVIDAD_META } from "../lib/tipoActividadMeta";
+import { MOSTRAR_NO_PAGA, noPagaVisible } from "../lib/noPaga";
 import {
   TarjetaBarras,
   TarjetaFilas,
@@ -138,7 +139,9 @@ export function TarjetaCuentas({ usuario: u }: { usuario: UsuarioTablero }) {
       <TarjetaBarras
         filas={[
           { etiqueta: ETIQUETA_COLUMNA.por_visitar, n: s.porVisitar, total, clase: "bg-foreground/70" },
-          { etiqueta: ETIQUETA_COLUMNA.no_paga, n: s.noPaga, total, clase: "bg-dsm-ambar" },
+          ...(noPagaVisible(MOSTRAR_NO_PAGA, s.noPaga)
+            ? [{ etiqueta: ETIQUETA_COLUMNA.no_paga, n: s.noPaga, total, clase: "bg-dsm-ambar" }]
+            : []),
           { etiqueta: ETIQUETA_COLUMNA.pagados, n: s.pagados, total, clase: "bg-dsm-ok" },
           { etiqueta: "Sin nada", n: s.sinNada, total, clase: "bg-dsm-rojo" },
         ]}

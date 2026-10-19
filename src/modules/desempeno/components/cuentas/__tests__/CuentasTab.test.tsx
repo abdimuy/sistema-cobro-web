@@ -11,6 +11,13 @@ import {
 } from "../../../application/__tests__/fakeDesempenoPort";
 import { DomainError } from "../../../domain/errors";
 
+// Estas pruebas fijan el comportamiento con "No paga" encendido (P2 de
+// visitas); el apagado lo cubre components/__tests__/noPagaOculto.test.tsx.
+vi.mock("../../lib/noPaga", async (original) => ({
+  ...(await original<typeof import("../../lib/noPaga")>()),
+  MOSTRAR_NO_PAGA: true,
+}));
+
 function montar(port = new FakeDesempenoPort(), onAbrirCuenta = vi.fn()) {
   renderConDesempeno(<CuentasTab usuario={makeUsuarioTablero()} onAbrirCuenta={onAbrirCuenta} />, {
     port,
