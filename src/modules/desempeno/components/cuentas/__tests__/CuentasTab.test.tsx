@@ -154,6 +154,32 @@ describe("CuentasTab", () => {
     expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
   });
 
+  // DA-2: Cuentas de un usuario con semana vencida responde 409; reintentar no lo arregla.
+  it("semana vencida (409): aviso propio con el mensaje del servidor, sin Reintentar", async () => {
+    const port = new FakeDesempenoPort();
+    port.throwOnNext.obtenerCuentas = new DomainError(
+      "desempeno_semana_vencida",
+      "el inicio de semana del usuario tiene más de 14 días",
+    );
+    montar(port);
+    expect(await screen.findByText("Semana vencida")).toBeInTheDocument();
+    expect(screen.getByText("el inicio de semana del usuario tiene más de 14 días")).toBeInTheDocument();
+    expect(screen.queryByText("No se pudieron cargar las cuentas")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
+  });
+
+  it("zona excluida (409): aviso propio, sin Reintentar", async () => {
+    const port = new FakeDesempenoPort();
+    port.throwOnNext.obtenerCuentas = new DomainError(
+      "desempeno_zona_excluida",
+      "la zona del usuario está excluida de desempeño",
+    );
+    montar(port);
+    expect(await screen.findByText("Zona excluida")).toBeInTheDocument();
+    expect(screen.getByText("la zona del usuario está excluida de desempeño")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
+  });
+
   it("una cuenta se abre con el teclado; la que no tiene detalle no es alcanzable", async () => {
     const port = new FakeDesempenoPort();
     port.cuentasResponse = makeCuentasSemana({

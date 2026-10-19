@@ -291,6 +291,18 @@ describe("JornadaTab", () => {
     expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
   });
 
+  it("zona excluida (409): aviso propio, sin Reintentar", async () => {
+    const port = new FakeDesempenoPort();
+    port.throwOnNext.obtenerJornada = new DomainError(
+      "desempeno_zona_excluida",
+      "la zona del usuario está excluida de desempeño",
+    );
+    montar({ port });
+    expect(await screen.findByText("Zona excluida")).toBeInTheDocument();
+    expect(screen.getByText("la zona del usuario está excluida de desempeño")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
+  });
+
   it("si falla la actualización de cada minuto, conserva la lista y avisa con la hora de los datos", async () => {
     vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
     try {

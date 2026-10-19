@@ -447,6 +447,18 @@ describe("ActividadTab", () => {
     expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
   });
 
+  it("zona excluida (409): aviso propio, sin Reintentar", async () => {
+    const port = new FakeDesempenoPort();
+    port.throwOnNext.listarActividad = new DomainError(
+      "desempeno_zona_excluida",
+      "la zona del usuario está excluida de desempeño",
+    );
+    montar(port);
+    expect(await screen.findByText("Zona excluida")).toBeInTheDocument();
+    expect(screen.getByText("la zona del usuario está excluida de desempeño")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument();
+  });
+
   it("una visita sin forma de cobro no muestra forma", async () => {
     const user = userEvent.setup();
     const port = new FakeDesempenoPort();

@@ -15,6 +15,8 @@ import { ErrorConReintento, EstadoVacio } from "../comunes/Estados";
 import type { AbrirVenta } from "../jornada/describirActividades";
 import { EstadoSinConfigurar } from "../ficha/EstadoSinConfigurar";
 import { esErrorSinConfigurar } from "../ficha/sinConfigurar";
+import { tituloConflicto } from "../ficha/conflictos";
+import { EstadoConflicto } from "../ficha/EstadoConflicto";
 import { FiltrosActividadBar } from "./FiltrosActividadBar";
 import { VistasActividad } from "./VistasActividad";
 import { MenuColumnas } from "./MenuColumnas";
@@ -46,6 +48,7 @@ export function ActividadTab({
   const { vistas, guardar, eliminar } = useVistasGuardadas();
   const { catalogos } = useCatalogos();
   const actividad = useActividad(usuario.uid, filtros);
+  const conflicto = tituloConflicto(actividad.error);
   const etiquetasForma = useMemo<EtiquetasForma>(
     () => Object.fromEntries((catalogos?.formasCobro ?? []).map((f) => [f.codigo, f.etiqueta])),
     [catalogos],
@@ -150,7 +153,9 @@ export function ActividadTab({
         </div>
       </div>
 
-      {actividad.error && actividad.items.length === 0 && esErrorSinConfigurar(actividad.error) ? (
+      {actividad.error && actividad.items.length === 0 && conflicto ? (
+        <EstadoConflicto titulo={conflicto} mensaje={actividad.error.message} />
+      ) : actividad.error && actividad.items.length === 0 && esErrorSinConfigurar(actividad.error) ? (
         <EstadoSinConfigurar mensaje={actividad.error.message} />
       ) : actividad.error && actividad.items.length === 0 ? (
         <ErrorConReintento

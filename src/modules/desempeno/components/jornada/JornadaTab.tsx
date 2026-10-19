@@ -15,6 +15,8 @@ import { ControlUmbralPausa } from "../comunes/ControlUmbralPausa";
 import { ControlHorario } from "../comunes/ControlHorario";
 import { EstadoSinConfigurar } from "../ficha/EstadoSinConfigurar";
 import { esErrorSinConfigurar } from "../ficha/sinConfigurar";
+import { tituloConflicto } from "../ficha/conflictos";
+import { EstadoConflicto } from "../ficha/EstadoConflicto";
 import type { AbrirVenta } from "./describirActividades";
 import { NavegadorDia } from "./NavegadorDia";
 import { EjeJornada } from "./EjeJornada";
@@ -59,6 +61,7 @@ export function JornadaTab({
 }: JornadaTabProps) {
   const esHoy = dia === hoy;
   const { jornada, isLoading, error, refresh } = useJornada(usuario.uid, dia, esHoy);
+  const conflicto = tituloConflicto(error);
   // Mismo umbral y horario que el tablero: viven en usePreferencias.
   const { pausaMin, setPausaMin } = usePreferencias();
   const [resaltada, setResaltada] = useState<string | null>(null);
@@ -92,10 +95,13 @@ export function JornadaTab({
         {controlesLinea}
       </div>
 
+      {error && !jornada && conflicto && (
+        <EstadoConflicto titulo={conflicto} mensaje={error.message} />
+      )}
       {error && !jornada && esErrorSinConfigurar(error) && (
         <EstadoSinConfigurar mensaje={error.message} />
       )}
-      {error && !jornada && !esErrorSinConfigurar(error) && (
+      {error && !jornada && !esErrorSinConfigurar(error) && !conflicto && (
         <ErrorConReintento
           titulo="No se pudo cargar la jornada"
           mensaje={error.message}

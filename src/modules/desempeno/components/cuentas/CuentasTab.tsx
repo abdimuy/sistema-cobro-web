@@ -17,6 +17,8 @@ import { ErrorConReintento, EstadoVacio } from "../comunes/Estados";
 import { InfoRapida, TarjetaNota, TarjetaTitulo } from "../comunes/InfoRapida";
 import { EstadoSinConfigurar } from "../ficha/EstadoSinConfigurar";
 import { esErrorSinConfigurar } from "../ficha/sinConfigurar";
+import { tituloConflicto } from "../ficha/conflictos";
+import { EstadoConflicto } from "../ficha/EstadoConflicto";
 import { TablaCuentas } from "./TablaCuentas";
 
 const CLAVE_CONTEO: Record<Columna, keyof ConteosCuentas> = {
@@ -71,6 +73,7 @@ export function CuentasTab({
     if (cuentas) setUltimas(cuentas);
   }, [cuentas]);
   const conteos = (cuentas ?? (isLoading ? ultimas : null))?.conteos;
+  const conflicto = tituloConflicto(error);
 
   return (
     <div className="flex flex-col gap-3">
@@ -148,7 +151,9 @@ export function CuentasTab({
         </div>
       </div>
 
-      {error && !cuentas && esErrorSinConfigurar(error) ? (
+      {error && !cuentas && conflicto ? (
+        <EstadoConflicto titulo={conflicto} mensaje={error.message} />
+      ) : error && !cuentas && esErrorSinConfigurar(error) ? (
         <EstadoSinConfigurar mensaje={error.message} />
       ) : error && !cuentas ? (
         <ErrorConReintento

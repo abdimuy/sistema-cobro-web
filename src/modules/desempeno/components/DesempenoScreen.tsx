@@ -19,6 +19,7 @@ import { RUTA_CONFIGURAR_USUARIO } from "./ficha/sinConfigurar";
 import { describirActividades, type RefVenta } from "./jornada/describirActividades";
 import { CeldaFotos } from "./modales/CeldaFotos";
 import { ModalesFicha, type ModalFicha } from "./modales/ModalesFicha";
+import { CODIGO_ZONA_EXCLUIDA } from "./ficha/conflictos";
 
 const FORMATO_DIA = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -105,7 +106,7 @@ function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar
         </div>
       );
     }
-    if (error?.code === "desempeno_zona_excluida") {
+    if (error?.code === CODIGO_ZONA_EXCLUIDA) {
       return (
         <div className="flex flex-col items-center gap-3 p-10">
           <EstadoVacio titulo="Zona excluida" detalle={error.message} />

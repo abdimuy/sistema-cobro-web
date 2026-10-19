@@ -26,6 +26,19 @@ describe("apperrorToDomainError", () => {
     expect(e.message).toBe("el usuario no tiene zona asignada");
   });
 
+  it("lee desempeno_semana_vencida del 409 de Cuentas v2.2 (DA-2)", () => {
+    const e = apperrorToDomainError(
+      errorHttp(409, {
+        title: "Conflict",
+        status: 409,
+        detail: "el inicio de semana del usuario tiene más de 14 días",
+        errors: [{ message: "code=desempeno_semana_vencida" }],
+      }),
+    );
+    expect(e.code).toBe("desempeno_semana_vencida");
+    expect(e.message).toBe("el inicio de semana del usuario tiene más de 14 días");
+  });
+
   it("acepta errors[].message con la forma 'code: mensaje'", () => {
     const e = apperrorToDomainError(
       errorHttp(404, { detail: "no existe el usuario", errors: [{ message: "desempeno_usuario_not_found: no existe" }] }),
