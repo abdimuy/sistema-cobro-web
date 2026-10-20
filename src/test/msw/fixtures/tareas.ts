@@ -1,100 +1,45 @@
 import type { ListaTareasDTO, TareaConEstadoDTO, TareaDTO } from "@/modules/desempeno/infrastructure/http/dtos";
+import listarGolden from "./goldens-servidor/tareas-listar.golden.json";
+import cancelarGolden from "./goldens-servidor/tareas-cancelar.golden.json";
+import crearGolden from "./goldens-servidor/tareas-crear.golden.json";
 
-// Fixtures del contrato de tareas de visita (visitas P3, Tarea 5 del plan).
-// Armados a mano desde el contrato mientras el servidor no existe: cuando la
-// Tarea 8 publique los goldens (internal/visitas/infra/visitashttp/testdata/
-// tareas-*.golden.json) se reemplaza ESTE archivo por ellos sin tocar las
-// pruebas, que solo importan los nombres de aquí.
+// Fixtures del contrato de tareas de visita: son los goldens del SERVIDOR
+// (ver goldens-servidor/README.md), no JSON escrito a mano. Las pruebas los
+// pasan por el mismo adaptador y mapper que usa producción. La lista golden
+// (zona 7) trae los casos: no_atendida, atendida por pago con nombre, atendida
+// sin hora ni cobrador, atendida sin nombre, atendida por visita, pendiente,
+// cancelada y su reemplazo.
 //
-// Día de referencia: 14-oct-2026. CDMX es UTC-6: 16:31Z = 10:31 en la oficina.
+// Hora de la oficina: CDMX es UTC-6 (14:05Z = 08:05).
 
-export const ZONA_TAREAS = 21563;
-export const VENTA_TAREA = 13785217;
-
-export const tareaPendienteDTO: TareaDTO = {
-  id: "3f9c2b1e-7a44-4d0e-9b6a-1c2d3e4f5a60",
-  venta_id: VENTA_TAREA,
-  cliente_id: 48211,
-  zona_cliente_id: ZONA_TAREAS,
-  fecha: "2026-10-15",
-  hora: "11:00",
-  nota: "llevar estado de cuenta",
-  reemplaza_a: null,
-  created_at: "2026-10-14T15:05:12.123456Z",
-  created_by: "8d1e5a2c-0b7f-4c39-a6e4-2f1b9c8d7e65",
-  updated_at: "2026-10-14T15:05:12.123456Z",
-  cancelada_at: null,
+const lista = (listarGolden as unknown as ListaTareasDTO).items;
+const porId = (n: number): TareaConEstadoDTO => {
+  const t = lista.find((x) => x.id.endsWith(String(n).padStart(12, "0")));
+  if (!t) throw new Error(`el golden de tareas no trae la tarea ${n}`);
+  return t;
 };
 
-export const tareaCanceladaDTO: TareaDTO = {
-  ...tareaPendienteDTO,
-  updated_at: "2026-10-14T16:20:00.5Z",
-  cancelada_at: "2026-10-14T16:20:00.5Z",
-};
+export const tareaConEstadoNoAtendidaDTO = porId(7);
+export const tareaConEstadoAtendidaDTO = porId(3); // pago, con cobrador e instante
+export const tareaConEstadoAtendidaSinHoraNiCobradorDTO = porId(4); // instante y cobrador null
+export const tareaConEstadoAtendidaSinNombreDTO = porId(5); // cobrador_id sin nombre
+export const tareaConEstadoAtendidaPorVisitaDTO = porId(6);
+export const tareaConEstadoPendienteDTO = porId(1);
+export const tareaConEstadoCanceladaDTO = porId(2);
+export const tareaConEstadoReemplazoDTO = porId(8);
 
-export const tareaConEstadoPendienteDTO: TareaConEstadoDTO = {
-  ...tareaPendienteDTO,
-  estado: "pendiente",
-  atendida_por: null,
-};
+export const ZONA_TAREAS = tareaConEstadoPendienteDTO.zona_cliente_id;
+export const VENTA_TAREA = tareaConEstadoPendienteDTO.venta_id;
 
-export const tareaConEstadoAtendidaDTO: TareaConEstadoDTO = {
-  id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-  venta_id: 13790011,
-  cliente_id: 51307,
-  zona_cliente_id: ZONA_TAREAS,
-  fecha: "2026-10-13",
-  hora: null,
-  nota: null,
-  reemplaza_a: null,
-  created_at: "2026-10-12T21:00:00Z",
-  created_by: "8d1e5a2c-0b7f-4c39-a6e4-2f1b9c8d7e65",
-  updated_at: "2026-10-12T21:00:00Z",
-  cancelada_at: null,
-  estado: "atendida",
-  atendida_por: {
-    tipo: "pago",
-    id: "c7d8e9f0-1a2b-4c3d-9e4f-5a6b7c8d9e0f",
-    cobrador_id: 47,
-    cobrador_nombre: "Juan Pérez",
-    instante: "2026-10-14T16:31:00Z",
-  },
-};
+// Respuestas de POST /tareas y POST /tareas/{id}/cancelar.
+export const tareaCreadaDTO = crearGolden as unknown as TareaDTO;
+export const tareaCanceladaDTO = cancelarGolden as unknown as TareaDTO;
+// La tarea pendiente tal como la lista (sin estado ni atendida_por).
+export const tareaPendienteDTO: TareaDTO = Object.fromEntries(
+  Object.entries(tareaConEstadoPendienteDTO).filter(([k]) => k !== "estado" && k !== "atendida_por"),
+) as TareaDTO;
 
-export const tareaConEstadoCanceladaDTO: TareaConEstadoDTO = {
-  ...tareaCanceladaDTO,
-  id: "5e6f7a8b-9c0d-4e1f-a2b3-c4d5e6f7a8b9",
-  venta_id: 13801234,
-  cliente_id: 50122,
-  estado: "cancelada",
-  atendida_por: null,
-};
-
-export const tareaConEstadoNoAtendidaDTO: TareaConEstadoDTO = {
-  id: "0f1e2d3c-4b5a-4968-8776-655443322110",
-  venta_id: 13755555,
-  cliente_id: 47001,
-  zona_cliente_id: ZONA_TAREAS,
-  fecha: "2026-09-28",
-  hora: "09:30",
-  nota: null,
-  reemplaza_a: null,
-  created_at: "2026-09-27T18:00:00Z",
-  created_by: "8d1e5a2c-0b7f-4c39-a6e4-2f1b9c8d7e65",
-  updated_at: "2026-09-27T18:00:00Z",
-  cancelada_at: null,
-  estado: "no_atendida",
-  atendida_por: null,
-};
-
-export const listaTareasDTO: ListaTareasDTO = {
-  items: [
-    tareaConEstadoPendienteDTO,
-    tareaConEstadoAtendidaDTO,
-    tareaConEstadoCanceladaDTO,
-    tareaConEstadoNoAtendidaDTO,
-  ],
-};
+export const listaTareasDTO: ListaTareasDTO = { items: lista };
 
 // Errores con la forma de Huma de msp-api: el código va en errors[].message
 // como "code=<codigo>" (lib/codigoDeError.ts) y el mensaje en `detail`.

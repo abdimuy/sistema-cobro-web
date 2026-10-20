@@ -38,7 +38,8 @@ export type AtendidaPor = {
   readonly cobradorId: number | null;
   // Lo manda el servidor; null si no sabe quién (p. ej. pago de oficina).
   readonly cobradorNombre: string | null;
-  readonly instante: string;
+  // null cuando es un pago sin hora: no se inventa una.
+  readonly instante: string | null;
 };
 
 export type TareaConEstado = Tarea & {

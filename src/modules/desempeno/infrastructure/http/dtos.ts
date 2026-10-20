@@ -293,7 +293,10 @@ export type AtendidaPorDTO = {
   id: string;
   cobrador_id: number | null;
   cobrador_nombre: string | null;
-  instante: string;
+  // null cuando es un pago sin hora.
+  instante: string | null;
+  // Día civil "AAAA-MM-DD" de la atención.
+  fecha: string;
 };
 
 export type TareaConEstadoDTO = TareaDTO & {

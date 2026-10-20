@@ -14,8 +14,10 @@ const ETIQUETA_ESTADO: Record<EstadoTarea, string> = {
 export function textoEstadoTarea(t: TareaConEstado): string {
   if (t.estado === "atendida" && t.atendidaPor) {
     const { cobradorNombre, instante } = t.atendidaPor;
-    const hora = horaCorta(instante);
-    return cobradorNombre ? `Atendida por ${cobradorNombre} a las ${hora}` : `Atendida a las ${hora}`;
+    // Sin hora (pago sin hora) o sin nombre: se dice solo lo que el servidor sabe.
+    const por = cobradorNombre ? ` por ${cobradorNombre}` : "";
+    const a = instante ? ` a las ${horaCorta(instante)}` : "";
+    return `Atendida${por}${a}`;
   }
   return ETIQUETA_ESTADO[t.estado];
 }

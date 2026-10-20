@@ -12,7 +12,13 @@ import {
   dtoToTareas,
   dtoToUltimosMovimientos,
 } from "../dtoADominio";
-import { tareaConEstadoAtendidaDTO, tareaPendienteDTO } from "../../../../../test/msw/fixtures/tareas";
+import {
+  listaTareasDTO,
+  tareaCanceladaDTO,
+  tareaConEstadoAtendidaDTO,
+  tareaCreadaDTO,
+  tareaPendienteDTO,
+} from "../../../../../test/msw/fixtures/tareas";
 import {
   actividadPagoDTO,
   actividadVisitaDTO,
@@ -727,7 +733,7 @@ describe("tareas: instantes RFC3339 (visitas P3, Tarea 9)", () => {
   it("lee los instantes del contrato", () => {
     expect(dtoToTarea(tareaPendienteDTO).createdAt).toBe(tareaPendienteDTO.created_at);
     const [t] = dtoToTareas({ items: [tareaConEstadoAtendidaDTO] });
-    expect(t.atendidaPor?.cobradorNombre).toBe("Juan Pérez");
+    expect(t.atendidaPor?.cobradorNombre).toBe("Juan Carlos Méndez");
   });
 
   it.each([
@@ -746,5 +752,23 @@ describe("tareas: instantes RFC3339 (visitas P3, Tarea 9)", () => {
       atendida_por: { ...tareaConEstadoAtendidaDTO.atendida_por!, instante: "10:31" },
     };
     expect(() => dtoToTareas({ items: [dto] })).toThrow(expect.objectContaining({ code: "desempeno_respuesta_invalida" }));
+  });
+});
+
+describe("tareas: goldens del servidor (visitas P3, Tarea 8)", () => {
+  it("la lista golden completa pasa por el mapper de producción", () => {
+    const tareas = dtoToTareas(listaTareasDTO);
+    expect(tareas).toHaveLength(8);
+    const sinHora = tareas.find((t) => t.id.endsWith("4"))!;
+    expect(sinHora.atendidaPor).toMatchObject({ instante: null, cobradorId: null, cobradorNombre: null });
+    const sinNombre = tareas.find((t) => t.id.endsWith("5"))!;
+    expect(sinNombre.atendidaPor).toMatchObject({ cobradorId: 11999, cobradorNombre: null });
+    // Nanosegundos del servidor (cancelada_at): se aceptan.
+    expect(tareas.find((t) => t.id.endsWith("2"))!.canceladaAt).toBe("2026-10-19T15:45:30.123456789Z");
+  });
+
+  it("las respuestas de crear y cancelar también", () => {
+    expect(dtoToTarea(tareaCreadaDTO).id).toBe(tareaCreadaDTO.id);
+    expect(dtoToTarea(tareaCanceladaDTO).canceladaAt).toBe("2026-10-19T16:00:00Z");
   });
 });

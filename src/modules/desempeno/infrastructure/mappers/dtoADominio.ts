@@ -619,7 +619,7 @@ function leerAtendidaPor(v: unknown): AtendidaPor | null {
     id: texto(a.id, "tarea.atendida_por.id"),
     cobradorId: numeroONulo(a.cobrador_id, "tarea.atendida_por.cobrador_id"),
     cobradorNombre: textoONulo(a.cobrador_nombre ?? null, "tarea.atendida_por.cobrador_nombre"),
-    instante: instante(a.instante, "tarea.atendida_por.instante"),
+    instante: instanteONulo(a.instante, "tarea.atendida_por.instante"),
   };
 }
 

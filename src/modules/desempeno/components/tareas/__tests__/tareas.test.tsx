@@ -16,6 +16,7 @@ import {
   tareaCanceladaDTO,
   tareaConEstadoAtendidaDTO,
   tareaConEstadoPendienteDTO,
+  tareaCreadaDTO,
   tareaPendienteDTO,
 } from "@/test/msw/fixtures/tareas";
 import { HttpDesempenoAdapter } from "../../../infrastructure/http/HttpDesempenoAdapter";
@@ -25,8 +26,14 @@ import { ListaTareas } from "../ListaTareas";
 import { dtoToTarea } from "../../../infrastructure/mappers/dtoADominio";
 
 // Visitas P3, Tarea 9: el escritorio asigna, edita (cancelar + asignar otra) y
-// cancela visitas. Todo contra MSW con los fixtures del contrato de la Tarea 5
-// (src/test/msw/fixtures/tareas.ts, que luego se reemplaza por los goldens).
+// cancela visitas. Todo contra MSW con los goldens del servidor (Tarea 8, ver
+// src/test/msw/fixtures/goldens-servidor/README.md), parseados por el mismo
+// adaptador y mapper que usa producción.
+
+// Orden de la lista golden: no_atendida, atendida (pago), atendida sin hora ni
+// cobrador, atendida sin nombre, atendida (visita), pendiente, cancelada,
+// pendiente que reemplaza a la cancelada.
+const FILA = { pendiente: 5, cancelada: 6 } as const;
 
 const TAREAS = "*/v2/visitas/tareas";
 const CANCELAR = "*/v2/visitas/tareas/:id/cancelar";
@@ -69,7 +76,7 @@ describe("AsignarVisitaDialog", () => {
     });
     const cuerpos = capturarPosts(async () => {
       await espera;
-      return HttpResponse.json(tareaPendienteDTO, { status: 201 });
+      return HttpResponse.json(tareaCreadaDTO, { status: 201 });
     });
     const onHecho = vi.fn();
     montar(<AsignarVisitaDialog ventaId={VENTA_TAREA} clienteNombre="María Guadalupe Hernández" onHecho={onHecho} onCerrar={vi.fn()} />);
@@ -93,7 +100,7 @@ describe("AsignarVisitaDialog", () => {
     const cuerpos = capturarPosts((n) =>
       n === 1
         ? HttpResponse.json({ title: "Internal Server Error", status: 500, detail: "error del servidor" }, { status: 500 })
-        : HttpResponse.json(tareaPendienteDTO, { status: 201 }),
+        : HttpResponse.json(tareaCreadaDTO, { status: 201 }),
     );
     const onHecho = vi.fn();
     montar(<AsignarVisitaDialog ventaId={VENTA_TAREA} clienteNombre="María Guadalupe Hernández" onHecho={onHecho} onCerrar={vi.fn()} />);
@@ -136,7 +143,7 @@ describe("AsignarVisitaDialog", () => {
 
   it("hora y nota opcionales viajan solo si se llenan", async () => {
     const user = userEvent.setup();
-    const cuerpos = capturarPosts(() => HttpResponse.json(tareaPendienteDTO, { status: 201 }));
+    const cuerpos = capturarPosts(() => HttpResponse.json(tareaCreadaDTO, { status: 201 }));
     montar(<AsignarVisitaDialog ventaId={VENTA_TAREA} clienteNombre="María Guadalupe Hernández" onHecho={vi.fn()} onCerrar={vi.fn()} />);
 
     await user.type(screen.getByLabelText("Hora"), "11:00");
@@ -165,36 +172,51 @@ describe("ListaTareas", () => {
     montar(<ListaTareas zonaId={ZONA_TAREAS} />);
 
     const filas = await screen.findAllByTestId("fila-tarea");
-    expect(filas).toHaveLength(4);
+    expect(filas).toHaveLength(8);
     expect(urls[0].searchParams.get("zona_id")).toBe(String(ZONA_TAREAS));
-    expect(within(filas[0]).getByText("Pendiente")).toBeInTheDocument();
-    expect(within(filas[1]).getByText("Atendida por Juan Pérez a las 10:31")).toBeInTheDocument();
-    expect(within(filas[2]).getByText("Cancelada")).toBeInTheDocument();
-    expect(within(filas[3]).getByText("No atendida")).toBeInTheDocument();
-    // Solo la pendiente se puede editar o cancelar.
-    expect(within(filas[0]).getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
-    for (const f of filas.slice(1)) {
+    expect(within(filas[0]).getByText("No atendida")).toBeInTheDocument();
+    expect(within(filas[1]).getByText("Atendida por Juan Carlos Méndez a las 08:05")).toBeInTheDocument();
+    expect(within(filas[FILA.pendiente]).getByText("Pendiente")).toBeInTheDocument();
+    expect(within(filas[FILA.cancelada]).getByText("Cancelada")).toBeInTheDocument();
+    // Solo las pendientes se pueden editar o cancelar.
+    expect(within(filas[FILA.pendiente]).getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
+    for (const f of filas.filter((_, i) => i !== FILA.pendiente && i !== 7)) {
       expect(within(f).queryByRole("button", { name: "Cancelar" })).toBeNull();
       expect(within(f).queryByRole("button", { name: "Editar" })).toBeNull();
     }
   });
 
-  it("atendida sin nombre de cobrador dice solo la hora", async () => {
+  it("atendidaSinHoraOSinCobrador (golden): no inventa hora ni nombre", async () => {
     server.use(
       http.get(TAREAS, () =>
         HttpResponse.json({
           items: [
+            // Sin cobrador y sin instante (pago sin hora), tal como el servidor.
+            ...listaTareasDTO.items.filter((t) => t.id.endsWith("4")),
+            // Cobrador_id sin nombre, con instante.
+            ...listaTareasDTO.items.filter((t) => t.id.endsWith("5")),
+            // Con nombre pero sin hora: derivado del golden del pago con nombre.
             {
               ...tareaConEstadoAtendidaDTO,
-              atendida_por: { ...tareaConEstadoAtendidaDTO.atendida_por!, cobrador_nombre: null },
+              atendida_por: { ...tareaConEstadoAtendidaDTO.atendida_por!, instante: null },
+            },
+            // Con instante y cobrador_id null: el servidor no sabe quién.
+            {
+              ...tareaConEstadoAtendidaDTO,
+              atendida_por: { ...tareaConEstadoAtendidaDTO.atendida_por!, cobrador_id: null, cobrador_nombre: null },
             },
           ],
         }),
       ),
     );
     montar(<ListaTareas zonaId={ZONA_TAREAS} />);
-    const [fila] = await screen.findAllByTestId("fila-tarea");
-    expect(within(fila).getByText("Atendida a las 10:31")).toBeInTheDocument();
+    const filas = await screen.findAllByTestId("fila-tarea");
+    expect(filas.map((f) => f.querySelector("[data-estado]")?.textContent)).toEqual([
+      "Atendida",
+      "Atendida a las 09:10",
+      "Atendida por Juan Carlos Méndez",
+      "Atendida a las 08:05",
+    ]);
   });
 
   it("cancelarRepetidoEsIgual: el servidor responde igual y la UI manda un solo POST", async () => {
@@ -216,7 +238,7 @@ describe("ListaTareas", () => {
     );
     montar(<ListaTareas zonaId={ZONA_TAREAS} />);
     const filas = await screen.findAllByTestId("fila-tarea");
-    const boton = within(filas[0]).getByRole("button", { name: "Cancelar" });
+    const boton = within(filas[FILA.pendiente]).getByRole("button", { name: "Cancelar" });
     act(() => {
       boton.click();
       boton.click();
@@ -229,11 +251,11 @@ describe("ListaTareas", () => {
   it("editarMandaReemplazaA: editar es cancelar + asignar otra con id nuevo", async () => {
     const user = userEvent.setup();
     servirLista();
-    const cuerpos = capturarPosts(() => HttpResponse.json(tareaPendienteDTO, { status: 201 }));
+    const cuerpos = capturarPosts(() => HttpResponse.json(tareaCreadaDTO, { status: 201 }));
     montar(<ListaTareas zonaId={ZONA_TAREAS} />);
 
     const filas = await screen.findAllByTestId("fila-tarea");
-    await user.click(within(filas[0]).getByRole("button", { name: "Editar" }));
+    await user.click(within(filas[FILA.pendiente]).getByRole("button", { name: "Editar" }));
     const dialogo = await screen.findByRole("dialog");
     // La nota de la tarea que se reemplaza viene precargada.
     expect(within(dialogo).getByLabelText("Nota")).toHaveValue(tareaConEstadoPendienteDTO.nota);
@@ -298,14 +320,18 @@ describe("textosAprobados (dueño, 2026-10-20)", () => {
     const filas = await screen.findAllByTestId("fila-tarea");
     expect(screen.getByRole("heading", { name: "Visitas asignadas" })).toBeInTheDocument();
     expect(filas.map((f) => f.querySelector("[data-estado]")?.textContent)).toEqual([
-      "Pendiente",
-      "Atendida por Juan Pérez a las 10:31",
-      "Cancelada",
       "No atendida",
+      "Atendida por Juan Carlos Méndez a las 08:05",
+      "Atendida",
+      "Atendida a las 09:10",
+      "Atendida por Rosa Elena Pacheco a las 09:30",
+      "Pendiente",
+      "Cancelada",
+      "Pendiente",
     ]);
-    expect(within(filas[0]).getByText(`Venta ${VENTA_TAREA}`)).toBeInTheDocument();
-    expect(within(filas[0]).getByRole("button", { name: "Editar" })).toBeInTheDocument();
-    expect(within(filas[0]).getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
+    expect(within(filas[FILA.pendiente]).getByText(`Venta ${VENTA_TAREA}`)).toBeInTheDocument();
+    expect(within(filas[FILA.pendiente]).getByRole("button", { name: "Editar" })).toBeInTheDocument();
+    expect(within(filas[FILA.pendiente]).getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
     unmount();
 
     server.use(http.get(TAREAS, () => HttpResponse.json({ items: [] })));
