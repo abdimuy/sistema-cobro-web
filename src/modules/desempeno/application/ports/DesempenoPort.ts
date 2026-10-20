@@ -12,7 +12,11 @@ import type {
   RefImagenes,
   ColumnaFiltro,
   FichaUsuario,
+  EstadoTarea,
+  NuevaTarea,
   Tablero,
+  Tarea,
+  TareaConEstado,
   UltimosMovimientos92Dias,
 } from "../../domain/entities";
 
@@ -72,6 +76,18 @@ export interface DesempenoPort {
   // vigente por venta de la zona con el estado que deriva el servidor. `hoy`
   // null = el día de hoy del servidor (America/Mexico_City).
   obtenerAgenda(zonaId: number, hoy: string | null, signal?: AbortSignal): Promise<Agenda>;
+  // Tareas de visita (visitas P3, spec §6.2). POST /v2/visitas/tareas: el
+  // mismo id con el mismo contenido responde igual (idempotente).
+  asignarTarea(cuerpo: NuevaTarea): Promise<Tarea>;
+  // POST /v2/visitas/tareas/{id}/cancelar: repetida responde igual.
+  cancelarTarea(id: string): Promise<Tarea>;
+  // GET /v2/visitas/tareas?zona_id=&estado=&desde=: con el estado derivado.
+  listarTareas(
+    zonaId: number,
+    estado: EstadoTarea | null,
+    desde: string | null,
+    signal?: AbortSignal,
+  ): Promise<TareaConEstado[]>;
   listarImagenes(ref: RefImagenes, signal?: AbortSignal): Promise<ImagenAdjunta[]>;
   descargarImagen(
     ref: RefImagenes,

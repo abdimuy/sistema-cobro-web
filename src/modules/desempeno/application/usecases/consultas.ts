@@ -2,13 +2,17 @@ import type {
   Agenda,
   Catalogos,
   CuentasSemana,
+  EstadoTarea,
   FichaUsuario,
   FiltrosActividad,
   ImagenAdjunta,
   Jornada,
+  NuevaTarea,
   PaginaActividad,
   RefImagenes,
   Tablero,
+  Tarea,
+  TareaConEstado,
   UltimoMovimiento,
 } from "../../domain/entities";
 import { LIMITE_UIDS_LOTE_MOVIMIENTO } from "../../domain/entities";
@@ -123,4 +127,24 @@ export function obtenerAgenda(
   signal?: AbortSignal,
 ): Promise<Agenda> {
   return port.obtenerAgenda(zonaId, hoy, signal);
+}
+
+// Tareas de visita (visitas P3, spec §6.2). Pass-through: idempotencia y
+// estado los resuelve el servidor.
+export function asignarTarea(port: DesempenoPort, cuerpo: NuevaTarea): Promise<Tarea> {
+  return port.asignarTarea(cuerpo);
+}
+
+export function cancelarTarea(port: DesempenoPort, id: string): Promise<Tarea> {
+  return port.cancelarTarea(id);
+}
+
+export function listarTareas(
+  port: DesempenoPort,
+  zonaId: number,
+  estado: EstadoTarea | null,
+  desde: string | null,
+  signal?: AbortSignal,
+): Promise<TareaConEstado[]> {
+  return port.listarTareas(zonaId, estado, desde, signal);
 }

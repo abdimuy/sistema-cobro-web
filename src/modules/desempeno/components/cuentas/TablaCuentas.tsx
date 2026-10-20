@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import type { Cuenta } from "../../domain/entities";
 import { diaDeNegocioDe, dinero2, fechaCorta, horaCorta } from "../lib/format";
 import { TIPO_ACTIVIDAD_META } from "../lib/tipoActividadMeta";
@@ -63,10 +65,13 @@ export function TablaCuentas({
   cuentas,
   onAbrir,
   compromisoDe = SIN_AGENDA,
+  onAsignar,
 }: {
   cuentas: readonly Cuenta[];
   onAbrir: (c: Cuenta) => void;
   compromisoDe?: CompromisoDe;
+  // Visitas P3: "Asignar visita" en la fila. Sin él no hay botón.
+  onAsignar?: (c: Cuenta) => void;
 }) {
   const [visibles, setVisibles] = useState(FILAS_INICIALES);
   const centinela = useRef<HTMLTableRowElement | null>(null);
@@ -104,6 +109,7 @@ export function TablaCuentas({
                 {t}
               </th>
             ))}
+            {onAsignar && <th aria-label="Acciones" />}
           </tr>
         </thead>
         <tbody>
@@ -173,6 +179,23 @@ export function TablaCuentas({
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
+                {onAsignar && (
+                  <td className="px-2 py-1.5 text-right">
+                    {/* La fila entera abre la venta: el botón no deja subir el clic. */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAsignar(c);
+                      }}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <CalendarPlus aria-hidden className="h-3.5 w-3.5" />
+                      Asignar visita
+                    </Button>
+                  </td>
+                )}
               </tr>
             );
           })}

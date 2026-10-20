@@ -7,7 +7,13 @@ import {
   esMotivoNoConfigurado,
   esPeriodo,
   esTipoSenal,
+  esEstadoTarea,
+  esTipoAtencion,
   type Actividad,
+  type AtendidaPor,
+  type NuevaTarea,
+  type Tarea,
+  type TareaConEstado,
   type Agenda,
   type CompromisoDeVenta,
   type Catalogos,
@@ -42,6 +48,9 @@ import type {
   ImagenDTO,
   JornadaDTO,
   LineaDelDiaDTO,
+  ListaTareasDTO,
+  NuevaTareaDTO,
+  TareaDTO,
   PaginaActividadDTO,
   TableroDTO,
   UltimosMovimientosDTO,
@@ -561,4 +570,61 @@ export function dtoToAgenda(dto: AgendaDTO, zonaId: number): Agenda {
     porVenta.set(c.ventaId, c);
   }
   return porVenta;
+}
+
+// Tareas de visita (visitas P3, Tarea 5 del plan). Mismo criterio: se lee y se
+// valida la forma, el estado lo deriva el servidor.
+function leerTarea(v: unknown, campo: string): Tarea {
+  const d = obj(v, campo);
+  const hora = textoONulo(d.hora, `${campo}.hora`);
+  return {
+    id: texto(d.id, `${campo}.id`),
+    ventaId: numero(d.venta_id, `${campo}.venta_id`),
+    clienteId: numero(d.cliente_id, `${campo}.cliente_id`),
+    zonaClienteId: numero(d.zona_cliente_id, `${campo}.zona_cliente_id`),
+    fecha: conForma(d.fecha, DIA_CIVIL, `${campo}.fecha`),
+    hora: hora === null ? null : conForma(hora, HORA_CIVIL, `${campo}.hora`),
+    nota: textoONulo(d.nota, `${campo}.nota`),
+    reemplazaA: textoONulo(d.reemplaza_a, `${campo}.reemplaza_a`),
+    createdAt: texto(d.created_at, `${campo}.created_at`),
+    createdBy: texto(d.created_by, `${campo}.created_by`),
+    updatedAt: texto(d.updated_at, `${campo}.updated_at`),
+    canceladaAt: textoONulo(d.cancelada_at, `${campo}.cancelada_at`),
+  };
+}
+
+export function dtoToTarea(dto: TareaDTO): Tarea {
+  return leerTarea(dto, "tarea");
+}
+
+function leerAtendidaPor(v: unknown): AtendidaPor | null {
+  if (v === null || v === undefined) return null;
+  const a = obj(v, "tarea.atendida_por");
+  return {
+    tipo: codigo(a.tipo, esTipoAtencion, "tarea.atendida_por.tipo"),
+    id: texto(a.id, "tarea.atendida_por.id"),
+    cobradorId: numeroONulo(a.cobrador_id, "tarea.atendida_por.cobrador_id"),
+    instante: texto(a.instante, "tarea.atendida_por.instante"),
+  };
+}
+
+export function dtoToTareas(dto: ListaTareasDTO): TareaConEstado[] {
+  const d = obj(dto, "tareas");
+  return lista(d.items, "tareas.items").map((x) => {
+    const it = obj(x, "tarea");
+    return {
+      ...leerTarea(it, "tarea"),
+      estado: codigo(it.estado, esEstadoTarea, "tarea.estado"),
+      atendidaPor: leerAtendidaPor(it.atendida_por),
+    };
+  });
+}
+
+// Dominio → cuerpo del POST. Los opcionales vacíos no viajan.
+export function nuevaTareaToDto(t: NuevaTarea): NuevaTareaDTO {
+  const dto: NuevaTareaDTO = { id: t.id, venta_id: t.ventaId, fecha: t.fecha };
+  if (t.hora) dto.hora = t.hora;
+  if (t.nota) dto.nota = t.nota;
+  if (t.reemplazaA) dto.reemplaza_a = t.reemplazaA;
+  return dto;
 }

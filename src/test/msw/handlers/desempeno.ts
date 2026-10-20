@@ -10,6 +10,7 @@ import {
   tableroDTO,
   ultimosMovimientosDTO,
 } from "../fixtures/desempeno";
+import { listaTareasVaciaDTO } from "../fixtures/tareas";
 
 export const DESEMPENO_BASE = "*/v2";
 
@@ -41,6 +42,9 @@ export function desempenoHandlers(op: Opciones = {}) {
     http.get(`${DESEMPENO_BASE}/desempeno/catalogos`, ({ request }) => responder(catalogosDTO, op, request)),
     http.get(`${DESEMPENO_BASE}/cobranza/pagos/:id/imagenes`, ({ request }) => responder(imagenesDTO, op, request)),
     http.get(`${DESEMPENO_BASE}/visitas/agenda`, ({ request }) => responder(agendaDTO, op, request)),
+    // Tareas de la zona (visitas P3): vacía por omisión y sin `vistoPor` ni
+    // `error`, para no pisar la URL ni el error de la consulta que se prueba.
+    http.get(`${DESEMPENO_BASE}/visitas/tareas`, () => HttpResponse.json(listaTareasVaciaDTO)),
     http.get(`${DESEMPENO_BASE}/visitas/:id/imagenes`, ({ request }) => responder(imagenesDTO, op, request)),
   ];
 }

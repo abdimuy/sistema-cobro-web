@@ -6,11 +6,13 @@ import type {
   Cuenta,
   CuentasSemana,
   FichaUsuario,
+  EstadoTarea,
   FiltrosActividad,
   HoraDelDia,
   ImagenAdjunta,
   Jornada,
   LineaDelDia,
+  NuevaTarea,
   PaginaActividad,
   Pausa,
   PuntoLinea,
@@ -18,6 +20,8 @@ import type {
   RegistradoPor,
   Senal,
   Tablero,
+  Tarea,
+  TareaConEstado,
   Tramo,
   UltimoMovimiento,
   UltimosMovimientos92Dias,
@@ -637,6 +641,12 @@ export class FakeDesempenoPort implements DesempenoPort {
   agendaResponse: Respuesta<Agenda> = new Map();
   imagenesResponse: Respuesta<ImagenAdjunta[]> = [makeImagen()];
   descargarResponse: Respuesta<Blob> = new Blob(["jpg"], { type: "image/jpeg" });
+  // Tareas de visita (visitas P3). Las pruebas de tareas van contra MSW; aquí
+  // basta con cumplir el puerto: por omisión la zona no tiene tareas.
+  asignarCalls: NuevaTarea[] = [];
+  cancelarCalls: string[] = [];
+  tareasCalls: Array<{ zonaId: number; estado: EstadoTarea | null; desde: string | null }> = [];
+  tareasResponse: Respuesta<TareaConEstado[]> = [];
 
   // Si se llena, la siguiente llamada a ese método lanza este error.
   throwOnNext: Partial<Record<keyof DesempenoPort, Error>> = {};
@@ -693,6 +703,39 @@ export class FakeDesempenoPort implements DesempenoPort {
     this.agendaCalls.push({ zonaId, hoy });
     this.lanzarSiToca("obtenerAgenda");
     return resolver(this.agendaResponse);
+  }
+
+  async asignarTarea(cuerpo: NuevaTarea): Promise<Tarea> {
+    this.asignarCalls.push(cuerpo);
+    this.lanzarSiToca("asignarTarea");
+    return {
+      id: cuerpo.id,
+      ventaId: cuerpo.ventaId,
+      clienteId: 0,
+      zonaClienteId: 0,
+      fecha: cuerpo.fecha,
+      hora: cuerpo.hora,
+      nota: cuerpo.nota,
+      reemplazaA: cuerpo.reemplazaA,
+      createdAt: "2026-10-14T15:05:12Z",
+      createdBy: "",
+      updatedAt: "2026-10-14T15:05:12Z",
+      canceladaAt: null,
+    };
+  }
+
+  async cancelarTarea(id: string): Promise<Tarea> {
+    this.cancelarCalls.push(id);
+    this.lanzarSiToca("cancelarTarea");
+    const t = (await resolver(this.tareasResponse)).find((x) => x.id === id);
+    if (!t) throw new Error(`tarea ${id} no existe en el fake`);
+    return { ...t, canceladaAt: t.canceladaAt ?? "2026-10-14T16:20:00Z" };
+  }
+
+  async listarTareas(zonaId: number, estado: EstadoTarea | null, desde: string | null): Promise<TareaConEstado[]> {
+    this.tareasCalls.push({ zonaId, estado, desde });
+    this.lanzarSiToca("listarTareas");
+    return resolver(this.tareasResponse);
   }
 
   async listarImagenes(ref: RefImagenes): Promise<ImagenAdjunta[]> {

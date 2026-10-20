@@ -129,4 +129,30 @@ describe("ModalesFicha", () => {
     expect(error.mock.calls.some((c) => String(c[0]).includes("same key"))).toBe(false);
     error.mockRestore();
   });
+
+  it("asignar visita (visitas P3, Tarea 9): la visita encadena el diálogo y al asignar se cierra", async () => {
+    const user = userEvent.setup();
+    const onAbrir = vi.fn();
+    const a = makeActividadVisita();
+    const { unmount } = renderConDesempeno(
+      <ModalesFicha pila={[{ tipo: "actividad", actividad: a }]} onCerrar={vi.fn()} onAbrir={onAbrir} />,
+    );
+    await user.click(screen.getByRole("button", { name: "Asignar visita" }));
+    expect(onAbrir).toHaveBeenCalledWith({ tipo: "asignar", ventaId: a.ventaId, clienteNombre: a.clienteNombre });
+    unmount();
+
+    const onCerrar = vi.fn();
+    const { port } = renderConDesempeno(
+      <ModalesFicha
+        pila={[{ tipo: "asignar", ventaId: 13785217, clienteNombre: "María Guadalupe Hernández" }]}
+        onCerrar={onCerrar}
+        onAbrir={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("asignar visita")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Asignar visita" }));
+    expect(port.asignarCalls).toHaveLength(1);
+    expect(port.asignarCalls[0].ventaId).toBe(13785217);
+    expect(onCerrar).toHaveBeenCalledTimes(1);
+  });
 });

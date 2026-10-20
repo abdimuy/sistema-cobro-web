@@ -83,3 +83,5 @@ export {
   esEstadoCompromiso,
 } from "./Agenda";
 export type { TipoCompromiso, EstadoCompromiso, CompromisoDeVenta, Agenda } from "./Agenda";
+export { ESTADOS_TAREA, esEstadoTarea, TIPOS_ATENCION, esTipoAtencion, LIMITE_NOTA_TAREA } from "./Tarea";
+export type { EstadoTarea, TipoAtencion, Tarea, AtendidaPor, TareaConEstado, NuevaTarea } from "./Tarea";

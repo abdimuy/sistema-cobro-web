@@ -10,13 +10,17 @@ import type {
   Agenda,
   Catalogos,
   CuentasSemana,
+  EstadoTarea,
   FichaUsuario,
   FiltrosActividad,
   ImagenAdjunta,
   Jornada,
   PaginaActividad,
+  NuevaTarea,
   RefImagenes,
   Tablero,
+  Tarea,
+  TareaConEstado,
   UltimosMovimientos92Dias,
 } from "../../domain/entities";
 import type {
@@ -26,8 +30,10 @@ import type {
   FichaUsuarioDTO,
   ImagenDTO,
   JornadaDTO,
+  ListaTareasDTO,
   PaginaActividadDTO,
   TableroDTO,
+  TareaDTO,
   UltimosMovimientosDTO,
 } from "./dtos";
 import { paramsDeActividad, paramsDeCuentas, paramsDeJornada, paramsDeUltimosMovimientos, type Params } from "./params";
@@ -40,7 +46,10 @@ import {
   dtoToJornada,
   dtoToPaginaActividad,
   dtoToTablero,
+  dtoToTarea,
+  dtoToTareas,
   dtoToUltimosMovimientos,
+  nuevaTareaToDto,
 } from "../mappers/dtoADominio";
 import { apperrorToDomainError, normalizarErrorBlob } from "../mappers/errorMapper";
 
@@ -51,6 +60,8 @@ const ULTIMO_MOVIMIENTO = "/desempeno/ultimo-movimiento";
 // Agenda de compromisos de visitas (visitas P2, spec §5.5). No es de
 // /desempeno/: no lleva `contrato`.
 const AGENDA = "/visitas/agenda";
+// Tareas de visita de la oficina (visitas P3, spec §6.2).
+const TAREAS = "/visitas/tareas";
 const SERIALIZAR = { indexes: null } as const;
 
 function rutaUsuario(uid: string, recurso: string): string {
@@ -169,6 +180,41 @@ export class HttpDesempenoAdapter implements DesempenoPort {
       if (hoy) params.hoy = hoy;
       const { data } = await this.client.get<AgendaDTO>(AGENDA, { params, signal });
       return dtoToAgenda(data, zonaId);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async asignarTarea(cuerpo: NuevaTarea): Promise<Tarea> {
+    try {
+      const { data } = await this.client.post<TareaDTO>(TAREAS, nuevaTareaToDto(cuerpo));
+      return dtoToTarea(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async cancelarTarea(id: string): Promise<Tarea> {
+    try {
+      const { data } = await this.client.post<TareaDTO>(`${TAREAS}/${encodeURIComponent(id)}/cancelar`);
+      return dtoToTarea(data);
+    } catch (e) {
+      throw apperrorToDomainError(e);
+    }
+  }
+
+  async listarTareas(
+    zonaId: number,
+    estado: EstadoTarea | null,
+    desde: string | null,
+    signal?: AbortSignal,
+  ): Promise<TareaConEstado[]> {
+    try {
+      const params: Params = { zona_id: zonaId };
+      if (estado) params.estado = estado;
+      if (desde) params.desde = desde;
+      const { data } = await this.client.get<ListaTareasDTO>(TAREAS, { params, signal });
+      return dtoToTareas(data);
     } catch (e) {
       throw apperrorToDomainError(e);
     }

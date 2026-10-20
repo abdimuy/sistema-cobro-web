@@ -325,4 +325,22 @@ describe("CuentasTab — columna Compromiso", () => {
     expect(celdaDe(await filaDe("JUANA ANDRADE LECHUGA"))).toHaveTextContent(/^$/);
     expect(url?.searchParams.get("zona_id")).toBe("21563");
   });
+
+  it("asignar visita (visitas P3, Tarea 9): la fila abre el diálogo y la lista de la zona se pinta", async () => {
+    const user = userEvent.setup();
+    const port = new FakeDesempenoPort();
+    montar(port);
+    await screen.findByText("GERARDO XICALE ANALCO");
+    expect(await screen.findByText("sin visitas asignadas")).toBeInTheDocument();
+    expect(port.tareasCalls[0].zonaId).toBe(makeUsuarioTablero().zonaId);
+    const fila = screen.getByText("GERARDO XICALE ANALCO").closest("tr")!;
+    await user.click(within(fila).getByRole("button", { name: "Asignar visita" }));
+    const dialogo = await screen.findByRole("dialog");
+    expect(within(dialogo).getByText("GERARDO XICALE ANALCO")).toBeInTheDocument();
+    await user.click(within(dialogo).getByRole("button", { name: "Asignar visita" }));
+    await waitFor(() => expect(port.asignarCalls).toHaveLength(1));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    // Asignar avisa al módulo y la lista recarga.
+    await waitFor(() => expect(port.tareasCalls.length).toBeGreaterThan(1));
+  });
 });

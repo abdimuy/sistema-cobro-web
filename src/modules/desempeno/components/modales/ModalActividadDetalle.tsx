@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { MapPinOff, Receipt, User, X } from "lucide-react";
+import { CalendarPlus, MapPinOff, Receipt, User, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -48,12 +48,15 @@ export function ModalActividadDetalle({
   onClose,
   onAbrirCliente,
   onAbrirVenta,
+  onAsignarVisita,
 }: {
   actividad: Actividad;
   onClose: () => void;
   onAbrirCliente: (clienteId: number) => void;
   // Solo se ofrece si la actividad trae docto_pv_id (contrato v2).
   onAbrirVenta?: (clienteId: number, doctoPvId: number) => void;
+  // Visitas P3: solo si la actividad es de una venta.
+  onAsignarVisita?: (ventaId: number, clienteNombre: string) => void;
 }) {
   const esVisita = a.visita !== null;
   const estado = estadoPago(a);
@@ -159,6 +162,12 @@ export function ModalActividadDetalle({
           </div>
         </div>
         <footer className="flex h-16 items-center justify-end gap-2 border-t border-border/60 px-6">
+          {onAsignarVisita && a.ventaId !== null && (
+            <Button variant="outline" size="sm" onClick={() => onAsignarVisita(a.ventaId!, a.clienteNombre)}>
+              <CalendarPlus aria-hidden className="mr-1.5 h-3.5 w-3.5" />
+              Asignar visita
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => onAbrirCliente(a.clienteId)}>
             <User aria-hidden className="mr-1.5 h-3.5 w-3.5" />
             Ficha del cliente

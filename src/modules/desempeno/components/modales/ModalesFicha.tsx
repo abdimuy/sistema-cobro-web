@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { ClienteFicha, PagoModal, VentaModal } from "@/modules/clientes";
 import type { Actividad } from "../../domain/entities";
 import { ModalActividadDetalle } from "./ModalActividadDetalle";
+import { AsignarVisitaDialog } from "../tareas/AsignarVisitaDialog";
 
 export type ModalFicha =
   | { tipo: "actividad"; actividad: Actividad }
   | { tipo: "pago"; clienteId: number; doctoCcId: number }
   | { tipo: "venta"; clienteId: number; doctoPvId: number }
-  | { tipo: "cliente"; clienteId: number };
+  | { tipo: "cliente"; clienteId: number }
+  | { tipo: "asignar"; ventaId: number; clienteNombre: string };
 
 // Identidad de un modal: qué muestra, no en qué posición está.
 function identidad(m: ModalFicha): string {
@@ -22,6 +24,8 @@ function identidad(m: ModalFicha): string {
       return `venta:${m.clienteId}:${m.doctoPvId}`;
     case "cliente":
       return `cliente:${m.clienteId}`;
+    case "asignar":
+      return `asignar:${m.ventaId}`;
   }
 }
 
@@ -78,6 +82,18 @@ export function ModalesFicha({
               onClose={onCerrar}
               onAbrirCliente={(clienteId) => onAbrir({ tipo: "cliente", clienteId })}
               onAbrirVenta={(clienteId, doctoPvId) => onAbrir({ tipo: "venta", clienteId, doctoPvId })}
+              onAsignarVisita={(ventaId, clienteNombre) => onAbrir({ tipo: "asignar", ventaId, clienteNombre })}
+            />
+          );
+        }
+        if (m.tipo === "asignar") {
+          return (
+            <AsignarVisitaDialog
+              key={clave}
+              ventaId={m.ventaId}
+              clienteNombre={m.clienteNombre}
+              onHecho={onCerrar}
+              onCerrar={onCerrar}
             />
           );
         }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CircleOff, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
@@ -22,6 +22,8 @@ import { tituloConflicto } from "../ficha/conflictos";
 import { EstadoConflicto } from "../ficha/EstadoConflicto";
 import { TablaCuentas } from "./TablaCuentas";
 import { MOSTRAR_NO_PAGA, noPagaVisible } from "../lib/noPaga";
+import { ListaTareas } from "../tareas/ListaTareas";
+import { AsignarVisitaDialog } from "../tareas/AsignarVisitaDialog";
 
 const CLAVE_CONTEO: Record<Columna, keyof ConteosCuentas> = {
   por_visitar: "porVisitar",
@@ -56,6 +58,7 @@ export function CuentasTab({
   const [clave, setClave] = useState("atrasos");
   const [escrito, setEscrito] = useState("");
   const [q, setQ] = useState("");
+  const [asignando, setAsignando] = useState<Cuenta | null>(null);
 
   useEffect(() => {
     const t = window.setTimeout(() => setQ(escrito.trim()), ESPERA_BUSQUEDA_MS);
@@ -86,9 +89,17 @@ export function CuentasTab({
   useEffect(() => {
     if (!conNoPaga && columna === "no_paga") setColumna("por_visitar");
   }, [conNoPaga, columna]);
+  // Visitas P3: nombre del cliente por venta para la lista de tareas, con las
+  // cuentas que ya llegaron (el contrato de tareas no trae el nombre).
+  const nombres = useMemo(
+    () => new Map((ultimas?.cuentas ?? []).map((c) => [c.ventaId, c.clienteNombre] as const)),
+    [ultimas],
+  );
+  const nombreDeVenta = useCallback((ventaId: number) => nombres.get(ventaId) ?? null, [nombres]);
 
   return (
     <div className="flex flex-col gap-3">
+      <ListaTareas zonaId={usuario.zonaId} nombreDeVenta={nombreDeVenta} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
           {pildoras.map(([valor, texto, campo]) => (
@@ -180,8 +191,21 @@ export function CuentasTab({
           <EstadoVacio titulo="No hay cuentas en este grupo" />
         </div>
       ) : cuentas ? (
-        <TablaCuentas cuentas={cuentas.cuentas} onAbrir={onAbrirCuenta} compromisoDe={compromisoDe} />
+        <TablaCuentas
+          cuentas={cuentas.cuentas}
+          onAbrir={onAbrirCuenta}
+          compromisoDe={compromisoDe}
+          onAsignar={setAsignando}
+        />
       ) : null}
+      {asignando && (
+        <AsignarVisitaDialog
+          ventaId={asignando.ventaId}
+          clienteNombre={asignando.clienteNombre}
+          onHecho={() => setAsignando(null)}
+          onCerrar={() => setAsignando(null)}
+        />
+      )}
     </div>
   );
 }

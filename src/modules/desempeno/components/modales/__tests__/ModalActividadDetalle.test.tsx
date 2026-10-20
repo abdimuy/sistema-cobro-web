@@ -117,4 +117,25 @@ describe("ModalActividadDetalle", () => {
     );
     expect(screen.queryByRole("button", { name: "Detalle de venta" })).not.toBeInTheDocument();
   });
+
+  it("asignar visita desde el pie (visitas P3, Tarea 9): solo con venta", async () => {
+    const user = userEvent.setup();
+    const onAsignarVisita = vi.fn();
+    const a = makeActividadVisita();
+    const { unmount } = renderConDesempeno(
+      <ModalActividadDetalle actividad={a} onClose={vi.fn()} onAbrirCliente={vi.fn()} onAsignarVisita={onAsignarVisita} />,
+    );
+    await user.click(screen.getByRole("button", { name: "Asignar visita" }));
+    expect(onAsignarVisita).toHaveBeenCalledWith(a.ventaId, a.clienteNombre);
+    unmount();
+    renderConDesempeno(
+      <ModalActividadDetalle
+        actividad={makeActividadVisita({ ventaId: null })}
+        onClose={vi.fn()}
+        onAbrirCliente={vi.fn()}
+        onAsignarVisita={onAsignarVisita}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Asignar visita" })).not.toBeInTheDocument();
+  });
 });

@@ -270,3 +270,44 @@ export type ImagenDTO = {
   created_at: string;
   updated_at: string;
 };
+
+// Tareas de visita de la oficina (visitas P3, Tarea 5 del plan; spec §6.2).
+// Instantes RFC3339 UTC; `fecha` día civil "AAAA-MM-DD"; `hora` "HH:MM".
+export type TareaDTO = {
+  id: string;
+  venta_id: number;
+  cliente_id: number;
+  zona_cliente_id: number;
+  fecha: string;
+  hora: string | null;
+  nota: string | null;
+  reemplaza_a: string | null;
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  cancelada_at: string | null;
+};
+
+export type AtendidaPorDTO = {
+  tipo: string;
+  id: string;
+  cobrador_id: number | null;
+  instante: string;
+};
+
+export type TareaConEstadoDTO = TareaDTO & {
+  estado: string;
+  atendida_por: AtendidaPorDTO | null;
+};
+
+export type ListaTareasDTO = { items: TareaConEstadoDTO[] };
+
+// POST /v2/visitas/tareas. Los opcionales se omiten cuando no hay valor.
+export type NuevaTareaDTO = {
+  id: string;
+  venta_id: number;
+  fecha: string;
+  hora?: string;
+  nota?: string;
+  reemplaza_a?: string;
+};
