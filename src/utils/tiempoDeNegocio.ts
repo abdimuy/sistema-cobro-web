@@ -222,6 +222,15 @@ const FORMATO_INSTANTE =
   /^\+?\d{4,}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 
 /**
+ * ¿Es `v` un instante RFC3339 con zona que existe en el calendario? Misma
+ * regla que `enRelojDeNegocio`, para validar lo que llega del API antes de
+ * aceptarlo en vez de lanzar al pintarlo.
+ */
+export function esInstanteRFC3339(v: string): boolean {
+  return FORMATO_INSTANTE.test(v) && !Number.isNaN(new Date(v).getTime());
+}
+
+/**
  * El instante `instanteISO` leído como reloj de pared del negocio, listo para
  * el `value` de un `<input type="datetime-local">`.
  *

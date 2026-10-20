@@ -181,7 +181,9 @@ export function TablaCuentas({
                 </td>
                 {onAsignar && (
                   <td className="px-2 py-1.5 text-right">
-                    {/* La fila entera abre la venta: el botón no deja subir el clic. */}
+                    {/* La fila entera abre la venta: el botón no deja subir el clic.
+                        Enter/Espacio sobre el botón también llegan como clic; el
+                        onKeyDown de la fila ignora teclas que no son suyas. */}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -189,7 +191,6 @@ export function TablaCuentas({
                         e.stopPropagation();
                         onAsignar(c);
                       }}
-                      onKeyDown={(e) => e.stopPropagation()}
                     >
                       <CalendarPlus aria-hidden className="h-3.5 w-3.5" />
                       Asignar visita

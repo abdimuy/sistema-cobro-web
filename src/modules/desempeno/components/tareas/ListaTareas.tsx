@@ -18,11 +18,9 @@ const TONO: Record<EstadoTarea, string> = {
 // edita (cancelar + asignar otra) o se cancela.
 export function ListaTareas({
   zonaId,
-  nombreDeCobrador,
   nombreDeVenta,
 }: {
   zonaId: number | null;
-  nombreDeCobrador?: (cobradorId: number) => string | null;
   nombreDeVenta?: (ventaId: number) => string | null;
 }) {
   const { tareas, isLoading, error, cancelar, cancelando, mensajeErrorCancelar } = useTareas(zonaId);
@@ -53,7 +51,7 @@ export function ListaTareas({
                 {t.nota && <span className="text-muted-foreground">{` · ${t.nota}`}</span>}
               </span>
               <span className={cn("shrink-0 text-[12px]", TONO[t.estado])}>
-                {textoEstadoTarea(t, nombreDeCobrador)}
+                {textoEstadoTarea(t)}
               </span>
               {t.estado === "pendiente" && (
                 <span className="flex shrink-0 gap-1">

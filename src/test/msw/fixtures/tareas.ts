@@ -56,6 +56,7 @@ export const tareaConEstadoAtendidaDTO: TareaConEstadoDTO = {
     tipo: "pago",
     id: "c7d8e9f0-1a2b-4c3d-9e4f-5a6b7c8d9e0f",
     cobrador_id: 47,
+    cobrador_nombre: "Juan Pérez",
     instante: "2026-10-14T16:31:00Z",
   },
 };

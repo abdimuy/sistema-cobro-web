@@ -8,8 +8,11 @@ import {
   dtoToJornada,
   dtoToPaginaActividad,
   dtoToTablero,
+  dtoToTarea,
+  dtoToTareas,
   dtoToUltimosMovimientos,
 } from "../dtoADominio";
+import { tareaConEstadoAtendidaDTO, tareaPendienteDTO } from "../../../../../test/msw/fixtures/tareas";
 import {
   actividadPagoDTO,
   actividadVisitaDTO,
@@ -717,5 +720,31 @@ describe("lote de último movimiento (92 días)", () => {
 
   it("una respuesta que no es objeto es inválida", () => {
     esRespuestaInvalida(() => dtoToUltimosMovimientos(roto(null), pedidos), /ultimo_movimiento_lote/);
+  });
+});
+
+describe("tareas: instantes RFC3339 (visitas P3, Tarea 9)", () => {
+  it("lee los instantes del contrato", () => {
+    expect(dtoToTarea(tareaPendienteDTO).createdAt).toBe(tareaPendienteDTO.created_at);
+    const [t] = dtoToTareas({ items: [tareaConEstadoAtendidaDTO] });
+    expect(t.atendidaPor?.cobradorNombre).toBe("Juan Pérez");
+  });
+
+  it.each([
+    ["created_at", { ...tareaPendienteDTO, created_at: "2026-10-14 15:05:12" }],
+    ["updated_at", { ...tareaPendienteDTO, updated_at: "2026-10-14" }],
+    ["cancelada_at", { ...tareaPendienteDTO, cancelada_at: "14/10/2026 10:00" }],
+    ["created_at sin zona", { ...tareaPendienteDTO, created_at: "2026-10-14T15:05:12" }],
+    ["created_at fuera de calendario", { ...tareaPendienteDTO, created_at: "2026-13-45T15:05:12Z" }],
+  ])("rechaza %s que no es RFC3339", (_, dto) => {
+    expect(() => dtoToTarea(dto)).toThrow(expect.objectContaining({ code: "desempeno_respuesta_invalida" }));
+  });
+
+  it("rechaza atendida_por.instante que no es RFC3339", () => {
+    const dto = {
+      ...tareaConEstadoAtendidaDTO,
+      atendida_por: { ...tareaConEstadoAtendidaDTO.atendida_por!, instante: "10:31" },
+    };
+    expect(() => dtoToTareas({ items: [dto] })).toThrow(expect.objectContaining({ code: "desempeno_respuesta_invalida" }));
   });
 });

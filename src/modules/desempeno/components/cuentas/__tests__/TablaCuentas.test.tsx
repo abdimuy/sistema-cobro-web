@@ -60,6 +60,18 @@ describe("TablaCuentas: asignar visita (visitas P3, Tarea 9)", () => {
     expect(onAbrir).not.toHaveBeenCalled();
   });
 
+  it("Enter sobre el botón asigna sin abrir la venta", async () => {
+    const user = userEvent.setup();
+    const onAbrir = vi.fn();
+    const onAsignar = vi.fn();
+    const cuenta = makeCuenta({ ventaId: 13785217, doctoPvId: 9934 });
+    render(<TablaCuentas cuentas={[cuenta]} onAbrir={onAbrir} onAsignar={onAsignar} />);
+    within(screen.getByTestId("fila-cuenta")).getByRole("button", { name: "Asignar visita" }).focus();
+    await user.keyboard("{Enter}");
+    expect(onAsignar).toHaveBeenCalledWith(cuenta);
+    expect(onAbrir).not.toHaveBeenCalled();
+  });
+
   it("sin onAsignar no hay botón", () => {
     render(<TablaCuentas cuentas={lista(1)} onAbrir={() => {}} />);
     expect(screen.queryByRole("button", { name: "Asignar visita" })).toBeNull();

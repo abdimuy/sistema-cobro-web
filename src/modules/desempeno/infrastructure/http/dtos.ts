@@ -292,6 +292,7 @@ export type AtendidaPorDTO = {
   tipo: string;
   id: string;
   cobrador_id: number | null;
+  cobrador_nombre: string | null;
   instante: string;
 };
 

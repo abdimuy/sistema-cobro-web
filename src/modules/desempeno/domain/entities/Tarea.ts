@@ -36,6 +36,8 @@ export type AtendidaPor = {
   readonly tipo: TipoAtencion;
   readonly id: string;
   readonly cobradorId: number | null;
+  // Lo manda el servidor; null si no sabe quién (p. ej. pago de oficina).
+  readonly cobradorNombre: string | null;
   readonly instante: string;
 };
 

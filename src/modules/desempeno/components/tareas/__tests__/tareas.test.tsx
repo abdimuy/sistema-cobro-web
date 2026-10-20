@@ -13,6 +13,7 @@ import {
   errorSinPermisoTareas,
   listaTareasDTO,
   tareaCanceladaDTO,
+  tareaConEstadoAtendidaDTO,
   tareaConEstadoPendienteDTO,
   tareaPendienteDTO,
 } from "@/test/msw/fixtures/tareas";
@@ -159,7 +160,7 @@ describe("ListaTareas", () => {
 
   it("listaPintaEstadoYQuienAtendio", async () => {
     const urls = servirLista();
-    montar(<ListaTareas zonaId={ZONA_TAREAS} nombreDeCobrador={(id) => (id === 47 ? "Juan Pérez" : null)} />);
+    montar(<ListaTareas zonaId={ZONA_TAREAS} />);
 
     const filas = await screen.findAllByTestId("fila-tarea");
     expect(filas).toHaveLength(4);
@@ -174,6 +175,24 @@ describe("ListaTareas", () => {
       expect(within(f).queryByRole("button", { name: "Cancelar" })).toBeNull();
       expect(within(f).queryByRole("button", { name: "Editar" })).toBeNull();
     }
+  });
+
+  it("atendida sin nombre de cobrador dice solo la hora", async () => {
+    server.use(
+      http.get(TAREAS, () =>
+        HttpResponse.json({
+          items: [
+            {
+              ...tareaConEstadoAtendidaDTO,
+              atendida_por: { ...tareaConEstadoAtendidaDTO.atendida_por!, cobrador_nombre: null },
+            },
+          ],
+        }),
+      ),
+    );
+    montar(<ListaTareas zonaId={ZONA_TAREAS} />);
+    const [fila] = await screen.findAllByTestId("fila-tarea");
+    expect(within(fila).getByText("atendida a las 10:31")).toBeInTheDocument();
   });
 
   it("cancelarRepetidoEsIgual: el servidor responde igual y la UI manda un solo POST", async () => {

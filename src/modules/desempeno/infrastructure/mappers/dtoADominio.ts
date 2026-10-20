@@ -39,6 +39,7 @@ import {
 import { esColumna, esEstadoCuenta, esTrato } from "../../domain/values/estadoCuenta";
 import { esUno } from "../../domain/values/esUno";
 import { DomainError } from "../../domain/errors";
+import { esInstanteRFC3339 } from "@/utils/tiempoDeNegocio";
 import type {
   ActividadDTO,
   AgendaDTO,
@@ -572,6 +573,19 @@ export function dtoToAgenda(dto: AgendaDTO, zonaId: number): Agenda {
   return porVenta;
 }
 
+// Instante RFC3339 con zona (misma regla que tiempoDeNegocio). Un instante sin
+// zona o fuera de calendario es respuesta inválida, no un dato: si pasara,
+// `horaCorta` lanzaría al pintarlo o lo leería en la zona del navegador.
+function instante(v: unknown, campo: string): string {
+  const s = texto(v, campo);
+  if (!esInstanteRFC3339(s)) throw invalida(campo);
+  return s;
+}
+
+function instanteONulo(v: unknown, campo: string): string | null {
+  return v === null ? null : instante(v, campo);
+}
+
 // Tareas de visita (visitas P3, Tarea 5 del plan). Mismo criterio: se lee y se
 // valida la forma, el estado lo deriva el servidor.
 function leerTarea(v: unknown, campo: string): Tarea {
@@ -586,10 +600,10 @@ function leerTarea(v: unknown, campo: string): Tarea {
     hora: hora === null ? null : conForma(hora, HORA_CIVIL, `${campo}.hora`),
     nota: textoONulo(d.nota, `${campo}.nota`),
     reemplazaA: textoONulo(d.reemplaza_a, `${campo}.reemplaza_a`),
-    createdAt: texto(d.created_at, `${campo}.created_at`),
+    createdAt: instante(d.created_at, `${campo}.created_at`),
     createdBy: texto(d.created_by, `${campo}.created_by`),
-    updatedAt: texto(d.updated_at, `${campo}.updated_at`),
-    canceladaAt: textoONulo(d.cancelada_at, `${campo}.cancelada_at`),
+    updatedAt: instante(d.updated_at, `${campo}.updated_at`),
+    canceladaAt: instanteONulo(d.cancelada_at, `${campo}.cancelada_at`),
   };
 }
 
@@ -604,7 +618,8 @@ function leerAtendidaPor(v: unknown): AtendidaPor | null {
     tipo: codigo(a.tipo, esTipoAtencion, "tarea.atendida_por.tipo"),
     id: texto(a.id, "tarea.atendida_por.id"),
     cobradorId: numeroONulo(a.cobrador_id, "tarea.atendida_por.cobrador_id"),
-    instante: texto(a.instante, "tarea.atendida_por.instante"),
+    cobradorNombre: textoONulo(a.cobrador_nombre ?? null, "tarea.atendida_por.cobrador_nombre"),
+    instante: instante(a.instante, "tarea.atendida_por.instante"),
   };
 }
 
