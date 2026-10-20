@@ -62,15 +62,15 @@ export function AsignarVisitaDialog({
     <Dialog open onOpenChange={(abierto) => !abierto && onCerrar()}>
       <DialogContent className="max-w-sm gap-4">
         <div>
-          <DialogTitle className="text-base">{previa ? "editar visita" : "asignar visita"}</DialogTitle>
+          <DialogTitle className="text-base">{previa ? "Editar visita" : "Asignar visita"}</DialogTitle>
           <DialogDescription className="text-[13px]">{clienteNombre}</DialogDescription>
         </div>
         <div className="flex items-center gap-2">
           <Popover open={calendario} onOpenChange={setCalendario}>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" aria-label="fecha">
+              <Button variant="outline" size="sm" aria-label="Fecha">
                 <CalendarDays aria-hidden className="h-3.5 w-3.5" />
-                {fecha === hoy ? "hoy" : fechaCorta(fecha)}
+                {fecha === hoy ? "Hoy" : fechaCorta(fecha)}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -88,15 +88,15 @@ export function AsignarVisitaDialog({
           </Popover>
           <input
             type="time"
-            aria-label="hora"
+            aria-label="Hora"
             value={hora}
             onChange={(e) => setHora(e.target.value)}
             className="h-8 rounded-md border border-input bg-background px-2 text-xs"
           />
         </div>
         <textarea
-          aria-label="nota"
-          placeholder="nota"
+          aria-label="Nota"
+          placeholder="Nota"
           maxLength={LIMITE_NOTA_TAREA}
           value={nota}
           onChange={(e) => setNota(e.target.value)}

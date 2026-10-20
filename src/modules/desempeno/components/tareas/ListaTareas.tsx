@@ -28,16 +28,16 @@ export function ListaTareas({
   if (zonaId === null) return null;
 
   return (
-    <section aria-label="visitas asignadas" className="rounded-[14px] bg-dsm-tarjeta px-4 py-3 shadow-sm ring-1 ring-border">
+    <section aria-label="Visitas asignadas" className="rounded-[14px] bg-dsm-tarjeta px-4 py-3 shadow-sm ring-1 ring-border">
       <h3 className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground">
-        visitas asignadas
+        Visitas asignadas
       </h3>
       {error && !tareas ? (
         <p className="text-[12px] text-muted-foreground">{error.message}</p>
       ) : isLoading && !tareas ? (
         <div className="h-8 animate-pulse rounded bg-muted" />
       ) : tareas && tareas.length === 0 ? (
-        <p className="text-[12px] text-muted-foreground">sin visitas asignadas</p>
+        <p className="text-[12px] text-muted-foreground">Sin visitas asignadas</p>
       ) : tareas ? (
         <ul className="divide-y divide-border">
           {tareas.map((t) => (
@@ -47,10 +47,10 @@ export function ListaTareas({
                 {t.hora && ` ${t.hora}`}
               </span>
               <span className="min-w-0 flex-1 truncate">
-                {nombreDeVenta?.(t.ventaId) ?? `venta ${t.ventaId}`}
+                {nombreDeVenta?.(t.ventaId) ?? `Venta ${t.ventaId}`}
                 {t.nota && <span className="text-muted-foreground">{` · ${t.nota}`}</span>}
               </span>
-              <span className={cn("shrink-0 text-[12px]", TONO[t.estado])}>
+              <span data-estado={t.estado} className={cn("shrink-0 text-[12px]", TONO[t.estado])}>
                 {textoEstadoTarea(t)}
               </span>
               {t.estado === "pendiente" && (
@@ -80,7 +80,7 @@ export function ListaTareas({
       {editando && (
         <AsignarVisitaDialog
           ventaId={editando.ventaId}
-          clienteNombre={nombreDeVenta?.(editando.ventaId) ?? `venta ${editando.ventaId}`}
+          clienteNombre={nombreDeVenta?.(editando.ventaId) ?? `Venta ${editando.ventaId}`}
           previa={editando}
           onHecho={() => setEditando(null)}
           onCerrar={() => setEditando(null)}

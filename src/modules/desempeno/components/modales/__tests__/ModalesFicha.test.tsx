@@ -149,7 +149,7 @@ describe("ModalesFicha", () => {
         onAbrir={vi.fn()}
       />,
     );
-    expect(screen.getByText("asignar visita")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Asignar visita" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Asignar visita" }));
     expect(port.asignarCalls).toHaveLength(1);
     expect(port.asignarCalls[0].ventaId).toBe(13785217);

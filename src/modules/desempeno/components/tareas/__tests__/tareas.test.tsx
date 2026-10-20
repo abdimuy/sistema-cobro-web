@@ -9,6 +9,7 @@ import { server } from "@/test/msw/server";
 import {
   VENTA_TAREA,
   ZONA_TAREAS,
+  errorTareaContenidoDistinto,
   errorTareaFechaPasada,
   errorSinPermisoTareas,
   listaTareasDTO,
@@ -21,6 +22,7 @@ import { HttpDesempenoAdapter } from "../../../infrastructure/http/HttpDesempeno
 import { DesempenoProvider } from "../../../presentation/context/DesempenoProvider";
 import { AsignarVisitaDialog } from "../AsignarVisitaDialog";
 import { ListaTareas } from "../ListaTareas";
+import { dtoToTarea } from "../../../infrastructure/mappers/dtoADominio";
 
 // Visitas P3, Tarea 9: el escritorio asigna, edita (cancelar + asignar otra) y
 // cancela visitas. Todo contra MSW con los fixtures del contrato de la Tarea 5
@@ -119,7 +121,7 @@ describe("AsignarVisitaDialog", () => {
     montar(<AsignarVisitaDialog ventaId={VENTA_TAREA} clienteNombre="María Guadalupe Hernández" onHecho={onHecho} onCerrar={vi.fn()} />);
 
     await user.click(screen.getByRole("button", { name: "Asignar visita" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("la fecha ya pasó");
+    expect(await screen.findByRole("alert")).toHaveTextContent("La fecha ya pasó");
     expect(onHecho).not.toHaveBeenCalled();
   });
 
@@ -129,7 +131,7 @@ describe("AsignarVisitaDialog", () => {
     montar(<AsignarVisitaDialog ventaId={VENTA_TAREA} clienteNombre="María Guadalupe Hernández" onHecho={vi.fn()} onCerrar={vi.fn()} />);
 
     await user.click(screen.getByRole("button", { name: "Asignar visita" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("no tienes permiso para asignar visitas");
+    expect(await screen.findByRole("alert")).toHaveTextContent("No tienes permiso para asignar visitas");
   });
 
   it("hora y nota opcionales viajan solo si se llenan", async () => {
@@ -137,8 +139,8 @@ describe("AsignarVisitaDialog", () => {
     const cuerpos = capturarPosts(() => HttpResponse.json(tareaPendienteDTO, { status: 201 }));
     montar(<AsignarVisitaDialog ventaId={VENTA_TAREA} clienteNombre="María Guadalupe Hernández" onHecho={vi.fn()} onCerrar={vi.fn()} />);
 
-    await user.type(screen.getByLabelText("hora"), "11:00");
-    await user.type(screen.getByLabelText("nota"), "llevar estado de cuenta");
+    await user.type(screen.getByLabelText("Hora"), "11:00");
+    await user.type(screen.getByLabelText("Nota"), "llevar estado de cuenta");
     await user.click(screen.getByRole("button", { name: "Asignar visita" }));
     await waitFor(() => expect(cuerpos).toHaveLength(1));
     expect(cuerpos[0].hora).toBe("11:00");
@@ -165,10 +167,10 @@ describe("ListaTareas", () => {
     const filas = await screen.findAllByTestId("fila-tarea");
     expect(filas).toHaveLength(4);
     expect(urls[0].searchParams.get("zona_id")).toBe(String(ZONA_TAREAS));
-    expect(within(filas[0]).getByText("pendiente")).toBeInTheDocument();
-    expect(within(filas[1]).getByText("atendida por Juan Pérez a las 10:31")).toBeInTheDocument();
-    expect(within(filas[2]).getByText("cancelada")).toBeInTheDocument();
-    expect(within(filas[3]).getByText("no atendida")).toBeInTheDocument();
+    expect(within(filas[0]).getByText("Pendiente")).toBeInTheDocument();
+    expect(within(filas[1]).getByText("Atendida por Juan Pérez a las 10:31")).toBeInTheDocument();
+    expect(within(filas[2]).getByText("Cancelada")).toBeInTheDocument();
+    expect(within(filas[3]).getByText("No atendida")).toBeInTheDocument();
     // Solo la pendiente se puede editar o cancelar.
     expect(within(filas[0]).getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
     for (const f of filas.slice(1)) {
@@ -192,7 +194,7 @@ describe("ListaTareas", () => {
     );
     montar(<ListaTareas zonaId={ZONA_TAREAS} />);
     const [fila] = await screen.findAllByTestId("fila-tarea");
-    expect(within(fila).getByText("atendida a las 10:31")).toBeInTheDocument();
+    expect(within(fila).getByText("Atendida a las 10:31")).toBeInTheDocument();
   });
 
   it("cancelarRepetidoEsIgual: el servidor responde igual y la UI manda un solo POST", async () => {
@@ -234,7 +236,7 @@ describe("ListaTareas", () => {
     await user.click(within(filas[0]).getByRole("button", { name: "Editar" }));
     const dialogo = await screen.findByRole("dialog");
     // La nota de la tarea que se reemplaza viene precargada.
-    expect(within(dialogo).getByLabelText("nota")).toHaveValue(tareaConEstadoPendienteDTO.nota);
+    expect(within(dialogo).getByLabelText("Nota")).toHaveValue(tareaConEstadoPendienteDTO.nota);
     await user.click(within(dialogo).getByRole("button", { name: "Asignar visita" }));
 
     await waitFor(() => expect(cuerpos).toHaveLength(1));
@@ -245,3 +247,70 @@ describe("ListaTareas", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 });
+
+// Textos aprobados por el dueño el 2026-10-20: mayúscula inicial, sin punto
+// final, iguales a los chips existentes. Esta prueba los fija exactos.
+describe("textosAprobados (dueño, 2026-10-20)", () => {
+  it("diálogo de asignar y de editar", async () => {
+    const user = userEvent.setup();
+    capturarPosts(() => HttpResponse.json(errorTareaFechaPasada, { status: 422 }));
+    const { unmount } = montar(
+      <AsignarVisitaDialog ventaId={VENTA_TAREA} clienteNombre="María Guadalupe Hernández" onHecho={vi.fn()} onCerrar={vi.fn()} />,
+    );
+    expect(screen.getByRole("heading", { name: "Asignar visita" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Asignar visita" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Fecha" })).toHaveTextContent(/^Hoy$/);
+    expect(screen.getByLabelText("Hora")).toBeInTheDocument();
+    expect(screen.getByLabelText("Nota")).toHaveAttribute("placeholder", "Nota");
+    await user.click(screen.getByRole("button", { name: "Asignar visita" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/^La fecha ya pasó$/);
+    unmount();
+
+    montar(
+      <AsignarVisitaDialog
+        ventaId={VENTA_TAREA}
+        clienteNombre="María Guadalupe Hernández"
+        previa={dtoToTarea(tareaPendienteDTO)}
+        onHecho={vi.fn()}
+        onCerrar={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "Editar visita" })).toBeInTheDocument();
+  });
+
+  it("errores: permiso y detalle del servidor con mayúscula inicial", async () => {
+    const user = userEvent.setup();
+    capturarPosts((n) =>
+      n === 1
+        ? HttpResponse.json(errorSinPermisoTareas, { status: 403 })
+        : HttpResponse.json(errorTareaContenidoDistinto, { status: 422 }),
+    );
+    montar(<AsignarVisitaDialog ventaId={VENTA_TAREA} clienteNombre="María Guadalupe Hernández" onHecho={vi.fn()} onCerrar={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Asignar visita" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/^No tienes permiso para asignar visitas$/);
+    await user.click(screen.getByRole("button", { name: "Asignar visita" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(/^Esta tarea ya existe con otros datos$/));
+  });
+
+  it("lista: título, vacía, venta, estados y acciones", async () => {
+    server.use(http.get(TAREAS, () => HttpResponse.json(listaTareasDTO)));
+    const { unmount } = montar(<ListaTareas zonaId={ZONA_TAREAS} />);
+    const filas = await screen.findAllByTestId("fila-tarea");
+    expect(screen.getByRole("heading", { name: "Visitas asignadas" })).toBeInTheDocument();
+    expect(filas.map((f) => f.querySelector("[data-estado]")?.textContent)).toEqual([
+      "Pendiente",
+      "Atendida por Juan Pérez a las 10:31",
+      "Cancelada",
+      "No atendida",
+    ]);
+    expect(within(filas[0]).getByText(`Venta ${VENTA_TAREA}`)).toBeInTheDocument();
+    expect(within(filas[0]).getByRole("button", { name: "Editar" })).toBeInTheDocument();
+    expect(within(filas[0]).getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
+    unmount();
+
+    server.use(http.get(TAREAS, () => HttpResponse.json({ items: [] })));
+    montar(<ListaTareas zonaId={ZONA_TAREAS} />);
+    expect(await screen.findByText(/^Sin visitas asignadas$/)).toBeInTheDocument();
+  });
+});
+

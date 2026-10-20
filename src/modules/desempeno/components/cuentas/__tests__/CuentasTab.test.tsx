@@ -331,7 +331,7 @@ describe("CuentasTab — columna Compromiso", () => {
     const port = new FakeDesempenoPort();
     montar(port);
     await screen.findByText("GERARDO XICALE ANALCO");
-    expect(await screen.findByText("sin visitas asignadas")).toBeInTheDocument();
+    expect(await screen.findByText("Sin visitas asignadas")).toBeInTheDocument();
     expect(port.tareasCalls[0].zonaId).toBe(makeUsuarioTablero().zonaId);
     const fila = screen.getByText("GERARDO XICALE ANALCO").closest("tr")!;
     await user.click(within(fila).getByRole("button", { name: "Asignar visita" }));
