@@ -611,6 +611,7 @@ export function dtoToTarea(dto: TareaDTO): Tarea {
   return leerTarea(dto, "tarea");
 }
 
+// atendida_por.fecha (día civil de la atención) está en el DTO pero la vista no la usa: se pinta la hora de `instante`.
 function leerAtendidaPor(v: unknown): AtendidaPor | null {
   if (v === null || v === undefined) return null;
   const a = obj(v, "tarea.atendida_por");

@@ -767,6 +767,16 @@ describe("tareas: goldens del servidor (visitas P3, Tarea 8)", () => {
     expect(tareas.find((t) => t.id.endsWith("2"))!.canceladaAt).toBe("2026-10-19T15:45:30.123456789Z");
   });
 
+  it("fecha viene de fecha, no de created_at (golden: pendiente creada el 18 para el 20)", () => {
+    const tareas = dtoToTareas(listaTareasDTO);
+    for (const [i, t] of tareas.entries()) {
+      expect(t.fecha).toBe(listaTareasDTO.items[i].fecha);
+    }
+    const pendiente = tareas.find((t) => t.id.endsWith("1"))!;
+    expect(pendiente.createdAt.slice(0, 10)).toBe("2026-10-18");
+    expect(pendiente.fecha).toBe("2026-10-20");
+  });
+
   it("las respuestas de crear y cancelar también", () => {
     expect(dtoToTarea(tareaCreadaDTO).id).toBe(tareaCreadaDTO.id);
     expect(dtoToTarea(tareaCanceladaDTO).canceladaAt).toBe("2026-10-19T16:00:00Z");
