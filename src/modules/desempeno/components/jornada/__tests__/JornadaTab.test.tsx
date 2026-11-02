@@ -102,10 +102,17 @@ describe("JornadaTab", () => {
     expect(filas.indexOf(enfocadas[0])).toBe(n - 1);
   });
 
-  it("muestra Inicio y Fin del día con la primera y última actividad del servidor", async () => {
+  it("hoy sin horario: Inicio del día primero y 'Última actividad' al final, sin sugerir cierre", async () => {
     montar();
-    expect(await screen.findByTestId("evento-inicio")).toHaveTextContent("Inicio del día");
-    expect(screen.getByTestId("evento-fin")).toHaveTextContent("Fin del día");
+    const inicio = await screen.findByTestId("evento-inicio");
+    const fin = screen.getByTestId("evento-fin");
+    expect(inicio).toHaveTextContent("Inicio del día");
+    expect(fin).toHaveTextContent("Última actividad");
+    expect(fin).not.toHaveTextContent("Fin del día");
+    // Primero y último dentro de la tarjeta del resumen.
+    const tarjeta = inicio.parentElement!;
+    expect(tarjeta.firstElementChild?.nextElementSibling).toBe(inicio);
+    expect(tarjeta.lastElementChild).toBe(fin);
   });
 
   it("la columna derecha queda fija (sticky) sólo en pantalla ancha", async () => {

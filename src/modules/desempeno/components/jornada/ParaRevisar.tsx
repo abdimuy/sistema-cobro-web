@@ -1,4 +1,4 @@
-import { Flag, Sunrise, Sunset } from "lucide-react";
+import { Clock, Flag, Sunrise, Sunset, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Senal } from "../../domain/entities";
 import { InfoRapida, TarjetaNota, TarjetaTitulo } from "../comunes/InfoRapida";
@@ -10,12 +10,15 @@ export function ParaRevisar({
   senales,
   inicioDia = null,
   finDia = null,
+  finEsCierre = true,
   onSeleccionar,
 }: {
   senales: readonly Senal[];
   /** Primera y última actividad del día: las manda el servidor (resumen). */
   inicioDia?: string | null;
   finDia?: string | null;
+  /** false: el día sigue en curso y la última fila no es un cierre. */
+  finEsCierre?: boolean;
   onSeleccionar: (actividadId: string) => void;
 }) {
   return (
@@ -27,25 +30,7 @@ export function ParaRevisar({
         </h3>
         <span className="font-mono text-[11px] text-muted-foreground">{`${senales.length} este día`}</span>
       </div>
-      {[
-        { clave: "inicio", titulo: "Inicio del día", hora: inicioDia, Icono: Sunrise },
-        { clave: "fin", titulo: "Fin del día", hora: finDia, Icono: Sunset },
-      ].map(
-        ({ clave, titulo, hora, Icono }) =>
-          hora && (
-            <div
-              key={clave}
-              data-testid={`evento-${clave}`}
-              className="flex items-center gap-3 border-t border-border px-[18px] py-2.5"
-            >
-              <span className="flex h-6 w-6 flex-none items-center justify-center rounded-md bg-dsm-marca-fondo text-dsm-marca">
-                <Icono aria-hidden className="h-3.5 w-3.5" />
-              </span>
-              <span className="flex-1 text-[13px]">{titulo}</span>
-              <time className="font-mono text-[12px]">{horaCorta(hora)}</time>
-            </div>
-          ),
-      )}
+      <EventoDia clave="inicio" titulo="Inicio del día" hora={inicioDia} Icono={Sunrise} />
       {senales.length === 0 ? (
         <p className="px-[18px] pb-5 text-center font-serif text-[15px]">Nada que revisar este día</p>
       ) : (
@@ -87,6 +72,45 @@ export function ParaRevisar({
           );
         })
       )}
+      <EventoDia
+        clave="fin"
+        titulo={finEsCierre ? "Fin del día" : "Última actividad"}
+        hora={finDia}
+        Icono={finEsCierre ? Sunset : Clock}
+        cierre={finEsCierre}
+      />
+    </div>
+  );
+}
+
+// Fila de inicio o de fin del día. La "última actividad" de un día que sigue en
+// curso va atenuada: no sugiere cierre.
+function EventoDia({
+  clave,
+  titulo,
+  hora,
+  Icono,
+  cierre = true,
+}: {
+  clave: string;
+  titulo: string;
+  hora: string | null;
+  Icono: LucideIcon;
+  cierre?: boolean;
+}) {
+  if (!hora) return null;
+  return (
+    <div data-testid={`evento-${clave}`} className="flex items-center gap-3 border-t border-border px-[18px] py-2.5">
+      <span
+        className={cn(
+          "flex h-6 w-6 flex-none items-center justify-center rounded-md",
+          cierre ? "bg-dsm-marca-fondo text-dsm-marca" : "bg-dsm-gris-fondo text-dsm-gris",
+        )}
+      >
+        <Icono aria-hidden className="h-3.5 w-3.5" />
+      </span>
+      <span className={cn("flex-1 text-[13px]", !cierre && "text-muted-foreground")}>{titulo}</span>
+      <time className="font-mono text-[12px]">{horaCorta(hora)}</time>
     </div>
   );
 }

@@ -23,6 +23,7 @@ import { EjeJornada } from "./EjeJornada";
 import { ListaJornada } from "./ListaJornada";
 import { MapaJornada } from "./MapaJornada";
 import { ParaRevisar } from "./ParaRevisar";
+import { finDelDiaTerminado } from "./finDelDia";
 
 export type JornadaTabProps = {
   usuario: UsuarioDesempeno;
@@ -180,6 +181,7 @@ export function JornadaTab({
                 senales={jornada.senales}
                 inicioDia={jornada.resumen.primeraActividad}
                 finDia={jornada.resumen.ultimaActividad}
+                finEsCierre={finDelDiaTerminado(jornada)}
                 onSeleccionar={setResaltada}
               />
             </div>
