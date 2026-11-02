@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { ESTILOS_CLAROS } from "@/components/maps/estilosDeMapa";
 import { LLAVE_GOOGLE_MAPS } from "@/components/maps/cargadorGoogleMaps";
 import { MapaJornadaGoogle } from "../MapaJornadaGoogle";
 
@@ -8,10 +9,11 @@ vi.mock("@/components/maps/cargadorGoogleMaps", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/components/maps/cargadorGoogleMaps")>()),
   cargarGoogleMaps: (...args: unknown[]) => cargarGoogleMaps(...args),
 }));
+vi.mock("@/context/ThemeContext", () => ({ useTheme: () => ({ theme: "light" }) }));
 vi.mock("@/lib/bitacora", () => ({ registrar: vi.fn() }));
 vi.mock("@react-google-maps/api", () => ({
-  GoogleMap: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="google-map">{children}</div>
+  GoogleMap: ({ children, options }: { children?: React.ReactNode; options?: unknown }) => (
+    <div data-testid="google-map" data-options={JSON.stringify(options)}>{children}</div>
   ),
   PolylineF: () => <div data-testid="recorrido" />,
   MarkerF: ({ label }: { label: { text: string } }) => <div data-testid="punto">{label.text}</div>,
@@ -36,6 +38,14 @@ describe("MapaJornadaGoogle", () => {
     expect(screen.getAllByTestId("punto").map((p) => p.textContent)).toEqual(["1", "3"]);
     expect(cargarGoogleMaps).toHaveBeenCalledWith(LLAVE_GOOGLE_MAPS);
     expect(screen.queryByText("Mapa no disponible")).not.toBeInTheDocument();
+  });
+
+  it("pasa los estilos del hook y apaga clickableIcons", async () => {
+    cargarGoogleMaps.mockResolvedValue(undefined);
+    render(<MapaJornadaGoogle puntos={puntos} onSeleccionar={vi.fn()} />);
+    const opciones = JSON.parse((await screen.findByTestId("google-map")).dataset.options ?? "{}");
+    expect(opciones.styles).toEqual(JSON.parse(JSON.stringify(ESTILOS_CLAROS)));
+    expect(opciones.clickableIcons).toBe(false);
   });
 
   it("si el script falla dice que no cargó y ofrece Reintentar", async () => {

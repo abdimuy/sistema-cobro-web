@@ -13,8 +13,8 @@ vi.mock("@/components/maps/cargadorGoogleMaps", () => ({
 }));
 vi.mock("@/lib/bitacora", () => ({ registrar: vi.fn() }));
 vi.mock("@react-google-maps/api", () => ({
-  GoogleMap: (props: { center: { lat: number; lng: number } }) => (
-    <div data-testid="google-map">
+  GoogleMap: (props: { center: { lat: number; lng: number }; options?: unknown }) => (
+    <div data-testid="google-map" data-options={JSON.stringify(props.options)}>
       {props.center.lat},{props.center.lng}
     </div>
   ),
@@ -23,6 +23,7 @@ vi.mock("@/context/ThemeContext", () => ({
   useTheme: () => ({ theme: "light" }),
 }));
 
+import { ESTILOS_CLAROS } from "@/components/maps/estilosDeMapa";
 import MapaPuntos from "../Map";
 import MapSimple from "../MapSimple";
 
@@ -49,6 +50,14 @@ describe.each([
     cargarGoogleMaps.mockResolvedValue(undefined);
     render(crear());
     expect(await screen.findByTestId("google-map")).toHaveTextContent("18.46,-97.39");
+  });
+
+  it("pasa los estilos del hook (poi y transit ocultos) y clickableIcons apagado", async () => {
+    cargarGoogleMaps.mockResolvedValue(undefined);
+    render(crear());
+    const opciones = JSON.parse((await screen.findByTestId("google-map")).dataset.options ?? "{}");
+    expect(opciones.styles).toEqual(JSON.parse(JSON.stringify(ESTILOS_CLAROS)));
+    expect(opciones.clickableIcons).toBe(false);
   });
 
   it("si Maps falla ofrece Reintentar y al reintentar pinta el mapa", async () => {

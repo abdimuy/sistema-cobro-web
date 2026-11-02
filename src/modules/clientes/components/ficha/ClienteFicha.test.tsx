@@ -15,6 +15,7 @@ import { ClienteFicha } from "./ClienteFicha";
 // ---------------------------------------------------------------------------
 // recharts: mock ResponsiveContainer so it renders in jsdom (no real width)
 // ---------------------------------------------------------------------------
+vi.mock("@/context/ThemeContext", () => ({ useTheme: () => ({ theme: "light" }) }));
 vi.mock("recharts", async (importOriginal) => {
   const actual = await importOriginal<typeof import("recharts")>();
   return {

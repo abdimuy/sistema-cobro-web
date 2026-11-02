@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { ESTILOS_CLAROS } from "@/components/maps/estilosDeMapa";
 import { LLAVE_GOOGLE_MAPS } from "@/components/maps/cargadorGoogleMaps";
 import { FichaMapEmbed } from "./FichaMapEmbed";
 
@@ -11,16 +12,19 @@ vi.mock("@/components/maps/cargadorGoogleMaps", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/components/maps/cargadorGoogleMaps")>()),
   cargarGoogleMaps: (...args: unknown[]) => cargarGoogleMaps(...args),
 }));
+vi.mock("@/context/ThemeContext", () => ({ useTheme: () => ({ theme: "light" }) }));
 vi.mock("@/lib/bitacora", () => ({ registrar: vi.fn() }));
 vi.mock("@react-google-maps/api", () => ({
   GoogleMap: ({
     children,
     mapContainerStyle,
+    options,
   }: {
+    options?: unknown;
     children?: React.ReactNode;
     mapContainerStyle?: React.CSSProperties;
   }) => (
-    <div data-testid="google-map" style={mapContainerStyle}>
+    <div data-testid="google-map" style={mapContainerStyle} data-options={JSON.stringify(options)}>
       {children}
     </div>
   ),
@@ -61,5 +65,13 @@ describe("FichaMapEmbed", () => {
     render(<FichaMapEmbed lat={19.4326} lng={-99.1332} />);
     await userEvent.click(await screen.findByRole("button", { name: "Reintentar" }));
     expect(await screen.findByTestId("google-map")).toBeInTheDocument();
+  });
+
+  it("pasa los estilos del hook y apaga clickableIcons", async () => {
+    cargarGoogleMaps.mockResolvedValue(undefined);
+    render(<FichaMapEmbed lat={19.4326} lng={-99.1332} />);
+    const opciones = JSON.parse((await screen.findByTestId("google-map")).dataset.options ?? "{}");
+    expect(opciones.styles).toEqual(JSON.parse(JSON.stringify(ESTILOS_CLAROS)));
+    expect(opciones.clickableIcons).toBe(false);
   });
 });

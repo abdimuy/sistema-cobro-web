@@ -1,5 +1,6 @@
 import { GoogleMap, MarkerF, PolylineF } from "@react-google-maps/api";
 import { MapaConCarga } from "@/components/maps/MapaConCarga";
+import { useEstilosDeMapa } from "@/components/maps/estilosDeMapa";
 
 export type PuntoMapa = { id: string; n: number; lat: number; lng: number };
 
@@ -14,6 +15,7 @@ export function MapaJornadaGoogle({
   puntos: readonly PuntoMapa[];
   onSeleccionar: (id: string) => void;
 }) {
+  const estilos = useEstilosDeMapa();
   return (
     <MapaConCarga alto="300px">
       <GoogleMap
@@ -23,7 +25,7 @@ export function MapaJornadaGoogle({
           puntos.forEach((p) => limites.extend({ lat: p.lat, lng: p.lng }));
           if (puntos.length > 0) mapa.fitBounds(limites, 32);
         }}
-        options={{ disableDefaultUI: true, zoomControl: true, clickableIcons: false }}
+        options={{ disableDefaultUI: true, zoomControl: true, clickableIcons: false, styles: estilos }}
       >
         <PolylineF
           path={puntos.map((p) => ({ lat: p.lat, lng: p.lng }))}

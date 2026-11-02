@@ -1,5 +1,6 @@
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { MapaConCarga } from "@/components/maps/MapaConCarga";
+import { useEstilosDeMapa } from "@/components/maps/estilosDeMapa";
 
 const MAP_CONTAINER_STYLE = { width: "100%", height: "220px" };
 
@@ -14,6 +15,7 @@ interface Props {
 // is never injected twice and a failed load offers "Reintentar".
 export function FichaMapEmbed({ lat, lng }: Props) {
   const center = { lat, lng };
+  const estilos = useEstilosDeMapa();
 
   return (
     <MapaConCarga alto="220px">
@@ -26,6 +28,7 @@ export function FichaMapEmbed({ lat, lng }: Props) {
             disableDefaultUI: true,
             zoomControl: true,
             clickableIcons: false,
+            styles: estilos,
           }}
         >
           <Marker position={center} />
