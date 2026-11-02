@@ -15,8 +15,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 function SidebarUpdateBanner() {
   const { state, downloadAndInstall, relaunchApp } = useUpdater()
@@ -95,28 +98,54 @@ function SidebarUpdateBanner() {
   return null
 }
 
-// Alternar compacto/expandido: botón al pie (Ctrl/Cmd+B hace lo mismo). En
-// móvil el menú es un cajón y este botón no se muestra.
-function BotonCompactar() {
+// Atajo según plataforma: ⌘B en Mac, Ctrl+B en el resto (Windows en producción).
+function atajoMenu(): string {
+  const esMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform ?? "")
+  return esMac ? "⌘B" : "Ctrl+B"
+}
+
+// Controles de compactar/expandir junto al logo (patrón ChatGPT/Claude).
+// Expandido: botón a la derecha del logo. Compacto: al pasar el mouse el logo
+// se transforma (crossfade) en el ícono de expandir; fuera de ese hover el logo
+// se comporta como siempre. En móvil el menú es un cajón y no se muestran.
+function ControlesCompactar() {
   const { state, toggleSidebar, isMobile } = useSidebar()
   if (isMobile) return null
   const compacta = state === "collapsed"
-  const Icono = compacta ? PanelLeftOpen : PanelLeftClose
-  const texto = compacta ? "Expandir menú" : "Compactar menú"
+  const atajo = atajoMenu()
+  if (!compacta) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Compactar menú"
+            onClick={toggleSidebar}
+            className="h-8 w-8 shrink-0 text-sidebar-foreground/70"
+          >
+            <PanelLeftClose aria-hidden />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">{`Compactar menú (${atajo})`}</TooltipContent>
+      </Tooltip>
+    )
+  }
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label="Expandir menú"
           onClick={toggleSidebar}
-          tooltip={`${texto} (Ctrl+B)`}
-          aria-label={texto}
-          aria-expanded={!compacta}
+          className="absolute inset-0 flex items-center justify-center rounded-lg bg-sidebar text-sidebar-foreground opacity-0 transition-opacity duration-200 ease-in-out hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring motion-reduce:transition-none [&>svg]:size-4"
         >
-          <Icono />
-          <span className={TEXTO_MENU}>{texto}</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
+          <PanelLeftOpen aria-hidden />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right">{`Expandir menú (${atajo})`}</TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -134,8 +163,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar variant="inset" collapsible="icon" {...props}>
       <SidebarHeader className="gap-2">
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+          <SidebarMenuItem className="relative flex items-center gap-1">
+            <SidebarMenuButton size="lg" asChild className="min-w-0 flex-1">
               <Link to="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <Armchair className="size-4" />
@@ -146,6 +175,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
               </Link>
             </SidebarMenuButton>
+            <ControlesCompactar />
           </SidebarMenuItem>
         </SidebarMenu>
         <div className="group-data-[collapsible=icon]:hidden">
@@ -176,9 +206,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <BotonCompactar />
         <NavUser />
       </SidebarFooter>
+      {/* Borde clicable: alterna compacto/expandido. */}
+      <SidebarRail
+        aria-label="Alternar menú lateral"
+        title=""
+        className="after:transition-colors hover:after:bg-primary/30"
+      />
     </Sidebar>
   )
 }

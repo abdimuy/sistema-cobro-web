@@ -41,17 +41,48 @@ describe("menú lateral compacto", () => {
     })) as unknown as typeof window.matchMedia;
   });
 
-  it("arranca expandido y el botón alterna a compacto (sólo íconos) y guarda la elección", async () => {
+  it("el botón junto al logo compacta, guarda la elección y ya no existe el botón del pie", async () => {
     const user = userEvent.setup();
     montar();
     expect(lateral().dataset.state).toBe("expanded");
-    await user.click(screen.getByRole("button", { name: "Compactar menú" }));
+    const boton = screen.getByRole("button", { name: "Compactar menú" });
+    // Está en el encabezado, junto al logo, no en el pie.
+    expect(lateral().querySelector("[data-sidebar=header]")).toContainElement(boton);
+    expect(lateral().querySelector("[data-sidebar=footer]")).not.toContainElement(boton);
+    await user.click(boton);
     expect(lateral().dataset.state).toBe("collapsed");
     expect(lateral().dataset.collapsible).toBe("icon");
     expect(localStorage.getItem(CLAVE)).toBe("1");
-    await user.click(screen.getByRole("button", { name: "Expandir menú" }));
+    expect(screen.queryByRole("button", { name: "Compactar menú" })).not.toBeInTheDocument();
+  });
+
+  it("en compacto, el hover sobre el logo ofrece Expandir y el clic expande", async () => {
+    localStorage.setItem(CLAVE, "1");
+    const user = userEvent.setup();
+    montar();
+    const expandir = screen.getByRole("button", { name: "Expandir menú" });
+    await user.hover(expandir);
+    expect((await screen.findAllByText(/Expandir menú \((⌘B|Ctrl\+B)\)/)).length).toBeGreaterThan(0);
+    await user.click(expandir);
     expect(lateral().dataset.state).toBe("expanded");
     expect(localStorage.getItem(CLAVE)).toBe("0");
+  });
+
+  it("el logo sigue siendo un enlace a Inicio", () => {
+    montar();
+    expect(screen.getByRole("link", { name: /Muebles San Pablo/ })).toHaveAttribute("href", "/");
+  });
+
+  it("el riel del borde alterna compacto/expandido", async () => {
+    const user = userEvent.setup();
+    montar();
+    const riel = document.querySelector("[data-sidebar=rail]") as HTMLElement;
+    expect(riel).toHaveAttribute("aria-label", "Alternar menú lateral");
+    await user.click(riel);
+    expect(lateral().dataset.state).toBe("collapsed");
+    expect(localStorage.getItem(CLAVE)).toBe("1");
+    await user.click(riel);
+    expect(lateral().dataset.state).toBe("expanded");
   });
 
   it("restaura el estado compacto guardado al montar", () => {
