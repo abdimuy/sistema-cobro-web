@@ -149,8 +149,21 @@ export function primerNombre(nombre: string): string {
  * `hoy` es el del servidor (`ficha.hoy`, `tablero.hoy`), nunca el de la Mac.
  */
 export function textoInicioSemana(inicioIso: string, hoy: string): string {
+  return `Semana ${sufijoInicioSemana(inicioIso, hoy, true)}`;
+}
+
+/**
+ * Versión compacta para las filas del tablero (sin hora, cabe junto a la zona):
+ * → "desde jue 15 oct · hace 3 d". La hora exacta va en el tooltip con
+ * `textoInicioSemana`.
+ */
+export function textoInicioSemanaCompacto(inicioIso: string, hoy: string): string {
+  return sufijoInicioSemana(inicioIso, hoy, false);
+}
+
+function sufijoInicioSemana(inicioIso: string, hoy: string, conHora: boolean): string {
   const dia = diaDeNegocioDe(inicioIso);
-  const base = `Semana desde ${fechaCorta(dia)}, ${horaCorta(inicioIso)}`;
+  const base = `desde ${fechaCorta(dia)}${conHora ? `, ${horaCorta(inicioIso)}` : ""}`;
   if (dia > hoy) return base;
   if (dia === hoy) return `${base} · hoy`;
   return `${base} · hace ${diasEntre(dia, hoy).length - 1} d`;

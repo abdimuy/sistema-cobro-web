@@ -9,6 +9,7 @@ import {
   plural,
   porcentaje,
   textoInicioSemana,
+  textoInicioSemanaCompacto,
 } from "../lib/format";
 import { textoAhora } from "./textoAhora";
 import { InfoRapida } from "../comunes/InfoRapida";
@@ -76,12 +77,14 @@ export function TableroFila({
             {u.nombre}
           </span>
         </InfoRapida>
-        <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{u.zonaNombre}</div>
-        {u.inicioSemana && (
-          <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
-            {textoInicioSemana(u.inicioSemana, hoy)}
-          </div>
-        )}
+        <div
+          className="mt-0.5 truncate whitespace-nowrap font-mono text-[11px] text-muted-foreground"
+          title={u.inicioSemana ? textoInicioSemana(u.inicioSemana, hoy) : undefined}
+        >
+          {u.inicioSemana
+            ? `${u.zonaNombre} · ${textoInicioSemanaCompacto(u.inicioSemana, hoy)}`
+            : u.zonaNombre}
+        </div>
       </td>
       <td className={CELDA}>
         <InfoRapida contenido={<TarjetaAhora usuario={u} pausaMin={pausaMin} periodo={periodo} />}>

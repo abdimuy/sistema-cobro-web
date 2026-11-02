@@ -1,6 +1,6 @@
 import type { UsuarioTablero } from "../../domain/entities";
 import type { MovimientoFila } from "../../presentation/hooks/useUltimosMovimientos92Dias";
-import { diaDeNegocioDe, fechaCorta, textoInicioSemana } from "../lib/format";
+import { diaDeNegocioDe, fechaCorta, textoInicioSemana, textoInicioSemanaCompacto } from "../lib/format";
 
 const CELDA = "border-y border-border bg-dsm-tarjeta px-2 py-3 align-middle";
 
@@ -44,12 +44,14 @@ export function FilaVencida({
     >
       <td className={`${CELDA} max-w-[220px] rounded-l-[14px] border-l pl-[18px]`}>
         <span className="font-serif text-[17px] leading-tight">{u.nombre}</span>
-        <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{u.zonaNombre}</div>
-        {u.inicioSemana && (
-          <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
-            {textoInicioSemana(u.inicioSemana, hoy)}
-          </div>
-        )}
+        <div
+          className="mt-0.5 truncate whitespace-nowrap font-mono text-[11px] text-muted-foreground"
+          title={u.inicioSemana ? textoInicioSemana(u.inicioSemana, hoy) : undefined}
+        >
+          {u.inicioSemana
+            ? `${u.zonaNombre} · ${textoInicioSemanaCompacto(u.inicioSemana, hoy)}`
+            : u.zonaNombre}
+        </div>
       </td>
       <td
         colSpan={columnas - 1}

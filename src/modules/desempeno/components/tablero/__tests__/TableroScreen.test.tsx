@@ -54,7 +54,11 @@ describe("TableroScreen", () => {
   it("cada fila dice desde cuándo corre su semana, con fecha y hora de la oficina", async () => {
     montar();
     const juan = (await screen.findByText("Juan Carlos Méndez")).closest("tr")!;
-    expect(within(juan).getByText("Semana desde vie 9 oct, 07:46 · hace 5 d")).toBeInTheDocument();
+    // Misma línea que la zona (sin agregar altura); la hora exacta va en el tooltip.
+    const linea = within(juan).getByTitle("Semana desde vie 9 oct, 07:46 · hace 5 d");
+    expect(linea).toHaveTextContent(/ · desde vie 9 oct · hace 5 d$/);
+    expect(linea.textContent).not.toContain("07:46");
+    expect(linea).toHaveClass("truncate", "whitespace-nowrap");
   });
 
   it("el rótulo y las marcas del eje salen del eje del tablero (E-INF-018)", async () => {

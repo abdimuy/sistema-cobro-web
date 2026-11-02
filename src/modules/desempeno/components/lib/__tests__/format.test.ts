@@ -17,6 +17,7 @@ import {
   sinAcentos,
   sumarDias,
   textoInicioSemana,
+  textoInicioSemanaCompacto,
 } from "../format";
 
 // La suite corre con TZ=UTC: si estas funciones usaran el reloj del
@@ -106,5 +107,12 @@ describe("textoInicioSemana (fecha y hora de la oficina)", () => {
     expect(textoInicioSemana("2026-10-16T14:00:00Z", "2026-10-15")).toBe(
       "Semana desde vie 16 oct, 08:00",
     );
+  });
+});
+
+describe("textoInicioSemanaCompacto (fila del tablero, sin hora)", () => {
+  it("sin hora y con hace N d / hoy", () => {
+    expect(textoInicioSemanaCompacto("2026-10-10T03:00:00Z", "2026-10-14")).toBe("desde vie 9 oct · hace 5 d");
+    expect(textoInicioSemanaCompacto("2026-10-15T14:12:00Z", "2026-10-15")).toBe("desde jue 15 oct · hoy");
   });
 });
