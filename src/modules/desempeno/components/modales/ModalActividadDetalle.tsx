@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { refImagenesDeActividad, type Actividad, type TipoActividad } from "../../domain/entities";
-import { diaDeNegocioDe, dinero2, fechaLarga, horaCorta } from "../lib/format";
+import { diaDeNegocioDe, dinero2, dineroSinSigno, fechaLarga, horaCorta } from "../lib/format";
 import { etiquetaFormaDePago } from "../lib/tipoActividadMeta";
 import { claveDeRef } from "../../presentation/hooks/useImagenes";
 import { GaleriaFotos } from "./GaleriaFotos";
@@ -98,7 +98,7 @@ export function ModalActividadDetalle({
                 {esVisita ? "Resultado" : "Importe"}
               </p>
               <p className="font-serif text-[28px] leading-tight">
-                {a.visita ? a.visita.etiqueta : a.pago ? dinero2(a.pago.importe) : "—"}
+                {a.visita ? a.visita.etiqueta : a.pago ? (a.tipo === "condonacion" ? dineroSinSigno(a.pago.importe) : dinero2(a.pago.importe)) : "—"}
               </p>
             </div>
           </div>

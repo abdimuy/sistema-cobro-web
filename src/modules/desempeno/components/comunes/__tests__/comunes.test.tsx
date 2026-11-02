@@ -28,7 +28,8 @@ describe("MontoActividad", () => {
     expect(screen.getByText("$150.00")).toBeInTheDocument();
 
     rerender(<MontoActividad actividad={makeActividadCondonacion()} />);
-    expect(screen.getByText("−$50.00")).toBeInTheDocument();
+    expect(screen.getByText("$50.00")).toBeInTheDocument();
+    expect(screen.queryByText(/[−-]\$50/)).not.toBeInTheDocument();
 
     rerender(<MontoActividad actividad={makeActividadVisita()} />);
     expect(screen.getByText("No se encontraba")).toBeInTheDocument();
@@ -128,7 +129,7 @@ describe("montos individuales con centavos", () => {
 
   it("MontoActividad: condonación con centavos", () => {
     render(<MontoActividad actividad={conCentavos(makeActividadCondonacion())} />);
-    expect(screen.getByText("−$150.50")).toBeInTheDocument();
+    expect(screen.getByText("$150.50")).toBeInTheDocument();
   });
 
   it("TarjetaActividad: el resumen del pago lleva centavos", () => {
@@ -136,3 +137,23 @@ describe("montos individuales con centavos", () => {
     expect(screen.getByText("Pago · $150.50")).toBeInTheDocument();
   });
 });
+
+describe("condonación sin signo negativo", () => {
+  const negativa = () => {
+    const base = makeActividadCondonacion();
+    return { ...base, pago: { ...base.pago!, importe: "-2000.00" } };
+  };
+
+  it("MontoActividad pinta $2,000.00 aunque el importe llegue negativo", () => {
+    const { container } = render(<MontoActividad actividad={negativa()} />);
+    expect(container).toHaveTextContent("$2,000.00");
+    expect(container.textContent).not.toMatch(/[−-]/);
+  });
+
+  it("TarjetaActividad (tooltip) tampoco lleva signo", () => {
+    const { container } = render(<TarjetaActividad actividad={makeActividadCondonacion()} />);
+    expect(container.textContent).toContain("$50.00");
+    expect(container.textContent).not.toContain("−$50");
+  });
+});
+

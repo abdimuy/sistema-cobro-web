@@ -22,6 +22,11 @@ export function diaDeNegocioDe(iso: string): string {
   return enRelojDeNegocio(iso).slice(0, 10);
 }
 
+/** Importe de una condonación sin signo: se distingue por color/etiqueta, no por "−". Sólo formato. */
+export function dineroSinSigno(importe: string): string {
+  return dinero2(importe.replace(/^-/, ""));
+}
+
 export function hoyDeNegocio(ahora: Date = new Date()): string {
   return diaDeNegocioDe(ahora.toISOString());
 }
