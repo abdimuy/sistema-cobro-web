@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { GoogleMap, MarkerF, PolylineF } from "@react-google-maps/api";
 import { MapaConCarga } from "@/components/maps/MapaConCarga";
 import { useEstilosDeMapa } from "@/components/maps/estilosDeMapa";
+import { UMBRAL_FUSION_M, distanciaMetros } from "./distancia";
 import { VARIABLE_COLOR, type CategoriaPunto } from "./categoriaPunto";
 
 export type PuntoMapa = {
@@ -12,11 +13,12 @@ export type PuntoMapa = {
   categoria: CategoriaPunto;
   /** Hora ya formateada (HH:mm) para el tooltip y las etiquetas. */
   hora: string;
+  /** Minutos desde medianoche de `hora` (para el filtro de horario). */
+  minutos: number;
   tipo: string;
   cliente: string;
 };
 
-const CONTENEDOR = { width: "100%", height: "300px" };
 const CIRCULO = 0; // google.maps.SymbolPath.CIRCLE
 
 // Lee un token HSL del tema ("150 66% 27%") y lo da como color CSS para Maps.
@@ -41,11 +43,25 @@ export function MapaJornadaGoogle({
   onSeleccionar,
   enfocada = null,
   onEnfocar,
+  trayecto = false,
+  rango = null,
+  finEsCierre = true,
+  claveDia = "",
+  alto = "300px",
 }: {
   puntos: readonly PuntoMapa[];
   onSeleccionar: (id: string) => void;
   enfocada?: string | null;
   onEnfocar?: (id: string | null) => void;
+  /** Muestra la polilínea entre puntos (apagada por omisión). */
+  trayecto?: boolean;
+  /** Filtro de horario [desde, hasta] en minutos; sólo decide qué se pinta. */
+  rango?: readonly [number, number] | null;
+  /** false: el día sigue en curso y el último marcador dice "Última". */
+  finEsCierre?: boolean;
+  /** Cambia con el día: es lo único que re-encuadra el mapa. */
+  claveDia?: string;
+  alto?: string;
 }) {
   const estilos = useEstilosDeMapa();
   const mapaRef = useRef<google.maps.Map | null>(null);
@@ -58,26 +74,53 @@ export function MapaJornadaGoogle({
     return () => clearTimeout(t);
   }, [estilos]);
 
-  const clave = puntos.map((p) => `${p.id}:${p.lat},${p.lng}`).join("|");
+  // Encuadre: sólo al cargar o cambiar de día, nunca al mover el filtro.
+  const puntosRef = useRef(puntos);
+  puntosRef.current = puntos;
   const ajustar = (mapa: google.maps.Map) => {
     const limites = new google.maps.LatLngBounds();
-    puntos.forEach((p) => limites.extend({ lat: p.lat, lng: p.lng }));
-    if (puntos.length > 0) mapa.fitBounds(limites, 48);
+    puntosRef.current.forEach((p) => limites.extend({ lat: p.lat, lng: p.lng }));
+    if (puntosRef.current.length > 0) mapa.fitBounds(limites, 48);
   };
   useEffect(() => {
     if (mapaRef.current) ajustar(mapaRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clave]);
+  }, [claveDia]);
+
+  const enRango = (p: PuntoMapa) => rango === null || (p.minutos >= rango[0] && p.minutos <= rango[1]);
+  const visibles = puntos.filter(enRango);
 
   const inicio = puntos[0];
   const fin = puntos.length > 1 ? puntos[puntos.length - 1] : undefined;
-  const origenEtiqueta =
-    typeof google !== "undefined" && google.maps?.Point ? new google.maps.Point(0, -2.6) : undefined;
+  const palabraFin = finEsCierre ? "Fin" : "Última";
+  const fusionados = fin !== undefined && distanciaMetros(inicio, fin) < UMBRAL_FUSION_M;
+  // Marcadores de extremo: uno solo si están cerca; si no, uno arriba y otro abajo.
+  const extremos: Array<{ p: PuntoMapa; texto: string; abajo: boolean; clave: string; visible: boolean }> = [];
+  if (inicio) {
+    if (fin && fusionados) {
+      extremos.push({
+        p: inicio,
+        texto: `Inicio ${inicio.hora} · ${palabraFin} ${fin.hora}`,
+        abajo: false,
+        clave: "extremo-fusion",
+        visible: enRango(inicio) || enRango(fin),
+      });
+    } else {
+      extremos.push({ p: inicio, texto: `Inicio ${inicio.hora}`, abajo: false, clave: "extremo-inicio", visible: enRango(inicio) });
+      if (fin) {
+        extremos.push({ p: fin, texto: `${palabraFin} ${fin.hora}`, abajo: true, clave: "extremo-fin", visible: enRango(fin) });
+      }
+    }
+  }
+  const origen = (abajo: boolean) =>
+    typeof google !== "undefined" && google.maps?.Point
+      ? new google.maps.Point(0, abajo ? 2.8 : -2.6)
+      : undefined;
 
   return (
-    <MapaConCarga alto="300px">
+    <MapaConCarga alto={alto}>
       <GoogleMap
-        mapContainerStyle={CONTENEDOR}
+        mapContainerStyle={{ width: "100%", height: alto }}
         onLoad={(mapa) => {
           mapaRef.current = mapa;
           ajustar(mapa);
@@ -92,23 +135,24 @@ export function MapaJornadaGoogle({
           styles: estilos,
         }}
       >
-        {puntos.slice(1).map((p, i) => (
+        {trayecto &&
+          visibles.slice(1).map((p, i) => (
           <PolylineF
-            key={`seg-${puntos[i].id}-${p.id}`}
+            key={`seg-${visibles[i].id}-${p.id}`}
             path={[
-              { lat: puntos[i].lat, lng: puntos[i].lng },
+              { lat: visibles[i].lat, lng: visibles[i].lng },
               { lat: p.lat, lng: p.lng },
             ]}
             options={{
               strokeColor: colores.marca,
               // De claro a oscuro conforme avanza el día.
-              strokeOpacity: 0.2 + (0.7 * (i + 1)) / Math.max(puntos.length - 1, 1),
+              strokeOpacity: 0.2 + (0.7 * (i + 1)) / Math.max(visibles.length - 1, 1),
               strokeWeight: 2,
               clickable: false,
             }}
           />
         ))}
-        {puntos.map((p) => {
+        {visibles.map((p) => {
           const activo = enfocada === p.id;
           return (
             <MarkerF
@@ -130,14 +174,11 @@ export function MapaJornadaGoogle({
             />
           );
         })}
-        {[
-          inicio && { p: inicio, rotulo: "Inicio" },
-          fin && { p: fin, rotulo: "Fin" },
-        ]
-          .filter((x): x is { p: PuntoMapa; rotulo: string } => Boolean(x))
-          .map(({ p, rotulo }) => (
+        {extremos
+          .filter((e) => e.visible)
+          .map(({ p, texto, abajo, clave }) => (
             <MarkerF
-              key={`extremo-${rotulo}`}
+              key={clave}
               position={{ lat: p.lat, lng: p.lng }}
               zIndex={900}
               icon={{
@@ -147,10 +188,10 @@ export function MapaJornadaGoogle({
                 fillOpacity: 1,
                 strokeColor: "#ffffff",
                 strokeWeight: 3,
-                labelOrigin: origenEtiqueta,
+                labelOrigin: origen(abajo),
               }}
               label={{
-                text: `${rotulo} ${p.hora}`,
+                text: texto,
                 fontSize: "12px",
                 fontWeight: "600",
                 color: colores.texto,

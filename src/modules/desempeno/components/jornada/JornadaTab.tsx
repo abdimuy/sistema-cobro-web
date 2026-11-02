@@ -172,6 +172,7 @@ export function JornadaTab({
                 <MapaJornada
                   actividades={jornada.actividades}
                   etiquetaDia={fechaLarga(dia)}
+                  finEsCierre={finDelDiaTerminado(jornada)}
                   onSeleccionar={setResaltada}
                   enfocada={enfocada}
                   onEnfocar={setEnfocada}

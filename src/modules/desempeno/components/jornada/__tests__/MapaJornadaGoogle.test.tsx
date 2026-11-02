@@ -23,7 +23,9 @@ vi.mock("@react-google-maps/api", () => ({
     options?: unknown;
     onLoad?: (m: unknown) => void;
   }) => {
-    useEffect(() => onLoad?.({ fitBounds }), [onLoad]);
+    // El GoogleMap real llama a onLoad una sola vez.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => onLoad?.({ fitBounds }), []);
     return (
       <div data-testid="google-map" data-options={JSON.stringify(options)}>
         {children}
@@ -61,9 +63,9 @@ vi.mock("@react-google-maps/api", () => ({
 
 const base = { tipo: "Pago", cliente: "Ana Pérez" };
 const puntos: PuntoMapa[] = [
-  { ...base, id: "a", n: 1, lat: 18.46, lng: -97.39, categoria: "pago", hora: "08:10" },
-  { ...base, id: "b", n: 2, lat: 18.47, lng: -97.4, categoria: "visita", hora: "09:00" },
-  { ...base, id: "c", n: 3, lat: 18.48, lng: -97.41, categoria: "no_pago", hora: "17:45" },
+  { ...base, id: "a", n: 1, lat: 18.46, lng: -97.39, categoria: "pago", hora: "08:10", minutos: 490 },
+  { ...base, id: "b", n: 2, lat: 18.47, lng: -97.4, categoria: "visita", hora: "09:00", minutos: 540 },
+  { ...base, id: "c", n: 3, lat: 18.48, lng: -97.41, categoria: "no_pago", hora: "17:45", minutos: 1065 },
 ];
 
 describe("MapaJornadaGoogle", () => {
@@ -114,9 +116,49 @@ describe("MapaJornadaGoogle", () => {
     expect(screen.getAllByTestId("punto")[1]).toHaveAttribute("title", "2 · 09:00 · Pago · Ana Pérez");
   });
 
-  it("une los puntos en orden con opacidad creciente", async () => {
+  it("por omisión no pinta el trayecto", async () => {
     cargarGoogleMaps.mockResolvedValue(undefined);
     render(<MapaJornadaGoogle puntos={puntos} onSeleccionar={vi.fn()} />);
+    await screen.findByTestId("google-map");
+    expect(screen.queryAllByTestId("segmento")).toHaveLength(0);
+  });
+
+  it("el rango de horario deja sólo los puntos de ese horario (Inicio/Fin ocultos si quedan fuera)", async () => {
+    cargarGoogleMaps.mockResolvedValue(undefined);
+    render(<MapaJornadaGoogle puntos={puntos} onSeleccionar={vi.fn()} rango={[500, 600]} />);
+    expect(await screen.findAllByTestId("punto")).toHaveLength(1);
+    expect(screen.queryAllByTestId("extremo")).toHaveLength(0);
+  });
+
+  it("Inicio y Fin a menos de 150 m: un solo marcador con las dos etiquetas", async () => {
+    cargarGoogleMaps.mockResolvedValue(undefined);
+    const cerca = [puntos[0], { ...puntos[2], lat: 18.46005, lng: -97.39 }];
+    render(<MapaJornadaGoogle puntos={cerca} onSeleccionar={vi.fn()} />);
+    const extremos = await screen.findAllByTestId("extremo");
+    expect(extremos.map((e) => e.textContent)).toEqual(["Inicio 08:10 · Fin 17:45"]);
+  });
+
+  it("Inicio y Fin lejanos: dos marcadores; con el día en curso dice Última", async () => {
+    cargarGoogleMaps.mockResolvedValue(undefined);
+    render(<MapaJornadaGoogle puntos={puntos} onSeleccionar={vi.fn()} finEsCierre={false} />);
+    const extremos = await screen.findAllByTestId("extremo");
+    expect(extremos.map((e) => e.textContent)).toEqual(["Inicio 08:10", "Última 17:45"]);
+  });
+
+  it("no re-encuadra al mover el filtro, sólo al cambiar de día", async () => {
+    cargarGoogleMaps.mockResolvedValue(undefined);
+    const { rerender } = render(<MapaJornadaGoogle puntos={puntos} onSeleccionar={vi.fn()} claveDia="a" />);
+    await screen.findByTestId("google-map");
+    fitBounds.mockClear();
+    rerender(<MapaJornadaGoogle puntos={puntos} onSeleccionar={vi.fn()} claveDia="a" rango={[500, 600]} />);
+    expect(fitBounds).not.toHaveBeenCalled();
+    rerender(<MapaJornadaGoogle puntos={puntos} onSeleccionar={vi.fn()} claveDia="b" />);
+    expect(fitBounds).toHaveBeenCalledTimes(1);
+  });
+
+  it("con trayecto encendido une los puntos en orden con opacidad creciente", async () => {
+    cargarGoogleMaps.mockResolvedValue(undefined);
+    render(<MapaJornadaGoogle puntos={puntos} onSeleccionar={vi.fn()} trayecto />);
     const ops = (await screen.findAllByTestId("segmento")).map((s) => Number(s.dataset.opacidad));
     expect(ops).toHaveLength(2);
     expect(ops[0]).toBeLessThan(ops[1]);
