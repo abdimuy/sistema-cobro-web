@@ -113,9 +113,10 @@ export function ClienteFicha({ clienteId }: Props) {
           <div className="sticky top-0 z-10 bg-background border-b border-border/60 px-6 py-2">
             <TabsList>
               <TabsTrigger value="resumen">Resumen</TabsTrigger>
+              {/* El id interno sigue siendo "productos": los enlaces ?tab=productos existentes no se rompen. */}
+              <TabsTrigger value="productos">Ventas</TabsTrigger>
               <TabsTrigger value="analisis">Análisis & predicción</TabsTrigger>
               <TabsTrigger value="pagos">Pagos & solvencia</TabsTrigger>
-              <TabsTrigger value="productos">Productos</TabsTrigger>
             </TabsList>
           </div>
 

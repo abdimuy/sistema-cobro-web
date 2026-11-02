@@ -101,9 +101,14 @@ describe("ClienteFicha", () => {
     expect(screen.getByRole("tab", { name: "Resumen" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Análisis & predicción" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Pagos & solvencia" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Productos" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Ventas" })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Riesgo & crédito" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("tab")).toHaveLength(4);
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual([
+      "Resumen",
+      "Ventas",
+      "Análisis & predicción",
+      "Pagos & solvencia",
+    ]);
   });
 
   it("clicking 'Análisis & predicción' reveals scores section", async () => {
@@ -134,14 +139,14 @@ describe("ClienteFicha", () => {
     );
   });
 
-  it("clicking 'Productos' reveals ventas list", async () => {
+  it("clicking 'Ventas' reveals ventas list", async () => {
     renderFicha(port);
     await waitFor(() =>
-      expect(screen.getByRole("tab", { name: "Productos" })).toBeInTheDocument(),
+      expect(screen.getByRole("tab", { name: "Ventas" })).toBeInTheDocument(),
     );
     expect(screen.queryByText("Historial de ventas")).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("tab", { name: "Productos" }));
+    await userEvent.click(screen.getByRole("tab", { name: "Ventas" }));
 
     await waitFor(() =>
       expect(screen.getByText("Historial de ventas")).toBeInTheDocument(),
