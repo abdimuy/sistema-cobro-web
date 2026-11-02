@@ -2,26 +2,26 @@ import { GoogleMap, Marker } from "@react-google-maps/api";
 import { MapaConCarga } from "@/components/maps/MapaConCarga";
 import { useEstilosDeMapa } from "@/components/maps/estilosDeMapa";
 
-const MAP_CONTAINER_STYLE = { width: "100%", height: "220px" };
-
 interface Props {
   lat: number;
   lng: number;
+  /** Alto CSS del mapa; 220px por omisión. */
+  alto?: string;
 }
 
 // FichaMapEmbed renders a Google Map centered on the client's GPS coordinates.
 // The Maps script is requested through MapaConCarga — the same single loader
 // and key source (obtenerLlaveGoogleMaps) as every other map — so the script
 // is never injected twice and a failed load offers "Reintentar".
-export function FichaMapEmbed({ lat, lng }: Props) {
+export function FichaMapEmbed({ lat, lng, alto = "220px" }: Props) {
   const center = { lat, lng };
   const estilos = useEstilosDeMapa();
 
   return (
-    <MapaConCarga alto="220px">
+    <MapaConCarga alto={alto}>
       <div className="overflow-hidden rounded-md border border-border/40">
         <GoogleMap
-          mapContainerStyle={MAP_CONTAINER_STYLE}
+          mapContainerStyle={{ width: "100%", height: alto }}
           center={center}
           zoom={15}
           options={{

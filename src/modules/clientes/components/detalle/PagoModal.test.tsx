@@ -71,6 +71,15 @@ describe("PagoModal", () => {
     expect(screen.getByText("19.4326, -99.1332")).toBeInTheDocument();
   });
 
+  it("el mapa ocupa un alto grande y 'Ampliar' abre otro mapa en grande", async () => {
+    const user = userEvent.setup();
+    renderModal(port, { doctoCcId: 70234 });
+    expect(await screen.findAllByTestId("mock-map")).toHaveLength(1);
+    await user.click(screen.getByRole("button", { name: "Ver mapa en grande" }));
+    expect(await screen.findAllByTestId("mock-map")).toHaveLength(2);
+    expect(screen.getByText("Ubicación del pago")).toBeInTheDocument();
+  });
+
   it("hides GPS section when lat/lon are null", async () => {
     port.obtenerPagoDetalleResponse = makeFakePagoDetalle({ lat: null, lon: null });
     renderModal(port, { doctoCcId: 70234 });

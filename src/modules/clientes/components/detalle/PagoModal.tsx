@@ -1,5 +1,5 @@
-import { lazy, Suspense } from "react";
-import { X } from "lucide-react";
+import { lazy, Suspense, useState } from "react";
+import { Maximize2, X } from "lucide-react";
 import dayjs from "dayjs";
 import {
   Dialog,
@@ -35,6 +35,7 @@ interface Props {
 
 export function PagoModal({ clienteId, doctoCcId, onClose, onAbrirVenta, onAbrirCliente }: Props) {
   const { detalle, isLoading, error } = usePagoDetalle(clienteId, doctoCcId);
+  const [mapaGrande, setMapaGrande] = useState(false);
 
   if (doctoCcId === null) return null;
 
@@ -191,7 +192,7 @@ export function PagoModal({ clienteId, doctoCcId, onClose, onAbrirVenta, onAbrir
                   <h4 className="mb-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                     Ubicación
                   </h4>
-                  <div className="h-[150px] overflow-hidden rounded-md border border-border/40">
+                  <div className="relative h-[320px] overflow-hidden rounded-md border border-border/40">
                     <Suspense
                       fallback={
                         <div className="flex h-full items-center justify-center bg-muted/30">
@@ -201,8 +202,19 @@ export function PagoModal({ clienteId, doctoCcId, onClose, onAbrirVenta, onAbrir
                         </div>
                       }
                     >
-                      <FichaMapEmbed lat={detalle.lat} lng={detalle.lon} />
+                      <FichaMapEmbed lat={detalle.lat} lng={detalle.lon} alto="320px" />
                     </Suspense>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      aria-label="Ver mapa en grande"
+                      onClick={() => setMapaGrande(true)}
+                      className="absolute right-2 top-2 h-7 gap-1.5 px-2 text-[11px] shadow"
+                    >
+                      <Maximize2 aria-hidden className="h-3.5 w-3.5" />
+                      Ampliar
+                    </Button>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
                     <p className="font-mono text-[10px] text-muted-foreground">
@@ -291,6 +303,17 @@ export function PagoModal({ clienteId, doctoCcId, onClose, onAbrirVenta, onAbrir
           )}
         </div>
       </DialogContent>
+      {detalle && detalle.lat !== null && detalle.lon !== null && (
+        <Dialog open={mapaGrande} onOpenChange={setMapaGrande}>
+          <DialogContent className="block max-w-[1100px] w-[96vw] gap-0 p-4">
+            <DialogTitle className="mb-3 text-sm font-medium">Ubicación del pago</DialogTitle>
+            <DialogDescription className="sr-only">Mapa ampliado del lugar donde se registró el pago</DialogDescription>
+            <Suspense fallback={<span className="font-mono text-[11px]">Cargando mapa…</span>}>
+              <FichaMapEmbed lat={detalle.lat} lng={detalle.lon} alto="75vh" />
+            </Suspense>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 }
