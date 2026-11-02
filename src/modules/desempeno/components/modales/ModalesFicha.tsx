@@ -124,7 +124,7 @@ export function ModalesFicha({
         return (
           <Dialog key={clave} open onOpenChange={(o) => !o && onCerrar()}>
             <DialogContent className="block h-[92vh] w-[96vw] max-w-[1180px] overflow-y-auto p-0 [&_button.absolute.right-4.top-4]:hidden">
-              <DialogTitle className="sr-only">Ficha del cliente</DialogTitle>
+              <DialogTitle className="sr-only">Detalles del cliente</DialogTitle>
               <DialogDescription className="sr-only">ficha del cliente</DialogDescription>
               <div className="sticky top-0 z-10 flex justify-end bg-background px-4 py-2">
                 <Button variant="ghost" size="icon" aria-label="Cerrar" onClick={onCerrar} className="h-7 w-7">

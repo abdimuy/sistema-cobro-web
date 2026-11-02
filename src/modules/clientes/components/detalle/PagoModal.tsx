@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from "react";
-import { Maximize2, X } from "lucide-react";
+import { Maximize2, ReceiptText, UserRound, X } from "lucide-react";
 import dayjs from "dayjs";
 import {
   Dialog,
@@ -288,12 +288,14 @@ export function PagoModal({ clienteId, doctoCcId, onClose, onAbrirVenta, onAbrir
               {(onAbrirVenta || onAbrirCliente) && (
                 <footer className="flex justify-end gap-2 border-t border-border/60 pt-4">
                   {onAbrirCliente && (
-                    <Button variant="outline" size="sm" onClick={onAbrirCliente}>
-                      Ficha del cliente
+                    <Button variant="tonal" size="sm" onClick={onAbrirCliente}>
+                      <UserRound aria-hidden />
+                      Detalles del cliente
                     </Button>
                   )}
                   {onAbrirVenta && (
                     <Button size="sm" onClick={() => onAbrirVenta(detalle.doctoPvId)}>
+                      <ReceiptText aria-hidden />
                       Detalle de venta
                     </Button>
                   )}

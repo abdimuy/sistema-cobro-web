@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CalendarPlus, MapPinOff, Receipt, User, X } from "lucide-react";
+import { CalendarPlus, MapPinOff, ReceiptText, UserRound, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -168,13 +168,13 @@ export function ModalActividadDetalle({
               Asignar visita
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => onAbrirCliente(a.clienteId)}>
-            <User aria-hidden className="mr-1.5 h-3.5 w-3.5" />
-            Ficha del cliente
+          <Button variant="tonal" size="sm" onClick={() => onAbrirCliente(a.clienteId)}>
+            <UserRound aria-hidden />
+            Detalles del cliente
           </Button>
           {onAbrirVenta && doctoPvId !== null && (
             <Button size="sm" onClick={() => onAbrirVenta(a.clienteId, doctoPvId)}>
-              <Receipt aria-hidden className="mr-1.5 h-3.5 w-3.5" />
+              <ReceiptText aria-hidden />
               Detalle de venta
             </Button>
           )}

@@ -24,7 +24,7 @@ describe("ModalActividadDetalle", () => {
     expect(screen.getByText("10:58")).toBeInTheDocument();
     expect(screen.getByText("Fotos · 2")).toBeInTheDocument();
     expect(await screen.findByAltText("Recibo firmado")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Ficha del cliente" }));
+    await user.click(screen.getByRole("button", { name: "Detalles del cliente" }));
     expect(onAbrirCliente).toHaveBeenCalledWith(1602231);
   });
 

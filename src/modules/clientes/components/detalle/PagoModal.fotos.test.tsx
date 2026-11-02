@@ -51,7 +51,7 @@ describe("PagoModal — fotos", () => {
     montar(port);
     await screen.findByText("Sin comprobante");
     expect(screen.queryByRole("button", { name: "Detalle de venta" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Ficha del cliente" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Detalles del cliente" })).not.toBeInTheDocument();
   });
 
   it("los botones de pie solo aparecen si quien abre el modal los pide", async () => {
@@ -62,6 +62,6 @@ describe("PagoModal — fotos", () => {
     montar(port, { onAbrirVenta, onAbrirCliente: vi.fn() });
     await user.click(await screen.findByRole("button", { name: "Detalle de venta" }));
     expect(onAbrirVenta).toHaveBeenCalledWith(30015);
-    expect(screen.getByRole("button", { name: "Ficha del cliente" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Detalles del cliente" })).toBeInTheDocument();
   });
 });
