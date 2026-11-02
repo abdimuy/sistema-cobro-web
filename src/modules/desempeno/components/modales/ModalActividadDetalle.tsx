@@ -1,3 +1,5 @@
+import { UbicacionConMapa } from "@/components/maps/UbicacionConMapa";
+import { coordenadasValidas } from "@/components/maps/coordenadas";
 import type { ReactNode } from "react";
 import { CalendarPlus, MapPinOff, ReceiptText, UserRound, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -120,8 +122,14 @@ export function ModalActividadDetalle({
               </dl>
             </Seccion>
             <Seccion titulo="Dónde se registró">
-              {a.conGps && a.lat !== null && a.lng !== null ? (
-                <div className="flex items-center justify-between">
+              {a.conGps && coordenadasValidas(a.lat, a.lng) && a.lng !== null ? (
+                <div className="space-y-2">
+                  <UbicacionConMapa
+                    lat={a.lat}
+                    lng={a.lng}
+                    titulo={esVisita ? "Ubicación de la visita" : "Ubicación del pago"}
+                  />
+                  <div className="flex items-center justify-between">
                   <span className="font-mono text-[12px]">{`${a.lat}, ${a.lng}`}</span>
                   <a
                     href={`https://www.google.com/maps?q=${a.lat},${a.lng}`}
@@ -131,6 +139,7 @@ export function ModalActividadDetalle({
                   >
                     Ver en Maps ↗
                   </a>
+                  </div>
                 </div>
               ) : (
                 <p className="flex items-center gap-2 text-[13px] text-dsm-ambar">
@@ -163,8 +172,8 @@ export function ModalActividadDetalle({
         </div>
         <footer className="flex h-16 items-center justify-end gap-2 border-t border-border/60 px-6">
           {onAsignarVisita && a.ventaId !== null && (
-            <Button variant="outline" size="sm" onClick={() => onAsignarVisita(a.ventaId!, a.clienteNombre)}>
-              <CalendarPlus aria-hidden className="mr-1.5 h-3.5 w-3.5" />
+            <Button variant="tonal" size="sm" onClick={() => onAsignarVisita(a.ventaId!, a.clienteNombre)}>
+              <CalendarPlus aria-hidden />
               Asignar visita
             </Button>
           )}

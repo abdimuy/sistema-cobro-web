@@ -5,6 +5,11 @@ import { ModalActividadDetalle } from "../ModalActividadDetalle";
 import { renderConDesempeno } from "../../../test/renderConDesempeno";
 import { makeActividadPago, makeActividadVisita, makeRegistradoPor } from "../../../application/__tests__/fakeDesempenoPort";
 
+vi.mock("@/modules/clientes/components/ficha/FichaMapEmbed", () => ({
+  FichaMapEmbed: ({ lat, lng }: { lat: number; lng: number }) => (
+    <div data-testid="mock-map">{lat},{lng}</div>
+  ),
+}));
 vi.mock("@/modules/ventasLocales/components/detalle/AuthenticatedImage", () => ({
   default: ({ alt }: { alt?: string }) => <img alt={alt ?? "imagen"} />,
 }));
@@ -137,5 +142,28 @@ describe("ModalActividadDetalle", () => {
       />,
     );
     expect(screen.queryByRole("button", { name: "Asignar visita" })).not.toBeInTheDocument();
+  });
+
+  it("con coordenadas válidas pinta el mapa y conserva Ver en Maps", async () => {
+    const base = makeActividadPago();
+    renderConDesempeno(
+      <ModalActividadDetalle actividad={{ ...base, conGps: true, lat: 18.4617, lng: -97.3928 }} onClose={vi.fn()} onAbrirCliente={vi.fn()} />,
+    );
+    expect(await screen.findByTestId("mock-map")).toHaveTextContent("18.4617,-97.3928");
+    expect(screen.getByRole("link", { name: /Ver en Maps/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ver mapa en grande" })).toBeInTheDocument();
+  });
+
+  it.each([
+    ["0,0", { lat: 0, lng: 0 }],
+    ["nulas", { lat: null, lng: null }],
+    ["fuera de rango", { lat: 120, lng: -97 }],
+  ])("con coordenadas %s no pinta mapa", (_n, coords) => {
+    const base = makeActividadPago();
+    renderConDesempeno(
+      <ModalActividadDetalle actividad={{ ...base, conGps: true, ...coords }} onClose={vi.fn()} onAbrirCliente={vi.fn()} />,
+    );
+    expect(screen.queryByTestId("mock-map")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver mapa en grande" })).not.toBeInTheDocument();
   });
 });
