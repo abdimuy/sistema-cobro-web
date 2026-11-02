@@ -4,15 +4,15 @@ export type CategoriaPunto = "pago" | "visita" | "no_pago" | "otro";
 
 // Sólo mapea campos que ya manda el servidor a un color; no decide nada nuevo.
 // - tipo "pago"            -> pago
-// - visita, trato (v2)     -> "pagado"/"parcial" = pago; "escalar"/"nadie" =
-//                             no pagó; el resto = visita sin pago
+// - visita, trato (v2)     -> "pagado"/"parcial" = pago; "escalar" = no pagó;
+//                             el resto (incl. "nadie", No estaba) = visita sin pago
 // - condonación            -> otro (neutro)
 export function categoriaDePunto(a: Pick<Actividad, "tipo" | "visita">): CategoriaPunto {
   if (a.tipo === "pago") return "pago";
   if (a.tipo === "visita") {
     const trato = a.visita?.trato;
     if (trato === "pagado" || trato === "parcial") return "pago";
-    if (trato === "escalar" || trato === "nadie") return "no_pago";
+    if (trato === "escalar") return "no_pago";
     return "visita";
   }
   return "otro";

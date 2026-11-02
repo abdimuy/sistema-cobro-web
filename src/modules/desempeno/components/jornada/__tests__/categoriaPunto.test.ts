@@ -9,9 +9,9 @@ describe("categoriaDePunto (sólo mapea campos del servidor)", () => {
     expect(categoriaDePunto(visita("pagado"))).toBe("pago");
     expect(categoriaDePunto(visita("parcial"))).toBe("pago");
   });
-  it("visita escalar/nadie -> no pagó", () => {
+  it("visita escalar -> no pagó; nadie (No estaba) -> visita en ámbar", () => {
     expect(categoriaDePunto(visita("escalar"))).toBe("no_pago");
-    expect(categoriaDePunto(visita("nadie"))).toBe("no_pago");
+    expect(categoriaDePunto(visita("nadie"))).toBe("visita");
   });
   it("otras visitas -> visita sin pago; condonación -> neutro", () => {
     expect(categoriaDePunto(visita("regresas"))).toBe("visita");
