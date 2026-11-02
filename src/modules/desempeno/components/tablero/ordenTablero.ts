@@ -76,11 +76,25 @@ export function ordenarUsuarios(
   });
 }
 
-export function filtrarUsuarios(usuarios: readonly UsuarioTablero[], q: string): UsuarioTablero[] {
+/** Zonas únicas de las filas ya cargadas, en orden alfabético natural. */
+export function zonasDelTablero(usuarios: readonly UsuarioTablero[]): string[] {
+  const zonas = new Set<string>();
+  for (const u of usuarios) if (u.zonaNombre) zonas.add(u.zonaNombre);
+  return [...zonas].sort((a, b) => a.localeCompare(b, "es", { numeric: true, sensitivity: "base" }));
+}
+
+// Busca por texto y, si se pasa, por zona exacta (el select "Zona"). Los dos
+// filtros se combinan.
+export function filtrarUsuarios(
+  usuarios: readonly UsuarioTablero[],
+  q: string,
+  zona: string | null = null,
+): UsuarioTablero[] {
   const buscado = sinAcentos(q.trim());
-  if (buscado === "") return [...usuarios];
-  return usuarios.filter((u) =>
-    sinAcentos(`${u.nombre} ${u.zonaNombre ?? ""} ${u.email}`).includes(buscado),
+  return usuarios.filter(
+    (u) =>
+      (zona === null || u.zonaNombre === zona) &&
+      (buscado === "" || sinAcentos(`${u.nombre} ${u.zonaNombre ?? ""} ${u.email}`).includes(buscado)),
   );
 }
 

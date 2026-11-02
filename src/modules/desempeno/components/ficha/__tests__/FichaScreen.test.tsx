@@ -13,6 +13,8 @@ import {
 } from "../../../application/__tests__/fakeDesempenoPort";
 import type { FichaUsuario, UsuarioTablero } from "../../../domain/entities";
 
+vi.mock("@/context/ThemeContext", () => ({ useTheme: () => ({ theme: "light" }) }));
+
 function montar(
   pestana: PestanaFicha = "jornada",
   usuario: UsuarioTablero = makeUsuarioTablero(),

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ArrowDown, ArrowUp, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Periodo } from "../../domain/entities";
@@ -19,6 +20,7 @@ import {
   filtrarUsuarios,
   ORDEN_TABLERO_INICIAL,
   ordenarUsuarios,
+  zonasDelTablero,
   siguienteOrden,
   type ClaveOrdenTablero,
   type OrdenTablero,
@@ -79,6 +81,9 @@ export function TableroScreen({
   const { tablero: recibido, isLoading, error, refresh } = useTablero();
   const { vista, horario, periodo } = usePreferencias();
   const [q, setQ] = useState("");
+  // La zona elegida vive en la URL (`?zona=`): se conserva al abrir una ficha y volver.
+  const [params, setParams] = useSearchParams();
+  const zonaPedida = params.get("zona");
   const [orden, setOrden] = useState<OrdenTablero>(ORDEN_TABLERO_INICIAL);
   const [verVencidas, setVerVencidas] = useState(false);
 
@@ -96,20 +101,34 @@ export function TableroScreen({
     return () => window.clearTimeout(t);
   }, [cargando, periodo]);
 
+  const zonas = useMemo(() => zonasDelTablero(tablero?.usuarios ?? []), [tablero]);
+  // Una zona que ya no está entre las filas cargadas equivale a "Todas".
+  const zona = zonaPedida !== null && zonas.includes(zonaPedida) ? zonaPedida : null;
+  const onZona = (z: string | null) =>
+    setParams(
+      (previos) => {
+        const nuevos = new URLSearchParams(previos);
+        if (z === null) nuevos.delete("zona");
+        else nuevos.set("zona", z);
+        return nuevos;
+      },
+      { replace: true },
+    );
+
   const eje = tablero?.eje ?? EJE_POR_OMISION;
   const escala = useMemo(() => escalaDe(eje), [eje]);
   const configurados = useMemo(
     () =>
       ordenarUsuarios(
-        filtrarUsuarios(tablero?.usuarios.filter((u) => u.configurado && !u.semanaVencida) ?? [], q),
+        filtrarUsuarios(tablero?.usuarios.filter((u) => u.configurado && !u.semanaVencida) ?? [], q, zona),
         orden,
         periodo,
       ),
-    [tablero, q, orden, periodo],
+    [tablero, q, zona, orden, periodo],
   );
   const vencidas = useMemo(
-    () => filtrarUsuarios(tablero?.usuarios.filter((u) => u.configurado && u.semanaVencida) ?? [], q),
-    [tablero, q],
+    () => filtrarUsuarios(tablero?.usuarios.filter((u) => u.configurado && u.semanaVencida) ?? [], q, zona),
+    [tablero, q, zona],
   );
   // Contrato pulido 2 §4: la fecha de 92 días de las vencidas se pide al abrir
   // "Ver N", con TODAS las vencidas (sin el filtro de búsqueda, para no pedir
@@ -122,8 +141,8 @@ export function TableroScreen({
     verVencidas && uidsVencidas.length > 0 ? uidsVencidas : null,
   );
   const sinConfigurar = useMemo(
-    () => filtrarUsuarios(tablero?.usuarios.filter((u) => !u.configurado) ?? [], q),
-    [tablero, q],
+    () => filtrarUsuarios(tablero?.usuarios.filter((u) => !u.configurado) ?? [], q, zona),
+    [tablero, q, zona],
   );
   const onOrdenar = (c: ClaveOrdenTablero) => setOrden((o) => siguienteOrden(o, c));
 
@@ -161,7 +180,7 @@ export function TableroScreen({
       </header>
 
       <AvisoPantallaAngosta />
-      <TableroToolbar q={q} onQ={setQ} />
+      <TableroToolbar q={q} onQ={setQ} zonas={zonas} zona={zona} onZona={onZona} />
 
       {error && tablero && (
         <div
@@ -268,7 +287,16 @@ export function TableroScreen({
               {tablero && tablero.usuarios.length > 0 && configurados.length + vencidas.length + sinConfigurar.length === 0 && (
                 <tr>
                   <td colSpan={COLUMNAS}>
-                    <EstadoVacio titulo={`Nadie coincide con “${q}”`} detalle="Busca por nombre, zona o correo." />
+                    <EstadoVacio
+                      titulo={
+                        q.trim() === ""
+                          ? `No hay cobradores en la zona “${zona}”`
+                          : zona
+                            ? `Nadie coincide con “${q}” en la zona “${zona}”`
+                            : `Nadie coincide con “${q}”`
+                      }
+                      detalle={zona ? "Cambia la zona o la búsqueda." : "Busca por nombre, zona o correo."}
+                    />
                   </td>
                 </tr>
               )}

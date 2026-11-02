@@ -507,3 +507,36 @@ describe("TableroScreen", () => {
     expect(within(norma).queryByText(/No tiene zona/)).not.toBeInTheDocument();
   });
 });
+
+describe("TableroScreen: filtro por zona", () => {
+  async function elegirZona(user: ReturnType<typeof userEvent.setup>, nombre: string) {
+    await user.click(await screen.findByRole("combobox", { name: "Zona" }));
+    await user.click(await screen.findByRole("option", { name: nombre }));
+  }
+
+  it("lista las zonas de las filas cargadas, filtra, se combina con el texto y 'Todas' restaura", async () => {
+    window.HTMLElement.prototype.hasPointerCapture ??= () => false;
+    window.HTMLElement.prototype.scrollIntoView ??= () => {};
+    const user = userEvent.setup();
+    montar();
+    await screen.findByText("Juan Carlos Méndez");
+    await user.click(screen.getByRole("combobox", { name: "Zona" }));
+    expect((await screen.findAllByRole("option")).map((o) => o.textContent)).toEqual([
+      "Todas las zonas",
+      "RUTA 21",
+      "RUTA 22",
+    ]);
+    await user.click(screen.getByRole("option", { name: "RUTA 22" }));
+    expect(screen.queryByText("Juan Carlos Méndez")).not.toBeInTheDocument();
+    expect(screen.getByText("Rosa Isela Pacheco")).toBeInTheDocument();
+
+    // Con texto que no coincide en esa zona: estado vacío acorde.
+    await user.type(screen.getByRole("searchbox"), "Juan");
+    expect(await screen.findByText(/Nadie coincide con “Juan” en la zona “RUTA 22”/)).toBeInTheDocument();
+    await user.clear(screen.getByRole("searchbox"));
+
+    await elegirZona(user, "Todas las zonas");
+    expect(screen.getByText("Juan Carlos Méndez")).toBeInTheDocument();
+    expect(screen.getByText("Rosa Isela Pacheco")).toBeInTheDocument();
+  });
+});

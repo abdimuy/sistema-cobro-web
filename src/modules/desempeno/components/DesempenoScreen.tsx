@@ -30,7 +30,7 @@ export function DesempenoScreen({ puedeConfigurar }: { puedeConfigurar: boolean 
   const [params, setParams] = useSearchParams();
   const uid = params.get("usuario");
   if (!uid) {
-    return <TableroScreen onAbrirUsuario={(u) => setParams({ usuario: u })} puedeConfigurar={puedeConfigurar} />;
+    return <TableroScreen onAbrirUsuario={(u) => setParams(params.get("zona") ? { usuario: u, zona: params.get("zona")! } : { usuario: u })} puedeConfigurar={puedeConfigurar} />;
   }
   return <FichaConectada key={uid} uid={uid} puedeConfigurar={puedeConfigurar} />;
 }
@@ -85,7 +85,11 @@ function FichaConectada({ uid, puedeConfigurar }: { uid: string; puedeConfigurar
     (v: RefVenta) => abrir({ tipo: "venta", clienteId: v.clienteId, doctoPvId: v.doctoPvId }),
     [abrir],
   );
-  const volver = () => setParams({});
+  // Conserva la zona elegida en el tablero.
+  const volver = () => setParams((previos) => {
+      const zona = previos.get("zona");
+      return zona ? { zona } : ({} as Record<string, string>);
+    });
 
   const volverAlEquipo = (
     <button

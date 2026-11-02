@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePreferencias } from "../../presentation/context/usePreferencias";
 import { SegmentoPeriodo } from "../comunes/SegmentoPeriodo";
 import { ControlUmbralPausa } from "../comunes/ControlUmbralPausa";
@@ -8,7 +9,22 @@ import { Leyenda } from "../linea/Leyenda";
 
 // TableroToolbar: periodo (D8), umbral de pausa y horario (D7, viajan en la
 // consulta), vista de la línea (D16), búsqueda y leyenda.
-export function TableroToolbar({ q, onQ }: { q: string; onQ: (q: string) => void }) {
+const TODAS = "__todas__";
+
+export function TableroToolbar({
+  q,
+  onQ,
+  zonas = [],
+  zona = null,
+  onZona,
+}: {
+  q: string;
+  onQ: (q: string) => void;
+  /** Zonas de las filas ya cargadas; sin ellas no se muestra el select. */
+  zonas?: readonly string[];
+  zona?: string | null;
+  onZona?: (zona: string | null) => void;
+}) {
   const { pausaMin, setPausaMin, vista } = usePreferencias();
   return (
     <div className="flex flex-wrap items-center gap-2.5">
@@ -27,6 +43,21 @@ export function TableroToolbar({ q, onQ }: { q: string; onQ: (q: string) => void
           className="h-9 w-[260px] rounded-full bg-dsm-tarjeta pl-8 pr-3 text-[13px] outline-none ring-1 ring-border focus:ring-foreground/40"
         />
       </label>
+      {onZona && zonas.length > 0 && (
+        <Select value={zona ?? TODAS} onValueChange={(v) => onZona(v === TODAS ? null : v)}>
+          <SelectTrigger aria-label="Zona" className="h-9 w-[200px] max-w-full rounded-full bg-dsm-tarjeta text-[13px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={TODAS}>Todas las zonas</SelectItem>
+            {zonas.map((z) => (
+              <SelectItem key={z} value={z}>
+                {z}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
       <Leyenda vista={vista} />
     </div>
   );
