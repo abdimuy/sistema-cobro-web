@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { Armchair, ArrowDownCircle, RefreshCw, Loader2 } from "lucide-react"
+import { Armchair, ArrowDownCircle, RefreshCw, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import { usePermissions } from "@/hooks/usePermissions"
 import { modulosParaMenu } from "@/utils/permissions"
 import { APP_VERSION } from "@/constants/version"
@@ -15,6 +15,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 function SidebarUpdateBanner() {
@@ -94,6 +95,35 @@ function SidebarUpdateBanner() {
   return null
 }
 
+// Alternar compacto/expandido: botón al pie (Ctrl/Cmd+B hace lo mismo). En
+// móvil el menú es un cajón y este botón no se muestra.
+function BotonCompactar() {
+  const { state, toggleSidebar, isMobile } = useSidebar()
+  if (isMobile) return null
+  const compacta = state === "collapsed"
+  const Icono = compacta ? PanelLeftOpen : PanelLeftClose
+  const texto = compacta ? "Expandir menú" : "Compactar menú"
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          onClick={toggleSidebar}
+          tooltip={`${texto} (Ctrl+B)`}
+          aria-label={texto}
+          aria-expanded={!compacta}
+        >
+          <Icono />
+          <span className={TEXTO_MENU}>{texto}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  )
+}
+
+// El texto se desvanece al compactar; nowrap evita saltos de línea durante la transición.
+const TEXTO_MENU =
+  "whitespace-nowrap transition-opacity duration-200 ease-in-out motion-reduce:transition-none group-data-[collapsible=icon]:opacity-0"
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { getAvailableModulesWithConfig } = usePermissions()
   const location = useLocation()
@@ -101,7 +131,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const modules = modulosParaMenu(getAvailableModulesWithConfig())
 
   return (
-    <Sidebar variant="inset" {...props}>
+    <Sidebar variant="inset" collapsible="icon" {...props}>
       <SidebarHeader className="gap-2">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -110,7 +140,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <Armchair className="size-4" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className={`grid flex-1 text-left text-sm leading-tight ${TEXTO_MENU}`}>
                   <span className="truncate font-medium">Muebles San Pablo</span>
                   <span className="truncate text-xs">v{APP_VERSION}</span>
                 </div>
@@ -118,7 +148,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <SidebarUpdateBanner />
+        <div className="group-data-[collapsible=icon]:hidden">
+          <SidebarUpdateBanner />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -134,7 +166,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuButton asChild isActive={isActive} tooltip={module.label}>
                     <Link to={module.path}>
                       {Icon && <Icon />}
-                      <span>{module.label}</span>
+                      <span className={TEXTO_MENU}>{module.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -144,6 +176,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        <BotonCompactar />
         <NavUser />
       </SidebarFooter>
     </Sidebar>
