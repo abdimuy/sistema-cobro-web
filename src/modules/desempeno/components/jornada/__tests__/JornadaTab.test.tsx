@@ -20,8 +20,26 @@ const FICHA = makeFichaUsuario();
 const DIAS_FICHA = { inicioSemanaDia: FICHA.inicioSemanaDia, diasNavegables: FICHA.diasNavegables };
 
 vi.mock("../MapaJornadaGoogle", () => ({
-  MapaJornadaGoogle: ({ puntos }: { puntos: Array<{ n: number }> }) => (
-    <div data-testid="mapa-google">{puntos.map((p) => p.n).join(",")}</div>
+  MapaJornadaGoogle: ({
+    puntos,
+    enfocada,
+    onEnfocar,
+  }: {
+    puntos: Array<{ n: number; id: string }>;
+    enfocada?: string | null;
+    onEnfocar?: (id: string | null) => void;
+  }) => (
+    <div data-testid="mapa-google" data-enfocada={enfocada ?? ""}>
+      {puntos.map((p) => p.n).join(",")}
+      {puntos.map((p) => (
+        <i
+          key={p.id}
+          data-testid={`punto-${p.n}`}
+          onMouseOver={() => onEnfocar?.(p.id)}
+          onMouseOut={() => onEnfocar?.(null)}
+        />
+      ))}
+    </div>
   ),
 }));
 
@@ -65,6 +83,35 @@ describe("JornadaTab", () => {
     expect(textos[0]).toContain("08:20");
     expect(textos[iPago0910 + 1]).toContain("Pausa · 1 h 12 min (09:10–10:22)");
     expect(textos[iPago0910 + 2]).toContain("ARACELI CORTÉS LUNA");
+  });
+
+  it("hover enlazado: la fila enfoca el punto del mapa y el punto enfoca la fila", async () => {
+    montar();
+    const lista = await screen.findByRole("list", { name: "Movimientos en orden" });
+    const filas = within(lista).getAllByRole("listitem").filter((f) => f.tabIndex === 0);
+    fireEvent.mouseEnter(filas[0]);
+    const mapa = await screen.findByTestId("mapa-google");
+    expect(mapa.dataset.enfocada).not.toBe("");
+    fireEvent.mouseLeave(filas[0]);
+    expect(mapa.dataset.enfocada).toBe("");
+    const punto = screen.getAllByTestId(/^punto-/)[0];
+    const n = Number(punto.dataset.testid?.replace("punto-", "") ?? punto.getAttribute("data-testid")?.replace("punto-", ""));
+    fireEvent.mouseOver(punto);
+    const enfocadas = filas.filter((f) => f.dataset.enfocada === "true");
+    expect(enfocadas).toHaveLength(1);
+    expect(filas.indexOf(enfocadas[0])).toBe(n - 1);
+  });
+
+  it("muestra Inicio y Fin del día con la primera y última actividad del servidor", async () => {
+    montar();
+    expect(await screen.findByTestId("evento-inicio")).toHaveTextContent("Inicio del día");
+    expect(screen.getByTestId("evento-fin")).toHaveTextContent("Fin del día");
+  });
+
+  it("la columna derecha queda fija (sticky) sólo en pantalla ancha", async () => {
+    montar();
+    const derecha = (await screen.findByTestId("mapa-google")).closest("div.xl\\:sticky");
+    expect(derecha).not.toBeNull();
   });
 
   it("clic en un renglón abre la actividad", async () => {

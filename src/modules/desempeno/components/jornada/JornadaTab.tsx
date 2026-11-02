@@ -65,6 +65,8 @@ export function JornadaTab({
   // Mismo umbral y horario que el tablero: viven en usePreferencias.
   const { pausaMin, setPausaMin } = usePreferencias();
   const [resaltada, setResaltada] = useState<string | null>(null);
+  // Hover enlazado entre la lista y el mapa.
+  const [enfocada, setEnfocada] = useState<string | null>(null);
 
   // ← → cambian de día (mock), salvo dentro de un campo o con un modal abierto.
   // Sin días navegables (semana vencida) no hay navegación por días.
@@ -156,21 +158,30 @@ export function JornadaTab({
                   actividades={jornada.actividades}
                   pausas={jornada.linea.pausas}
                   resaltada={resaltada}
+                  enfocada={enfocada}
+                  onEnfocar={setEnfocada}
                   onAbrir={onAbrirActividad}
                   onAbrirVenta={onAbrirVenta}
                   renderFotos={renderFotos}
                 />
               </div>
             )}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-5rem)] xl:self-start xl:overflow-y-auto">
               {jornada.actividades.length > 0 && (
                 <MapaJornada
                   actividades={jornada.actividades}
                   etiquetaDia={fechaLarga(dia)}
                   onSeleccionar={setResaltada}
+                  enfocada={enfocada}
+                  onEnfocar={setEnfocada}
                 />
               )}
-              <ParaRevisar senales={jornada.senales} onSeleccionar={setResaltada} />
+              <ParaRevisar
+                senales={jornada.senales}
+                inicioDia={jornada.resumen.primeraActividad}
+                finDia={jornada.resumen.ultimaActividad}
+                onSeleccionar={setResaltada}
+              />
             </div>
           </div>
         </>

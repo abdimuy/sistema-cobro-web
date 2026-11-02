@@ -38,6 +38,8 @@ export function ListaJornada({
   actividades,
   pausas,
   resaltada,
+  enfocada = null,
+  onEnfocar,
   onAbrir,
   onAbrirVenta,
   renderFotos,
@@ -45,6 +47,9 @@ export function ListaJornada({
   actividades: readonly Actividad[];
   pausas: readonly Pausa[];
   resaltada: string | null;
+  /** Fila/punto bajo el mouse (hover enlazado con el mapa). */
+  enfocada?: string | null;
+  onEnfocar?: (id: string | null) => void;
   onAbrir: (a: Actividad) => void;
   onAbrirVenta?: AbrirVenta;
   renderFotos?: (a: Actividad) => ReactNode;
@@ -68,6 +73,8 @@ export function ListaJornada({
           numero={i + 1}
           pausasDespues={pausas.filter((p) => p.anteriorId === a.id)}
           resaltada={resaltada === a.id}
+          enfocada={enfocada === a.id}
+          onEnfocar={onEnfocar}
           refResaltada={resaltada === a.id ? refResaltada : undefined}
           onAbrir={onAbrir}
           onAbrirVenta={onAbrirVenta}
@@ -83,6 +90,8 @@ function FragmentoActividad({
   numero,
   pausasDespues,
   resaltada,
+  enfocada,
+  onEnfocar,
   refResaltada,
   onAbrir,
   onAbrirVenta,
@@ -92,6 +101,8 @@ function FragmentoActividad({
   numero: number;
   pausasDespues: readonly Pausa[];
   resaltada: boolean;
+  enfocada: boolean;
+  onEnfocar?: (id: string | null) => void;
   refResaltada?: MutableRefObject<HTMLLIElement | null>;
   onAbrir: (a: Actividad) => void;
   onAbrirVenta?: AbrirVenta;
@@ -102,7 +113,10 @@ function FragmentoActividad({
       <li
         ref={refResaltada}
         data-resaltada={resaltada ? "true" : undefined}
+        data-enfocada={enfocada ? "true" : undefined}
         tabIndex={0}
+        onMouseEnter={() => onEnfocar?.(a.id)}
+        onMouseLeave={() => onEnfocar?.(null)}
         onClick={() => onAbrir(a)}
         onKeyDown={(e) => {
           if (e.target !== e.currentTarget) return;
@@ -114,6 +128,7 @@ function FragmentoActividad({
         className={cn(
           "grid cursor-pointer grid-cols-[22px_44px_28px_1fr_auto_auto] items-center gap-3 px-[18px] py-[11px] hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
           resaltada && "bg-dsm-marca-fondo",
+          enfocada && !resaltada && "bg-muted/60",
         )}
       >
         <span className="font-mono text-[11px] text-muted-foreground">{numero}</span>

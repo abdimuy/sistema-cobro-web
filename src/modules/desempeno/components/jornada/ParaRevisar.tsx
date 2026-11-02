@@ -1,15 +1,21 @@
-import { Flag } from "lucide-react";
+import { Flag, Sunrise, Sunset } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Senal } from "../../domain/entities";
 import { InfoRapida, TarjetaNota, TarjetaTitulo } from "../comunes/InfoRapida";
+import { horaCorta } from "../lib/format";
 import { SENAL_META } from "./senalMeta";
 
 // "Para revisar" (spec §4.2): señales calculadas por el servidor, con su regla.
 export function ParaRevisar({
   senales,
+  inicioDia = null,
+  finDia = null,
   onSeleccionar,
 }: {
   senales: readonly Senal[];
+  /** Primera y última actividad del día: las manda el servidor (resumen). */
+  inicioDia?: string | null;
+  finDia?: string | null;
   onSeleccionar: (actividadId: string) => void;
 }) {
   return (
@@ -21,6 +27,25 @@ export function ParaRevisar({
         </h3>
         <span className="font-mono text-[11px] text-muted-foreground">{`${senales.length} este día`}</span>
       </div>
+      {[
+        { clave: "inicio", titulo: "Inicio del día", hora: inicioDia, Icono: Sunrise },
+        { clave: "fin", titulo: "Fin del día", hora: finDia, Icono: Sunset },
+      ].map(
+        ({ clave, titulo, hora, Icono }) =>
+          hora && (
+            <div
+              key={clave}
+              data-testid={`evento-${clave}`}
+              className="flex items-center gap-3 border-t border-border px-[18px] py-2.5"
+            >
+              <span className="flex h-6 w-6 flex-none items-center justify-center rounded-md bg-dsm-marca-fondo text-dsm-marca">
+                <Icono aria-hidden className="h-3.5 w-3.5" />
+              </span>
+              <span className="flex-1 text-[13px]">{titulo}</span>
+              <time className="font-mono text-[12px]">{horaCorta(hora)}</time>
+            </div>
+          ),
+      )}
       {senales.length === 0 ? (
         <p className="px-[18px] pb-5 text-center font-serif text-[15px]">Nada que revisar este día</p>
       ) : (
