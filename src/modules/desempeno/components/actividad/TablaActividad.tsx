@@ -1,3 +1,4 @@
+import { BotonCopiar } from "@/components/BotonCopiar";
 import type { ReactNode } from "react";
 import { ArrowDown, ArrowUp, Camera, CloudOff, MapPin, MapPinOff } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -50,9 +51,12 @@ function Celda({
       return <span className="whitespace-nowrap font-mono text-[12px]">{cuando(a.hora)}</span>;
     case "cliente":
       return (
-        <InfoRapida contenido={<TarjetaActividad actividad={a} />}>
+        <span className="inline-flex items-center">
+          <InfoRapida contenido={<TarjetaActividad actividad={a} />}>
           <span className="cursor-help">{a.clienteNombre}</span>
-        </InfoRapida>
+          </InfoRapida>
+          <BotonCopiar texto={a.clienteNombre} />
+        </span>
       );
     case "venta":
       return (
@@ -143,7 +147,7 @@ export function TablaActividad({
           onAbrir(a);
         }
       }}
-      className="cursor-pointer border-b border-border last:border-b-0 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      className="group cursor-pointer border-b border-border last:border-b-0 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
       {visibles.map((c) => (
         <td

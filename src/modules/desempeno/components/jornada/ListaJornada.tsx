@@ -1,3 +1,4 @@
+import { BotonCopiar } from "@/components/BotonCopiar";
 import { useEffect, useRef, type MutableRefObject, type ReactNode } from "react";
 import { Camera, CloudOff, MapPinOff, Pause } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -126,7 +127,7 @@ function FragmentoActividad({
           }
         }}
         className={cn(
-          "grid cursor-pointer grid-cols-[22px_44px_28px_1fr_auto_auto] items-center gap-3 px-[18px] py-[11px] hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+          "group grid cursor-pointer grid-cols-[22px_44px_28px_1fr_auto_auto] items-center gap-3 px-[18px] py-[11px] hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
           resaltada && "bg-dsm-marca-fondo",
           enfocada && !resaltada && "bg-muted/60",
         )}
@@ -139,7 +140,10 @@ function FragmentoActividad({
           </span>
         </InfoRapida>
         <div className="min-w-0">
-          <div className="truncate text-[14px]">{a.clienteNombre}</div>
+          <div className="truncate text-[14px]">
+            {a.clienteNombre}
+            <BotonCopiar texto={a.clienteNombre} />
+          </div>
           <div className="truncate font-mono text-[11px] text-muted-foreground">
             <FolioVenta actividad={a} onAbrirVenta={onAbrirVenta} vacio="Sin venta" />
             {a.registradoPor.origen === "oficina" && " · registró oficina"}

@@ -1,3 +1,4 @@
+import { BotonCopiar } from "@/components/BotonCopiar";
 import { useEffect, useRef, useState } from "react";
 import { CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -138,7 +139,7 @@ export function TablaCuentas({
                   }
                 }}
                 className={cn(
-                  "border-b border-border last:border-b-0",
+                  "group border-b border-border last:border-b-0",
                   abrible
                     ? "cursor-pointer hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                     : "opacity-80",
@@ -153,6 +154,7 @@ export function TablaCuentas({
                 </td>
                 <td className="px-3 py-2.5 text-[13px]">
                   {c.clienteNombre}
+                  <BotonCopiar texto={c.clienteNombre} />
                   {c.nueva && (
                     <span className="ml-2 rounded-full bg-dsm-marca-fondo px-1.5 text-[10px] text-dsm-marca">
                       Nueva
