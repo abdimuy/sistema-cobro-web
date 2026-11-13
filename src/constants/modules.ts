@@ -46,6 +46,13 @@ export const DESKTOP_MODULES: ModuleConfig[] = [
     color: 'blue'
   },
   {
+    key: 'GARANTIAS_OFICINA',
+    label: 'Garantías de oficina',
+    path: '/garantias-oficina',
+    icon: Shield,
+    color: 'blue'
+  },
+  {
     key: 'ALMACENES',
     label: 'Asignar Vendedores',
     path: '/asignacion-almacenes',
@@ -123,6 +130,7 @@ export const ROUTE_TO_MODULE: Record<string, string> = {
   '/sales': 'SALES',
   '/ventas-locales': 'VENTAS_LOCALES',
   '/garantias': 'GARANTIAS',
+  '/garantias-oficina': 'GARANTIAS_OFICINA',
   '/garantias/:id': 'GARANTIAS',
   '/asignacion-almacenes': 'ALMACENES',
   '/inventario-camionetas': 'INVENTARIO',
