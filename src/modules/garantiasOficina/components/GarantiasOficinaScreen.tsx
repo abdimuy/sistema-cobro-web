@@ -1,4 +1,3 @@
-import { EntregaGarantiaForm } from "./EntregaGarantiaForm";
 import { VisorImagenGarantia } from "./VisorImagenGarantia";
 import { ComandoFolioForm } from "./ComandoFolioForm";
 import { ComandoArticuloForm } from "./ComandoArticuloForm";
@@ -255,12 +254,6 @@ function BandejaGarantiasAutorizada({ permisos }: { permisos: readonly string[] 
                   </p>
                 )}
               </section>
-
-              <EntregaGarantiaForm
-                garantiaId={detalle.garantia.id}
-                permisos={permisos}
-                onSuccess={() => setRevision((n) => n + 1)}
-              />
 
               <ComandoFolioForm
                 garantiaId={detalle.garantia.id}
