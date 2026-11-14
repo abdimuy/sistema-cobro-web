@@ -1,3 +1,4 @@
+import { AxiosError, type AxiosResponse } from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ComandoFolioForm } from "../ComandoFolioForm";
@@ -133,4 +134,50 @@ describe("ComandoFolioForm", () => {
     });
     expect(mocks.ejecutar).toHaveBeenCalledTimes(1);
   });
+
+  it("muestra el detalle HTTP 422 y conserva la identidad al reintentar", async () => {
+    const detalle = "Los artículos deben estar reingresados al inventario.";
+    const error = new AxiosError("Request failed with status code 422");
+
+    error.response = {
+      status: 422,
+      data: { detail: detalle },
+    } as AxiosResponse;
+
+    mocks.ejecutar
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce({});
+
+    const onSuccess = montar(["garantias:actualizar"]);
+
+    fireEvent.change(screen.getByLabelText("Operación de folio"), {
+      target: { value: "listo-entrega" },
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Preparar operación de folio" }),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirmar operación de folio" }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(detalle);
+
+    expect(mocks.ejecutar).toHaveBeenCalledTimes(1);
+    expect(onSuccess).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reintentar operación de folio" }),
+    );
+
+    await waitFor(() => {
+      expect(mocks.ejecutar).toHaveBeenCalledTimes(2);
+      expect(onSuccess).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mocks.ejecutar.mock.calls[0])
+      .toEqual(mocks.ejecutar.mock.calls[1]);
+  });
+
 });

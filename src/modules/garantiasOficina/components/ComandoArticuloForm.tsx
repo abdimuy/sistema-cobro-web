@@ -8,6 +8,7 @@ import type {
 import { nuevaIdentidadComando } from "../domain/comandos";
 import { puedeEjecutarComando } from "../domain/permisos";
 import { crearGarantiasPort } from "../presentation/composition/crearGarantiasPort";
+import { mensajeErrorGarantias } from "../infrastructure/mappers/errorMapper";
 
 interface Props {
   garantiaId: string;
@@ -117,9 +118,7 @@ export function ComandoArticuloForm({
       setMensaje("Operación registrada correctamente.");
       onSuccess();
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "No se pudo registrar la operación.",
-      );
+      setError(mensajeErrorGarantias(e));
       // No borrar la operación: el reintento debe ser idéntico.
     } finally {
       setEnviando(false);

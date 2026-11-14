@@ -9,6 +9,7 @@ import {
   puedeCerrarGarantia,
 } from "../domain/permisos";
 import { crearGarantiasPort } from "../presentation/composition/crearGarantiasPort";
+import { mensajeErrorGarantias } from "../infrastructure/mappers/errorMapper";
 
 interface Props {
   garantiaId: string;
@@ -106,11 +107,7 @@ export function ComandoFolioForm({
       setMensaje("Operación de folio registrada correctamente.");
       onSuccess();
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : "No se pudo registrar la operación.",
-      );
+      setError(mensajeErrorGarantias(e));
       // Se conserva la identidad y el cuerpo para reintentar.
     } finally {
       setEnviando(false);

@@ -4,6 +4,7 @@ import {
   type IdentidadComando,
 } from "../domain/comandos";
 import { crearGarantiasPort } from "../presentation/composition/crearGarantiasPort";
+import { mensajeErrorGarantias } from "../infrastructure/mappers/errorMapper";
 
 interface Articulo {
   id: string;
@@ -142,9 +143,7 @@ export function GestionArticulosForm({
       setMensaje("Operación registrada correctamente.");
       onSuccess();
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "No se pudo guardar la operación.",
-      );
+      setError(mensajeErrorGarantias(e));
       // Conservamos la identidad para reintentos.
     } finally {
       setEnviando(false);

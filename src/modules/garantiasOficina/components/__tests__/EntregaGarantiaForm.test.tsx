@@ -1,3 +1,4 @@
+import { AxiosError, type AxiosResponse } from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { EntregaGarantiaForm } from "../EntregaGarantiaForm";
@@ -182,4 +183,55 @@ describe("EntregaGarantiaForm", () => {
 
     expect(mocks.entregar).toHaveBeenCalledTimes(1);
   });
+
+  it("muestra el detalle HTTP 422 y conserva firma, GPS e identidad", async () => {
+    const detalle = "La entrega no cumple las condiciones del folio.";
+    const error = new AxiosError("Request failed with status code 422");
+
+    error.response = {
+      status: 422,
+      data: { detail: detalle },
+    } as AxiosResponse;
+
+    mocks.entregar
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce({});
+
+    const onSuccess = montar();
+    const firma = new File(["imagen"], "firma.png", {
+      type: "image/png",
+    });
+
+    llenar(firma);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Preparar entrega" }),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirmar entrega" }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(detalle);
+
+    expect(mocks.entregar).toHaveBeenCalledTimes(1);
+    expect(onSuccess).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reintentar entrega" }),
+    );
+
+    await waitFor(() => {
+      expect(mocks.entregar).toHaveBeenCalledTimes(2);
+      expect(onSuccess).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mocks.entregar.mock.calls[0])
+      .toEqual(mocks.entregar.mock.calls[1]);
+
+    expect(mocks.entregar.mock.calls[0][1]).toBe(firma);
+    expect(mocks.entregar.mock.calls[0][2]).toBe(19.4326);
+    expect(mocks.entregar.mock.calls[0][3]).toBe(-99.1332);
+  });
+
 });

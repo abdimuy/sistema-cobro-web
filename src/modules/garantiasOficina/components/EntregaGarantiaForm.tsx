@@ -5,6 +5,7 @@ import {
 } from "../domain/comandos";
 import { puedeCerrarGarantia } from "../domain/permisos";
 import { crearGarantiasPort } from "../presentation/composition/crearGarantiasPort";
+import { mensajeErrorGarantias } from "../infrastructure/mappers/errorMapper";
 
 interface Props {
   garantiaId: string;
@@ -98,9 +99,7 @@ export function EntregaGarantiaForm({
       setMensaje("Entrega registrada correctamente.");
       onSuccess();
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "No se pudo registrar la entrega.",
-      );
+      setError(mensajeErrorGarantias(e));
       // Conservar firma, GPS e identidad para el mismo reintento.
     } finally {
       setEnviando(false);
