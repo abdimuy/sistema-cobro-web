@@ -127,7 +127,7 @@ export function ComandoFolioForm({
         Operación
         <select
           aria-label="Operación de folio"
-          className="mt-1 w-full rounded border bg-transparent p-2"
+          className="mt-1 w-full rounded border border-input bg-background p-2 text-foreground"
           value={tipo}
           disabled={bloqueado}
           onChange={(e) => {
@@ -157,7 +157,7 @@ export function ComandoFolioForm({
           Motivo de cancelación
           <textarea
             aria-label="Motivo de cancelación"
-            className="mt-1 w-full rounded border bg-transparent p-2"
+            className="mt-1 w-full rounded border border-input bg-background p-2 text-foreground"
             value={motivo}
             disabled={bloqueado}
             onChange={(e) => setMotivo(e.target.value)}
@@ -170,7 +170,7 @@ export function ComandoFolioForm({
           Justificación de desvío (opcional)
           <textarea
             aria-label="Justificación de desvío"
-            className="mt-1 w-full rounded border bg-transparent p-2"
+            className="mt-1 w-full rounded border border-input bg-background p-2 text-foreground"
             value={justificacion}
             disabled={bloqueado}
             onChange={(e) => setJustificacion(e.target.value)}
@@ -181,7 +181,7 @@ export function ComandoFolioForm({
       {!preparada ? (
         <button
           type="button"
-          className="rounded bg-blue-700 px-4 py-2 text-white"
+          className="rounded bg-primary px-4 py-2 text-primary-foreground"
           onClick={preparar}
         >
           Preparar operación de folio
@@ -193,7 +193,7 @@ export function ComandoFolioForm({
           </p>
           <button
             type="button"
-            className="rounded bg-blue-700 px-4 py-2 text-white disabled:opacity-50"
+            className="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
             disabled={enviando}
             onClick={() => void enviar()}
           >
@@ -218,7 +218,7 @@ export function ComandoFolioForm({
       )}
 
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="text-destructive">
           {error}
         </p>
       )}

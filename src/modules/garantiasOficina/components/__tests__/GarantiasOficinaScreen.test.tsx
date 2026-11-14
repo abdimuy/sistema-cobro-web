@@ -164,6 +164,7 @@ describe("GarantiasOficinaScreen", () => {
     expect(mocks.bandeja).toHaveBeenLastCalledWith(
       expect.objectContaining({ estado: "cerrado" }),
       undefined,
+      0,
     );
   });
 
@@ -175,6 +176,7 @@ describe("GarantiasOficinaScreen", () => {
     expect(mocks.bandeja).toHaveBeenLastCalledWith(
       expect.any(Object),
       "cursor-2",
+      0,
     );
     expect(screen.getByText("Página 2")).toBeTruthy();
   });
@@ -214,6 +216,7 @@ describe("GarantiasOficinaScreen", () => {
     expect(mocks.bandeja).toHaveBeenLastCalledWith(
       expect.any(Object),
       undefined,
+      0,
     );
   });
 
@@ -230,6 +233,7 @@ describe("GarantiasOficinaScreen", () => {
     expect(mocks.bandeja).toHaveBeenLastCalledWith(
       expect.objectContaining({ origen: "piso" }),
       undefined,
+      0,
     );
   });
 
@@ -255,6 +259,7 @@ describe("GarantiasOficinaScreen", () => {
         cliente_id: 15,
       }),
       undefined,
+      0,
     );
   });
 

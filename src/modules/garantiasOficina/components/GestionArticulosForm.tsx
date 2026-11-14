@@ -153,7 +153,7 @@ export function GestionArticulosForm({
   if (!puedeCrear && !puedeActualizar) return null;
 
   const bloqueado = preparada !== null || enviando;
-  const campo = "mt-1 w-full rounded border bg-transparent p-2";
+  const campo = "mt-1 w-full rounded border border-input bg-background p-2 text-foreground";
 
   return (
     <section className="space-y-4 rounded-md border p-4"
@@ -176,7 +176,7 @@ export function GestionArticulosForm({
               onChange={(e) => setDescripcion(e.target.value)} />
           </label>
           <button type="button" disabled={bloqueado}
-            className="rounded bg-blue-700 px-4 py-2 text-white disabled:opacity-50"
+            className="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
             onClick={prepararAgregar}>
             Preparar artículo
           </button>
@@ -216,7 +216,7 @@ export function GestionArticulosForm({
             </select>
           </label>
           <button type="button" disabled={bloqueado}
-            className="rounded bg-blue-700 px-4 py-2 text-white disabled:opacity-50"
+            className="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
             onClick={prepararAvance}>
             Preparar avance
           </button>
@@ -232,7 +232,7 @@ export function GestionArticulosForm({
           </p>
           <div className="flex flex-wrap gap-2">
             <button type="button" disabled={enviando}
-              className="rounded bg-blue-700 px-4 py-2 text-white"
+              className="rounded bg-primary px-4 py-2 text-primary-foreground"
               onClick={() => void confirmar()}>
               {enviando ? "Guardando..." : error ? "Reintentar" : "Confirmar"}
             </button>
@@ -248,7 +248,7 @@ export function GestionArticulosForm({
         </div>
       )}
 
-      {error && <p role="alert" className="text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-destructive">{error}</p>}
       {mensaje && <p role="status">{mensaje}</p>}
     </section>
   );

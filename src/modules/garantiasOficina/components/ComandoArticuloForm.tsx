@@ -142,7 +142,7 @@ export function ComandoArticuloForm({
         Artículo
         <select
           aria-label="Artículo para operación"
-          className="mt-1 w-full rounded border bg-transparent p-2"
+          className="mt-1 w-full rounded border border-input bg-background p-2 text-foreground"
           value={articuloId}
           disabled={bloqueado}
           onChange={(e) => setArticuloId(e.target.value)}
@@ -160,7 +160,7 @@ export function ComandoArticuloForm({
         Operación
         <select
           aria-label="Tipo de operación"
-          className="mt-1 w-full rounded border bg-transparent p-2"
+          className="mt-1 w-full rounded border border-input bg-background p-2 text-foreground"
           value={tipo}
           disabled={bloqueado}
           onChange={(e) => cambiarTipo(e.target.value as TipoComandoArticulo | "")}
@@ -179,7 +179,7 @@ export function ComandoArticuloForm({
           {tipo === "diagnostico" ? "Ruta" : tipo === "dictamen" ? "Dictamen" : "Desenlace"}
           <select
             aria-label="Resultado de operación"
-            className="mt-1 w-full rounded border bg-transparent p-2"
+            className="mt-1 w-full rounded border border-input bg-background p-2 text-foreground"
             value={valor}
             disabled={bloqueado}
             onChange={(e) => setValor(e.target.value)}
@@ -204,7 +204,7 @@ export function ComandoArticuloForm({
           Rol decisor
           <select
             aria-label="Rol decisor"
-            className="mt-1 w-full rounded border bg-transparent p-2"
+            className="mt-1 w-full rounded border border-input bg-background p-2 text-foreground"
             value={rol}
             disabled={bloqueado}
             onChange={(e) =>
@@ -221,7 +221,7 @@ export function ComandoArticuloForm({
       {!preparada ? (
         <button
           type="button"
-          className="rounded bg-blue-700 px-4 py-2 text-white"
+          className="rounded bg-primary px-4 py-2 text-primary-foreground"
           onClick={preparar}
         >
           Preparar operación
@@ -233,7 +233,7 @@ export function ComandoArticuloForm({
           </p>
           <button
             type="button"
-            className="rounded bg-blue-700 px-4 py-2 text-white disabled:opacity-50"
+            className="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
             disabled={enviando}
             onClick={() => void enviar()}
           >
@@ -253,7 +253,7 @@ export function ComandoArticuloForm({
         </div>
       )}
 
-      {error && <p role="alert" className="text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-destructive">{error}</p>}
       {mensaje && <p role="status">{mensaje}</p>}
     </section>
   );

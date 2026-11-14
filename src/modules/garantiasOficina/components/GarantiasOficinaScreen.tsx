@@ -47,6 +47,7 @@ function BandejaGarantiasAutorizada({ permisos }: { permisos: readonly string[] 
   const { pagina, cargando, error } = useBandejaGarantias(
     filtros,
     cursores[indice],
+    revision,
   );
 
   const {
@@ -71,13 +72,13 @@ function BandejaGarantiasAutorizada({ permisos }: { permisos: readonly string[] 
   }
 
   const inputClass =
-    "w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm";
+    "w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm";
 
   return (
     <main className="mx-auto max-w-7xl space-y-6 p-6">
       <header>
         <h1 className="text-2xl font-semibold">Garantías de oficina</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Consulta de folios, artículos y seguimiento de eventos.
         </p>
       </header>
@@ -149,7 +150,7 @@ function BandejaGarantiasAutorizada({ permisos }: { permisos: readonly string[] 
       </section>
 
       {errorCatalogos && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="text-destructive">
           No se pudieron cargar los filtros: {errorCatalogos}
         </p>
       )}
@@ -159,7 +160,7 @@ function BandejaGarantiasAutorizada({ permisos }: { permisos: readonly string[] 
           <h2 className="text-lg font-semibold">Folios</h2>
 
           {cargando && <p role="status">Cargando garantías...</p>}
-          {error && <p role="alert" className="text-red-600">{error}</p>}
+          {error && <p role="alert" className="text-destructive">{error}</p>}
 
           {!cargando && !error && pagina?.items.length === 0 && (
             <p>No se encontraron garantías con esos filtros.</p>
@@ -170,16 +171,16 @@ function BandejaGarantiasAutorizada({ permisos }: { permisos: readonly string[] 
               <button key={g.id} type="button"
                 onClick={() => setSeleccionado(g.id)}
                 aria-pressed={seleccionado === g.id}
-                className="w-full rounded-md border p-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800">
+                className="w-full rounded-md border p-4 text-left hover:bg-accent hover:text-accent-foreground">
                 <div className="flex items-center justify-between gap-3">
                   <strong>{g.folio}</strong>
                   <span className="text-sm">{g.estado}</span>
                 </div>
                 <p className="mt-1 text-sm">{g.description}</p>
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-muted-foreground">
                   Origen: {g.origen} · {fecha(g.created_at)}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Artículos: {g.articulos.length}
                 </p>
               </button>
@@ -212,7 +213,7 @@ function BandejaGarantiasAutorizada({ permisos }: { permisos: readonly string[] 
 
           {!seleccionado && <p>Selecciona un folio para consultar su detalle.</p>}
           {cargandoDetalle && <p role="status">Cargando detalle...</p>}
-          {errorDetalle && <p role="alert" className="text-red-600">{errorDetalle}</p>}
+          {errorDetalle && <p role="alert" className="text-destructive">{errorDetalle}</p>}
 
           {detalle && (
             <>
@@ -309,7 +310,7 @@ function BandejaGarantiasAutorizada({ permisos }: { permisos: readonly string[] 
                       <time>{fecha(evento.created_at)}</time>
                     </div>
                     <p>{evento.description}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Usuario: {evento.usuario}
                     </p>
                     {evento.imagenes.length > 0 && (
@@ -341,7 +342,7 @@ export function GarantiasOficinaScreen() {
     return (
       <main className="p-6">
         <h1 className="text-xl font-semibold">Garantías de oficina</h1>
-        <p role="alert" className="mt-3 text-red-600">
+        <p role="alert" className="mt-3 text-destructive">
           No se pudieron verificar los permisos: {error}
         </p>
       </main>

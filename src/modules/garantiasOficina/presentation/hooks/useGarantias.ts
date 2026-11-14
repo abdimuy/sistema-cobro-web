@@ -16,6 +16,7 @@ function mensajeError(error: unknown): string {
 export function useBandejaGarantias(
   filtros: FiltrosGarantias,
   cursor?: string,
+  revision = 0,
 ) {
   const port = useMemo(() => crearGarantiasPort(), []);
   const [pagina, setPagina] = useState<PaginaGarantias | null>(null);
@@ -45,7 +46,7 @@ export function useBandejaGarantias(
     });
 
     return () => controller.abort();
-  }, [port, estado, origen, cliente_id, etapa, ubicacion, desde, hasta, cursor]);
+  }, [port, estado, origen, cliente_id, etapa, ubicacion, desde, hasta, cursor, revision]);
 
   return { pagina, cargando, error };
 }

@@ -139,7 +139,7 @@ export function EntregaGarantiaForm({
           value={latitud}
           disabled={bloqueado}
           onChange={(e) => setLatitud(e.target.value)}
-          className="mt-1 w-full rounded border bg-transparent p-2"
+          className="mt-1 w-full rounded border border-input bg-background p-2 text-foreground"
         />
       </label>
 
@@ -152,14 +152,14 @@ export function EntregaGarantiaForm({
           value={longitud}
           disabled={bloqueado}
           onChange={(e) => setLongitud(e.target.value)}
-          className="mt-1 w-full rounded border bg-transparent p-2"
+          className="mt-1 w-full rounded border border-input bg-background p-2 text-foreground"
         />
       </label>
 
       {!preparada ? (
         <button
           type="button"
-          className="rounded bg-blue-700 px-4 py-2 text-white"
+          className="rounded bg-primary px-4 py-2 text-primary-foreground"
           onClick={preparar}
         >
           Preparar entrega
@@ -171,7 +171,7 @@ export function EntregaGarantiaForm({
           </p>
           <button
             type="button"
-            className="rounded bg-blue-700 px-4 py-2 text-white disabled:opacity-50"
+            className="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
             disabled={enviando}
             onClick={() => void confirmar()}
           >
@@ -195,7 +195,7 @@ export function EntregaGarantiaForm({
         </div>
       )}
 
-      {error && <p role="alert" className="text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-destructive">{error}</p>}
       {mensaje && <p role="status">{mensaje}</p>}
     </section>
   );
