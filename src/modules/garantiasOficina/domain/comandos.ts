@@ -16,6 +16,16 @@ export interface ComandoBase {
   readonly gps_lon?: number;
 }
 
+export interface SolicitudAgregarArticulo {
+  readonly articulo_id?: number;
+  readonly clave: string;
+  readonly description?: string;
+}
+
+export interface SolicitudAvanzarArticulo {
+  readonly etapa_destino: string;
+}
+
 export type TipoComandoArticulo =
   | "diagnostico"
   | "dictamen"
@@ -62,6 +72,9 @@ export type SolicitudComandoArticulo =
     };
 
 export type SolicitudComandoFolio =
+  | {
+      readonly tipo: "iniciar-proceso";
+    }
   | {
       readonly tipo: "listo-entrega";
     }

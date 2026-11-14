@@ -1,4 +1,4 @@
-import type { IdentidadComando, SolicitudComandoArticulo, SolicitudComandoFolio } from "../../domain/comandos";
+import type { IdentidadComando, SolicitudComandoArticulo, SolicitudComandoFolio, SolicitudAgregarArticulo, SolicitudAvanzarArticulo } from "../../domain/comandos";
 import type { CatalogosGarantias } from "../../domain/catalogos";
 import type {
   DetalleGarantia,
@@ -12,6 +12,21 @@ export interface PaginaSolicitada {
 }
 
 export interface GarantiasPort {
+  agregarArticulo(
+    garantiaId: string,
+    solicitud: SolicitudAgregarArticulo,
+    identidad: IdentidadComando,
+    signal?: AbortSignal,
+  ): Promise<unknown>;
+
+  avanzarArticulo(
+    garantiaId: string,
+    articuloId: string,
+    solicitud: SolicitudAvanzarArticulo,
+    identidad: IdentidadComando,
+    signal?: AbortSignal,
+  ): Promise<unknown>;
+
   entregarGarantia(
     garantiaId: string,
     firma: File,

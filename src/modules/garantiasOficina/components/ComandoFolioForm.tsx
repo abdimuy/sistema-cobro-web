@@ -48,7 +48,7 @@ export function ComandoFolioForm({
   function preparar() {
     let comando: SolicitudComandoFolio;
 
-    if (tipo === "listo-entrega" && puedeActualizar) {
+    if ((tipo === "iniciar-proceso" || tipo === "listo-entrega") && puedeActualizar) {
       comando = { tipo };
     } else if (tipo === "cancelar" && puedeCerrar) {
       if (!motivo.trim()) {
@@ -80,7 +80,7 @@ export function ComandoFolioForm({
     if (!preparada || enviando) return;
 
     const autorizado =
-      preparada.comando.tipo === "listo-entrega"
+      (preparada.comando.tipo === "iniciar-proceso" || preparada.comando.tipo === "listo-entrega")
         ? puedeActualizar
         : puedeCerrar;
 
@@ -141,7 +141,10 @@ export function ComandoFolioForm({
         >
           <option value="">Seleccionar operación</option>
           {puedeActualizar && (
-            <option value="listo-entrega">Listo para entrega</option>
+            <>
+              <option value="iniciar-proceso">Iniciar proceso</option>
+              <option value="listo-entrega">Listo para entrega</option>
+            </>
           )}
           {puedeCerrar && (
             <>

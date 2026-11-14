@@ -2,6 +2,7 @@ import { EntregaGarantiaForm } from "./EntregaGarantiaForm";
 import { VisorImagenGarantia } from "./VisorImagenGarantia";
 import { ComandoFolioForm } from "./ComandoFolioForm";
 import { ComandoArticuloForm } from "./ComandoArticuloForm";
+import { GestionArticulosForm } from "./GestionArticulosForm";
 import { usePermisosGarantias } from "../presentation/hooks/usePermisosGarantias";
 import { puedeLeerGarantias } from "../domain/permisos";
 import { useCatalogosGarantias } from "../presentation/hooks/useCatalogosGarantias";
@@ -262,6 +263,17 @@ function BandejaGarantiasAutorizada({ permisos }: { permisos: readonly string[] 
 
               <ComandoFolioForm
                 garantiaId={detalle.garantia.id}
+                permisos={permisos}
+                onSuccess={() => setRevision((n) => n + 1)}
+              />
+
+              <GestionArticulosForm
+                key={`gestion-${detalle.garantia.id}`}
+                garantiaId={detalle.garantia.id}
+                origen={detalle.garantia.origen}
+                estado={detalle.garantia.estado}
+                articulos={detalle.garantia.articulos}
+                transiciones={catalogos?.transiciones ?? []}
                 permisos={permisos}
                 onSuccess={() => setRevision((n) => n + 1)}
               />

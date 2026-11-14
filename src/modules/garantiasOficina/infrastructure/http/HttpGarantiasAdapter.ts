@@ -1,4 +1,4 @@
-import type { IdentidadComando, SolicitudComandoArticulo, SolicitudComandoFolio } from "../../domain/comandos";
+import type { IdentidadComando, SolicitudComandoArticulo, SolicitudComandoFolio, SolicitudAgregarArticulo, SolicitudAvanzarArticulo } from "../../domain/comandos";
 import type { CatalogosGarantias } from "../../domain/catalogos";
 import type { AxiosInstance } from "axios";
 import type {
@@ -17,6 +17,51 @@ function segmento(id: string): string {
 
 export class HttpGarantiasAdapter implements GarantiasPort {
   constructor(private readonly client: AxiosInstance) {}
+
+  async agregarArticulo(
+    garantiaId: string,
+    solicitud: SolicitudAgregarArticulo,
+    identidad: IdentidadComando,
+    signal?: AbortSignal,
+  ): Promise<unknown> {
+    const { data } = await this.client.post(
+      `/garantias/${segmento(garantiaId)}/articulos`,
+      {
+        ...solicitud,
+        device_created_at: identidad.deviceCreatedAt,
+      },
+      {
+        headers: {
+          "Idempotency-Key": identidad.claveIdempotencia,
+        },
+        signal,
+      },
+    );
+    return data;
+  }
+
+  async avanzarArticulo(
+    garantiaId: string,
+    articuloId: string,
+    solicitud: SolicitudAvanzarArticulo,
+    identidad: IdentidadComando,
+    signal?: AbortSignal,
+  ): Promise<unknown> {
+    const { data } = await this.client.post(
+      `/garantias/${segmento(garantiaId)}/articulos/${segmento(articuloId)}/avanzar`,
+      {
+        ...solicitud,
+        device_created_at: identidad.deviceCreatedAt,
+      },
+      {
+        headers: {
+          "Idempotency-Key": identidad.claveIdempotencia,
+        },
+        signal,
+      },
+    );
+    return data;
+  }
 
   async obtenerCatalogos(signal?: AbortSignal): Promise<CatalogosGarantias> {
     const { data } = await this.client.get<CatalogosGarantias>(
