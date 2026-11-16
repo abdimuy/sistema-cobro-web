@@ -135,11 +135,11 @@ describe("desktopModules (interruptores de la pantalla de usuarios)", () => {
     expect(desktopModules.map((m) => m.key)).not.toContain("HOME");
   });
 
-  it("cubre todas las pantallas salvo Inicio — hoy son 14 (con Desempeño de cobradores)", () => {
+  it("cubre todas las pantallas salvo Inicio — hoy son 15 (con Desempeño de cobradores)", () => {
     const esperados = DESKTOP_MODULES.filter((m) => m.key !== "HOME").map((m) => m.key);
 
     expect(desktopModules.map((m) => m.key)).toEqual(esperados);
-    expect(desktopModules).toHaveLength(14);
+    expect(desktopModules).toHaveLength(15);
     expect(desktopModules.map((m) => m.key)).toContain("DESEMPENO_COBRADORES");
   });
 

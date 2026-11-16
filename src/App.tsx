@@ -13,6 +13,7 @@ import CreateUser from "./modules/user/CreateUser";
 import Sales from "./modules/sales/Sales";
 import VentasLocales from "./modules/ventasLocales/VentasLocales";
 import Garantias from "./modules/garantias/Garantias";
+import { GarantiasOficina } from "./modules/garantiasOficina";
 import GarantiaDetalle from "./modules/garantias/GarantiaDetails";
 import AsignacionAlmacenes from "./modules/almacenes/AsignacionAlmacenes";
 import Traspasos from "./modules/traspasos/Traspasos";
@@ -103,6 +104,12 @@ function App() {
 
               <Route path="/garantias/:id" element={
                 <ProtectedRoute requiredModule="GARANTIAS"><GarantiaDetalle /></ProtectedRoute>
+              } />
+
+              <Route path="/garantias-oficina" element={
+                <ProtectedRoute requiredModule="GARANTIAS_OFICINA">
+                  <GarantiasOficina />
+                </ProtectedRoute>
               } />
 
               <Route path="/asignacion-almacenes" element={
