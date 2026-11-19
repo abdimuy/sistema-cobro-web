@@ -99,8 +99,10 @@ body {
     --dsm-gris: 155 6% 38%;
     --dsm-gris-fondo: 160 9% 94%;
     --dsm-visita: 153 6% 62%;
+    --fila-archivo: 60 9.1% 97.8%; /* #fafaf9 */
   }
   .dark {
+    --fila-archivo: 0 0% 7%;
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
     --card: 0 0% 3.9%;

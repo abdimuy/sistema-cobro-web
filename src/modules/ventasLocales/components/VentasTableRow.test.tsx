@@ -1,6 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
+vi.mock("../presentation/hooks/useVentaEventos", () => ({
+  useVentaEventos: vi.fn(() => ({ eventos: [], isLoading: false, error: null })),
+}));
+
+import { useVentaEventos } from "../presentation/hooks/useVentaEventos";
 import { VentasTableRow } from "./VentasTableRow";
 import { DEFAULT_COLUMN_WIDTHS, type ColumnId } from "./columns";
 import type { VentaLocal } from "@/services/api/getVentasLocales";
@@ -17,6 +22,8 @@ const VENTA: VentaLocal = {
   PRECIO_TOTAL: 12500,
   TELEFONO: "3312345678",
 };
+
+const mockUseVentaEventos = vi.mocked(useVentaEventos);
 
 const VISIBLE: ColumnId[] = ["cliente", "zona"];
 
@@ -181,5 +188,105 @@ describe("VentasTableRow — columna de fase", () => {
     renderRow({ visibleColumns: ["fase", "cliente"], density: "compact" });
 
     expect(screen.getByTestId("fase-anillo")).toHaveAttribute("width", "18");
+  });
+});
+
+describe("VentasTableRow — Archivo y coincidencias", () => {
+  const ARCHIVO: VentaLocal = {
+    ...VENTA,
+    LOCAL_SALE_ID: "arch-1832",
+    ORIGEN: "archivo",
+    NOMBRE_CLIENTE: "JOSÉ LUIS GARCÍA RAMOS",
+    TIPO_VENTA: undefined,
+    ESTADO: undefined,
+  } as unknown as VentaLocal;
+  const seg = (texto: string, coincide: boolean) => ({ texto, coincide });
+  const coin = (
+    campo: "cliente" | "telefono" | "articulos",
+    segmentos: { texto: string; coincide: boolean }[],
+  ) => ({ campo, segmentos, aproximada: false, recortado: false });
+  const COLS_FASE: ColumnId[] = [
+    "fase", "cliente", "telefono", "situacion", "microsipFolio", "tipo", "estado",
+  ];
+
+  beforeEach(() => mockUseVentaEventos.mockClear());
+
+  it("fila de Archivo muestra el badge Archivo y NO llama useVentaEventos", () => {
+    renderRow({ venta: ARCHIVO, visibleColumns: COLS_FASE });
+    expect(screen.getByText("Archivo")).toBeInTheDocument();
+    expect(screen.queryByTestId("fase-anillo")).toBeNull();
+    expect(mockUseVentaEventos).not.toHaveBeenCalled();
+  });
+
+  it("fila de app sigue montando FaseCell", () => {
+    // El hook se llama solo al abrir el panel de la fase; montarla se ve en el anillo.
+    renderRow({ visibleColumns: ["fase", "cliente"] });
+    expect(screen.getByTestId("fase-anillo")).toBeInTheDocument();
+  });
+
+  it("Archivo: Situación 'Solo consulta' y Folio '—'", () => {
+    renderRow({ venta: ARCHIVO, visibleColumns: ["cliente", "situacion", "microsipFolio"] });
+    expect(screen.getByText("Solo consulta")).toBeInTheDocument();
+    expect(screen.getAllByText("—")).toHaveLength(1);
+  });
+
+  it("Archivo: no renderiza ninguna <img> (sin miniaturas)", () => {
+    const { container } = renderRow({ venta: ARCHIVO, visibleColumns: COLS_FASE });
+    expect(container.querySelector("img")).toBeNull();
+  });
+
+  it("clic en el nombre de Archivo llama onViewDetails", () => {
+    const onViewDetails = vi.fn();
+    renderRow({ venta: ARCHIVO, onViewDetails });
+    fireEvent.click(screen.getByRole("button", { name: ARCHIVO.NOMBRE_CLIENTE }));
+    expect(onViewDetails).toHaveBeenCalled();
+  });
+
+  it("resalta con <mark> el segmento coincidente del cliente", () => {
+    renderRow({
+      venta: { ...ARCHIVO, COINCIDENCIAS: [coin("cliente", [seg("JOSÉ LUIS ", false), seg("GARCÍA", true), seg(" RAMOS", false)])] },
+    });
+    const mark = document.querySelector("mark");
+    expect(mark).toHaveTextContent("GARCÍA");
+  });
+
+  it("muestra chip 'teléfono' y resalta el teléfono cuando campo=telefono", () => {
+    renderRow({
+      visibleColumns: ["cliente", "telefono"],
+      venta: { ...ARCHIVO, TELEFONO: "236 381 0042", COINCIDENCIAS: [coin("telefono", [seg("236 ", false), seg("381", true), seg(" 0042", false)])] },
+    });
+    expect(screen.getByText("teléfono")).toBeInTheDocument();
+    expect(document.querySelector("mark")).toHaveTextContent("381");
+  });
+
+  it("muestra 'Coincide en artículos' aunque no sea columna", () => {
+    renderRow({
+      venta: { ...ARCHIVO, COINCIDENCIAS: [coin("articulos", [seg("Sala ", false), seg("Milán", true)])] },
+    });
+    expect(screen.getByText(/Coincide en/)).toBeInTheDocument();
+    expect(document.querySelector("mark")).toHaveTextContent("Milán");
+  });
+
+  it("con cliente oculto el bloque de motivos aparece en la primera columna visible", () => {
+    renderRow({
+      visibleColumns: ["zona", "telefono"],
+      venta: { ...ARCHIVO, COINCIDENCIAS: [coin("articulos", [seg("Milán", true)])] },
+    });
+    const celda = screen.getByText(/Coincide en/).closest("td") as HTMLTableCellElement;
+    expect(celda).toBe(document.querySelector("tr")!.querySelector("td"));
+  });
+
+  it("tono de fila de Archivo distinto al de la app y token propio en hover", () => {
+    renderRow({ venta: ARCHIVO });
+    const tr = document.querySelector("tr") as HTMLTableRowElement;
+    expect(tr.style.background).toBe("hsl(var(--fila-archivo))");
+    fireEvent.mouseEnter(tr);
+    expect(tr.style.background).toBe("hsl(var(--accent))");
+  });
+
+  it("fila de app sin coincidencias no renderiza <mark> ni chips", () => {
+    const { container } = renderRow();
+    expect(container.querySelector("mark")).toBeNull();
+    expect(container.querySelector(".coincide-chip")).toBeNull();
   });
 });

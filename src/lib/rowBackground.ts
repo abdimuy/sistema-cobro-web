@@ -12,8 +12,16 @@
  * Los tokens van como `hsl(var(--token))` porque en este proyecto las variables
  * de `index.css` guardan sólo los canales HSL (`0 0% 100%`), no un color
  * completo: `var(--card)` a secas es una declaración inválida.
+ *
+ * Las filas de Archivo (solo consulta) llevan un tono propio, `--fila-archivo`
+ * (#fafaf9 en claro); el hover conserva el de la app.
  */
-export const rowBackground = (zebra: boolean, hovered: boolean): string => {
+export const rowBackground = (
+  zebra: boolean,
+  hovered: boolean,
+  archivo = false,
+): string => {
   if (hovered) return "hsl(var(--accent))";
+  if (archivo) return "hsl(var(--fila-archivo))";
   return zebra ? "hsl(var(--muted))" : "hsl(var(--card))";
 };

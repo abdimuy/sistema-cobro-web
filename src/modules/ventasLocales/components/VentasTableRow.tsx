@@ -21,6 +21,10 @@ import {
 import { VentaLocal } from "@/services/api/getVentasLocales";
 import { ColumnId, ColumnWidths, COLUMNS, Density } from "./columns";
 import { FaseCell } from "./FaseCell";
+import { ArchivoBadge } from "./ArchivoBadge";
+import { TextoResaltado } from "./coincidencia/TextoResaltado";
+import { CoincidenciaMotivos } from "./coincidencia/CoincidenciaMotivos";
+import { coincidenciaDe, columnaDelBloque } from "./coincidencia/coincidencias";
 import { formatCurrency, formatPhone, copyToClipboard } from "./utils";
 import { cn } from "@/lib/utils";
 import { rowBackground } from "@/lib/rowBackground";
@@ -76,7 +80,14 @@ export function VentasTableRow({
 
   // Un solo color para el <tr> y para las celdas ancladas: así coinciden en los
   // tres estados (normal, cebra, hover) y la columna fija no se queda apagada.
-  const background = rowBackground(zebra, hovered);
+  const esArchivo = venta.ORIGEN === "archivo";
+  const background = rowBackground(zebra, hovered, esArchivo);
+  const coinCliente = coincidenciaDe(venta, "cliente");
+  const coinTelefono = coincidenciaDe(venta, "telefono");
+  const coinFolio = coincidenciaDe(venta, "folio");
+  const coinDireccion = coincidenciaDe(venta, "direccion");
+  const hayCoincidencias = (venta.COINCIDENCIAS ?? []).length > 0;
+  const columnaBloque = columnaDelBloque(visibleColumns);
 
   const handleCopy = async (text: string, field: string) => {
     const success = await copyToClipboard(text);
@@ -97,7 +108,22 @@ export function VentasTableRow({
 
   const getColumnDef = (id: ColumnId) => COLUMNS.find((col) => col.id === id);
 
+  // El bloque de motivos va en la columna del cliente, o en la primera visible.
   const renderCell = (columnId: ColumnId) => {
+    const cell = renderCellBase(columnId);
+    if (!hayCoincidencias || columnId !== columnaBloque || !React.isValidElement(cell)) {
+      return cell;
+    }
+    const el = cell as React.ReactElement<{ children?: React.ReactNode }>;
+    return React.cloneElement(
+      el,
+      undefined,
+      el.props.children,
+      <CoincidenciaMotivos venta={venta} visibleColumns={visibleColumns} />,
+    );
+  };
+
+  const renderCellBase = (columnId: ColumnId) => {
     const colDef = getColumnDef(columnId);
     const alignClass = colDef?.align === "right" ? "text-right" : "";
     const width = columnWidths[columnId];
@@ -124,7 +150,11 @@ export function VentasTableRow({
       case "fase":
         return (
           <TableCell className={cn(alignClass, "overflow-hidden")} style={cellStyle}>
-            <FaseCell venta={venta} compact={density === "compact"} />
+            {esArchivo ? (
+              <ArchivoBadge />
+            ) : (
+              <FaseCell venta={venta} compact={density === "compact"} />
+            )}
           </TableCell>
         );
 
@@ -140,9 +170,30 @@ export function VentasTableRow({
       case "cliente":
         return (
           <TableCell className={alignClass} style={cellStyle}>
-            <span className="font-medium text-foreground truncate block">
-              {venta.NOMBRE_CLIENTE}
-            </span>
+            {esArchivo ? (
+              <button
+                type="button"
+                className="font-medium text-foreground truncate block max-w-full text-left hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewDetails();
+                }}
+              >
+                <TextoResaltado
+                  segmentos={coinCliente?.segmentos}
+                  aproximada={coinCliente?.aproximada}
+                  texto={venta.NOMBRE_CLIENTE}
+                />
+              </button>
+            ) : (
+              <span className="font-medium text-foreground truncate block">
+                <TextoResaltado
+                  segmentos={coinCliente?.segmentos}
+                  aproximada={coinCliente?.aproximada}
+                  texto={venta.NOMBRE_CLIENTE}
+                />
+              </span>
+            )}
           </TableCell>
         );
 
@@ -152,7 +203,15 @@ export function VentasTableRow({
             {venta.TELEFONO ? (
               <div className="flex items-center gap-1">
                 <span className="text-sm tabular-nums truncate">
-                  {formatPhone(venta.TELEFONO)}
+                  {coinTelefono ? (
+                    <TextoResaltado
+                      segmentos={coinTelefono.segmentos}
+                      aproximada={coinTelefono.aproximada}
+                      texto=""
+                    />
+                  ) : (
+                    formatPhone(venta.TELEFONO)
+                  )}
                 </span>
                 <Button
                   variant="ghost"
@@ -180,7 +239,15 @@ export function VentasTableRow({
         return (
           <TableCell className={alignClass} style={cellStyle}>
             <span className="text-sm text-muted-foreground truncate block" title={venta.DIRECCION}>
-              {venta.DIRECCION || "—"}
+              {coinDireccion ? (
+                <TextoResaltado
+                  segmentos={coinDireccion.segmentos}
+                  aproximada={coinDireccion.aproximada}
+                  texto=""
+                />
+              ) : (
+                venta.DIRECCION || "—"
+              )}
             </span>
           </TableCell>
         );
@@ -373,7 +440,9 @@ export function VentasTableRow({
         const s = venta.SITUACION;
         return (
           <TableCell className={alignClass} style={cellStyle}>
-            {s ? (
+            {esArchivo ? (
+              <span className="text-xs text-muted-foreground">Solo consulta</span>
+            ) : s ? (
               <span className={cn(
                 "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
                 SITUACION_STYLES[s]
@@ -420,14 +489,26 @@ export function VentasTableRow({
       case "microsipFolio":
         return (
           <TableCell className={alignClass} style={cellStyle}>
-            {venta.MICROSIP_FOLIO ? (
+            {esArchivo && !coinFolio ? (
+              <span className="text-muted-foreground text-sm">—</span>
+            ) : venta.MICROSIP_FOLIO || coinFolio ? (
               <div className="flex items-center gap-1">
-                <span className="font-mono text-xs">{venta.MICROSIP_FOLIO}</span>
+                <span className="font-mono text-xs">
+                  {coinFolio ? (
+                    <TextoResaltado
+                      segmentos={coinFolio.segmentos}
+                      aproximada={coinFolio.aproximada}
+                      texto=""
+                    />
+                  ) : (
+                    venta.MICROSIP_FOLIO
+                  )}
+                </span>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                  onClick={(e) => { e.stopPropagation(); handleCopy(venta.MICROSIP_FOLIO!, "folio"); }}
+                  onClick={(e) => { e.stopPropagation(); handleCopy(venta.MICROSIP_FOLIO ?? "", "folio"); }}
                 >
                   {copiedField === "folio" ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                 </Button>
@@ -607,7 +688,7 @@ export function VentasTableRow({
 
   return (
     <TableRow
-      className="group cursor-pointer transition-colors"
+      className="group cursor-pointer transition-colors fila-aparece"
       style={{ background }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
