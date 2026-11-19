@@ -320,6 +320,26 @@ describe("useBuscarVentas origen y conteoOrigen", () => {
     expect(port.buscarCalls[1].input.cursor).toBe("c2");
   });
 
+  it("cambiar el origen después de loadMore vuelve a la primera página sin cursor", async () => {
+    const port = new FakeVentasListPort();
+    port.buscarResponse = {
+      items: [makeFakeVentaLocal({ LOCAL_SALE_ID: "v1" })],
+      nextCursor: "c2",
+    };
+    const { result } = renderHook(() => useBuscarVentas(), { wrapper: wrapWith(port) });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => {
+      await result.current.loadMore();
+    });
+    expect(port.buscarCalls[1].input.cursor).toBe("c2");
+
+    act(() => result.current.setParams({ origen: "archivo" }));
+    await waitFor(() => expect(port.buscarCalls).toHaveLength(3));
+    const ultima = port.buscarCalls[2].input;
+    expect(ultima.origen).toBe("archivo");
+    expect(ultima.cursor).toBeUndefined();
+  });
+
   it("conteoOrigen es undefined con un API anterior", async () => {
     const port = new FakeVentasListPort();
     const { result } = renderHook(() => useBuscarVentas(), { wrapper: wrapWith(port) });

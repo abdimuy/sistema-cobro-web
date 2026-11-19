@@ -2,6 +2,7 @@ import type { VentaLocal } from "@/services/api/getVentasLocales";
 import type {
   CampoCoincidencia,
   Coincidencia,
+  Segmento,
 } from "../../domain/values/Coincidencia";
 import type { ColumnId } from "../columns";
 
@@ -67,4 +68,42 @@ export function coincidenciasOcultas(
 
 export function columnaDelBloque(visibles: ColumnId[]): ColumnId | undefined {
   return visibles.includes("cliente") ? "cliente" : visibles[0];
+}
+
+/**
+ * Proyecta los segmentos del API (sobre los dígitos crudos) sobre el texto ya
+ * formateado, p. ej. "3312345678" -> "(331) 234-5678". Un separador queda
+ * resaltado solo si los dígitos a ambos lados coinciden. Si la cantidad de
+ * dígitos no cuadra, devuelve los segmentos tal cual.
+ */
+export function segmentosSobreFormato(
+  segmentos: Segmento[],
+  formateado: string,
+): Segmento[] {
+  const banderas: boolean[] = [];
+  for (const s of segmentos) {
+    for (const ch of s.texto) if (/\d/.test(ch)) banderas.push(s.coincide);
+  }
+  const digitos = [...formateado].filter((c) => /\d/.test(c)).length;
+  if (digitos !== banderas.length) return segmentos;
+
+  const chars = [...formateado];
+  const flags: boolean[] = [];
+  let d = 0;
+  chars.forEach((ch, i) => {
+    if (/\d/.test(ch)) {
+      flags.push(banderas[d++]);
+      return;
+    }
+    const prev = d > 0 ? banderas[d - 1] : false;
+    const next = d < banderas.length ? banderas[d] : false;
+    flags[i] = prev && next;
+  });
+  const out: Segmento[] = [];
+  chars.forEach((ch, i) => {
+    const last = out[out.length - 1];
+    if (last && last.coincide === flags[i]) last.texto += ch;
+    else out.push({ texto: ch, coincide: flags[i] });
+  });
+  return out;
 }

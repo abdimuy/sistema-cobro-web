@@ -153,11 +153,10 @@ function VentasLocalesScreen() {
   // Fila que abrió el panel: al cerrarlo el foco vuelve ahí.
   const disparadorPanelRef = useRef<HTMLElement | null>(null);
 
-  const handleViewDetails = useCallback((venta: VentaLocal) => {
+  const handleViewDetails = useCallback((venta: VentaLocal, retorno?: HTMLElement | null) => {
     if (venta.ORIGEN === "archivo") {
-      if (document.activeElement instanceof HTMLElement) {
-        disparadorPanelRef.current = document.activeElement;
-      }
+      const el = retorno ?? document.activeElement;
+      if (el instanceof HTMLElement) disparadorPanelRef.current = el;
       setArchivoSeleccionadoId(venta.LOCAL_SALE_ID);
       return;
     }
@@ -413,8 +412,14 @@ function VentasLocalesScreen() {
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-1 flex-wrap items-stretch gap-3 overflow-hidden min-h-0">
-        <div className="min-w-0 flex-[3_1_480px] overflow-hidden h-full">
+      <div
+        data-testid="ventas-contenido"
+        className="flex flex-1 flex-nowrap items-stretch gap-3 overflow-hidden min-h-0"
+      >
+        <div
+          data-testid="ventas-tabla-col"
+          className="min-w-0 flex-1 basis-0 overflow-hidden h-full"
+        >
         {error ? (
           <VentasErrorState message={error} onRetry={refetch} />
         ) : loading && ventas.length === 0 ? (

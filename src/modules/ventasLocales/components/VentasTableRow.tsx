@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import dayjs from "dayjs";
 import {
   Eye,
@@ -24,7 +24,7 @@ import { FaseCell } from "./FaseCell";
 import { ArchivoBadge } from "./ArchivoBadge";
 import { TextoResaltado } from "./coincidencia/TextoResaltado";
 import { CoincidenciaMotivos } from "./coincidencia/CoincidenciaMotivos";
-import { coincidenciaDe, columnaDelBloque } from "./coincidencia/coincidencias";
+import { coincidenciaDe, columnaDelBloque, segmentosSobreFormato } from "./coincidencia/coincidencias";
 import { formatCurrency, formatPhone, copyToClipboard } from "./utils";
 import { cn } from "@/lib/utils";
 import { rowBackground } from "@/lib/rowBackground";
@@ -56,7 +56,11 @@ interface VentasTableRowProps {
   pinnedColumns?: ColumnId[];
   pinnedOffsets?: Partial<Record<ColumnId, number>>;
   columnWidths: ColumnWidths;
-  onViewDetails: () => void;
+  /**
+   * `retorno`: elemento al que debe volver el foco al cerrar lo que se abra.
+   * Desde el menú de la fila es la propia fila (el ítem del menú se desmonta).
+   */
+  onViewDetails: (retorno?: HTMLElement | null) => void;
   getAlmacenName: (id: number) => string;
   /** Fila par de la tabla (cebra). Lo decide la tabla, no el CSS. */
   zebra?: boolean;
@@ -77,6 +81,7 @@ export function VentasTableRow({
 }: VentasTableRowProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [hovered, setHovered] = useState(false);
+  const rowRef = useRef<HTMLTableRowElement>(null);
 
   // Un solo color para el <tr> y para las celdas ancladas: así coinciden en los
   // tres estados (normal, cebra, hover) y la columna fija no se queda apagada.
@@ -205,7 +210,10 @@ export function VentasTableRow({
                 <span className="text-sm tabular-nums truncate">
                   {coinTelefono ? (
                     <TextoResaltado
-                      segmentos={coinTelefono.segmentos}
+                      segmentos={segmentosSobreFormato(
+                        coinTelefono.segmentos,
+                        formatPhone(venta.TELEFONO),
+                      )}
                       aproximada={coinTelefono.aproximada}
                       texto=""
                     />
@@ -688,12 +696,13 @@ export function VentasTableRow({
 
   return (
     <TableRow
+      ref={rowRef}
       className="group cursor-pointer transition-colors fila-aparece outline-none"
       tabIndex={-1}
       style={{ background }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={onViewDetails}
+      onClick={() => onViewDetails()}
     >
       {/* Dynamic columns */}
       {visibleColumns.map((columnId) => (
@@ -712,8 +721,18 @@ export function VentasTableRow({
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={onViewDetails}>
+          <DropdownMenuContent
+            align="end"
+            className="w-48"
+            onCloseAutoFocus={(e) => e.preventDefault()}
+          >
+            <DropdownMenuItem
+              onClick={() => {
+                // El ítem se desmonta al cerrar el menú: la fila es el destino
+                // al que debe volver el foco cuando se cierre el panel.
+                onViewDetails(rowRef.current);
+              }}
+            >
               <Eye className="h-4 w-4 mr-2" />
               Ver detalles
             </DropdownMenuItem>
@@ -745,6 +764,8 @@ export function VentasTableRow({
   );
 }
 
+const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+
 /**
  * Un usuario en la tabla: el NOMBRE si el API lo manda, y el UUID recortado
  * como respaldo cuando no viene. El UUID no se lee, pero es mejor que nada
@@ -768,7 +789,7 @@ function UsuarioCelda({
     );
   }
 
-  if (id) {
+  if (id && id !== NIL_UUID) {
     return (
       <span
         className="font-mono text-[10px] text-muted-foreground truncate block"

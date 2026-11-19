@@ -77,7 +77,7 @@ export function ArchivoPanel({
         }
       }}
       aria-label="Detalle de venta de Archivo"
-      className="panel-aparece flex min-w-0 max-w-[520px] flex-[1_1_380px] flex-col overflow-hidden rounded-lg border border-border bg-background"
+      className="panel-aparece flex w-[min(420px,45%)] min-w-0 flex-none flex-col overflow-y-auto overflow-x-hidden rounded-lg border border-border bg-background"
     >
       {venta ? (
         <>
@@ -104,9 +104,9 @@ export function ArchivoPanel({
                 VACIO
               ) : (
                 <ul className="m-0 list-none p-0">
-                  {venta.articulos.map((a) => (
+                  {venta.articulos.map((a, i) => (
                     <li
-                      key={`${a.articulo_id}-${a.nombre}`}
+                      key={`${i}-${a.articulo_id}-${a.nombre}`}
                     >{`${a.cantidad} × ${a.nombre}`}</li>
                   ))}
                 </ul>

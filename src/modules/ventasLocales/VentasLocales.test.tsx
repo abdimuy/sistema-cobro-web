@@ -37,13 +37,20 @@ vi.mock("./components/VentasTable", () => ({
     onViewDetails,
   }: {
     ventas: VentaLocal[];
-    onViewDetails: (v: VentaLocal) => void;
+    onViewDetails: (v: VentaLocal, retorno?: HTMLElement | null) => void;
   }) => (
     <div>
       {ventas.map((v) => (
-        <button key={v.LOCAL_SALE_ID} onClick={() => onViewDetails(v)}>
-          fila-{v.LOCAL_SALE_ID}
-        </button>
+        <span key={v.LOCAL_SALE_ID}>
+          <button onClick={() => onViewDetails(v)}>fila-{v.LOCAL_SALE_ID}</button>
+          <button
+            onClick={() =>
+              onViewDetails(v, hookState.__retorno as HTMLElement | undefined)
+            }
+          >
+            menu-{v.LOCAL_SALE_ID}
+          </button>
+        </span>
       ))}
     </div>
   ),
@@ -107,6 +114,26 @@ describe("VentasLocales: Archivo y origen", () => {
     expect(fila).not.toHaveFocus();
     fireEvent.click(cerrar);
     expect(fila).toHaveFocus();
+  });
+
+  // Layout NO medido en pantalla (jsdom no calcula anchos): solo clases.
+  it("el contenedor no envuelve y la tabla cede ancho al panel", () => {
+    renderScreen();
+    expect(screen.getByTestId("ventas-contenido").className).toContain("flex-nowrap");
+    expect(screen.getByTestId("ventas-contenido").className).not.toMatch(/(^|\s)flex-wrap/);
+    const col = screen.getByTestId("ventas-tabla-col").className;
+    expect(col).toContain("flex-1");
+    expect(col).toContain("min-w-0");
+    expect(col).toContain("basis-0");
+  });
+
+  it("abierto desde el menú, al cerrar el foco vuelve al destino que entregó la fila", () => {
+    renderScreen();
+    const destino = screen.getByText("fila-x2");
+    hookState.__retorno = destino;
+    fireEvent.click(screen.getByText("menu-x1"));
+    fireEvent.click(screen.getByText("cerrar-panel"));
+    expect(destino).toHaveFocus();
   });
 
   it("abrir otra venta de Archivo reemplaza el panel", () => {

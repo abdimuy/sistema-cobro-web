@@ -90,6 +90,14 @@ describe("ArchivoPanel", () => {
     expect(screen.getByRole("button", { name: "Cerrar detalle" })).toHaveFocus();
   });
 
+  it("el panel no crece ni envuelve: flex-none con ancho acotado (no medido en pantalla)", () => {
+    ok();
+    render(<ArchivoPanel ventaId="v1" onClose={vi.fn()} />);
+    const cls = screen.getByRole("complementary").className;
+    expect(cls).toContain("flex-none");
+    expect(cls).toContain("w-[min(420px,45%)]");
+  });
+
   it("Escape cierra el panel", () => {
     ok();
     const onClose = vi.fn();

@@ -8,11 +8,12 @@ export interface VentaArchivoArticuloDTO {
   precio_lista: string;
   precio_corto_plazo: string;
   precio_contado: string;
-  combo_id: number | null;
+  /** El API lo manda como texto. */
+  combo_id: string | null;
 }
 
 export interface VentaArchivoComboDTO {
-  combo_id: number;
+  combo_id: string;
   nombre: string;
   precio_lista: string;
   precio_corto_plazo: string;

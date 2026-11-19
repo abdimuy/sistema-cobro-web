@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 vi.mock("../presentation/hooks/useVentaEventos", () => ({
   useVentaEventos: vi.fn(() => ({ eventos: [], isLoading: false, error: null })),
@@ -288,5 +289,53 @@ describe("VentasTableRow — Archivo y coincidencias", () => {
     const { container } = renderRow();
     expect(container.querySelector("mark")).toBeNull();
     expect(container.querySelector(".coincide-chip")).toBeNull();
+  });
+});
+
+describe("VentasTableRow — fixes finales", () => {
+  it("teléfono resaltado conserva el formato (331) 234-5678", () => {
+    const venta = {
+      ...VENTA,
+      COINCIDENCIAS: [
+        {
+          campo: "telefono",
+          segmentos: [
+            { texto: "331", coincide: true },
+            { texto: "2345678", coincide: false },
+          ],
+          aproximada: false,
+          recortado: false,
+        },
+      ],
+    } as unknown as VentaLocal;
+    renderRow({ venta, visibleColumns: ["cliente", "telefono"] });
+    const cell = screen.getByText(/234-5678/).closest("td") as HTMLElement;
+    expect(cell.textContent).toContain("(331) 234-5678");
+    const marks = cell.querySelectorAll("mark");
+    expect(marks).toHaveLength(1);
+    expect(marks[0].textContent).toBe("331");
+  });
+
+  it("Archivo con created_by nil UUID y sin nombre muestra — y no 00000000", () => {
+    const venta = {
+      ...VENTA,
+      ORIGEN: "archivo",
+      CREATED_BY: "00000000-0000-0000-0000-000000000000",
+      USER_EMAIL: undefined,
+    } as unknown as VentaLocal;
+    renderRow({ venta, visibleColumns: ["cliente", "creador"] });
+    expect(screen.queryByText("00000000")).toBeNull();
+  });
+
+  it("'Ver detalles' del menú entrega la fila como destino del foco, no el ítem que se desmonta", async () => {
+    const onViewDetails = vi.fn();
+    renderRow({ onViewDetails });
+    const user = userEvent.setup();
+    const trigger = document.querySelector(
+      'button[aria-haspopup="menu"]',
+    ) as HTMLElement;
+    await user.click(trigger);
+    await user.click(await screen.findByText("Ver detalles"));
+    expect(onViewDetails).toHaveBeenCalledWith(row());
   });
 });
