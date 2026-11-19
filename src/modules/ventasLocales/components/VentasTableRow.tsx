@@ -82,6 +82,9 @@ export function VentasTableRow({
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [hovered, setHovered] = useState(false);
   const rowRef = useRef<HTMLTableRowElement>(null);
+  // Solo "Ver detalles" desvía el foco (va al panel); el resto de acciones y
+  // Escape dejan que Radix lo devuelva al disparador.
+  const desviarFocoRef = useRef(false);
 
   // Un solo color para el <tr> y para las celdas ancladas: así coinciden en los
   // tres estados (normal, cebra, hover) y la columna fija no se queda apagada.
@@ -724,12 +727,16 @@ export function VentasTableRow({
           <DropdownMenuContent
             align="end"
             className="w-48"
-            onCloseAutoFocus={(e) => e.preventDefault()}
+            onCloseAutoFocus={(e) => {
+              if (desviarFocoRef.current) e.preventDefault();
+              desviarFocoRef.current = false;
+            }}
           >
             <DropdownMenuItem
               onClick={() => {
                 // El ítem se desmonta al cerrar el menú: la fila es el destino
                 // al que debe volver el foco cuando se cierre el panel.
+                desviarFocoRef.current = true;
                 onViewDetails(rowRef.current);
               }}
             >

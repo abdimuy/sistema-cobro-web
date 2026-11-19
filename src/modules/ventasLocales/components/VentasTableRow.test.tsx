@@ -325,6 +325,8 @@ describe("VentasTableRow — fixes finales", () => {
     } as unknown as VentaLocal;
     renderRow({ venta, visibleColumns: ["cliente", "creador"] });
     expect(screen.queryByText("00000000")).toBeNull();
+    const celda = screen.getByText("—").closest("td") as HTMLElement;
+    expect(celda).toBeInTheDocument();
   });
 
   it("'Ver detalles' del menú entrega la fila como destino del foco, no el ítem que se desmonta", async () => {
@@ -337,5 +339,37 @@ describe("VentasTableRow — fixes finales", () => {
     await user.click(trigger);
     await user.click(await screen.findByText("Ver detalles"));
     expect(onViewDetails).toHaveBeenCalledWith(row());
+  });
+
+  const abrirMenu = async () => {
+    const user = userEvent.setup();
+    const trigger = document.querySelector(
+      'button[aria-haspopup="menu"]',
+    ) as HTMLElement;
+    await user.click(trigger);
+    return { user, trigger };
+  };
+
+  it("tras otro ítem del menú (Copiar ID) el foco vuelve al disparador", async () => {
+    renderRow();
+    const { user, trigger } = await abrirMenu();
+    await user.click(await screen.findByText("Copiar ID"));
+    await vi.waitFor(() => expect(trigger).toHaveFocus());
+  });
+
+  it("con Escape el foco vuelve al disparador", async () => {
+    renderRow();
+    const { user, trigger } = await abrirMenu();
+    await screen.findByText("Ver detalles");
+    await user.keyboard("{Escape}");
+    await vi.waitFor(() => expect(trigger).toHaveFocus());
+  });
+
+  it("tras 'Ver detalles' Radix no devuelve el foco al disparador", async () => {
+    renderRow();
+    const { user, trigger } = await abrirMenu();
+    await user.click(await screen.findByText("Ver detalles"));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(trigger).not.toHaveFocus();
   });
 });
