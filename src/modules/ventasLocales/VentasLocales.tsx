@@ -9,6 +9,9 @@ import useGetAlmacenes from "@/hooks/useGetAlmacenes";
 import useGetZonasCliente from "@/hooks/useGetZonasCliente";
 import useGetVendedores from "@/hooks/useGetVendedores";
 import { VentaDetalleModal } from "./components/detalle";
+import { ArchivoPanel } from "./components/archivo/ArchivoPanel";
+import { OrigenFiltro } from "./components/OrigenFiltro";
+import type { VentaLocal } from "@/services/api/getVentasLocales";
 import { VentasListContainer } from "./presentation/composition/VentasListContainer";
 import { useBuscarVentas } from "./presentation/hooks/useBuscarVentas";
 import {
@@ -44,6 +47,7 @@ import {
   saveActiveViewId,
 } from "./components/views";
 import { VentasViewSwitcher } from "./components/VentasViewSwitcher";
+import type { FiltroOrigen } from "./domain/values/Coincidencia";
 
 export default function VentasLocales() {
   return (
@@ -59,6 +63,8 @@ function VentasLocalesScreen() {
   // Modal state
   const [selectedVentaId, setSelectedVentaId] = useState<string | null>(null);
   const [showDetalleModal, setShowDetalleModal] = useState(false);
+  // Panel lateral de Archivo (solo consulta). Independiente del modal de app.
+  const [archivoSeleccionadoId, setArchivoSeleccionadoId] = useState<string | null>(null);
 
   // Open modal from notification deep link
   const ventaIdParam = searchParams.get("ventaId");
@@ -127,6 +133,7 @@ function VentasLocalesScreen() {
     updateSort,
     loadMore,
     refetch,
+    conteoOrigen,
   } = useBuscarVentas();
 
   // `almacenes` ya no se usa: el filtro de almacén se quitó (el API no filtra
@@ -143,10 +150,23 @@ function VentasLocalesScreen() {
     [setParams]
   );
 
-  const handleViewDetails = useCallback((ventaId: string) => {
-    setSelectedVentaId(ventaId);
+  const handleViewDetails = useCallback((venta: VentaLocal) => {
+    if (venta.ORIGEN === "archivo") {
+      setArchivoSeleccionadoId(venta.LOCAL_SALE_ID);
+      return;
+    }
+    setSelectedVentaId(venta.LOCAL_SALE_ID);
     setShowDetalleModal(true);
   }, []);
+
+  const handleCloseArchivo = useCallback(() => setArchivoSeleccionadoId(null), []);
+
+  // `origen` NO se guarda en las vistas (views.ts): es un filtro de consulta
+  // de la sesión, no una preferencia de presentación.
+  const handleOrigenChange = useCallback(
+    (origen: FiltroOrigen) => setParams({ origen }),
+    [setParams]
+  );
 
   const handleCloseModal = useCallback(() => {
     setShowDetalleModal(false);
@@ -163,6 +183,7 @@ function VentasLocalesScreen() {
       vendedorEmails: undefined,
       precioMin: undefined,
       precioMax: undefined,
+      origen: "todas",
     });
   }, [setParams]);
 
@@ -310,7 +331,8 @@ function VentasLocalesScreen() {
       params.zonaClienteId ||
       params.vendedorEmails ||
       params.precioMin ||
-      params.precioMax
+      params.precioMax ||
+      (params.origen !== undefined && params.origen !== "todas")
     );
   }, [params]);
 
@@ -346,6 +368,11 @@ function VentasLocalesScreen() {
               className="flex-1 min-w-0"
             />
             <div className="flex items-center gap-2 flex-shrink-0">
+              <OrigenFiltro
+                value={params.origen ?? "todas"}
+                conteo={conteoOrigen}
+                onChange={handleOrigenChange}
+              />
               <VentasViewSwitcher
                 activeViewId={activeViewId}
                 views={allViews}
@@ -375,7 +402,8 @@ function VentasLocalesScreen() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden min-h-0">
+      <div className="flex flex-1 flex-wrap items-stretch gap-3 overflow-hidden min-h-0">
+        <div className="min-w-0 flex-[3_1_480px] overflow-hidden h-full">
         {error ? (
           <VentasErrorState message={error} onRetry={refetch} />
         ) : loading && ventas.length === 0 ? (
@@ -404,6 +432,10 @@ function VentasLocalesScreen() {
               onLoadMore: loadMore,
             }}
           />
+        )}
+        </div>
+        {archivoSeleccionadoId && (
+          <ArchivoPanel ventaId={archivoSeleccionadoId} onClose={handleCloseArchivo} />
         )}
       </div>
 

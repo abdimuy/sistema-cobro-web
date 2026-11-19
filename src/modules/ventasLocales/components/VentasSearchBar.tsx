@@ -14,7 +14,7 @@ interface VentasSearchBarProps {
 export function VentasSearchBar({
   value,
   onSearch,
-  placeholder = "Buscar cliente, teléfono, dirección...",
+  placeholder = "Buscar cliente, teléfono, dirección, artículo...",
   className,
 }: VentasSearchBarProps) {
   const [localValue, setLocalValue] = useState(value);

@@ -22,7 +22,7 @@ interface VentasTableProps {
   sortBy: VentasParams["sortBy"];
   sortOrder: VentasParams["sortOrder"];
   onSort: (column: VentasParams["sortBy"]) => void;
-  onViewDetails: (ventaId: string) => void;
+  onViewDetails: (venta: VentaLocal) => void;
   getAlmacenName: (id: number) => string;
   density?: Density;
 }
@@ -297,7 +297,7 @@ export function VentasTable({
               pinnedColumns={pinnedColumns}
               pinnedOffsets={pinnedOffsets}
               columnWidths={columnWidths}
-              onViewDetails={() => onViewDetails(venta.LOCAL_SALE_ID)}
+              onViewDetails={() => onViewDetails(venta)}
               getAlmacenName={getAlmacenName}
               density={density}
             />
