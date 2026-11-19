@@ -58,7 +58,8 @@ export interface VentaV2DTO {
   aproximada_detalle?: string | null;
   cliente: ClienteSnapshotV2;
   direccion: DireccionV2;
-  gps: GPSV2;
+  /** Null en ventas de Archivo sin coordenadas. */
+  gps: GPSV2 | null;
   fecha_venta: string;
   /** Null en ventas de Archivo. */
   tipo_venta: string | null;
@@ -69,6 +70,8 @@ export interface VentaV2DTO {
   microsip_docto_pv_id: number | null;
   microsip_aplicada_at: string | null;
   montos: MontosV2;
+  /** Total ("1234.00") en todos los items; ausente en un API anterior. */
+  precio_total?: string | null;
   plan_credito: PlanCreditoV2 | null;
   dia_cobranza: DiaCobranzaV2 | null;
   nota: string | null;
@@ -114,10 +117,10 @@ export const adaptVentaV2ToLocal = (v: VentaV2DTO): VentaLocal => {
     ALMACEN_DESTINO_ID: firstProd?.almacen_destino_id ?? undefined,
     NOMBRE_CLIENTE: v.cliente.nombre,
     FECHA_VENTA: v.fecha_venta,
-    LATITUD: v.gps.latitud,
-    LONGITUD: v.gps.longitud,
+    LATITUD: v.gps?.latitud ?? 0,
+    LONGITUD: v.gps?.longitud ?? 0,
     DIRECCION: v.direccion.calle,
-    PRECIO_TOTAL: numOrUndef(v.montos.anual) ?? 0,
+    PRECIO_TOTAL: numOrUndef(v.precio_total) ?? numOrUndef(v.montos.anual) ?? 0,
     TELEFONO: v.cliente.telefono ?? "",
     PARCIALIDAD: v.plan_credito ? numOrUndef(v.plan_credito.parcialidad) : undefined,
     ENGANCHE: v.plan_credito ? numOrUndef(v.plan_credito.enganche) : undefined,

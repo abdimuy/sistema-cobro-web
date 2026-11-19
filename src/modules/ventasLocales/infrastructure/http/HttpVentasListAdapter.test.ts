@@ -310,4 +310,41 @@ describe("HttpVentasListAdapter origen y coincidencias", () => {
 
     expect(out.items[0].COINCIDENCIAS).toHaveLength(0);
   });
+
+  it("item de Archivo con nulos y gps null se mapea sin lanzar", async () => {
+    const { client } = makeStubClient({
+      items: [
+        makeVentaV2DTO({
+          origen: "archivo",
+          gps: null,
+          tipo_venta: null,
+          estado: null,
+          situacion: null,
+          sincronizacion: null,
+          microsip_folio: null,
+        }),
+      ],
+    });
+    const out = await new HttpVentasListAdapter(client).buscarVentas({});
+
+    expect(out.items[0].ORIGEN).toBe("archivo");
+    expect(out.items[0].TIPO_VENTA).toBeUndefined();
+    expect(out.items[0].ESTADO).toBeUndefined();
+  });
+
+  it("usa precio_total cuando viene", async () => {
+    const { client } = makeStubClient({
+      items: [makeVentaV2DTO({ precio_total: "1234.00", montos: { anual: "0.00", corto_plazo: "0.00", contado: "0.00" } })],
+    });
+    const out = await new HttpVentasListAdapter(client).buscarVentas({});
+
+    expect(out.items[0].PRECIO_TOTAL).toBe(1234);
+  });
+
+  it("cae a montos.anual cuando precio_total no viene", async () => {
+    const { client } = makeStubClient({ items: [makeVentaV2DTO()] });
+    const out = await new HttpVentasListAdapter(client).buscarVentas({});
+
+    expect(out.items[0].PRECIO_TOTAL).toBe(8500);
+  });
 });
