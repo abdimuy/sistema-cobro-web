@@ -57,7 +57,7 @@ export class HttpVentasListAdapter implements VentasListPort {
       if (input.incluirCanceladas !== undefined) params.incluir_canceladas = input.incluirCanceladas;
       if (input.sortBy !== undefined) params.sort_by = input.sortBy;
       if (input.sortOrder !== undefined) params.sort_order = input.sortOrder;
-      if (input.origen !== undefined) params.origen = input.origen;
+      params.origen = input.origen ?? "todas";
       if (input.cursor !== undefined) params.cursor = input.cursor;
       if (input.limit !== undefined) params.limit = input.limit;
 

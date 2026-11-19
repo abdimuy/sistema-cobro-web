@@ -1,13 +1,29 @@
 import { describe, it, expect, vi } from "vitest";
 import type { AxiosInstance } from "axios";
 import { HttpVentasListAdapter } from "./HttpVentasListAdapter";
-import type { VentaV2DTO, ListV2Response } from "../../../../services/api/getVentasLocales";
+import type {
+  VentaV2DTO,
+  ListV2Response,
+} from "../../../../services/api/getVentasLocales";
 
 function makeVentaV2DTO(overrides: Partial<VentaV2DTO> = {}): VentaV2DTO {
   const base: VentaV2DTO = {
     id: "3fa1c2b0-3e9e-4b3a-8b1a-000000000001",
-    cliente: { cliente_id: 24037, nombre: "GUADALUPE HERNÁNDEZ TORRES", telefono: "5512345678", aval: null, referencia: null },
-    direccion: { calle: "Av. Insurgentes 45", numero_exterior: null, colonia: "Centro", poblacion: "CDMX", ciudad: "CDMX", zona_cliente_id: 12 },
+    cliente: {
+      cliente_id: 24037,
+      nombre: "GUADALUPE HERNÁNDEZ TORRES",
+      telefono: "5512345678",
+      aval: null,
+      referencia: null,
+    },
+    direccion: {
+      calle: "Av. Insurgentes 45",
+      numero_exterior: null,
+      colonia: "Centro",
+      poblacion: "CDMX",
+      ciudad: "CDMX",
+      zona_cliente_id: 12,
+    },
     gps: { latitud: 19.4326, longitud: -99.1332 },
     fecha_venta: "2026-05-12T00:00:00.000Z",
     tipo_venta: "CREDITO",
@@ -23,7 +39,14 @@ function makeVentaV2DTO(overrides: Partial<VentaV2DTO> = {}): VentaV2DTO {
     nota: null,
     combos: [],
     productos: [],
-    vendedores: [{ id: "v1", usuario_id: "u1", email: "maria.ramirez@muebleriamsp.mx", nombre: "María Ramírez" }],
+    vendedores: [
+      {
+        id: "v1",
+        usuario_id: "u1",
+        email: "maria.ramirez@muebleriamsp.mx",
+        nombre: "María Ramírez",
+      },
+    ],
     imagenes: [],
     created_at: "2026-05-12T00:00:00.000Z",
     updated_at: "2026-05-12T00:00:00.000Z",
@@ -32,9 +55,10 @@ function makeVentaV2DTO(overrides: Partial<VentaV2DTO> = {}): VentaV2DTO {
   return base;
 }
 
-function makeStubClient(
-  response: Partial<ListV2Response<VentaV2DTO>> = {},
-): { client: AxiosInstance; get: ReturnType<typeof vi.fn> } {
+function makeStubClient(response: Partial<ListV2Response<VentaV2DTO>> = {}): {
+  client: AxiosInstance;
+  get: ReturnType<typeof vi.fn>;
+} {
   const data: ListV2Response<VentaV2DTO> = {
     items: [],
     ...response,
@@ -71,6 +95,7 @@ describe("HttpVentasListAdapter.buscarVentas query params", () => {
     const [url, config] = get.mock.calls[0];
     expect(url).toBe("/ventas");
     expect(config.params).toEqual({
+      origen: "todas",
       search: "hernandez",
       tipo_venta: "CREDITO",
       situacion: "aprobada",
@@ -115,7 +140,10 @@ describe("HttpVentasListAdapter.buscarVentas query params", () => {
     const { client, get } = makeStubClient();
     const adapter = new HttpVentasListAdapter(client);
 
-    await adapter.buscarVentas({ fechaInicio: "2026-08-20", fechaFin: "2026-08-20" });
+    await adapter.buscarVentas({
+      fechaInicio: "2026-08-20",
+      fechaFin: "2026-08-20",
+    });
 
     const [, config] = get.mock.calls[0];
     const desde = new Date(config.params.desde as string);
@@ -148,7 +176,7 @@ describe("HttpVentasListAdapter.buscarVentas query params", () => {
     });
 
     const [, config] = get.mock.calls[0];
-    expect(config.params).toEqual({ search: "hernandez" });
+    expect(config.params).toEqual({ search: "hernandez", origen: "todas" });
     expect("almacen_id" in config.params).toBe(false);
     expect("almacenId" in config.params).toBe(false);
     expect("tipo_venta" in config.params).toBe(false);
@@ -156,14 +184,14 @@ describe("HttpVentasListAdapter.buscarVentas query params", () => {
     expect("limit" in config.params).toBe(false);
   });
 
-  it("sends no params at all for an empty input", async () => {
+  it("sends only origen=todas for an empty input", async () => {
     const { client, get } = makeStubClient();
     const adapter = new HttpVentasListAdapter(client);
 
     await adapter.buscarVentas({});
 
     const [, config] = get.mock.calls[0];
-    expect(config.params).toEqual({});
+    expect(config.params).toEqual({ origen: "todas" });
   });
 
   it("propagates the abort signal", async () => {
@@ -198,7 +226,10 @@ describe("HttpVentasListAdapter.buscarVentas query params", () => {
   });
 
   it("returns next_cursor verbatim when present", async () => {
-    const { client } = makeStubClient({ items: [], next_cursor: "cursor-page2" });
+    const { client } = makeStubClient({
+      items: [],
+      next_cursor: "cursor-page2",
+    });
     const adapter = new HttpVentasListAdapter(client);
 
     const result = await adapter.buscarVentas({});
@@ -210,7 +241,10 @@ describe("HttpVentasListAdapter.buscarVentas query params", () => {
     const get = vi.fn().mockRejectedValue(
       Object.assign(new Error("Request failed with status code 500"), {
         isAxiosError: true,
-        response: { status: 500, data: { code: "error_inesperado", message: "fallo interno" } },
+        response: {
+          status: 500,
+          data: { code: "error_inesperado", message: "fallo interno" },
+        },
       }),
     );
     const client = { get } as unknown as AxiosInstance;
@@ -224,7 +258,7 @@ describe("HttpVentasListAdapter.buscarVentas query params", () => {
 });
 
 describe("HttpVentasListAdapter origen y coincidencias", () => {
-  it("manda origen=archivo como query param y no lo manda si no se pide", async () => {
+  it("manda origen=archivo como query param y todas si no se pide", async () => {
     const { client, get } = makeStubClient();
     const adapter = new HttpVentasListAdapter(client);
 
@@ -232,7 +266,7 @@ describe("HttpVentasListAdapter origen y coincidencias", () => {
     await adapter.buscarVentas({});
 
     expect(get.mock.calls[0][1].params.origen).toBe("archivo");
-    expect("origen" in get.mock.calls[1][1].params).toBe(false);
+    expect(get.mock.calls[1][1].params.origen).toBe("todas");
   });
 
   it("mapea origen, coincidencias y aproximada_detalle al VentaLocal", async () => {
@@ -290,7 +324,9 @@ describe("HttpVentasListAdapter origen y coincidencias", () => {
   });
 
   it("devuelve conteoOrigen {app:3, archivo:null} tal cual", async () => {
-    const { client } = makeStubClient({ conteo_origen: { app: 3, archivo: null } });
+    const { client } = makeStubClient({
+      conteo_origen: { app: 3, archivo: null },
+    });
     const out = await new HttpVentasListAdapter(client).buscarVentas({});
 
     expect(out.conteoOrigen).toEqual({ app: 3, archivo: null });
@@ -301,7 +337,12 @@ describe("HttpVentasListAdapter origen y coincidencias", () => {
       items: [
         makeVentaV2DTO({
           coincidencias: [
-            { campo: "vendedor", segmentos: [{ texto: "x", coincide: true }], aproximada: false, recortado: false },
+            {
+              campo: "vendedor",
+              segmentos: [{ texto: "x", coincide: true }],
+              aproximada: false,
+              recortado: false,
+            },
           ],
         }),
       ],
@@ -334,7 +375,12 @@ describe("HttpVentasListAdapter origen y coincidencias", () => {
 
   it("usa precio_total cuando viene", async () => {
     const { client } = makeStubClient({
-      items: [makeVentaV2DTO({ precio_total: "1234.00", montos: { anual: "0.00", corto_plazo: "0.00", contado: "0.00" } })],
+      items: [
+        makeVentaV2DTO({
+          precio_total: "1234.00",
+          montos: { anual: "0.00", corto_plazo: "0.00", contado: "0.00" },
+        }),
+      ],
     });
     const out = await new HttpVentasListAdapter(client).buscarVentas({});
 
