@@ -222,3 +222,92 @@ describe("HttpVentasListAdapter.buscarVentas query params", () => {
     });
   });
 });
+
+describe("HttpVentasListAdapter origen y coincidencias", () => {
+  it("manda origen=archivo como query param y no lo manda si no se pide", async () => {
+    const { client, get } = makeStubClient();
+    const adapter = new HttpVentasListAdapter(client);
+
+    await adapter.buscarVentas({ origen: "archivo" });
+    await adapter.buscarVentas({});
+
+    expect(get.mock.calls[0][1].params.origen).toBe("archivo");
+    expect("origen" in get.mock.calls[1][1].params).toBe(false);
+  });
+
+  it("mapea origen, coincidencias y aproximada_detalle al VentaLocal", async () => {
+    const detalle = "Escribiste “garcia” · se encontró “Gracia”";
+    const { client } = makeStubClient({
+      items: [
+        makeVentaV2DTO({
+          origen: "archivo",
+          coincidencias: [
+            {
+              campo: "cliente",
+              segmentos: [{ texto: "GARCÍA", coincide: true }],
+              aproximada: false,
+              recortado: false,
+            },
+          ],
+          aproximada_detalle: detalle,
+        }),
+      ],
+    });
+    const out = await new HttpVentasListAdapter(client).buscarVentas({});
+
+    expect(out.items[0].ORIGEN).toBe("archivo");
+    expect(out.items[0].COINCIDENCIAS?.[0].segmentos[0].coincide).toBe(true);
+    expect(out.items[0].APROXIMADA_DETALLE).toBe(detalle);
+  });
+
+  it("item de Archivo con situacion/sincronizacion/folio null queda sin esos campos", async () => {
+    const { client } = makeStubClient({
+      items: [
+        makeVentaV2DTO({
+          origen: "archivo",
+          situacion: null,
+          sincronizacion: null,
+          microsip_folio: null,
+          tipo_venta: null,
+          estado: null,
+        }),
+      ],
+    });
+    const out = await new HttpVentasListAdapter(client).buscarVentas({});
+
+    expect(out.items[0].SITUACION).toBeUndefined();
+    expect(out.items[0].SINCRONIZACION).toBeUndefined();
+    expect(out.items[0].MICROSIP_FOLIO).toBeUndefined();
+  });
+
+  it("API anterior sin origen/coincidencias/conteo_origen: ORIGEN undefined, COINCIDENCIAS [] y conteoOrigen undefined", async () => {
+    const { client } = makeStubClient({ items: [makeVentaV2DTO()] });
+    const out = await new HttpVentasListAdapter(client).buscarVentas({});
+
+    expect(out.items[0].ORIGEN).toBeUndefined();
+    expect(out.items[0].COINCIDENCIAS).toEqual([]);
+    expect(out.conteoOrigen).toBeUndefined();
+  });
+
+  it("devuelve conteoOrigen {app:3, archivo:null} tal cual", async () => {
+    const { client } = makeStubClient({ conteo_origen: { app: 3, archivo: null } });
+    const out = await new HttpVentasListAdapter(client).buscarVentas({});
+
+    expect(out.conteoOrigen).toEqual({ app: 3, archivo: null });
+  });
+
+  it("descarta coincidencias de un campo desconocido", async () => {
+    const { client } = makeStubClient({
+      items: [
+        makeVentaV2DTO({
+          coincidencias: [
+            { campo: "vendedor", segmentos: [{ texto: "x", coincide: true }], aproximada: false, recortado: false },
+          ],
+        }),
+      ],
+    });
+    const out = await new HttpVentasListAdapter(client).buscarVentas({});
+
+    expect(out.items[0].COINCIDENCIAS).toHaveLength(0);
+  });
+});

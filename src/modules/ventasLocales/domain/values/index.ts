@@ -9,3 +9,11 @@ export { NombreCliente } from "./NombreCliente";
 export { Telefono } from "./Telefono";
 export { Direccion } from "./Direccion";
 export { GPSCoords } from "./GPSCoords";
+export type {
+  OrigenVenta,
+  FiltroOrigen,
+  CampoCoincidencia,
+  Segmento,
+  Coincidencia,
+  ConteoOrigen,
+} from "./Coincidencia";

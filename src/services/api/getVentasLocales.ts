@@ -1,5 +1,11 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { URL_API } from "../../constants/api";
+import type {
+  CampoCoincidencia,
+  Coincidencia,
+  ConteoOrigen,
+  OrigenVenta,
+} from "../../modules/ventasLocales/domain/values/Coincidencia";
 
 const BASE_URL = URL_API
 
@@ -16,16 +22,48 @@ interface ComboV2 { id: string; nombre: string; precio_anual: string; precio_cor
 interface VendedorV2 { id: string; usuario_id: string; email: string; nombre: string }
 interface ImagenV2 { id: string; storage_kind: string; storage_key: string; mime: string; size_bytes: number; descripcion: string | null; created_at: string; updated_at: string }
 
+interface CoincidenciaV2 {
+  campo: string;
+  segmentos: { texto: string; coincide: boolean }[];
+  aproximada: boolean;
+  recortado: boolean;
+}
+
+const CAMPOS_COINCIDENCIA: readonly CampoCoincidencia[] = [
+  "cliente",
+  "telefono",
+  "folio",
+  "direccion",
+  "articulos",
+];
+
+// Defensivo ante un API anterior (sin `coincidencias`) y ante un campo que el
+// escritorio todavía no conoce: ese se descarta en vez de pintarse mal.
+const mapCoincidencias = (raw?: CoincidenciaV2[] | null): Coincidencia[] =>
+  (raw ?? [])
+    .filter((c) => (CAMPOS_COINCIDENCIA as readonly string[]).includes(c.campo))
+    .map((c) => ({
+      campo: c.campo as CampoCoincidencia,
+      segmentos: c.segmentos.map((sg) => ({ texto: sg.texto, coincide: sg.coincide })),
+      aproximada: c.aproximada,
+      recortado: c.recortado,
+    }));
+
 export interface VentaV2DTO {
   id: string;
+  /** "app" | "archivo". Ausente en un API anterior: se trata como "app". */
+  origen?: OrigenVenta;
+  coincidencias?: CoincidenciaV2[];
+  aproximada_detalle?: string | null;
   cliente: ClienteSnapshotV2;
   direccion: DireccionV2;
   gps: GPSV2;
   fecha_venta: string;
-  tipo_venta: string;
-  estado: string;
-  situacion: string;
-  sincronizacion: string;
+  /** Null en ventas de Archivo. */
+  tipo_venta: string | null;
+  estado: string | null;
+  situacion: string | null;
+  sincronizacion: string | null;
   microsip_folio: string | null;
   microsip_docto_pv_id: number | null;
   microsip_aplicada_at: string | null;
@@ -57,7 +95,7 @@ export interface VentaV2DTO {
   fase_alcanzada?: number | null;
 }
 
-export interface ListV2Response<T> { items: T[]; next_cursor?: string }
+export interface ListV2Response<T> { items: T[]; next_cursor?: string; conteo_origen?: ConteoOrigen }
 
 const numOrUndef = (s: string | null | undefined): number | undefined => {
   if (s == null || s === "") return undefined;
@@ -92,17 +130,20 @@ export const adaptVentaV2ToLocal = (v: VentaV2DTO): VentaLocal => {
     COLONIA: v.direccion.colonia,
     POBLACION: v.direccion.poblacion,
     CIUDAD: v.direccion.ciudad,
-    TIPO_VENTA: v.tipo_venta,
+    TIPO_VENTA: v.tipo_venta ?? undefined,
     ZONA_CLIENTE_ID: v.direccion.zona_cliente_id ?? undefined,
     // El nombre de la zona lo manda el API dentro de `direccion`. Si todavía no
     // viene (API sin desplegar), la columna muestra "—" y no se resuelve contra
     // el catálogo local a propósito.
     ZONA_CLIENTE: v.direccion.zona_cliente ?? undefined,
     ENVIADO: true,
-    SITUACION: v.situacion as VentaLocal["SITUACION"],
-    SINCRONIZACION: v.sincronizacion as VentaLocal["SINCRONIZACION"],
-    ESTADO: v.estado as VentaLocal["ESTADO"],
-    MICROSIP_FOLIO: v.microsip_folio,
+    SITUACION: (v.situacion ?? undefined) as VentaLocal["SITUACION"],
+    SINCRONIZACION: (v.sincronizacion ?? undefined) as VentaLocal["SINCRONIZACION"],
+    ESTADO: (v.estado ?? undefined) as VentaLocal["ESTADO"],
+    MICROSIP_FOLIO: v.microsip_folio ?? undefined,
+    ORIGEN: v.origen,
+    COINCIDENCIAS: mapCoincidencias(v.coincidencias),
+    APROXIMADA_DETALLE: v.aproximada_detalle ?? undefined,
     MICROSIP_DOCTO_PV_ID: v.microsip_docto_pv_id,
     MICROSIP_APLICADA_AT: v.microsip_aplicada_at,
     MONTO_CONTADO: numOrUndef(v.montos.contado),
@@ -173,6 +214,10 @@ export interface VentaLocal {
   SITUACION?: "borrador" | "revisada" | "aprobada" | "cancelada";
   SINCRONIZACION?: "pendiente" | "aplicada";
   ESTADO?: "active" | "deleted";
+  /** Ausente = "app". */
+  ORIGEN?: OrigenVenta;
+  COINCIDENCIAS?: Coincidencia[];
+  APROXIMADA_DETALLE?: string;
   MICROSIP_FOLIO?: string | null;
   MICROSIP_DOCTO_PV_ID?: number | null;
   MICROSIP_APLICADA_AT?: string | null;

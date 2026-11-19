@@ -1,3 +1,5 @@
+import type { FiltroOrigen } from "../../domain/values/Coincidencia";
+
 // SortByVenta mirrors the backend sort_by enum for GET /v2/ventas. It is the
 // only allowed set — ciudad/tipoVenta sorting from the legacy UI has no
 // backend equivalent and must be dropped at the presentation layer instead
@@ -22,6 +24,7 @@ export type BuscarVentasInput = {
   readonly incluirCanceladas?: boolean;
   readonly sortBy?: SortByVenta;
   readonly sortOrder?: "asc" | "desc";
+  readonly origen?: FiltroOrigen;
   readonly cursor?: string;
   readonly limit?: number;
 };

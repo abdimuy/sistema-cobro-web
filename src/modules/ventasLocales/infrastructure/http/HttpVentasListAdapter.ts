@@ -57,6 +57,7 @@ export class HttpVentasListAdapter implements VentasListPort {
       if (input.incluirCanceladas !== undefined) params.incluir_canceladas = input.incluirCanceladas;
       if (input.sortBy !== undefined) params.sort_by = input.sortBy;
       if (input.sortOrder !== undefined) params.sort_order = input.sortOrder;
+      if (input.origen !== undefined) params.origen = input.origen;
       if (input.cursor !== undefined) params.cursor = input.cursor;
       if (input.limit !== undefined) params.limit = input.limit;
 
@@ -70,6 +71,7 @@ export class HttpVentasListAdapter implements VentasListPort {
         // El backend omite next_cursor en la última página (json omitempty),
         // así que un campo ausente significa "no hay más" → "".
         nextCursor: data.next_cursor ?? "",
+        ...(data.conteo_origen !== undefined && { conteoOrigen: data.conteo_origen }),
       };
     } catch (e) {
       throw mapAxiosError(e);
