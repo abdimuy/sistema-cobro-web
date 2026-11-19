@@ -1,11 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
-import { getVentaArchivo, type VentaArchivoDTO } from "@/services/api/getVentaArchivo";
+import { isAxiosError } from "axios";
+import {
+  getVentaArchivo,
+  type VentaArchivoDTO,
+} from "@/services/api/getVentaArchivo";
 
 export interface UseVentaArchivoReturn {
   venta: VentaArchivoDTO | null;
   loading: boolean;
   error: string | null;
   reintentar: () => void;
+}
+
+// Texto de UI en español: el mensaje de axios/Error viene en inglés.
+function mensajeDeError(e: unknown): string {
+  if (isAxiosError(e) && e.response?.status === 404)
+    return "La venta no existe";
+  return "No se pudo cargar la venta";
 }
 
 // Detalle de una venta de Archivo. Aborta al cambiar de id y no pide con null.
@@ -30,7 +41,7 @@ export function useVentaArchivo(id: string | null): UseVentaArchivoReturn {
       })
       .catch((e: unknown) => {
         if (ctrl.signal.aborted) return;
-        setError(e instanceof Error ? e.message : "No se pudo cargar la venta");
+        setError(mensajeDeError(e));
       })
       .finally(() => {
         if (!ctrl.signal.aborted) setLoading(false);

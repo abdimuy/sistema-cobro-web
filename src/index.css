@@ -309,6 +309,9 @@ body {
 .fila-aparece {
   animation: fila-aparece 0.2s ease-out;
 }
+.panel-aparece {
+  animation: fila-aparece 0.2s ease-out;
+}
 .dark .coincide {
   background: #1e3a8a;
   color: #dbeafe;
@@ -339,7 +342,8 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .coincide,
-  .fila-aparece {
+  .fila-aparece,
+  .panel-aparece {
     animation: none;
   }
 }
