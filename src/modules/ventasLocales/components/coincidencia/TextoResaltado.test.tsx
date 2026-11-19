@@ -21,7 +21,11 @@ describe("TextoResaltado", () => {
 
   it("aproximada usa la clase coincide-aprox y no la exacta", () => {
     const { container } = render(
-      <TextoResaltado texto="x" aproximada segmentos={[{ texto: "Gracia", coincide: true }]} />,
+      <TextoResaltado
+        texto="x"
+        aproximada
+        segmentos={[{ texto: "Gracia", coincide: true }]}
+      />,
     );
     const m = container.querySelector("mark");
     expect(m?.classList.contains("coincide-aprox")).toBe(true);
@@ -30,7 +34,10 @@ describe("TextoResaltado", () => {
 
   it("un segmento con <script> se pinta como texto, sin elementos script", () => {
     const { container } = render(
-      <TextoResaltado texto="x" segmentos={[{ texto: "<script>alert(1)</script>", coincide: true }]} />,
+      <TextoResaltado
+        texto="x"
+        segmentos={[{ texto: "<script>alert(1)</script>", coincide: true }]}
+      />,
     );
     expect(container.querySelector("script")).toBeNull();
     expect(container.textContent).toContain("<script>alert(1)</script>");

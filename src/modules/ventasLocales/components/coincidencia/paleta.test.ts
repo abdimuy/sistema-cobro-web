@@ -18,7 +18,14 @@ describe("paleta de coincidencia", () => {
 
   it("la paleta clara es la del spec", () => {
     const c = PALETA_COINCIDENCIA.claro;
-    expect([c.exacta.bg, c.exacta.fg, c.aprox.fg, c.aprox.linea, c.chip.borde, c.chip.fg]).toEqual([
+    expect([
+      c.exacta.bg,
+      c.exacta.fg,
+      c.aprox.fg,
+      c.aprox.linea,
+      c.chip.borde,
+      c.chip.fg,
+    ]).toEqual([
       "#dbeafe",
       "#1e3a8a",
       "#1e40af",
@@ -43,8 +50,12 @@ describe("paleta de coincidencia", () => {
   });
 
   it("index.css anula las animaciones de coincidencia bajo prefers-reduced-motion", () => {
-    const bloques = css.split(/@media\s*\(prefers-reduced-motion:\s*reduce\)/).slice(1);
-    const propio = bloques.find((b) => b.includes(".coincide") && b.includes(".fila-aparece"));
+    const bloques = css
+      .split(/@media\s*\(prefers-reduced-motion:\s*reduce\)/)
+      .slice(1);
+    const propio = bloques.find(
+      (b) => b.includes(".coincide") && b.includes(".fila-aparece"),
+    );
     expect(propio).toBeDefined();
     expect(propio).toMatch(/animation:\s*none/);
   });
