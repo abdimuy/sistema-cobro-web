@@ -3,6 +3,7 @@ import type { VentaLocal, VentasParams } from "../../../../services/api/getVenta
 import { DomainError } from "../../domain/errors";
 import { useVentasListPort } from "../context/VentasListContext";
 import { buscarVentas } from "../../application/usecases/buscarVentas";
+import type { ConteoOrigen } from "../../domain/values/Coincidencia";
 import type { BuscarVentasInput, SortByVenta } from "../../application/dto/BuscarVentasInput";
 
 // ============================================================================
@@ -28,6 +29,8 @@ export type UseVentasReturn = UseVentasState &
   UseVentasActions & {
     params: VentasParams;
     hasMore: boolean;
+    /** Conteos por origen de la última primera página; undefined con un API anterior. */
+    conteoOrigen: ConteoOrigen | undefined;
   };
 
 const DEFAULT_LIMIT = 50;
@@ -58,6 +61,7 @@ function toBuscarVentasInput(params: VentasParams, cursor?: string): BuscarVenta
     // La UI guarda el filtro como `vendedorEmails` (plural) aunque el selector
     // es de un solo vendedor; el contrato del backend es `vendedor_email`.
     ...(params.vendedorEmails !== undefined && { vendedorEmail: params.vendedorEmails }),
+    ...(params.origen !== undefined && { origen: params.origen }),
     ...(sortBy !== undefined && { sortBy }),
     ...(params.sortOrder !== undefined && { sortOrder: params.sortOrder }),
     ...(cursor !== undefined && { cursor }),
@@ -97,6 +101,7 @@ export function useBuscarVentas(initialParams?: Partial<VentasParams>): UseVenta
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [conteoOrigen, setConteoOrigen] = useState<ConteoOrigen | undefined>(undefined);
   const [tick, setTick] = useState(0);
 
   const abortRef = useRef<AbortController | null>(null);
@@ -115,6 +120,7 @@ export function useBuscarVentas(initialParams?: Partial<VentasParams>): UseVenta
     fechaFin,
     incluirCanceladas,
     vendedorEmails,
+    origen,
     sortBy,
     sortOrder,
     limit,
@@ -134,6 +140,7 @@ export function useBuscarVentas(initialParams?: Partial<VentasParams>): UseVenta
       .then((out) => {
         if (ctrl.signal.aborted) return;
         setVentas(out.items);
+        setConteoOrigen(out.conteoOrigen);
         setNextCursor(out.nextCursor);
         nextCursorRef.current = out.nextCursor;
       })
@@ -160,6 +167,7 @@ export function useBuscarVentas(initialParams?: Partial<VentasParams>): UseVenta
     fechaFin,
     incluirCanceladas,
     vendedorEmails,
+    origen,
     sortBy,
     sortOrder,
     limit,
@@ -219,6 +227,7 @@ export function useBuscarVentas(initialParams?: Partial<VentasParams>): UseVenta
     error,
     params,
     hasMore: nextCursor !== "",
+    conteoOrigen,
     setParams,
     updateSort,
     loadMore,

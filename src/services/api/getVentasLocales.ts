@@ -4,6 +4,7 @@ import type {
   CampoCoincidencia,
   Coincidencia,
   ConteoOrigen,
+  FiltroOrigen,
   OrigenVenta,
 } from "../../modules/ventasLocales/domain/values/Coincidencia";
 
@@ -287,6 +288,8 @@ export interface VentasParams {
   // Sorting
   sortBy?: "fechaVenta" | "nombreCliente" | "precioTotal" | "ciudad" | "tipoVenta";
   sortOrder?: "asc" | "desc";
+  // Origen de la venta (default del API: todas)
+  origen?: FiltroOrigen;
   // Options
   includeTotal?: boolean;
   incluirCanceladas?: boolean;

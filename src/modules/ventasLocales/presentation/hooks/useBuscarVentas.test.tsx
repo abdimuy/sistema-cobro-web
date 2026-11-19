@@ -280,3 +280,59 @@ describe("useBuscarVentas", () => {
     expect(result.current.ventas[0]?.LOCAL_SALE_ID).toBe("fresh");
   });
 });
+
+describe("useBuscarVentas origen y conteoOrigen", () => {
+  it("reenvía origen al puerto cuando cambia con setParams", async () => {
+    const port = new FakeVentasListPort();
+    const { result } = renderHook(() => useBuscarVentas(), { wrapper: wrapWith(port) });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => result.current.setParams({ origen: "archivo" }));
+    await waitFor(() => expect(port.buscarCalls).toHaveLength(2));
+
+    expect(port.buscarCalls[port.buscarCalls.length - 1].input.origen).toBe("archivo");
+  });
+
+  it("expone conteoOrigen de la última primera página y lo conserva en loadMore", async () => {
+    const port = new FakeVentasListPort();
+    port.buscarResponse = {
+      items: [makeFakeVentaLocal({ LOCAL_SALE_ID: "v1" })],
+      nextCursor: "c2",
+      conteoOrigen: { app: 5, archivo: 7 },
+    };
+    const { result } = renderHook(() => useBuscarVentas({ origen: "archivo" }), {
+      wrapper: wrapWith(port),
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.conteoOrigen).toEqual({ app: 5, archivo: 7 });
+
+    port.buscarResponse = {
+      items: [makeFakeVentaLocal({ LOCAL_SALE_ID: "v2" })],
+      nextCursor: "",
+      conteoOrigen: { app: 99, archivo: 99 },
+    };
+    await act(async () => {
+      await result.current.loadMore();
+    });
+
+    expect(result.current.conteoOrigen).toEqual({ app: 5, archivo: 7 });
+    expect(port.buscarCalls[1].input.origen).toBe("archivo");
+    expect(port.buscarCalls[1].input.cursor).toBe("c2");
+  });
+
+  it("conteoOrigen es undefined con un API anterior", async () => {
+    const port = new FakeVentasListPort();
+    const { result } = renderHook(() => useBuscarVentas(), { wrapper: wrapWith(port) });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.conteoOrigen).toBeUndefined();
+  });
+
+  it("no manda origen por defecto", async () => {
+    const port = new FakeVentasListPort();
+    const { result } = renderHook(() => useBuscarVentas(), { wrapper: wrapWith(port) });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(port.buscarCalls[0].input.origen).toBeUndefined();
+  });
+});
