@@ -8,6 +8,8 @@ interface Props {
   alt?: string;
   className?: string;
   onLoad?: (el: HTMLImageElement) => void;
+  /** Texto visible cuando la descarga falla; sin él solo se muestra el ícono. */
+  textoError?: string;
 }
 
 // Ref-counted blob cache. Multiple consumers (thumbnail + lightbox) of the
@@ -75,7 +77,7 @@ const release = (key: string) => {
   }
 };
 
-export const AuthenticatedImage = ({ fuente, alt, className, onLoad }: Props) => {
+export const AuthenticatedImage = ({ fuente, alt, className, onLoad, textoError }: Props) => {
   const key = fuente.cacheKey;
   // El descargador puede ser una función nueva en cada render; la clave manda.
   const fuenteRef = useRef(fuente);
@@ -107,7 +109,10 @@ export const AuthenticatedImage = ({ fuente, alt, className, onLoad }: Props) =>
         aria-label="No se pudo cargar la imagen"
         className={cn("flex items-center justify-center bg-muted text-muted-foreground", className)}
       >
-        <ImageOff className="h-5 w-5" />
+        <div className="flex flex-col items-center gap-1 text-center">
+          <ImageOff className="h-5 w-5" />
+          {textoError && <span className="text-xs">{textoError}</span>}
+        </div>
       </div>
     );
   }
