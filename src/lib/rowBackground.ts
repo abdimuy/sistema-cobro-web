@@ -13,8 +13,8 @@
  * de `index.css` guardan sólo los canales HSL (`0 0% 100%`), no un color
  * completo: `var(--card)` a secas es una declaración inválida.
  *
- * Las filas de Archivo (solo consulta) llevan un tono propio, `--fila-archivo`
- * (#fafaf9 en claro); el hover conserva el de la app.
+ * Las filas de Archivo (solo consulta) llevan un degradado violeta propio
+ * (`--archivo-fondo` hacia la tarjeta en 280px); el hover conserva el de la app.
  */
 export const rowBackground = (
   zebra: boolean,
@@ -22,6 +22,6 @@ export const rowBackground = (
   archivo = false,
 ): string => {
   if (hovered) return "hsl(var(--accent))";
-  if (archivo) return "hsl(var(--fila-archivo))";
+  if (archivo) return "linear-gradient(90deg, var(--archivo-fondo) 0, hsl(var(--card)) 280px)";
   return zebra ? "hsl(var(--muted))" : "hsl(var(--card))";
 };

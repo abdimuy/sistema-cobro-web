@@ -83,7 +83,7 @@ export function ArchivoPanel({
         <>
           <div className="flex items-start justify-between gap-2.5 border-b border-border/60 px-4 py-3.5">
             <div className="flex min-w-0 flex-col gap-1">
-              <ArchivoBadge className="self-start" />
+              <ArchivoBadge variant="insignia" className="self-start" />
               <h2 className="m-0 text-[17px] font-semibold">
                 {venta.nombre_cliente}
               </h2>

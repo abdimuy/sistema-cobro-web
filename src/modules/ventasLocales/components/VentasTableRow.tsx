@@ -7,6 +7,7 @@ import {
   MapPin,
   MoreHorizontal,
   Check,
+  Lock,
 } from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import { CoincidenciaMotivos } from "./coincidencia/CoincidenciaMotivos";
 import { coincidenciaDe, columnaDelBloque, segmentosSobreFormato } from "./coincidencia/coincidencias";
 import { formatCurrency, formatPhone, copyToClipboard } from "./utils";
 import { cn } from "@/lib/utils";
+import { anioOficina } from "./archivo/formatoArchivo";
 import { rowBackground } from "@/lib/rowBackground";
 
 const formatDate = (iso: string): string => dayjs(iso).format("DD/MM/YYYY HH:mm");
@@ -49,6 +51,36 @@ const SINCRONIZACION_STYLES: Record<NonNullable<VentaLocal["SINCRONIZACION"]>, s
   pendiente: "bg-chart-4/15 text-chart-4 border-chart-4/30",
   aplicada: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-400",
 };
+
+/** Bajo el nombre: "Sistema anterior · año · n fotos". Las fotos sólo si la lista las cuenta. */
+function ArchivoLinea({ venta }: { venta: VentaLocal }) {
+  const anio = anioOficina(venta.FECHA_VENTA);
+  const fotos = venta.IMAGENES_COUNT ?? 0;
+  const sep = (
+    <span aria-hidden="true" className="mx-1.5">
+      ·
+    </span>
+  );
+  return (
+    <div className="mt-[3px] flex items-center text-[11px] text-muted-foreground">
+      <span className="font-medium" style={{ color: "var(--archivo-etiqueta)" }}>
+        Sistema anterior
+      </span>
+      {anio && (
+        <>
+          {sep}
+          <span>{anio}</span>
+        </>
+      )}
+      {fotos > 0 && (
+        <>
+          {sep}
+          <span>{fotos === 1 ? "1 foto" : `${fotos} fotos`}</span>
+        </>
+      )}
+    </div>
+  );
+}
 
 interface VentasTableRowProps {
   venta: VentaLocal;
@@ -153,6 +185,14 @@ export function VentasTableRow({
             : "1px 0 0 0 var(--border)",
         }
       : { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` };
+    // Franja violeta de 3px a la izquierda de la fila de Archivo: va en la
+    // primera celda visible (un box-shadow en el <tr> no es fiable).
+    if (esArchivo && columnId === visibleColumns[0]) {
+      const franja = "inset 3px 0 0 var(--archivo-borde)";
+      cellStyle.boxShadow = cellStyle.boxShadow
+        ? `${franja}, ${cellStyle.boxShadow}`
+        : franja;
+    }
 
     switch (columnId) {
       case "fase":
@@ -202,6 +242,7 @@ export function VentasTableRow({
                 />
               </span>
             )}
+            {esArchivo && <ArchivoLinea venta={venta} />}
           </TableCell>
         );
 
@@ -452,7 +493,10 @@ export function VentasTableRow({
         return (
           <TableCell className={alignClass} style={cellStyle}>
             {esArchivo ? (
-              <span className="text-xs text-muted-foreground">Solo consulta</span>
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <Lock aria-hidden="true" className="h-3 w-3 text-[#9ca3af]" />
+                Solo consulta
+              </span>
             ) : s ? (
               <span className={cn(
                 "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",

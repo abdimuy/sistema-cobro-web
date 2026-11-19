@@ -219,6 +219,58 @@ describe("VentasTableRow — Archivo y coincidencias", () => {
     expect(mockUseVentaEventos).not.toHaveBeenCalled();
   });
 
+  it("Archivo: círculo violeta con la etiqueta accesible y sin anillo de fase", () => {
+    const { container } = renderRow({ venta: ARCHIVO, visibleColumns: COLS_FASE });
+    const marca = screen.getByRole("img", { name: "Venta del sistema anterior" });
+    expect(marca).toHaveAttribute("title", "Venta del sistema anterior");
+    const circulo = marca.firstElementChild as HTMLElement;
+    expect(circulo.className).toContain("h-[30px]");
+    expect(circulo.className).toContain("rounded-full");
+    expect(circulo.style.boxShadow).toContain("var(--archivo-borde)");
+    expect(circulo.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    expect(container.querySelector('[data-testid="fase-anillo"]')).toBeNull();
+  });
+
+  it("Archivo: línea 'Sistema anterior · año' en hora de oficina, sin fotos si la lista no las cuenta", () => {
+    renderRow({
+      venta: { ...ARCHIVO, FECHA_VENTA: "2020-01-01T03:00:00Z", IMAGENES_COUNT: 0 },
+      visibleColumns: ["cliente"],
+    });
+    const linea = screen.getByText("Sistema anterior").parentElement as HTMLElement;
+    // 03:00Z del 1 de enero es 31 de diciembre de 2019 en la oficina.
+    expect(linea.textContent).toBe("Sistema anterior·2019");
+    expect(linea.textContent).not.toMatch(/foto/);
+  });
+
+  it("Archivo: con conteo de imágenes muestra '1 foto' / 'n fotos'", () => {
+    const { unmount } = renderRow({
+      venta: { ...ARCHIVO, IMAGENES_COUNT: 1 },
+      visibleColumns: ["cliente"],
+    });
+    expect(screen.getByText("1 foto")).toBeInTheDocument();
+    unmount();
+    renderRow({ venta: { ...ARCHIVO, IMAGENES_COUNT: 3 }, visibleColumns: ["cliente"] });
+    expect(screen.getByText("3 fotos")).toBeInTheDocument();
+  });
+
+  it("Archivo: franja violeta en la primera celda; la app no lleva franja ni línea", () => {
+    renderRow({ venta: ARCHIVO, visibleColumns: ["cliente", "situacion"] });
+    const td = document.querySelector("td") as HTMLTableCellElement;
+    expect(td.style.boxShadow).toContain("inset 3px 0 0 var(--archivo-borde)");
+  });
+
+  it("Archivo: 'Solo consulta' lleva el candado", () => {
+    renderRow({ venta: ARCHIVO, visibleColumns: ["situacion"] });
+    const t = screen.getByText("Solo consulta");
+    expect(t.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("app: sin línea 'Sistema anterior' ni candado", () => {
+    renderRow({ visibleColumns: ["cliente", "situacion"] });
+    expect(screen.queryByText("Sistema anterior")).toBeNull();
+    expect(document.querySelector("tr")!.style.background).not.toContain("archivo");
+  });
+
   it("fila de app sigue montando FaseCell", () => {
     // El hook se llama solo al abrir el panel de la fase; montarla se ve en el anillo.
     renderRow({ visibleColumns: ["fase", "cliente"] });
@@ -280,7 +332,7 @@ describe("VentasTableRow — Archivo y coincidencias", () => {
   it("tono de fila de Archivo distinto al de la app y token propio en hover", () => {
     renderRow({ venta: ARCHIVO });
     const tr = document.querySelector("tr") as HTMLTableRowElement;
-    expect(tr.style.background).toBe("hsl(var(--fila-archivo))");
+    expect(tr.style.background).toContain("var(--archivo-fondo)");
     fireEvent.mouseEnter(tr);
     expect(tr.style.background).toBe("hsl(var(--accent))");
   });

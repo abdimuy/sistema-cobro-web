@@ -99,10 +99,21 @@ body {
     --dsm-gris: 155 6% 38%;
     --dsm-gris-fondo: 160 9% 94%;
     --dsm-visita: 153 6% 62%;
-    --fila-archivo: 60 9.1% 97.8%; /* #fafaf9 */
+    /* Archivo (ventas del sistema anterior): violeta. Hex completos, no canales HSL. */
+    --archivo-fondo: #faf8ff;
+    --archivo-circulo: #f3f0ff;
+    --archivo-borde: #c4b5fd;
+    --archivo-trazo: #6d28d9;
+    --archivo-texto: #5b21b6;
+    --archivo-etiqueta: #6d28d9;
   }
   .dark {
-    --fila-archivo: 0 0% 7%;
+    --archivo-fondo: #1e1433;
+    --archivo-circulo: #2e1065;
+    --archivo-borde: #8b5cf6;
+    --archivo-trazo: #c4b5fd;
+    --archivo-texto: #ddd6fe;
+    --archivo-etiqueta: #a78bfa;
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
     --card: 0 0% 3.9%;

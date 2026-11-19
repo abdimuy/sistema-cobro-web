@@ -9,8 +9,9 @@ describe("rowBackground", () => {
   });
 
   it("Archivo tiene tono propio y conserva el hover de la app", () => {
-    expect(rowBackground(false, false, true)).toBe("hsl(var(--fila-archivo))");
-    expect(rowBackground(true, false, true)).toBe("hsl(var(--fila-archivo))");
+    const degradado = "linear-gradient(90deg, var(--archivo-fondo) 0, hsl(var(--card)) 280px)";
+    expect(rowBackground(false, false, true)).toBe(degradado);
+    expect(rowBackground(true, false, true)).toBe(degradado);
     expect(rowBackground(false, true, true)).toBe("hsl(var(--accent))");
     expect(rowBackground(false, false, true)).not.toBe(rowBackground(false, false));
   });

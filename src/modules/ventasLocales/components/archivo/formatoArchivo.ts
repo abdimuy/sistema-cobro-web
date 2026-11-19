@@ -35,3 +35,14 @@ export function lineaSoloConsulta(
 ): string {
   return `Venta del sistema anterior · solo consulta · capturada el ${fechaHoraOficina(v.fecha_venta)} por ${v.capturada_por}`;
 }
+
+// Año de la venta en hora de oficina (una venta de la noche del 31 de diciembre
+// no salta de año por el UTC). Inválido -> null.
+export function anioOficina(iso: string): string | null {
+  try {
+    const m = /^(\d{4,})-/.exec(enRelojDeNegocio(iso));
+    return m ? m[1] : null;
+  } catch {
+    return null;
+  }
+}
