@@ -84,6 +84,22 @@ describe("ArchivoPanel", () => {
     expect(screen.getByText(/RECAMARA/)).toBeInTheDocument();
   });
 
+  it("al abrir, el foco va al botón 'Cerrar detalle'", () => {
+    ok();
+    render(<ArchivoPanel ventaId="v1" onClose={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "Cerrar detalle" })).toHaveFocus();
+  });
+
+  it("Escape cierra el panel", () => {
+    ok();
+    const onClose = vi.fn();
+    render(<ArchivoPanel ventaId="v1" onClose={onClose} />);
+    fireEvent.keyDown(screen.getByRole("button", { name: "Cerrar detalle" }), {
+      key: "Escape",
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it("no tiene botones de acción: solo 'Cerrar detalle' y los de la galería", () => {
     ok({
       imagenes: [

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import MapSimple from "@/components/MapSimple";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,9 +56,26 @@ export function ArchivoPanel({
   onClose: () => void;
 }) {
   const { venta, loading, error, reintentar } = useVentaArchivo(ventaId);
+  const panelRef = useRef<HTMLElement>(null);
+
+  // Al abrir (o cambiar de venta / terminar de cargar, que remonta el botón)
+  // el foco va al botón de cerrar.
+  const cargada = venta !== null && venta !== undefined;
+  useEffect(() => {
+    panelRef.current
+      ?.querySelector<HTMLButtonElement>('button[aria-label="Cerrar detalle"]')
+      ?.focus();
+  }, [ventaId, cargada]);
 
   return (
     <aside
+      ref={panelRef}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          e.stopPropagation();
+          onClose();
+        }
+      }}
       aria-label="Detalle de venta de Archivo"
       className="panel-aparece flex min-w-0 max-w-[520px] flex-[1_1_380px] flex-col overflow-hidden rounded-lg border border-border bg-background"
     >

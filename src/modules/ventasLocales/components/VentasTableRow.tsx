@@ -688,7 +688,8 @@ export function VentasTableRow({
 
   return (
     <TableRow
-      className="group cursor-pointer transition-colors fila-aparece"
+      className="group cursor-pointer transition-colors fila-aparece outline-none"
+      tabIndex={-1}
       style={{ background }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}

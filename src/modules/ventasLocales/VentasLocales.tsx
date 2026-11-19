@@ -150,8 +150,14 @@ function VentasLocalesScreen() {
     [setParams]
   );
 
+  // Fila que abrió el panel: al cerrarlo el foco vuelve ahí.
+  const disparadorPanelRef = useRef<HTMLElement | null>(null);
+
   const handleViewDetails = useCallback((venta: VentaLocal) => {
     if (venta.ORIGEN === "archivo") {
+      if (document.activeElement instanceof HTMLElement) {
+        disparadorPanelRef.current = document.activeElement;
+      }
       setArchivoSeleccionadoId(venta.LOCAL_SALE_ID);
       return;
     }
@@ -159,7 +165,12 @@ function VentasLocalesScreen() {
     setShowDetalleModal(true);
   }, []);
 
-  const handleCloseArchivo = useCallback(() => setArchivoSeleccionadoId(null), []);
+  const handleCloseArchivo = useCallback(() => {
+    setArchivoSeleccionadoId(null);
+    const el = disparadorPanelRef.current;
+    disparadorPanelRef.current = null;
+    if (el && el.isConnected) el.focus();
+  }, []);
 
   // `origen` NO se guarda en las vistas (views.ts): es un filtro de consulta
   // de la sesión, no una preferencia de presentación.

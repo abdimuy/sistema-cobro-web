@@ -97,6 +97,18 @@ describe("VentasLocales: Archivo y origen", () => {
     expect(screen.queryByTestId("modal-app")).toBeNull();
   });
 
+  it("al cerrar el panel el foco vuelve a la fila que lo abrió", () => {
+    renderScreen();
+    const fila = screen.getByText("fila-x1");
+    fila.focus();
+    fireEvent.click(fila);
+    const cerrar = screen.getByText("cerrar-panel");
+    cerrar.focus(); // el foco se mudó al panel
+    expect(fila).not.toHaveFocus();
+    fireEvent.click(cerrar);
+    expect(fila).toHaveFocus();
+  });
+
   it("abrir otra venta de Archivo reemplaza el panel", () => {
     renderScreen();
     fireEvent.click(screen.getByText("fila-x1"));
