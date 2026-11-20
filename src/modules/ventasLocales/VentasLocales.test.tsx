@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
@@ -57,7 +57,9 @@ vi.mock("./components/VentasTable", () => ({
 }));
 vi.mock("./components/VentasFilters", () => ({ VentasFilters: () => null }));
 vi.mock("./components/VentasViewSwitcher", () => ({ VentasViewSwitcher: () => null }));
-vi.mock("./components/VentasColumnSelector", () => ({ VentasColumnSelector: () => null }));
+vi.mock("./components/VentasColumnSelector", () => ({
+  VentasColumnSelector: () => <div data-testid="selector-columnas" />,
+}));
 
 import VentasLocales from "./VentasLocales";
 
@@ -180,14 +182,51 @@ describe("VentasLocales: Archivo y origen", () => {
     expect(screen.getByRole("button", { name: /^App/ })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("con conteoOrigen.archivo null el filtro muestra 'Archivo —'", () => {
-    hookState.conteoOrigen = { app: 5, archivo: null };
+  it("las pestañas de origen no muestran totales", () => {
+    hookState.conteoOrigen = { app: 5, archivo: 7 };
     renderScreen();
-    expect(screen.getByRole("button", { name: /Archivo\s+—/ })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Origen" })).not.toHaveTextContent(/\d/);
   });
 
   it("el deep link ?ventaId= sigue abriendo el modal de app", () => {
     renderScreen("/?ventaId=deep1");
     expect(screen.getByTestId("modal-app")).toHaveTextContent("deep1");
+  });
+});
+
+describe("VentasLocales: barra de filtros angosta", () => {
+  let ancho = 0;
+  const original = globalThis.ResizeObserver;
+  beforeEach(() => {
+    globalThis.ResizeObserver = class {
+      private cb: ResizeObserverCallback;
+      constructor(cb: ResizeObserverCallback) {
+        this.cb = cb;
+      }
+      observe() {
+        this.cb([{ contentRect: { width: ancho } } as ResizeObserverEntry], this as unknown as ResizeObserver);
+      }
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+  });
+  afterEach(() => {
+    globalThis.ResizeObserver = original;
+  });
+
+  it("ancha: Columnas en línea y sin menú Más", () => {
+    ancho = 1200;
+    renderScreen();
+    expect(screen.getByTestId("selector-columnas")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Más opciones" })).not.toBeInTheDocument();
+  });
+
+  it("angosta: Columnas y Densidad pasan al menú Más", () => {
+    ancho = 800;
+    renderScreen();
+    expect(screen.queryByTestId("selector-columnas")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
+    expect(screen.getByTestId("selector-columnas")).toBeInTheDocument();
+    expect(screen.getByText("Densidad")).toBeInTheDocument();
   });
 });

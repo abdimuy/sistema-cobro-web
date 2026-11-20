@@ -12,6 +12,8 @@ import { VentaDetalleModal } from "./components/detalle";
 import { EVENTO_RETORNO_FOCO } from "./components/FotosVistaPrevia";
 import { ArchivoPanel } from "./components/archivo/ArchivoPanel";
 import { OrigenFiltro } from "./components/OrigenFiltro";
+import { BarraMasOpciones } from "./components/BarraMasOpciones";
+import { useBarraAngosta } from "./presentation/hooks/useBarraAngosta";
 import type { VentaLocal } from "@/services/api/getVentasLocales";
 import { VentasListContainer } from "./presentation/composition/VentasListContainer";
 import { useBuscarVentas } from "./presentation/hooks/useBuscarVentas";
@@ -137,8 +139,10 @@ function VentasLocalesScreen() {
     updateSort,
     loadMore,
     refetch,
-    conteoOrigen,
   } = useBuscarVentas();
+
+  const barraRef = useRef<HTMLDivElement>(null);
+  const barraAngosta = useBarraAngosta(barraRef);
 
   // `almacenes` ya no se usa: el filtro de almacén se quitó (el API no filtra
   // por almacén). `getAlmacenById` sigue alimentando la COLUMNA de la tabla.
@@ -365,6 +369,28 @@ function VentasLocalesScreen() {
     );
   }, [params]);
 
+  const vistas = (
+    <VentasViewSwitcher
+      activeViewId={activeViewId}
+      views={allViews}
+      hasUnsavedChanges={hasUnsavedChanges}
+      onSelectView={handleSelectView}
+      onSaveAsNew={handleSaveAsNew}
+      onDeleteView={handleDeleteView}
+      onRenameView={handleRenameView}
+      onResetToView={handleResetToView}
+    />
+  );
+  const densidadControl = <VentasDensityToggle density={density} onChange={setDensity} />;
+  const columnasControl = (
+    <VentasColumnSelector
+      visibleColumns={visibleColumns}
+      onChange={setVisibleColumns}
+      pinnedColumns={pinnedColumns}
+      onTogglePin={handleTogglePin}
+    />
+  );
+
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
@@ -389,42 +415,43 @@ function VentasLocalesScreen() {
             </Button>
           </div>
 
-          {/* Filters Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 pb-4">
+          {/* Filters Row: lo que no cabe pasa al menú "Más" */}
+          <div
+            ref={barraRef}
+            data-testid="ventas-barra-filtros"
+            className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 pb-4"
+          >
             <VentasSearchBar
               value={params.search || ""}
               onSearch={handleSearch}
-              className="flex-1 min-w-0"
+              className="flex-1 min-w-[200px]"
             />
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
               <OrigenFiltro
                 value={params.origen ?? FILTRO_ORIGEN_INICIAL}
-                conteo={conteoOrigen}
                 onChange={handleOrigenChange}
               />
-              <VentasViewSwitcher
-                activeViewId={activeViewId}
-                views={allViews}
-                hasUnsavedChanges={hasUnsavedChanges}
-                onSelectView={handleSelectView}
-                onSaveAsNew={handleSaveAsNew}
-                onDeleteView={handleDeleteView}
-                onRenameView={handleRenameView}
-                onResetToView={handleResetToView}
-              />
+              {!barraAngosta && vistas}
               <VentasFilters
                 params={params}
                 onParamsChange={setParams}
                 zonas={zonas}
                 vendedores={vendedoresOptions}
               />
-              <VentasDensityToggle density={density} onChange={setDensity} />
-              <VentasColumnSelector
-                visibleColumns={visibleColumns}
-                onChange={setVisibleColumns}
-                pinnedColumns={pinnedColumns}
-                onTogglePin={handleTogglePin}
-              />
+              {barraAngosta ? (
+                <BarraMasOpciones
+                  opciones={[
+                    { id: "vistas", etiqueta: "Vista", control: vistas },
+                    { id: "densidad", etiqueta: "Densidad", control: densidadControl },
+                    { id: "columnas", etiqueta: "Columnas", control: columnasControl },
+                  ]}
+                />
+              ) : (
+                <>
+                  {densidadControl}
+                  {columnasControl}
+                </>
+              )}
             </div>
           </div>
         </div>

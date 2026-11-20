@@ -1,35 +1,26 @@
 import { cn } from "@/lib/utils";
-import type {
-  ConteoOrigen,
-  FiltroOrigen,
-} from "../domain/values/Coincidencia";
+import type { FiltroOrigen } from "../domain/values/Coincidencia";
 
 interface Props {
   value: FiltroOrigen;
-  conteo?: ConteoOrigen;
   onChange: (o: FiltroOrigen) => void;
 }
 
-const ETIQUETA = (n: number | null | undefined, conteo: boolean) =>
-  !conteo ? "" : n === null || n === undefined ? " —" : ` ${n}`;
+// Sin totales por pestaña (decisión del dueño, 2026-11-20): sólo las etiquetas.
+const OPCIONES: Array<{ id: FiltroOrigen; label: string }> = [
+  { id: "todas", label: "Todas" },
+  { id: "app", label: "App" },
+  { id: "archivo", label: "Archivo" },
+];
 
-export function OrigenFiltro({ value, conteo, onChange }: Props) {
-  const total =
-    conteo && conteo.app !== null && conteo.archivo !== null
-      ? conteo.app + conteo.archivo
-      : undefined;
-  const opciones: Array<{ id: FiltroOrigen; label: string; sufijo: string }> = [
-    { id: "todas", label: "Todas", sufijo: total === undefined ? "" : ` ${total}` },
-    { id: "app", label: "App", sufijo: ETIQUETA(conteo?.app, !!conteo) },
-    { id: "archivo", label: "Archivo", sufijo: ETIQUETA(conteo?.archivo, !!conteo) },
-  ];
+export function OrigenFiltro({ value, onChange }: Props) {
   return (
     <div
       role="group"
       aria-label="Origen"
-      className="inline-flex gap-0.5 rounded-md border bg-muted p-0.5"
+      className="inline-flex flex-none gap-0.5 rounded-md border bg-muted p-0.5"
     >
-      {opciones.map((o) => {
+      {OPCIONES.map((o) => {
         const activo = value === o.id;
         return (
           <button
@@ -45,9 +36,6 @@ export function OrigenFiltro({ value, conteo, onChange }: Props) {
             )}
           >
             {o.label}
-            {o.sufijo && (
-              <span className="font-normal text-muted-foreground">{o.sufijo}</span>
-            )}
           </button>
         );
       })}
