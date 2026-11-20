@@ -38,8 +38,10 @@ const Pila = forwardRef<
   HTMLButtonElement,
   { total: number; nombre: string } & ButtonHTMLAttributes<HTMLButtonElement>
 >(function Pila({ total, nombre, onClick, ...resto }, ref) {
+  // En oscuro --muted/--card/--border casi igualan el fondo de la fila: las
+  // tarjetas se perdían como manchas negras. Ahí se aclaran con foreground.
   const tarjeta =
-    "absolute left-[3px] top-[4px] h-[20px] w-[24px] rounded-[4px] border border-border bg-muted shadow-sm transition-transform duration-[180ms] motion-reduce:transition-none";
+    "absolute left-[3px] top-[4px] h-[20px] w-[24px] rounded-[4px] border border-border bg-muted shadow-sm transition-transform duration-[180ms] motion-reduce:transition-none dark:shadow-none";
   return (
     <button
       {...resto}
@@ -54,16 +56,16 @@ const Pila = forwardRef<
     >
       <span
         aria-hidden="true"
-        className={`${tarjeta} rotate-[-8deg] group-hover/pila:-translate-x-[2px] group-hover/pila:rotate-[-14deg] group-focus-visible/pila:-translate-x-[2px] group-focus-visible/pila:rotate-[-14deg]`}
+        className={`${tarjeta} rotate-[-8deg] dark:border-foreground/20 dark:bg-secondary group-hover/pila:-translate-x-[2px] group-hover/pila:rotate-[-14deg] group-focus-visible/pila:-translate-x-[2px] group-focus-visible/pila:rotate-[-14deg]`}
       />
       <span
         aria-hidden="true"
-        className={`${tarjeta} translate-x-[3px] translate-y-[1px] bg-card group-hover/pila:translate-x-[5px] group-hover/pila:-translate-y-[1px] group-focus-visible/pila:translate-x-[5px] group-focus-visible/pila:-translate-y-[1px]`}
+        className={`${tarjeta} translate-x-[3px] translate-y-[1px] bg-card dark:border-foreground/45 dark:bg-secondary group-hover/pila:translate-x-[5px] group-hover/pila:-translate-y-[1px] group-focus-visible/pila:translate-x-[5px] group-focus-visible/pila:-translate-y-[1px]`}
       />
       <span
         aria-hidden="true"
         data-testid="fotos-contador"
-        className="absolute bottom-0 right-0 flex h-[15px] min-w-[15px] items-center justify-center rounded-full border border-background bg-primary px-1 text-[9px] font-semibold leading-none text-primary-foreground"
+        className="absolute bottom-0 right-0 flex h-[15px] min-w-[15px] items-center justify-center rounded-full border border-background bg-primary px-1 text-[9px] font-semibold leading-none text-primary-foreground dark:bg-muted-foreground dark:text-background"
       >
         {total}
       </span>
