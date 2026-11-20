@@ -308,21 +308,26 @@ describe("VentasTableRow — Archivo y coincidencias", () => {
     expect(mark).toHaveTextContent("GARCÍA");
   });
 
-  it("muestra chip 'teléfono' y resalta el teléfono cuando campo=telefono", () => {
+  it("coincidencia en columna visible: resalta ahí y la línea muestra la dirección en gris, sin etiquetas", () => {
     renderRow({
       visibleColumns: ["cliente", "telefono"],
-      venta: { ...ARCHIVO, TELEFONO: "236 381 0042", COINCIDENCIAS: [coin("telefono", [seg("236 ", false), seg("381", true), seg(" 0042", false)])] },
+      venta: { ...ARCHIVO, DIRECCION: "Calle Hidalgo 18", TELEFONO: "236 381 0042", COINCIDENCIAS: [coin("telefono", [seg("236 ", false), seg("381", true), seg(" 0042", false)])] },
     });
-    expect(screen.getByText("teléfono")).toBeInTheDocument();
     expect(document.querySelector("mark")).toHaveTextContent("381");
+    expect(screen.getByTestId("coincidencia-linea")).toHaveTextContent("Calle Hidalgo 18");
+    expect(document.querySelector(".coincide-chip")).toBeNull();
+    expect(screen.queryByText("Sistema anterior")).toBeNull();
   });
 
-  it("muestra 'Coincide en artículos' aunque no sea columna", () => {
+  it("coincidencia en artículos: una línea con +N si hay más campos ocultos", () => {
     renderRow({
-      venta: { ...ARCHIVO, COINCIDENCIAS: [coin("articulos", [seg("Sala ", false), seg("Milán", true)])] },
+      venta: { ...ARCHIVO, COINCIDENCIAS: [coin("articulos", [seg("Sala ", false), seg("Milán", true)]), coin("telefono", [seg("1832", true)])] },
+      visibleColumns: ["cliente"],
     });
-    expect(screen.getByText(/Coincide en/)).toBeInTheDocument();
-    expect(document.querySelector("mark")).toHaveTextContent("Milán");
+    const linea = screen.getByTestId("coincidencia-linea");
+    expect(linea.querySelector("mark")).toHaveTextContent("Milán");
+    expect(linea).toHaveTextContent("+1");
+    expect(screen.getByRole("button", { name: /Coincide en artículos: Sala Milán/ })).toBeInTheDocument();
   });
 
   it("con cliente oculto el bloque de motivos aparece en la primera columna visible", () => {
@@ -330,7 +335,7 @@ describe("VentasTableRow — Archivo y coincidencias", () => {
       visibleColumns: ["zona", "telefono"],
       venta: { ...ARCHIVO, COINCIDENCIAS: [coin("articulos", [seg("Milán", true)])] },
     });
-    const celda = screen.getByText(/Coincide en/).closest("td") as HTMLTableCellElement;
+    const celda = screen.getByTestId("coincidencia-linea").closest("td") as HTMLTableCellElement;
     expect(celda).toBe(document.querySelector("tr")!.querySelector("td"));
   });
 

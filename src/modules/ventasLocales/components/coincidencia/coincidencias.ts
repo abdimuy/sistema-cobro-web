@@ -14,16 +14,6 @@ export const COLUMNA_DE_CAMPO: Record<CampoCoincidencia, ColumnId | null> = {
   articulos: null,
 };
 
-export const ETIQUETA_MOTIVO: Record<
-  Exclude<CampoCoincidencia, "cliente">,
-  string
-> = {
-  telefono: "teléfono",
-  folio: "folio",
-  direccion: "dirección",
-  articulos: "artículos",
-};
-
 const ORDEN: CampoCoincidencia[] = [
   "cliente",
   "telefono",
@@ -43,14 +33,21 @@ export function coincidenciaDe(
   return conocidas(venta).find((c) => c.campo === campo);
 }
 
-export function motivosDe(
-  venta: VentaLocal,
-): Array<Exclude<CampoCoincidencia, "cliente">> {
-  const presentes = new Set(conocidas(venta).map((c) => c.campo));
-  return ORDEN.filter(
-    (c): c is Exclude<CampoCoincidencia, "cliente"> =>
-      c !== "cliente" && presentes.has(c),
-  );
+/**
+ * Recorta el texto ANTES de la primera coincidencia a `antes` caracteres (con
+ * "…"), para que en una línea de un renglón lo resaltado nunca quede cortado
+ * por la elipsis del final. El final lo recorta el CSS (truncate).
+ */
+export function ventanaAlrededor(segmentos: Segmento[], antes = 16): Segmento[] {
+  const i = segmentos.findIndex((s) => s.coincide);
+  if (i <= 0) return segmentos;
+  const previo = segmentos.slice(0, i).map((s) => s.texto).join("");
+  if (previo.length <= antes) return segmentos;
+  const corte = previo.slice(previo.length - antes);
+  // Sin cortar a media palabra si hay un espacio cerca.
+  const espacio = corte.indexOf(" ");
+  const limpio = espacio >= 0 && espacio < 8 ? corte.slice(espacio + 1) : corte;
+  return [{ texto: `…${limpio}`, coincide: false }, ...segmentos.slice(i)];
 }
 
 export function coincidenciasOcultas(

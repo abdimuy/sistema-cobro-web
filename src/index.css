@@ -316,6 +316,24 @@ body {
 }
 .coincide-chip-aprox {
   border-style: dashed;
+  line-height: 15px;
+  padding: 0 6px;
+  font-size: 10.5px;
+}
+.coincide-mas {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #1e40af;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 9999px;
+  padding: 0 6px;
+  line-height: 15px;
+}
+.dark .coincide-mas {
+  color: #93c5fd;
+  background: #172554;
+  border-color: #1e40af;
 }
 .fila-aparece {
   animation: fila-aparece 0.2s ease-out;

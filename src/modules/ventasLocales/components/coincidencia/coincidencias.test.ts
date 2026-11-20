@@ -5,7 +5,7 @@ import type { ColumnId } from "../columns";
 import {
   coincidenciasOcultas,
   columnaDelBloque,
-  motivosDe,
+  ventanaAlrededor,
   segmentosSobreFormato,
 } from "./coincidencias";
 
@@ -20,16 +20,21 @@ const v = (...campos: string[]) =>
   ({ COINCIDENCIAS: campos.map(c) }) as VentaLocal;
 
 describe("coincidencias", () => {
-  it("motivosDe omite cliente y respeta el orden del contrato", () => {
-    expect(motivosDe(v("articulos", "cliente", "telefono", "folio"))).toEqual([
-      "telefono",
-      "folio",
-      "articulos",
-    ]);
+  it("ventanaAlrededor recorta antes de la coincidencia con … y sin media palabra", () => {
+    const r = ventanaAlrededor([
+      { texto: "C PLUTARCO ELIAS ", coincide: false },
+      { texto: "CALLES", coincide: true },
+      { texto: " COL CENTRO", coincide: false },
+    ], 10);
+    expect(r[0]).toEqual({ texto: "…ELIAS ", coincide: false });
+    expect(r[1]).toEqual({ texto: "CALLES", coincide: true });
   });
 
-  it("motivosDe ignora campos desconocidos y duplicados", () => {
-    expect(motivosDe(v("vendedor", "folio", "folio"))).toEqual(["folio"]);
+  it("ventanaAlrededor no toca textos cortos ni los que empiezan con la coincidencia", () => {
+    const corto = [{ texto: "C ", coincide: false }, { texto: "CALLE", coincide: true }];
+    expect(ventanaAlrededor(corto)).toBe(corto);
+    const inicio = [{ texto: "CALLE", coincide: true }, { texto: " 5", coincide: false }];
+    expect(ventanaAlrededor(inicio)).toBe(inicio);
   });
 
   it("coincidenciasOcultas incluye articulos siempre (no es columna)", () => {

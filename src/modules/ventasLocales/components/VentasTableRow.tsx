@@ -25,7 +25,7 @@ import { FaseCell } from "./FaseCell";
 import { FotosVistaPrevia } from "./FotosVistaPrevia";
 import { ArchivoBadge } from "./ArchivoBadge";
 import { TextoResaltado } from "./coincidencia/TextoResaltado";
-import { CoincidenciaMotivos } from "./coincidencia/CoincidenciaMotivos";
+import { CoincidenciaLinea } from "./coincidencia/CoincidenciaLinea";
 import { coincidenciaDe, columnaDelBloque, segmentosSobreFormato } from "./coincidencia/coincidencias";
 import { formatCurrency, formatPhone, copyToClipboard } from "./utils";
 import { cn } from "@/lib/utils";
@@ -155,7 +155,13 @@ export function VentasTableRow({
   // El bloque de motivos va en la columna del cliente, o en la primera visible.
   const renderCell = (columnId: ColumnId) => {
     const cell = renderCellBase(columnId);
-    if (!hayCoincidencias || columnId !== columnaBloque || !React.isValidElement(cell)) {
+    // En la columna del cliente la línea va bajo el nombre (dentro de la celda).
+    if (
+      !hayCoincidencias ||
+      columnId !== columnaBloque ||
+      columnId === "cliente" ||
+      !React.isValidElement(cell)
+    ) {
       return cell;
     }
     const el = cell as React.ReactElement<{ children?: React.ReactNode }>;
@@ -163,7 +169,7 @@ export function VentasTableRow({
       el,
       undefined,
       el.props.children,
-      <CoincidenciaMotivos venta={venta} visibleColumns={visibleColumns} />,
+      <CoincidenciaLinea venta={venta} visibleColumns={visibleColumns} />,
     );
   };
 
@@ -249,7 +255,12 @@ export function VentasTableRow({
                 />
               </span>
             )}
-            {esArchivo && <ArchivoLinea venta={venta} />}
+            {/* Con búsqueda la línea de coincidencia reemplaza a la de Archivo: misma altura en todas las filas. */}
+            {hayCoincidencias ? (
+              <CoincidenciaLinea venta={venta} visibleColumns={visibleColumns} />
+            ) : (
+              esArchivo && <ArchivoLinea venta={venta} />
+            )}
               </div>
             </div>
           </TableCell>
