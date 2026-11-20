@@ -1,4 +1,4 @@
-import { forwardRef, useRef, useState, type ButtonHTMLAttributes } from "react";
+import { forwardRef, useEffect, useRef, useState, type ButtonHTMLAttributes } from "react";
 import { createPortal } from "react-dom";
 import {
   HoverCard,
@@ -15,6 +15,13 @@ import {
   type FuenteImagen,
 } from "./detalle/fuenteImagen";
 import { fechaHoraOficina } from "./archivo/formatoArchivo";
+
+/**
+ * Quien devuelve el foco a la pila (visor, panel de Archivo) lo anuncia con este
+ * evento justo antes de llamar a focus(): la pila arma la bandera sólo ese
+ * instante, para que el foco devuelto no reabra la tarjeta.
+ */
+export const EVENTO_RETORNO_FOCO = "msp:retorno-foco";
 
 /** Con más de MAX_MINIATURAS fotos: MINIATURAS_CON_MAS miniaturas + casilla "+N". */
 const MAX_MINIATURAS = 6;
@@ -162,6 +169,19 @@ export function FotosVistaPrevia({
   // Al devolver el foco a la pila (cerrar visor/panel) la tarjeta no debe
   // reabrirse sola: Radix abre al enfocar, salvo que se cancele el evento.
   const sinAbrirPorFoco = useRef(false);
+  useEffect(() => {
+    const pila = pilaRef.current;
+    if (!pila) return;
+    const armar = () => {
+      sinAbrirPorFoco.current = true;
+      // Se desarma en la misma tarea: nunca sobrevive a este focus().
+      queueMicrotask(() => {
+        sinAbrirPorFoco.current = false;
+      });
+    };
+    pila.addEventListener(EVENTO_RETORNO_FOCO, armar);
+    return () => pila.removeEventListener(EVENTO_RETORNO_FOCO, armar);
+  }, [imagenes.length]);
   const esArchivo = venta.ORIGEN === "archivo";
   const ventaId = venta.LOCAL_SALE_ID;
 
@@ -172,7 +192,6 @@ export function FotosVistaPrevia({
 
   const abrir = (indice: number) => {
     setAbierta(false);
-    sinAbrirPorFoco.current = true;
     if (esArchivo) onAbrirArchivo?.(indice, pilaRef.current);
     else setVisor(indice);
   };
@@ -182,9 +201,6 @@ export function FotosVistaPrevia({
       <HoverCard openDelay={200} closeDelay={100} open={abierta} onOpenChange={setAbierta}>
         <HoverCardTrigger
           asChild
-          onPointerEnter={() => {
-            sinAbrirPorFoco.current = false;
-          }}
           onFocus={(e) => {
             if (sinAbrirPorFoco.current) {
               sinAbrirPorFoco.current = false;
@@ -218,6 +234,7 @@ export function FotosVistaPrevia({
               initialIndex={visor}
               onClose={() => {
                 setVisor(null);
+                pilaRef.current?.dispatchEvent(new Event(EVENTO_RETORNO_FOCO));
                 pilaRef.current?.focus();
               }}
             />

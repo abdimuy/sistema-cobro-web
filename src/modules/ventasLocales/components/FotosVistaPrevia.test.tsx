@@ -9,12 +9,14 @@ vi.mock("./detalle/AuthenticatedImage", () => ({
   ),
 }));
 vi.mock("./detalle/VentaImagenLightbox", () => ({
-  default: ({ initialIndex }: { initialIndex: number }) => (
-    <div data-testid="lightbox" data-index={initialIndex} />
+  default: ({ initialIndex, onClose }: { initialIndex: number; onClose: () => void }) => (
+    <div data-testid="lightbox" data-index={initialIndex}>
+      <button onClick={onClose}>cerrar-visor</button>
+    </div>
   ),
 }));
 
-import { FotosVistaPrevia } from "./FotosVistaPrevia";
+import { EVENTO_RETORNO_FOCO, FotosVistaPrevia } from "./FotosVistaPrevia";
 import type { ImagenListado, VentaLocal } from "@/services/api/getVentasLocales";
 
 const fotos = (n: number): ImagenListado[] =>
@@ -176,8 +178,41 @@ describe("FotosVistaPrevia", () => {
     await user.tab();
     await user.click(await screen.findByRole("button", { name: "Ver foto: Foto 2" }));
     await waitFor(() => expect(screen.queryByText("1 / 5")).toBeNull());
-    act(() => pila().focus());
+    act(() => {
+      pila().dispatchEvent(new Event(EVENTO_RETORNO_FOCO));
+      pila().focus();
+    });
     await new Promise((r) => setTimeout(r, 350));
     expect(screen.queryByText("1 / 5")).toBeNull();
+  });
+
+  it("el visor al cerrarse devuelve el foco a la pila sin reabrir la tarjeta", async () => {
+    const user = userEvent.setup();
+    render(<FotosVistaPrevia venta={venta(5)} />);
+    await user.tab();
+    await user.keyboard("{Enter}");
+    await user.click(screen.getByText("cerrar-visor"));
+    expect(pila()).toHaveFocus();
+    await new Promise((r) => setTimeout(r, 350));
+    expect(screen.queryByText("1 / 5")).toBeNull();
+  });
+
+  it("N-1: abrir el visor no deja armada la bandera: otro foco y luego Tab a la pila abre la tarjeta al primer intento", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <button>otro</button>
+        <FotosVistaPrevia venta={venta(5)} />
+      </>,
+    );
+    await user.tab();
+    await user.tab();
+    expect(pila()).toHaveFocus();
+    await user.keyboard("{Enter}");
+    // El foco se va a otra parte (p. ej. otra venta) sin cerrar el visor por la pila.
+    act(() => screen.getByText("otro").focus());
+    await user.tab();
+    expect(pila()).toHaveFocus();
+    expect(await screen.findByText("1 / 5")).toBeTruthy();
   });
 });

@@ -9,6 +9,7 @@ import useGetAlmacenes from "@/hooks/useGetAlmacenes";
 import useGetZonasCliente from "@/hooks/useGetZonasCliente";
 import useGetVendedores from "@/hooks/useGetVendedores";
 import { VentaDetalleModal } from "./components/detalle";
+import { EVENTO_RETORNO_FOCO } from "./components/FotosVistaPrevia";
 import { ArchivoPanel } from "./components/archivo/ArchivoPanel";
 import { OrigenFiltro } from "./components/OrigenFiltro";
 import type { VentaLocal } from "@/services/api/getVentasLocales";
@@ -183,7 +184,10 @@ function VentasLocalesScreen() {
     setArchivoFoto(undefined);
     const el = disparadorPanelRef.current;
     disparadorPanelRef.current = null;
-    if (el && el.isConnected) el.focus();
+    if (el && el.isConnected) {
+      el.dispatchEvent(new Event(EVENTO_RETORNO_FOCO));
+      el.focus();
+    }
   }, []);
 
   // `origen` NO se guarda en las vistas (views.ts): es un filtro de consulta
