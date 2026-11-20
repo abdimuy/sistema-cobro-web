@@ -153,4 +153,74 @@ describe("AuthenticatedImage: fuentes de Archivo y de ventas", () => {
     const el = await screen.findByLabelText("No se pudo cargar la imagen");
     expect(el.textContent).toBe("");
   });
+
+  it("al desmontar, las descargas EN COLA no se inician; las ya iniciadas terminan", async () => {
+    const pendientes: Array<() => void> = [];
+    const iniciadas: string[] = [];
+    const fuente = (n: number) => ({
+      cacheKey: `prueba/cola-${n}`,
+      descargar: () =>
+        new Promise<Blob>((resolve) => {
+          iniciadas.push(`c${n}`);
+          pendientes.push(() => resolve(new Blob(["x"])));
+        }),
+    });
+    const { unmount } = render(
+      <>
+        {[1, 2, 3, 4, 5, 6].map((n) => (
+          <AuthenticatedImage key={n} fuente={fuente(n)} alt={`f${n}`} />
+        ))}
+      </>,
+    );
+    // Control positivo: el tope de 4 deja 5 y 6 en cola.
+    await waitFor(() => expect(iniciadas).toHaveLength(4));
+    unmount();
+    pendientes.forEach((r) => r());
+    await new Promise((r) => setTimeout(r, 30));
+    expect(iniciadas).toEqual(["c1", "c2", "c3", "c4"]);
+  });
+
+  it("control: sin desmontar, las de la cola sí se inician al liberarse cupo", async () => {
+    const pendientes: Array<() => void> = [];
+    const iniciadas: string[] = [];
+    const fuente = (n: number) => ({
+      cacheKey: `prueba/cola-control-${n}`,
+      descargar: () =>
+        new Promise<Blob>((resolve) => {
+          iniciadas.push(`c${n}`);
+          pendientes.push(() => resolve(new Blob(["x"])));
+        }),
+    });
+    render(
+      <>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <AuthenticatedImage key={n} fuente={fuente(n)} alt={`f${n}`} />
+        ))}
+      </>,
+    );
+    await waitFor(() => expect(iniciadas).toHaveLength(4));
+    pendientes[0]?.();
+    await waitFor(() => expect(iniciadas).toHaveLength(5));
+    pendientes.forEach((r) => r());
+  });
+
+  it("lo que pinta cargando y en error es válido dentro de un botón (sin div)", async () => {
+    const { container, unmount } = render(
+      <button type="button">
+        <AuthenticatedImage fuente={{ cacheKey: "prueba/span", descargar: () => new Promise<Blob>(() => {}) }} />
+      </button>,
+    );
+    expect(container.querySelector("button div")).toBeNull();
+    unmount();
+    const r = render(
+      <button type="button">
+        <AuthenticatedImage
+          fuente={{ cacheKey: "prueba/span-error", descargar: async () => Promise.reject(new Error("x")) }}
+          textoError="no"
+        />
+      </button>,
+    );
+    await screen.findByText("no");
+    expect(r.container.querySelector("button div")).toBeNull();
+  });
 });

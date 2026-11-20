@@ -1,4 +1,4 @@
-import { forwardRef, useState, type ButtonHTMLAttributes } from "react";
+import { forwardRef, useRef, useState, type ButtonHTMLAttributes } from "react";
 import { createPortal } from "react-dom";
 import {
   HoverCard,
@@ -38,7 +38,7 @@ const Pila = forwardRef<
       {...resto}
       ref={ref}
       type="button"
-      aria-label={`${total} ${total === 1 ? "foto" : "fotos"} de ${nombre}`}
+      aria-label={`${total} ${total === 1 ? "foto" : "fotos"} de ${nombre}. Abrir`}
       onClick={(e) => {
         e.stopPropagation();
         onClick?.(e);
@@ -158,6 +158,10 @@ export function FotosVistaPrevia({
   const imagenes = venta.IMAGENES ?? [];
   const [visor, setVisor] = useState<number | null>(null);
   const [abierta, setAbierta] = useState(false);
+  const pilaRef = useRef<HTMLButtonElement>(null);
+  // Al devolver el foco a la pila (cerrar visor/panel) la tarjeta no debe
+  // reabrirse sola: Radix abre al enfocar, salvo que se cancele el evento.
+  const sinAbrirPorFoco = useRef(false);
   const esArchivo = venta.ORIGEN === "archivo";
   const ventaId = venta.LOCAL_SALE_ID;
 
@@ -168,15 +172,27 @@ export function FotosVistaPrevia({
 
   const abrir = (indice: number) => {
     setAbierta(false);
-    if (esArchivo) onAbrirArchivo?.(indice, document.activeElement as HTMLElement | null);
+    sinAbrirPorFoco.current = true;
+    if (esArchivo) onAbrirArchivo?.(indice, pilaRef.current);
     else setVisor(indice);
   };
 
   return (
     <>
       <HoverCard openDelay={200} closeDelay={100} open={abierta} onOpenChange={setAbierta}>
-        <HoverCardTrigger asChild>
-          <Pila total={imagenes.length} nombre={venta.NOMBRE_CLIENTE} onClick={() => abrir(0)} />
+        <HoverCardTrigger
+          asChild
+          onPointerEnter={() => {
+            sinAbrirPorFoco.current = false;
+          }}
+          onFocus={(e) => {
+            if (sinAbrirPorFoco.current) {
+              sinAbrirPorFoco.current = false;
+              e.preventDefault();
+            }
+          }}
+        >
+          <Pila ref={pilaRef} total={imagenes.length} nombre={venta.NOMBRE_CLIENTE} onClick={() => abrir(0)} />
         </HoverCardTrigger>
         <HoverCardPortal>
           <HoverCardContent
@@ -184,7 +200,9 @@ export function FotosVistaPrevia({
             align="start"
             collisionPadding={8}
             avoidCollisions
-            className="w-[320px] p-3"
+            // React burbujea por los portales: sin esto el clic llegaría al <tr>.
+            onClick={(e) => e.stopPropagation()}
+            className="w-[320px] p-3 motion-reduce:animate-none"
           >
             <Tarjeta imagenes={imagenes} fuentePara={fuentePara} onAbrir={abrir} />
           </HoverCardContent>
@@ -192,12 +210,18 @@ export function FotosVistaPrevia({
       </HoverCard>
       {visor !== null &&
         createPortal(
-          <VentaImagenLightbox
-            fuentePara={fuentePara}
-            imagenes={imagenes}
-            initialIndex={visor}
-            onClose={() => setVisor(null)}
-          />,
+          // Igual que la tarjeta: los clics del visor no deben llegar a la fila.
+          <div onClick={(e) => e.stopPropagation()}>
+            <VentaImagenLightbox
+              fuentePara={fuentePara}
+              imagenes={imagenes}
+              initialIndex={visor}
+              onClose={() => {
+                setVisor(null);
+                pilaRef.current?.focus();
+              }}
+            />
+          </div>,
           document.body,
         )}
     </>

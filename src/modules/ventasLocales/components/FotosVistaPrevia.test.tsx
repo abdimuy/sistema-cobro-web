@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // Sin red: la imagen falsa deja ver qué fuente se pidió y cuántas se montaron.
@@ -40,12 +40,12 @@ const venta = (n: number, origen?: "archivo"): VentaLocal => ({
   IMAGENES: fotos(n),
 });
 
-const pila = () => screen.getByRole("button", { name: /fotos? de María Fernanda Olvera/ });
+const pila = () => screen.getByRole("button", { name: /fotos? de María Fernanda Olvera\. Abrir/ });
 
 describe("FotosVistaPrevia", () => {
   it("la pila muestra el número de fotos", () => {
     render(<FotosVistaPrevia venta={venta(5)} />);
-    expect(pila().getAttribute("aria-label")).toBe("5 fotos de María Fernanda Olvera");
+    expect(pila().getAttribute("aria-label")).toBe("5 fotos de María Fernanda Olvera. Abrir");
     expect(within(pila()).getByTestId("fotos-contador").textContent).toBe("5");
   });
 
@@ -100,7 +100,7 @@ describe("FotosVistaPrevia", () => {
     expect(screen.queryByText(/^\+\d/)).toBeNull();
   });
 
-  it("app: clic en miniatura k abre el visor en k; +N abre en 5", async () => {
+  it("app: clic en la miniatura 3 abre el visor en el índice 2", async () => {
     const user = userEvent.setup();
     render(<FotosVistaPrevia venta={venta(9)} />);
     await user.tab();
@@ -150,5 +150,34 @@ describe("FotosVistaPrevia", () => {
     for (const el of screen.getAllByTestId("img")) {
       expect(el.getAttribute("data-key")).toMatch(/^venta\/venta-1\/img-/);
     }
+  });
+
+  it("teclado: Tab a la pila y Enter abre el visor en la foto 1", async () => {
+    const user = userEvent.setup();
+    render(<FotosVistaPrevia venta={venta(5)} />);
+    await user.tab();
+    expect(pila()).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(screen.getByTestId("lightbox").getAttribute("data-index")).toBe("0");
+  });
+
+  it("Archivo: el retorno del foco que se entrega es la pila, no la miniatura", async () => {
+    const user = userEvent.setup();
+    const abrir = vi.fn();
+    render(<FotosVistaPrevia venta={venta(5, "archivo")} onAbrirArchivo={abrir} />);
+    await user.tab();
+    await user.click(await screen.findByRole("button", { name: "Ver foto: Foto 2" }));
+    expect(abrir.mock.calls[0]?.[1]).toBe(pila());
+  });
+
+  it("devolver el foco a la pila tras abrir no reabre la tarjeta", async () => {
+    const user = userEvent.setup();
+    render(<FotosVistaPrevia venta={venta(5, "archivo")} onAbrirArchivo={() => {}} />);
+    await user.tab();
+    await user.click(await screen.findByRole("button", { name: "Ver foto: Foto 2" }));
+    await waitFor(() => expect(screen.queryByText("1 / 5")).toBeNull());
+    act(() => pila().focus());
+    await new Promise((r) => setTimeout(r, 350));
+    expect(screen.queryByText("1 / 5")).toBeNull();
   });
 });

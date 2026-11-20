@@ -6,6 +6,11 @@ vi.mock("../presentation/hooks/useVentaEventos", () => ({
   useVentaEventos: vi.fn(() => ({ eventos: [], isLoading: false, error: null })),
 }));
 
+// Sin red: la vista previa de fotos monta AuthenticatedImage al abrirse.
+vi.mock("./detalle/AuthenticatedImage", () => ({
+  default: ({ alt }: { alt?: string }) => <span data-testid="img-falsa">{alt}</span>,
+}));
+
 import { useVentaEventos } from "../presentation/hooks/useVentaEventos";
 import { VentasTableRow } from "./VentasTableRow";
 import { DEFAULT_COLUMN_WIDTHS, type ColumnId } from "./columns";
@@ -436,7 +441,7 @@ describe("VentasTableRow — vista previa de fotos", () => {
 
   it("con fotos muestra la pila antes del nombre; sin fotos, el espacio", () => {
     const { unmount } = renderRow({ venta: { ...VENTA, IMAGENES: fotos } });
-    const pila = screen.getByRole("button", { name: "3 fotos de María Fernanda Olvera" });
+    const pila = screen.getByRole("button", { name: "3 fotos de María Fernanda Olvera. Abrir" });
     const nombre = screen.getByText(VENTA.NOMBRE_CLIENTE);
     expect(pila.compareDocumentPosition(nombre) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     unmount();
@@ -457,6 +462,41 @@ describe("VentasTableRow — vista previa de fotos", () => {
     await userEvent.click(screen.getByRole("button", { name: /3 fotos de/ }));
     expect(onAbrirFotoArchivo).toHaveBeenCalledTimes(1);
     expect(onAbrirFotoArchivo.mock.calls[0]?.[0]).toBe(0);
+    expect(onViewDetails).not.toHaveBeenCalled();
+  });
+
+  it("app: clic en una miniatura abre el visor y NO el detalle; clics dentro del visor tampoco", async () => {
+    const onViewDetails = vi.fn();
+    renderRow({ venta: { ...VENTA, IMAGENES: fotos }, onViewDetails });
+    await userEvent.tab();
+    await userEvent.click(await screen.findByRole("button", { name: "Ver foto: Foto 3" }));
+    expect(onViewDetails).not.toHaveBeenCalled();
+    // El visor real (en portal) está abierto: cualquier clic dentro de él.
+    const zoom = await screen.findByTitle(/Zoom in/);
+    await userEvent.click(zoom);
+    expect(onViewDetails).not.toHaveBeenCalled();
+  });
+
+  it("Archivo: clic en la miniatura 4 pide abrir en la foto 4 y NO abre el detalle", async () => {
+    const onAbrirFotoArchivo = vi.fn();
+    const onViewDetails = vi.fn();
+    const cinco = [1, 2, 3, 4, 5].map((n) => ({ ...fotos[0]!, id: `i${n}` }));
+    renderRow({
+      venta: { ...VENTA, ORIGEN: "archivo", IMAGENES: cinco } as VentaLocal,
+      onAbrirFotoArchivo,
+      onViewDetails,
+    });
+    await userEvent.tab();
+    await userEvent.click(await screen.findByRole("button", { name: "Ver foto: Foto 4" }));
+    expect(onAbrirFotoArchivo.mock.calls[0]?.[0]).toBe(3);
+    expect(onViewDetails).not.toHaveBeenCalled();
+  });
+
+  it("clic en la foto grande de la tarjeta no abre el detalle", async () => {
+    const onViewDetails = vi.fn();
+    renderRow({ venta: { ...VENTA, IMAGENES: fotos }, onViewDetails });
+    await userEvent.tab();
+    await userEvent.click(await screen.findByRole("button", { name: /^Abrir foto:/ }));
     expect(onViewDetails).not.toHaveBeenCalled();
   });
 });

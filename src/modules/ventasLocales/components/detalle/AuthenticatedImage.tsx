@@ -19,46 +19,70 @@ interface Props {
 interface Entry {
   promise: Promise<string>;
   refs: number;
+  /** Saca la descarga de la cola si todavía no empezó; false si ya empezó. */
+  cancelar: () => boolean;
 }
 const cache = new Map<string, Entry>();
 
 // Concurrency throttle so a 20-image grid doesn't open 20 parallel XHRs.
 const MAX_INFLIGHT = 4;
 let inFlight = 0;
-const waiting: Array<() => void> = [];
+interface Espera {
+  resolve: () => void;
+  reject: (e: Error) => void;
+}
+const waiting: Espera[] = [];
 
-const acquireSlot = (): Promise<void> =>
-  new Promise((resolve) => {
-    if (inFlight < MAX_INFLIGHT) {
-      inFlight++;
-      resolve();
-    } else {
-      waiting.push(() => {
+const acquireSlot = (): { slot: Promise<void>; cancelar: () => boolean } => {
+  if (inFlight < MAX_INFLIGHT) {
+    inFlight++;
+    return { slot: Promise.resolve(), cancelar: () => false };
+  }
+  let espera!: Espera;
+  const slot = new Promise<void>((resolve, reject) => {
+    espera = {
+      resolve: () => {
         inFlight++;
         resolve();
-      });
-    }
+      },
+      reject,
+    };
+    waiting.push(espera);
   });
+  return {
+    slot,
+    cancelar: () => {
+      const i = waiting.indexOf(espera);
+      if (i < 0) return false;
+      waiting.splice(i, 1);
+      espera.reject(new Error("descarga cancelada"));
+      return true;
+    },
+  };
+};
 
 const releaseSlot = () => {
   inFlight--;
   const next = waiting.shift();
-  if (next) next();
+  if (next) next.resolve();
 };
 
-const fetchImage = async (descargar: () => Promise<Blob>): Promise<string> => {
-  await acquireSlot();
-  try {
-    return URL.createObjectURL(await descargar());
-  } finally {
-    releaseSlot();
-  }
+const fetchImage = (descargar: () => Promise<Blob>) => {
+  const { slot, cancelar } = acquireSlot();
+  const promise = slot.then(async () => {
+    try {
+      return URL.createObjectURL(await descargar());
+    } finally {
+      releaseSlot();
+    }
+  });
+  return { promise, cancelar };
 };
 
 const acquire = (key: string, descargar: () => Promise<Blob>): Promise<string> => {
   let entry = cache.get(key);
   if (!entry) {
-    entry = { promise: fetchImage(descargar), refs: 0 };
+    entry = { ...fetchImage(descargar), refs: 0 };
     cache.set(key, entry);
   }
   entry.refs++;
@@ -71,6 +95,8 @@ const release = (key: string) => {
   entry.refs--;
   if (entry.refs <= 0) {
     cache.delete(key);
+    // Sin consumidores: lo que sigue en cola no se descarga. Lo ya iniciado termina.
+    entry.cancelar();
     entry.promise
       .then((url) => URL.revokeObjectURL(url))
       .catch(() => {});
@@ -104,24 +130,24 @@ export const AuthenticatedImage = ({ fuente, alt, className, onLoad, textoError 
 
   if (error) {
     return (
-      <div
+      <span
         role="img"
         aria-label="No se pudo cargar la imagen"
         className={cn("flex items-center justify-center bg-muted text-muted-foreground", className)}
       >
-        <div className="flex flex-col items-center gap-1 text-center">
+        <span className="flex flex-col items-center gap-1 text-center">
           <ImageOff className="h-5 w-5" />
           {textoError && <span className="text-xs">{textoError}</span>}
-        </div>
-      </div>
+        </span>
+      </span>
     );
   }
 
   if (!url) {
     return (
-      <div aria-label="Cargando imagen" className={cn("flex items-center justify-center bg-muted", className)}>
+      <span aria-label="Cargando imagen" className={cn("flex items-center justify-center bg-muted", className)}>
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
+      </span>
     );
   }
 
