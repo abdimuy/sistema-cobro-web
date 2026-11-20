@@ -3,7 +3,7 @@ import type { VentaLocal, VentasParams } from "../../../../services/api/getVenta
 import { DomainError } from "../../domain/errors";
 import { useVentasListPort } from "../context/VentasListContext";
 import { buscarVentas } from "../../application/usecases/buscarVentas";
-import type { ConteoOrigen } from "../../domain/values/Coincidencia";
+import { FILTRO_ORIGEN_INICIAL, type ConteoOrigen } from "../../domain/values/Coincidencia";
 import type { BuscarVentasInput, SortByVenta } from "../../application/dto/BuscarVentasInput";
 
 // ============================================================================
@@ -61,7 +61,7 @@ function toBuscarVentasInput(params: VentasParams, cursor?: string): BuscarVenta
     // La UI guarda el filtro como `vendedorEmails` (plural) aunque el selector
     // es de un solo vendedor; el contrato del backend es `vendedor_email`.
     ...(params.vendedorEmails !== undefined && { vendedorEmail: params.vendedorEmails }),
-    ...(params.origen !== undefined && { origen: params.origen }),
+    origen: params.origen ?? FILTRO_ORIGEN_INICIAL,
     ...(sortBy !== undefined && { sortBy }),
     ...(params.sortOrder !== undefined && { sortOrder: params.sortOrder }),
     ...(cursor !== undefined && { cursor }),

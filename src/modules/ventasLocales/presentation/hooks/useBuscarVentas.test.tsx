@@ -348,11 +348,11 @@ describe("useBuscarVentas origen y conteoOrigen", () => {
     expect(result.current.conteoOrigen).toBeUndefined();
   });
 
-  it("no manda origen por defecto", async () => {
+  it("sin origen elegido pide las ventas de la app", async () => {
     const port = new FakeVentasListPort();
     const { result } = renderHook(() => useBuscarVentas(), { wrapper: wrapWith(port) });
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(port.buscarCalls[0].input.origen).toBeUndefined();
+    expect(port.buscarCalls[0].input.origen).toBe("app");
   });
 });

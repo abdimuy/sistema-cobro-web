@@ -164,14 +164,20 @@ describe("VentasLocales: Archivo y origen", () => {
     expect(screen.getByTestId("panel-archivo")).toBeInTheDocument();
   });
 
-  it("limpiar filtros restablece origen a 'todas'", () => {
+  it("limpiar filtros restablece origen a 'app'", () => {
     hookState.ventas = [];
     hookState.params = { origen: "archivo" };
     renderScreen();
     fireEvent.click(screen.getByRole("button", { name: /limpiar/i }));
     expect(setParams).toHaveBeenCalledWith(
-      expect.objectContaining({ origen: "todas" }),
+      expect.objectContaining({ origen: "app" }),
     );
+  });
+
+  it("sin origen elegido el filtro marca App", () => {
+    hookState.params = {};
+    renderScreen();
+    expect(screen.getByRole("button", { name: /^App/ })).toHaveAttribute("aria-pressed", "true");
   });
 
   it("con conteoOrigen.archivo null el filtro muestra 'Archivo —'", () => {

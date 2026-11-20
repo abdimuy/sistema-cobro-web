@@ -48,7 +48,7 @@ import {
   saveActiveViewId,
 } from "./components/views";
 import { VentasViewSwitcher } from "./components/VentasViewSwitcher";
-import type { FiltroOrigen } from "./domain/values/Coincidencia";
+import { FILTRO_ORIGEN_INICIAL, type FiltroOrigen } from "./domain/values/Coincidencia";
 
 export default function VentasLocales() {
   return (
@@ -212,7 +212,7 @@ function VentasLocalesScreen() {
       vendedorEmails: undefined,
       precioMin: undefined,
       precioMax: undefined,
-      origen: "todas",
+      origen: FILTRO_ORIGEN_INICIAL,
     });
   }, [setParams]);
 
@@ -361,7 +361,7 @@ function VentasLocalesScreen() {
       params.vendedorEmails ||
       params.precioMin ||
       params.precioMax ||
-      (params.origen !== undefined && params.origen !== "todas")
+      (params.origen !== undefined && params.origen !== FILTRO_ORIGEN_INICIAL)
     );
   }, [params]);
 
@@ -398,7 +398,7 @@ function VentasLocalesScreen() {
             />
             <div className="flex items-center gap-2 flex-shrink-0">
               <OrigenFiltro
-                value={params.origen ?? "todas"}
+                value={params.origen ?? FILTRO_ORIGEN_INICIAL}
                 conteo={conteoOrigen}
                 onChange={handleOrigenChange}
               />
