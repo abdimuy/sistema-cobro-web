@@ -94,4 +94,15 @@ describe("ArchivoGaleria", () => {
     rerender(<ArchivoGaleria ventaId="v2" imagenes={imagenes.slice(0, 1)} />);
     expect(screen.getByText("Foto 1 de 1")).toBeInTheDocument();
   });
+
+  it("fotoInicial abre en esa foto y un objeto nuevo vuelve a ella", () => {
+    const { rerender } = render(
+      <ArchivoGaleria ventaId="v1" imagenes={imagenes} fotoInicial={{ indice: 2 }} />,
+    );
+    expect(screen.getByText("Foto 3 de 3")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Foto anterior"));
+    expect(screen.getByText("Foto 2 de 3")).toBeInTheDocument();
+    rerender(<ArchivoGaleria ventaId="v1" imagenes={imagenes} fotoInicial={{ indice: 2 }} />);
+    expect(screen.getByText("Foto 3 de 3")).toBeInTheDocument();
+  });
 });

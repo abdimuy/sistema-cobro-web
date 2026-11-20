@@ -65,6 +65,9 @@ function VentasLocalesScreen() {
   const [showDetalleModal, setShowDetalleModal] = useState(false);
   // Panel lateral de Archivo (solo consulta). Independiente del modal de app.
   const [archivoSeleccionadoId, setArchivoSeleccionadoId] = useState<string | null>(null);
+  // Foto en la que abre el panel (vista previa de fotos). Objeto nuevo en cada
+  // clic: aunque el índice se repita, la galería vuelve a esa foto.
+  const [archivoFoto, setArchivoFoto] = useState<{ indice: number } | undefined>(undefined);
 
   // Open modal from notification deep link
   const ventaIdParam = searchParams.get("ventaId");
@@ -157,6 +160,7 @@ function VentasLocalesScreen() {
     if (venta.ORIGEN === "archivo") {
       const el = retorno ?? document.activeElement;
       if (el instanceof HTMLElement) disparadorPanelRef.current = el;
+      setArchivoFoto(undefined);
       setArchivoSeleccionadoId(venta.LOCAL_SALE_ID);
       return;
     }
@@ -164,8 +168,19 @@ function VentasLocalesScreen() {
     setShowDetalleModal(true);
   }, []);
 
+  const handleAbrirFotoArchivo = useCallback(
+    (venta: VentaLocal, indice: number, retorno?: HTMLElement | null) => {
+      const el = retorno ?? document.activeElement;
+      if (el instanceof HTMLElement) disparadorPanelRef.current = el;
+      setArchivoFoto({ indice });
+      setArchivoSeleccionadoId(venta.LOCAL_SALE_ID);
+    },
+    []
+  );
+
   const handleCloseArchivo = useCallback(() => {
     setArchivoSeleccionadoId(null);
+    setArchivoFoto(undefined);
     const el = disparadorPanelRef.current;
     disparadorPanelRef.current = null;
     if (el && el.isConnected) el.focus();
@@ -440,6 +455,7 @@ function VentasLocalesScreen() {
             sortOrder={params.sortOrder}
             onSort={updateSort}
             onViewDetails={handleViewDetails}
+            onAbrirFotoArchivo={handleAbrirFotoArchivo}
             getAlmacenName={getAlmacenName}
             density={density}
             infiniteScroll={{
@@ -451,7 +467,11 @@ function VentasLocalesScreen() {
         )}
         </div>
         {archivoSeleccionadoId && (
-          <ArchivoPanel ventaId={archivoSeleccionadoId} onClose={handleCloseArchivo} />
+          <ArchivoPanel
+            ventaId={archivoSeleccionadoId}
+            fotoInicial={archivoFoto}
+            onClose={handleCloseArchivo}
+          />
         )}
       </div>
 

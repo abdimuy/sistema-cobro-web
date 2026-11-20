@@ -162,3 +162,33 @@ describe("adaptVentaV2ToLocal — fase_alcanzada", () => {
     ).toBeUndefined();
   });
 });
+
+describe("adaptVentaV2ToLocal — fotos del listado", () => {
+  it("conserva la lista de fotos con id, descripcion, created_at y mime", () => {
+    const venta = adaptVentaV2ToLocal(
+      makeVentaDTO({
+        imagenes: [
+          {
+            id: "img-1",
+            storage_kind: "archivo",
+            storage_key: "",
+            mime: "image/jpeg",
+            size_bytes: 10,
+            descripcion: "Fachada",
+            created_at: "2026-08-10T18:00:00Z",
+            updated_at: "2026-08-10T18:00:00Z",
+          },
+        ],
+      })
+    );
+
+    expect(venta.IMAGENES).toEqual([
+      { id: "img-1", descripcion: "Fachada", created_at: "2026-08-10T18:00:00Z", mime: "image/jpeg" },
+    ]);
+    expect(venta.IMAGENES_COUNT).toBe(1);
+  });
+
+  it("un API anterior que manda [] deja la lista vacía", () => {
+    expect(adaptVentaV2ToLocal(makeVentaDTO({ imagenes: [] })).IMAGENES).toEqual([]);
+  });
+});

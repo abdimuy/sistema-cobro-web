@@ -23,6 +23,7 @@ interface VentasTableProps {
   sortOrder: VentasParams["sortOrder"];
   onSort: (column: VentasParams["sortBy"]) => void;
   onViewDetails: (venta: VentaLocal, retorno?: HTMLElement | null) => void;
+  onAbrirFotoArchivo?: (venta: VentaLocal, indice: number, retorno?: HTMLElement | null) => void;
   getAlmacenName: (id: number) => string;
   density?: Density;
 }
@@ -138,6 +139,7 @@ export function VentasTable({
   sortOrder,
   onSort,
   onViewDetails,
+  onAbrirFotoArchivo,
   getAlmacenName,
   density = "normal",
   infiniteScroll,
@@ -298,6 +300,11 @@ export function VentasTable({
               pinnedOffsets={pinnedOffsets}
               columnWidths={columnWidths}
               onViewDetails={(retorno) => onViewDetails(venta, retorno)}
+              onAbrirFotoArchivo={
+                onAbrirFotoArchivo
+                  ? (indice, retorno) => onAbrirFotoArchivo(venta, indice, retorno)
+                  : undefined
+              }
               getAlmacenName={getAlmacenName}
               density={density}
             />

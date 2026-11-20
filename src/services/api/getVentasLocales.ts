@@ -172,6 +172,12 @@ export const adaptVentaV2ToLocal = (v: VentaV2DTO): VentaLocal => {
     PRODUCTOS_COUNT: v.productos.length,
     COMBOS_COUNT: v.combos.length,
     IMAGENES_COUNT: v.imagenes.length,
+    IMAGENES: v.imagenes.map((im) => ({
+      id: im.id,
+      descripcion: im.descripcion,
+      created_at: im.created_at,
+      mime: im.mime,
+    })),
     vendedores: v.vendedores.map((ve) => ({
       LOCAL_SALE_ID: v.id,
       VENDEDOR_EMAIL: ve.email,
@@ -184,6 +190,14 @@ export interface VendedorVenta {
   LOCAL_SALE_ID: string;
   VENDEDOR_EMAIL: string;
   NOMBRE_VENDEDOR: string;
+}
+
+/** Lo mínimo de una foto del listado: alcanza para la vista previa y el visor. */
+export interface ImagenListado {
+  id: string;
+  descripcion: string | null;
+  created_at: string;
+  mime: string;
 }
 
 export interface VentaLocal {
@@ -254,6 +268,8 @@ export interface VentaLocal {
   PRODUCTOS_COUNT?: number;
   COMBOS_COUNT?: number;
   IMAGENES_COUNT?: number;
+  /** Fotos de la venta (app y Archivo). Ausente = sin fotos. */
+  IMAGENES?: ImagenListado[];
 }
 
 // ============================================================================

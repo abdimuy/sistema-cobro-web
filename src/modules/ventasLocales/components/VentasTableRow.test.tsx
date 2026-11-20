@@ -425,3 +425,38 @@ describe("VentasTableRow — fixes finales", () => {
     expect(trigger).not.toHaveFocus();
   });
 });
+
+describe("VentasTableRow — vista previa de fotos", () => {
+  const fotos = [1, 2, 3].map((n) => ({
+    id: `img-${n}`,
+    descripcion: null,
+    created_at: "2026-08-10T18:30:00Z",
+    mime: "image/jpeg",
+  }));
+
+  it("con fotos muestra la pila antes del nombre; sin fotos, el espacio", () => {
+    const { unmount } = renderRow({ venta: { ...VENTA, IMAGENES: fotos } });
+    const pila = screen.getByRole("button", { name: "3 fotos de María Fernanda Olvera" });
+    const nombre = screen.getByText(VENTA.NOMBRE_CLIENTE);
+    expect(pila.compareDocumentPosition(nombre) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    unmount();
+
+    renderRow();
+    expect(screen.queryByRole("button", { name: /fotos? de/ })).toBeNull();
+    expect(screen.getByTestId("fotos-espacio")).toBeInTheDocument();
+  });
+
+  it("Archivo: la pila pide abrir el panel en la foto 0 sin abrir el detalle", async () => {
+    const onAbrirFotoArchivo = vi.fn();
+    const onViewDetails = vi.fn();
+    renderRow({
+      venta: { ...VENTA, ORIGEN: "archivo", IMAGENES: fotos } as VentaLocal,
+      onAbrirFotoArchivo,
+      onViewDetails,
+    });
+    await userEvent.click(screen.getByRole("button", { name: /3 fotos de/ }));
+    expect(onAbrirFotoArchivo).toHaveBeenCalledTimes(1);
+    expect(onAbrirFotoArchivo.mock.calls[0]?.[0]).toBe(0);
+    expect(onViewDetails).not.toHaveBeenCalled();
+  });
+});

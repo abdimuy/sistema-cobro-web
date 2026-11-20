@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 import type { VentaArchivoDTO } from "@/services/api/getVentaArchivo";
 import AuthenticatedImage from "../detalle/AuthenticatedImage";
@@ -11,11 +11,17 @@ const botonFlecha =
 export function ArchivoGaleria({
   ventaId,
   imagenes,
+  fotoInicial,
 }: {
   ventaId: string;
   imagenes: VentaArchivoDTO["imagenes"];
+  /** Foto en la que abrir; un objeto nuevo vuelve a posicionarla. */
+  fotoInicial?: { indice: number };
 }) {
-  const [pedido, setPedido] = useState(0);
+  const [pedido, setPedido] = useState(fotoInicial?.indice ?? 0);
+  useEffect(() => {
+    if (fotoInicial) setPedido(fotoInicial.indice);
+  }, [fotoInicial]);
   const total = imagenes.length;
 
   if (total === 0) {

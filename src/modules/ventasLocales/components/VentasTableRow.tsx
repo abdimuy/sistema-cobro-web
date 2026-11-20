@@ -22,6 +22,7 @@ import {
 import { VentaLocal } from "@/services/api/getVentasLocales";
 import { ColumnId, ColumnWidths, COLUMNS, Density } from "./columns";
 import { FaseCell } from "./FaseCell";
+import { FotosVistaPrevia } from "./FotosVistaPrevia";
 import { ArchivoBadge } from "./ArchivoBadge";
 import { TextoResaltado } from "./coincidencia/TextoResaltado";
 import { CoincidenciaMotivos } from "./coincidencia/CoincidenciaMotivos";
@@ -93,6 +94,8 @@ interface VentasTableRowProps {
    * Desde el menú de la fila es la propia fila (el ítem del menú se desmonta).
    */
   onViewDetails: (retorno?: HTMLElement | null) => void;
+  /** Fila de Archivo: abre el panel en la foto `indice` (vista previa de fotos). */
+  onAbrirFotoArchivo?: (indice: number, retorno?: HTMLElement | null) => void;
   getAlmacenName: (id: number) => string;
   /** Fila par de la tabla (cebra). Lo decide la tabla, no el CSS. */
   zebra?: boolean;
@@ -107,6 +110,7 @@ export function VentasTableRow({
   pinnedOffsets = {},
   columnWidths,
   onViewDetails,
+  onAbrirFotoArchivo,
   getAlmacenName,
   zebra = false,
   density = "normal",
@@ -218,6 +222,9 @@ export function VentasTableRow({
       case "cliente":
         return (
           <TableCell className={alignClass} style={cellStyle}>
+            <div className="flex items-center gap-2">
+              <FotosVistaPrevia venta={venta} onAbrirArchivo={onAbrirFotoArchivo} />
+              <div className="min-w-0 flex-1">
             {esArchivo ? (
               <button
                 type="button"
@@ -243,6 +250,8 @@ export function VentasTableRow({
               </span>
             )}
             {esArchivo && <ArchivoLinea venta={venta} />}
+              </div>
+            </div>
           </TableCell>
         );
 

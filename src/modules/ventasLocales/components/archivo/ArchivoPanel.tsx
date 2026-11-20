@@ -50,9 +50,12 @@ function BotonCerrar({ onClose }: { onClose: () => void }) {
 
 export function ArchivoPanel({
   ventaId,
+  fotoInicial,
   onClose,
 }: {
   ventaId: string;
+  /** Foto en la que abre la galería (vista previa de fotos de la lista). */
+  fotoInicial?: { indice: number };
   onClose: () => void;
 }) {
   const { venta, loading, error, reintentar } = useVentaArchivo(ventaId);
@@ -93,7 +96,7 @@ export function ArchivoPanel({
             </div>
             <BotonCerrar onClose={onClose} />
           </div>
-          <ArchivoGaleria ventaId={venta.id} imagenes={venta.imagenes} />
+          <ArchivoGaleria ventaId={venta.id} imagenes={venta.imagenes} fotoInicial={fotoInicial} />
           <dl className="m-0 grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-2 px-4 pb-4 pt-3 text-[13px]">
             <Fila etiqueta="Dirección">{direccionCompleta(venta)}</Fila>
             <Fila etiqueta="Teléfono">
